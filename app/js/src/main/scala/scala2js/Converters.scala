@@ -209,9 +209,7 @@ object Converters {
         ModelField.User.loginName,
         ModelField.User.passwordHash,
         ModelField.User.name,
-        ModelField.User.isAdmin,
-        ModelField.User.expandCashFlowTablesByDefault,
-        ModelField.User.expandLiquidationTablesByDefault
+        ModelField.User.isAdmin
       )
 
     override def toScalaWithoutId(dict: js.Dictionary[js.Any]) = {
@@ -222,9 +220,7 @@ object Converters {
         loginName = getRequired(ModelField.User.loginName),
         passwordHash = getRequired(ModelField.User.passwordHash),
         name = getRequired(ModelField.User.name),
-        isAdmin = getRequired(ModelField.User.isAdmin),
-        expandCashFlowTablesByDefault = getRequired(ModelField.User.expandCashFlowTablesByDefault),
-        expandLiquidationTablesByDefault = getRequired(ModelField.User.expandLiquidationTablesByDefault)
+        isAdmin = getRequired(ModelField.User.isAdmin)
       )
     }
   }

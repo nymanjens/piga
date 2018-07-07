@@ -16,8 +16,6 @@ object TestObjects {
     // = sha512("pw")
     name = "Test User A",
     isAdmin = false,
-    expandCashFlowTablesByDefault = true,
-    expandLiquidationTablesByDefault = true,
     idOption = Option(918273)
   )
   val testUserB: User = User(
@@ -27,8 +25,6 @@ object TestObjects {
     // = sha512("pw")
     name = "Test User B",
     isAdmin = false,
-    expandCashFlowTablesByDefault = true,
-    expandLiquidationTablesByDefault = true,
     idOption = Option(918274)
   )
   def testUser: User = testUserA

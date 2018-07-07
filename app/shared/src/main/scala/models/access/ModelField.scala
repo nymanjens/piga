@@ -52,10 +52,6 @@ object ModelField {
     case object passwordHash extends ModelField[String, E]("passwordHash", _.passwordHash)
     case object name extends ModelField[String, E]("name", _.name)
     case object isAdmin extends ModelField[Boolean, E]("isAdmin", _.isAdmin)
-    case object expandCashFlowTablesByDefault
-        extends ModelField[Boolean, E]("expandCashFlowTablesByDefault", _.expandCashFlowTablesByDefault)
-    case object expandLiquidationTablesByDefault
-        extends ModelField[Boolean, E]("expandLiquidationTablesByDefault", _.expandLiquidationTablesByDefault)
   }
 
   // **************** Field numbers **************** //

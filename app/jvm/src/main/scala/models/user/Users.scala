@@ -11,16 +11,12 @@ object Users {
   def createUser(loginName: String,
                  password: String,
                  name: String,
-                 isAdmin: Boolean = false,
-                 expandCashFlowTablesByDefault: Boolean = true,
-                 expandLiquidationTablesByDefault: Boolean = true): User =
+                 isAdmin: Boolean = false): User =
     User(
       loginName = loginName,
       passwordHash = hash(password),
       name = name,
-      isAdmin = isAdmin,
-      expandCashFlowTablesByDefault = expandCashFlowTablesByDefault,
-      expandLiquidationTablesByDefault = expandLiquidationTablesByDefault
+      isAdmin = isAdmin
     )
 
   def copyUserWithPassword(user: User, password: String): User = {

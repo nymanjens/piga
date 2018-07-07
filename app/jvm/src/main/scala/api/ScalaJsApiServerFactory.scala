@@ -99,9 +99,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
               loginName = userProto.loginName.get,
               password = userProto.plainTextPassword.get,
               name = userProto.name.get,
-              isAdmin = userProto.isAdmin getOrElse false,
-              expandCashFlowTablesByDefault = userProto.expandCashFlowTablesByDefault getOrElse true,
-              expandLiquidationTablesByDefault = userProto.expandLiquidationTablesByDefault getOrElse true
+              isAdmin = userProto.isAdmin getOrElse false
             )))
 
         case Some(id) => // Update user
@@ -117,12 +115,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
             var result = existingUser.copy(
               loginName = userProto.loginName getOrElse existingUser.loginName,
               name = userProto.name getOrElse existingUser.name,
-              isAdmin = userProto.isAdmin getOrElse existingUser.isAdmin,
-              expandCashFlowTablesByDefault =
-                userProto.expandCashFlowTablesByDefault getOrElse existingUser.expandCashFlowTablesByDefault,
-              expandLiquidationTablesByDefault =
-                userProto.expandLiquidationTablesByDefault getOrElse
-                  existingUser.expandLiquidationTablesByDefault
+              isAdmin = userProto.isAdmin getOrElse existingUser.isAdmin
             )
             if (userProto.plainTextPassword.isDefined) {
               result = Users.copyUserWithPassword(result, userProto.plainTextPassword.get)

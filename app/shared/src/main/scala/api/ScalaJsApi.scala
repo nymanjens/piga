@@ -60,27 +60,19 @@ object ScalaJsApi {
                            loginName: Option[String] = None,
                            plainTextPassword: Option[String] = None,
                            name: Option[String] = None,
-                           isAdmin: Option[Boolean] = None,
-                           expandCashFlowTablesByDefault: Option[Boolean] = None,
-                           expandLiquidationTablesByDefault: Option[Boolean] = None)
+                           isAdmin: Option[Boolean] = None)
   object UserPrototype {
     def create(id: java.lang.Long = null,
                loginName: String = null,
                plainTextPassword: String = null,
                name: String = null,
-               isAdmin: java.lang.Boolean = null,
-               expandCashFlowTablesByDefault: java.lang.Boolean = null,
-               expandLiquidationTablesByDefault: java.lang.Boolean = null): UserPrototype =
+               isAdmin: java.lang.Boolean = null): UserPrototype =
       UserPrototype(
         id = if (id == null) None else Some(id),
         loginName = Option(loginName),
         plainTextPassword = Option(plainTextPassword),
         name = Option(name),
-        isAdmin = if (isAdmin == null) None else Some(isAdmin),
-        expandCashFlowTablesByDefault =
-          if (expandCashFlowTablesByDefault == null) None else Some(expandCashFlowTablesByDefault),
-        expandLiquidationTablesByDefault =
-          if (expandLiquidationTablesByDefault == null) None else Some(expandLiquidationTablesByDefault)
+        isAdmin = if (isAdmin == null) None else Some(isAdmin)
       )
   }
 }
