@@ -1,7 +1,7 @@
 package flux.react.app
 
 import common.I18n
-import common.LoggingUtils.logExceptions
+import common.LoggingUtils.{logExceptions, LogExceptionsCallback}
 import flux.react.router.RouterContext
 import flux.react.uielements
 import flux.react.uielements.Panel
@@ -14,18 +14,8 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .renderP(($, props) =>
-      logExceptions {
-        implicit val router = props.router
-        <.span(
-          uielements.PageHeader(router.currentPage),
-          Panel(
-            title = "Piga Task List"
-          ) {
-            <.span("Hello world!")
-          }
-        )
-    })
+    .initialState(State())
+    .renderBackend[Backend]
     .build
 
   // **************** API ****************//
@@ -35,4 +25,27 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
 
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
+  private case class State(content: VdomElement = <.span("Hello ", <.b("world")))
+
+  private class Backend($ : BackendScope[Props, State]) {
+    def render(props: Props, state: State): VdomElement = logExceptions {
+      implicit val router = props.router
+      <.span(
+        uielements.PageHeader(router.currentPage),
+        Panel(
+          title = "Piga Task List"
+        ) {
+          <.div(
+            ^.contentEditable := true,
+            ^.onInput ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+            ^.onBlur ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+            state.content)
+        }
+      )
+    }
+
+    private def onChange(value: String): Callback = LogExceptionsCallback {
+      println(value)
+    }
+  }
 }

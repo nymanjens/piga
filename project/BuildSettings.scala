@@ -54,6 +54,7 @@ object BuildSettings {
     val metisMenu = "org.webjars" % "metisMenu" % "1.1.3" // Used by Start Bootstrap
     val mousetrap = "org.webjars.npm" % "mousetrap" % "1.6.1"
     val reactAutosuggest = "org.webjars.npm" % "react-autosuggest" % "9.3.2"
+    val reactContentEditable = "org.webjars.bowergithub.lovasoa" % "react-contenteditable" % "2.0.5"
     val react = "org.webjars.bower" % "react" % "15.3.2"
     val webjarsPlay = "org.webjars" %% "webjars-play" % "2.6.0-M1"
   }
@@ -126,6 +127,7 @@ object BuildSettings {
       webjarDeps.metisMenu / "metisMenu.min.js" dependsOn files.bootstrap,
       webjarDeps.mousetrap / "mousetrap.min.js",
       webjarDeps.mousetrap / "plugins/global-bind/mousetrap-global-bind.min.js",
+      // webjarDeps.reactContentEditable / "react-contenteditable.js" dependsOn files.reactDom,
       webjarDeps.reactTagInput / files.reactDnd dependsOn files.reactDom,
       webjarDeps.reactTagInput / "ReactTags.min.js" dependsOn files.reactDnd,
       webjarDeps.reactAutosuggest / "dist/standalone/autosuggest.min.js" dependsOn files.reactDom
