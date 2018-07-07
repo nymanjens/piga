@@ -14,10 +14,7 @@ import models.user.User
 
 import scala.collection.immutable.Seq
 
-private[app] final class Menu(implicit                              entityAccess: EntityAccess,
-                              user: User,
-                              clock: Clock,
-                              i18n: I18n) {
+private[app] final class Menu(implicit entityAccess: EntityAccess, user: User, clock: Clock, i18n: I18n) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -82,9 +79,9 @@ private[app] final class Menu(implicit                              entityAccess
                       e.preventDefault()
 
                       queryInputRef().value match {
-                        case Some(query) => 
-                          // TODO: Fix
-                          //props.router.setPage(Page.Search(query))
+                        case Some(query) =>
+                        // TODO: Fix
+                        //props.router.setPage(Page.Search(query))
                         case None =>
                       }
                     }

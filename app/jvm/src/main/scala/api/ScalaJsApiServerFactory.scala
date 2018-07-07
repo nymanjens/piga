@@ -95,12 +95,13 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
           require(user.isAdmin, "Only an admin can add users")
 
           entityAccess.persistEntityModifications(
-            EntityModification.createAddWithRandomId(Users.createUser(
-              loginName = userProto.loginName.get,
-              password = userProto.plainTextPassword.get,
-              name = userProto.name.get,
-              isAdmin = userProto.isAdmin getOrElse false
-            )))
+            EntityModification.createAddWithRandomId(
+              Users.createUser(
+                loginName = userProto.loginName.get,
+                password = userProto.plainTextPassword.get,
+                name = userProto.name.get,
+                isAdmin = userProto.isAdmin getOrElse false
+              )))
 
         case Some(id) => // Update user
           requireNonEmptyIfSet(userProto.loginName)
