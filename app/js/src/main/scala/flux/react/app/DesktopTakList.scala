@@ -10,9 +10,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
 import models.user.User
 
-private[app] final class DesktopTaskList(implicit user: User,
-                                      entityAccess: EntityAccess,
-                                      i18n: I18n) {
+private[app] final class DesktopTaskList(implicit user: User, entityAccess: EntityAccess, i18n: I18n) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)

@@ -45,10 +45,10 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess) e
       var editCount = 0
 
       for (modification <- modifications) modification.entityType match {
-        case EntityType.UserType                    => editCount += 1
+        case EntityType.UserType => editCount += 1
       }
 
-editCount
+      editCount
     }
   }
 }

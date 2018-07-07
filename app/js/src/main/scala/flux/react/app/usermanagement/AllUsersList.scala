@@ -75,9 +75,7 @@ private[app] final class AllUsersList(implicit i18n: I18n, userStore: UserStore)
               Seq[VdomElement](
                 <.td(user.loginName),
                 <.td(user.name),
-                <.td(<<.ifThen(user.isAdmin)(<.i(^.className := "fa fa-check"))),
-                <.td(<<.ifThen(user.expandCashFlowTablesByDefault)(<.i(^.className := "fa fa-check"))),
-                <.td(<<.ifThen(user.expandLiquidationTablesByDefault)(<.i(^.className := "fa fa-check")))
+                <.td(<<.ifThen(user.isAdmin)(<.i(^.className := "fa fa-check")))
               ))
           }
       }

@@ -21,7 +21,7 @@ final class TestModule extends AbstractModule {
   private[testing] def playConfiguration(): play.api.Configuration = {
     play.api.Configuration.from(
       Map(
-      ))
+        ))
   }
 
   private def bindSingleton[T](interface: Class[T], implementation: Class[_ <: T]): Unit = {

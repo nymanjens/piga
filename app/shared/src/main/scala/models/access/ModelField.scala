@@ -27,7 +27,7 @@ object ModelField {
 
   // **************** Methods **************** //
   def id[E <: Entity](implicit entityType: EntityType[E]): ModelField[Long, E] = entityType match {
-    case UserType                    => User.id.asInstanceOf[ModelField[Long, E]]
+    case UserType => User.id.asInstanceOf[ModelField[Long, E]]
   }
 
   // **************** Related types **************** //

@@ -84,7 +84,7 @@ private[app] final class Menu(implicit entriesStoreFactory: AllEntriesStoreFacto
 
                       queryInputRef().value match {
                         // case Some(query) => props.router.setPage(Page.Search(query))
-                        case None        =>
+                        case None =>
                       }
                     }
                   },

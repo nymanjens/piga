@@ -132,7 +132,7 @@ private[access] object InMemoryEntityDatabase {
       typeToCollection(entityType).asInstanceOf[EntityCollection[E]]
 
     private def sortings(entityType: EntityType.any): Set[DbQuery.Sorting[_]] = entityType match {
-      case _                           => Set()
+      case _ => Set()
     }
   }
 }

@@ -20,7 +20,7 @@ object Converters {
   implicit def fromEntityType[E <: Entity: EntityType]: MapConverter[E] = {
     val entityType: EntityType[E] = implicitly[EntityType[E]]
     val converter: MapConverter[_ <: Entity] = entityType match {
-      case EntityType.UserType                    => UserConverter
+      case EntityType.UserType => UserConverter
     }
     converter.asInstanceOf[MapConverter[E]]
   }

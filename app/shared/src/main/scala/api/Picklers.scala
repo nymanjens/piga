@@ -64,7 +64,7 @@ object Picklers {
   implicit object EntityTypePickler extends Pickler[EntityType.any] {
     override def pickle(entityType: EntityType.any)(implicit state: PickleState): Unit = logExceptions {
       val intValue: Int = entityType match {
-        case UserType                    => 1
+        case UserType => 1
       }
       state.pickle(intValue)
     }
