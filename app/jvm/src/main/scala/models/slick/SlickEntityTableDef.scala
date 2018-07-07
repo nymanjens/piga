@@ -23,7 +23,8 @@ object SlickEntityTableDef {
 
   val all: Seq[SlickEntityTableDef[_]] =
     Seq(
-      UserDef
+      UserDef,
+      EntityModificationEntityDef
     )
 
   /** Table extension to be used with an Entity model. */
@@ -50,12 +51,7 @@ object SlickEntityTableDef {
       def isAdmin = column[Boolean]("isAdmin")
 
       override def * =
-        (
-          loginName,
-          passwordHash,
-          name,
-          isAdmin,
-          id.?) <> (User.tupled, User.unapply)
+        (loginName, passwordHash, name, isAdmin, id.?) <> (User.tupled, User.unapply)
     }
   }
 
