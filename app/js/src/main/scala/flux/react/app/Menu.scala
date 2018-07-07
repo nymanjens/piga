@@ -82,7 +82,9 @@ private[app] final class Menu(implicit                              entityAccess
                       e.preventDefault()
 
                       queryInputRef().value match {
-                        // case Some(query) => props.router.setPage(Page.Search(query))
+                        case Some(query) => 
+                          // TODO: Fix
+                          //props.router.setPage(Page.Search(query))
                         case None =>
                       }
                     }

@@ -51,7 +51,7 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
           | staticRuleFromPage(Page.DesktopTaskList, reactAppModule.desktopTaskList.apply)
 
         // Fallback
-        ).notFound(redirectToPage(Page.CashFlow)(Redirect.Replace))
+        ).notFound(redirectToPage(Page.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
             LogExceptionsCallback(dispatcher.dispatch(Action.SetPageLoadingState(isLoading = false))))
           .setTitle(page => s"${page.title} | Facto")
