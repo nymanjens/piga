@@ -8,8 +8,6 @@ import common.money.Currency
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
-import models.accounting.config._
-import models.accounting.{BalanceCheck, Transaction, TransactionGroup}
 import models.modification.EntityType._
 import models.modification.{EntityModification, EntityType}
 import models.money.ExchangeRateMeasurement
@@ -71,30 +69,18 @@ object Picklers {
     override def pickle(entityType: EntityType.any)(implicit state: PickleState): Unit = logExceptions {
       val intValue: Int = entityType match {
         case UserType                    => 1
-        case TransactionType             => 2
-        case TransactionGroupType        => 3
-        case BalanceCheckType            => 4
-        case ExchangeRateMeasurementType => 5
       }
       state.pickle(intValue)
     }
     override def unpickle(implicit state: UnpickleState): EntityType.any = logExceptions {
       state.unpickle[Int] match {
         case 1 => UserType
-        case 2 => TransactionType
-        case 3 => TransactionGroupType
-        case 4 => BalanceCheckType
-        case 5 => ExchangeRateMeasurementType
       }
     }
   }
 
   implicit val entityPickler = compositePickler[Entity]
     .addConcreteType[User]
-    .addConcreteType[Transaction]
-    .addConcreteType[TransactionGroup]
-    .addConcreteType[BalanceCheck]
-    .addConcreteType[ExchangeRateMeasurement]
 
   implicit object EntityModificationPickler extends Pickler[EntityModification] {
     val addNumber = 1

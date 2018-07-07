@@ -199,14 +199,6 @@ private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorker
     EntityType.values.map(collectionNameOf) :+ singletonsCollectionName :+ pendingModificationsCollectionName
 
   private def secondaryIndices(entityType: EntityType.any): Seq[ModelField[_, _]] = entityType match {
-    case TransactionType =>
-      Seq(
-        ModelField.Transaction.transactionGroupId,
-        ModelField.Transaction.moneyReservoirCode,
-        ModelField.Transaction.beneficiaryAccountCode)
-    case TransactionGroupType        => Seq()
-    case BalanceCheckType            => Seq()
-    case ExchangeRateMeasurementType => Seq()
     case UserType                    => Seq()
   }
 }

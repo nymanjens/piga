@@ -13,7 +13,6 @@ import models.accounting.config.Config
 import models.user.User
 
 final class Module(implicit i18n: I18n,
-                   accountingConfig: Config,
                    user: User,
                    entityAccess: JsEntityAccess,
                    globalMessagesStore: GlobalMessagesStore,

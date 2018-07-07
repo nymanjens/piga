@@ -4,7 +4,6 @@ import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
 import flux.react.router.Page
 import japgolly.scalajs.react.extra.router.Router
-import models.accounting.config.Config
 import models.user.User
 
 final class ClientAppModule(implicit getInitialDataResponse: GetInitialDataResponse,

@@ -43,23 +43,14 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess) e
     }
 
     private def getModificationsSize(modifications: Seq[EntityModification]): Int = {
-      val affectedTransactionGroupIds = mutable.Set[Long]()
-      var nonTransactionEditCount = 0
+      // TODO
+      var editCount = 0
 
       for (modification <- modifications) modification.entityType match {
-        case EntityType.TransactionType =>
-          modification match {
-            case EntityModification.Add(entity) =>
-              affectedTransactionGroupIds += entity.asInstanceOf[Transaction].transactionGroupId
-            case _ =>
-          }
-        case EntityType.TransactionGroupType        => affectedTransactionGroupIds += modification.entityId
-        case EntityType.UserType                    => nonTransactionEditCount += 1
-        case EntityType.BalanceCheckType            => nonTransactionEditCount += 1
-        case EntityType.ExchangeRateMeasurementType => nonTransactionEditCount += 1
+        case EntityType.UserType                    => editCount += 1
       }
 
-      affectedTransactionGroupIds.size + nonTransactionEditCount
+editCount
     }
   }
 }

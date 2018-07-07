@@ -49,7 +49,7 @@ final class Layout(implicit globalMessages: GlobalMessages,
               <.span(^.className := "icon-bar"),
               <.span(^.className := "icon-bar")
             ),
-            router.anchorWithHrefTo(Page.Root)(^.className := "navbar-brand", "Family Accounting Tool"),
+            router.anchorWithHrefTo(Page.Root)(^.className := "navbar-brand", "Piga Task Keeper"),
             " ",
             pageLoadingSpinner()
           ),

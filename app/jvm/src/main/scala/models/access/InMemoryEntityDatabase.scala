@@ -132,13 +132,6 @@ private[access] object InMemoryEntityDatabase {
       typeToCollection(entityType).asInstanceOf[EntityCollection[E]]
 
     private def sortings(entityType: EntityType.any): Set[DbQuery.Sorting[_]] = entityType match {
-      case EntityType.TransactionType =>
-        Set(
-          DbQuery.Sorting.Transaction.deterministicallyByTransactionDate,
-          DbQuery.Sorting.Transaction.deterministicallyByConsumedDate,
-          DbQuery.Sorting.Transaction.deterministicallyByCreateDate
-        )
-      case EntityType.BalanceCheckType => Set(DbQuery.Sorting.BalanceCheck.deterministicallyByCheckDate)
       case _                           => Set()
     }
   }

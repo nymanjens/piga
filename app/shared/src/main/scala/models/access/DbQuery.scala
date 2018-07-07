@@ -130,25 +130,5 @@ object DbQuery {
         if (isDesc) ascendingOrdering.reverse else ascendingOrdering
       }
     }
-
-    object Transaction {
-      val deterministicallyByTransactionDate: Sorting[Transaction] = DbQuery.Sorting
-        .ascBy(ModelField.Transaction.transactionDate)
-        .thenAscBy(ModelField.Transaction.createdDate)
-        .thenAscBy(ModelField.id)
-      val deterministicallyByConsumedDate: Sorting[Transaction] = DbQuery.Sorting
-        .ascBy(ModelField.Transaction.consumedDate)
-        .thenAscBy(ModelField.Transaction.createdDate)
-        .thenAscBy(ModelField.id)
-      val deterministicallyByCreateDate: Sorting[Transaction] = DbQuery.Sorting
-        .ascBy(ModelField.Transaction.createdDate)
-        .thenAscBy(ModelField.id)
-    }
-    object BalanceCheck {
-      val deterministicallyByCheckDate: Sorting[BalanceCheck] = DbQuery.Sorting
-        .ascBy(ModelField.BalanceCheck.checkDate)
-        .thenAscBy(ModelField.BalanceCheck.createdDate)
-        .thenAscBy(ModelField.id)
-    }
   }
 }

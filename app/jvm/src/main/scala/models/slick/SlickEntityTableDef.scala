@@ -7,7 +7,6 @@ import boopickle.Default.{Pickle, Unpickle}
 import common.accounting.Tags
 import common.time.LocalDateTime
 import models.Entity
-import models.accounting.{BalanceCheck, Transaction, TransactionGroup}
 import models.modification.{EntityModification, EntityModificationEntity}
 import models.money.ExchangeRateMeasurement
 import models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
@@ -26,12 +25,7 @@ object SlickEntityTableDef {
 
   val all: Seq[SlickEntityTableDef[_]] =
     Seq(
-      UserDef,
-      TransactionDef,
-      TransactionGroupDef,
-      BalanceCheckDef,
-      ExchangeRateMeasurementDef,
-      EntityModificationEntityDef
+      UserDef
     )
 
   /** Table extension to be used with an Entity model. */

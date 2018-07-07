@@ -20,7 +20,6 @@ import scala.scalajs.js
 final class GlobalMessagesStore(implicit i18n: I18n,
                                 clock: Clock,
                                 entityAccess: EntityAccess,
-                                accountingConfig: Config,
                                 dispatcher: Dispatcher)
     extends StateStore[Option[Message]] {
   dispatcher.registerPartialSync(dispatcherListener)
@@ -65,28 +64,6 @@ final class GlobalMessagesStore(implicit i18n: I18n,
       i18n("app.successfully-updated-password")
     case UpsertUser(userPrototype) if userPrototype.id.isEmpty =>
       i18n("app.successfully-added-user", userPrototype.loginName getOrElse "<Unknown name>")
-
-    // **************** Transaction[Group]-related actions **************** //
-    case AddTransactionGroup(transactionsProvider) if numTransactions(transactionsProvider) == 1 =>
-      i18n("app.successfully-created-1-transaction")
-    case AddTransactionGroup(transactionsProvider) =>
-      i18n("app.successfully-created-transactions", numTransactions(transactionsProvider))
-
-    case UpdateTransactionGroup(group, transactions) if transactions.size == 1 =>
-      i18n("app.successfully-edited-1-transaction")
-    case UpdateTransactionGroup(group, transactions) =>
-      i18n("app.successfully-edited-transactions", transactions.size)
-
-    case RemoveTransactionGroup(group) =>
-      i18n("app.successfully-deleted-transactions")
-
-    // **************** BalanceCheck-related actions **************** //
-    case AddBalanceCheck(balanceCheck) =>
-      i18n("app.successfully-created-a-balance-check-for", balanceCheck.moneyReservoir.name)
-    case UpdateBalanceCheck(existingBalanceCheck, newBalanceCheck) =>
-      i18n("app.successfully-edited-a-balance-check-for", newBalanceCheck.moneyReservoir.name)
-    case RemoveBalanceCheck(existingBalanceCheck) =>
-      i18n("app.successfully-deleted-balance-check-for", existingBalanceCheck.moneyReservoir.name)
   }
 
   /** Clear this message after some delay */
@@ -101,10 +78,6 @@ final class GlobalMessagesStore(implicit i18n: I18n,
         setState(None)
       }
     })
-  }
-
-  private def numTransactions(transactionsProvider: TransactionGroup => Seq[Transaction]): Int = {
-    transactionsProvider(TransactionGroup(createdDate = clock.now).withId(1)).size
   }
 
   // **************** Private state helper methods ****************//
