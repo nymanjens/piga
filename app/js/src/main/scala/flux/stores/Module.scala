@@ -10,13 +10,10 @@ import models.user.User
 final class Module(implicit i18n: I18n,
                    user: User,
                    entityAccess: JsEntityAccess,
-                   exchangeRateManager: ExchangeRateManager,
                    dispatcher: Dispatcher,
                    clock: Clock,
                    scalaJsApiClient: ScalaJsApiClient,
                    entityModificationPushClientFactory: EntityModificationPushClientFactory) {
-
-  implicit private val complexQueryFilter = new ComplexQueryFilter
 
   implicit val globalMessagesStore = new GlobalMessagesStore
   implicit val pageLoadingStateStore = new PageLoadingStateStore

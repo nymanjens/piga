@@ -14,11 +14,9 @@ import models.user.User
 
 import scala.collection.immutable.Seq
 
-private[app] final class Menu(implicit entriesStoreFactory: AllEntriesStoreFactory,
-                              entityAccess: EntityAccess,
+private[app] final class Menu(implicit                              entityAccess: EntityAccess,
                               user: User,
                               clock: Clock,
-                              exchangeRateManager: ExchangeRateManager,
                               i18n: I18n) {
 
   private val component = ScalaComponent
@@ -28,9 +26,10 @@ private[app] final class Menu(implicit entriesStoreFactory: AllEntriesStoreFacto
     .componentDidMount(scope =>
       LogExceptionsCallback {
         scope.props.router.currentPage match {
-          case page: Page.Search => {
-            scope.backend.queryInputRef().setValue(page.query)
-          }
+          // TODO: Restore
+          //case page: Page.Search => {
+          //  scope.backend.queryInputRef().setValue(page.query)
+          //}
           case _ =>
         }
     })

@@ -2,7 +2,7 @@ package models.modification
 
 import common.time.LocalDateTime
 import models.Entity
-import models.access.EntityAccess
+import models.access.JvmEntityAccess
 import models.user.User
 
 /**
@@ -21,7 +21,7 @@ case class EntityModificationEntity(userId: Long,
 
   override def withId(id: Long) = copy(idOption = Some(id))
 
-  def user(implicit entityAccess: EntityAccess): User = entityAccess.newQuerySyncForUser().findById(userId)
+  def user(implicit entityAccess: JvmEntityAccess): User = entityAccess.newQuerySync[User]().findById(userId)
 }
 
 object EntityModificationEntity {

@@ -12,7 +12,7 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-private[access] final class JsEntityAccessImpl(allUsers: Seq[User])(
+private[access] final class JsEntityAccessImpl()(
     implicit remoteDatabaseProxy: RemoteDatabaseProxy)
     extends JsEntityAccess {
 
@@ -55,9 +55,6 @@ private[access] final class JsEntityAccessImpl(allUsers: Seq[User])(
       }
     })
   }
-
-  override def newQuerySyncForUser() =
-    DbResultSet.fromExecutor(DbQueryExecutor.fromEntities(allUsers))
 
   override def pendingModifications = _pendingModifications
 

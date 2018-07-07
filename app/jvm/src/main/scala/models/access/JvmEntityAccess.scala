@@ -32,7 +32,6 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
 
   // **************** Getters ****************//
   override def newQuery[E <: Entity: EntityType]() = DbResultSet.fromExecutor(queryExecutor[E].asAsync)
-  override def newQuerySyncForUser() = newQuerySync[User]()
   def newQuerySync[E <: Entity: EntityType](): DbResultSet.Sync[E] =
     DbResultSet.fromExecutor(queryExecutor)
 

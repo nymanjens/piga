@@ -13,8 +13,6 @@ trait JsEntityAccess extends EntityAccess {
   // **************** Getters ****************//
   override def newQuery[E <: Entity: EntityType](): DbResultSet.Async[E]
 
-  override def newQuerySyncForUser(): DbResultSet.Sync[User]
-
   /**
     * Returns the modifications that are incorporated into the data backing `newQuery()` ,but are not yet persisted
     * remotely.
