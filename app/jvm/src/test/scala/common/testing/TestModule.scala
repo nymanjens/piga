@@ -21,7 +21,6 @@ final class TestModule extends AbstractModule {
   private[testing] def playConfiguration(): play.api.Configuration = {
     play.api.Configuration.from(
       Map(
-        "app.accounting.configYamlFilePath" -> "/test-accounting-config.yml"
       ))
   }
 
