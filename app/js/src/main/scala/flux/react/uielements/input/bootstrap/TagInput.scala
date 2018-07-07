@@ -8,7 +8,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.{MountedImpure, MutableRef}
 import japgolly.scalajs.react.internal.Box
 import japgolly.scalajs.react.vdom.html_<^._
-import jsfacades.ReactTagInput
 import org.scalajs.dom.ext.KeyCode
 
 import scala.collection.immutable.Seq

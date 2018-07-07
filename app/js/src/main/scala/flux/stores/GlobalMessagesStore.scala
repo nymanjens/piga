@@ -10,10 +10,7 @@ import flux.action.Action._
 import flux.action.{Action, Dispatcher}
 import flux.stores.GlobalMessagesStore.Message
 import models.access.EntityAccess
-import models.accounting._
-import models.accounting.config.Config
 
-import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import scala.scalajs.js
 

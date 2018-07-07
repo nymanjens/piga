@@ -2,12 +2,9 @@ package models.access
 
 import java.time.Month.JANUARY
 
-import common.testing.TestObjects._
 import common.time.LocalDateTimes.createDateTime
 import models.access.DbQuery.Filter
 import models.access.DbQueryImplicits._
-import models.accounting.Transaction
-import models.accounting.config.Category
 import models.modification.EntityModification
 import utest._
 

@@ -1,15 +1,10 @@
 package flux.react.app
 
 import common.I18n
-import common.money.ExchangeRateManager
 import common.time.Clock
 import flux.action.Dispatcher
-import flux.react.app.balancecheckform.BalanceCheckForm
-import flux.react.app.transactiongroupform.TransactionGroupForm
 import flux.stores._
-import flux.stores.entries.factories._
 import models.access.JsEntityAccess
-import models.accounting.config.Config
 import models.user.User
 
 final class Module(implicit i18n: I18n,

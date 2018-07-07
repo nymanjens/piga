@@ -4,16 +4,12 @@ import java.time.{LocalDate, LocalTime}
 
 import api.PicklableDbQuery.FieldWithValue
 import boopickle.Default._
-import common.money.Currency
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
 import models.modification.EntityType._
 import models.modification.{EntityModification, EntityType}
-import models.money.ExchangeRateMeasurement
 import models.user.User
-
-import scala.collection.immutable.{Seq, Set}
 
 object Picklers {
 

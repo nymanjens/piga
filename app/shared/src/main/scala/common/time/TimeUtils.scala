@@ -1,8 +1,6 @@
 package common.time
 
-import java.time.{DateTimeException, LocalDate, LocalTime, Month}
-
-import scala.collection.immutable.Seq
+import java.time.{DateTimeException, LocalDate, LocalTime}
 
 object TimeUtils {
 

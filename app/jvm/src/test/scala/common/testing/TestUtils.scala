@@ -2,14 +2,11 @@ package common.testing
 
 import java.time.{Instant, ZoneId}
 
-import common.testing.TestObjects._
 import common.time.LocalDateTime
 import models.Entity
 import models.access.JvmEntityAccess
 import models.modification.{EntityModification, EntityType}
 import models.user.User
-
-import scala.collection.immutable.Seq
 
 object TestUtils {
 

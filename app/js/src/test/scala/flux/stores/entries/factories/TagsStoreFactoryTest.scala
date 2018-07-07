@@ -1,9 +1,7 @@
 package flux.stores.entries.factories
 
 import common.GuavaReplacement.ImmutableSetMultimap
-import common.testing.TestObjects._
 import common.testing.{FakeJsEntityAccess, TestModule}
-import models.accounting._
 import utest._
 
 import scala.async.Async.{async, await}

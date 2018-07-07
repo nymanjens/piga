@@ -2,8 +2,6 @@ package models.modification
 
 import common.ScalaUtils
 import models.Entity
-import models.accounting._
-import models.money.ExchangeRateMeasurement
 import models.user.User
 
 import scala.collection.immutable.Seq

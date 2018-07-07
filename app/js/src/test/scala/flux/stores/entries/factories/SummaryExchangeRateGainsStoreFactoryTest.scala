@@ -3,14 +3,9 @@ package flux.stores.entries.factories
 import java.time.LocalDate
 import java.time.Month._
 
-import common.money.ReferenceMoney
-import common.testing.TestObjects._
 import common.testing.{FakeJsEntityAccess, TestModule}
+import common.time.LocalDateTime
 import common.time.LocalDateTimes.createDateTime
-import common.time.{DatedMonth, LocalDateTime}
-import flux.stores.entries.ComplexQueryFilter
-import flux.stores.entries.factories.SummaryExchangeRateGainsStoreFactory.GainsForMonth
-import models.accounting.config.MoneyReservoir
 import models.modification.EntityModification
 import utest._
 

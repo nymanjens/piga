@@ -1,12 +1,9 @@
 package models.access
 
-import common.testing.TestObjects._
 import common.testing._
 import models.Entity
 import models.access.DbQuery.Sorting
-import models.access.DbQueryImplicits._
 import models.access.InMemoryEntityDatabase.EntitiesFetcher
-import models.accounting.Transaction
 import models.modification.{EntityModification, EntityType}
 import org.junit.runner._
 import org.specs2.runner._

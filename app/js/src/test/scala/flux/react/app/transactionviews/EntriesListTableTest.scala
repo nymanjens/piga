@@ -1,6 +1,5 @@
 package flux.react.app.transactionviews
 
-import flux.react.app.transactionviews.EntriesListTable.NumEntriesStrategy
 import utest._
 
 import scala.collection.immutable.Seq

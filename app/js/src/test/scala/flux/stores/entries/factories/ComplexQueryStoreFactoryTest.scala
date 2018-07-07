@@ -1,8 +1,5 @@
 package flux.stores.entries.factories
 
-import common.testing.TestObjects._
-import flux.stores.entries.ComplexQueryFilter
-import flux.stores.entries.GeneralEntry.toGeneralEntrySeq
 import utest._
 
 import scala.async.Async.{async, await}

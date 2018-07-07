@@ -2,10 +2,8 @@ package common.money
 
 import java.time.Duration
 
-import common.money.Currency.Gbp
 import common.testing.{FakeJsEntityAccess, TestModule}
 import common.time.Clock
-import models.money.{ExchangeRateMeasurement, JsExchangeRateManager}
 import utest.{TestSuite, _}
 
 import scala.collection.immutable.Seq

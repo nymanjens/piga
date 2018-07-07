@@ -2,14 +2,9 @@ package flux.stores.entries.factories
 
 import java.time.Month._
 
-import common.testing.TestObjects._
 import common.testing.{FakeJsEntityAccess, TestModule}
-import flux.stores.entries.factories.SummaryExchangeRateGainsStoreFactory.GainsForYear
-import flux.stores.entries.factories.SummaryForYearStoreFactory.SummaryForYear
-import flux.stores.entries.{AccountPair, ComplexQueryFilter, EntriesStore}
 import models.Entity
 import models.access.ModelField
-import models.accounting._
 import models.modification.EntityModification._
 import models.modification._
 import utest._

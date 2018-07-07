@@ -2,11 +2,9 @@ package flux.stores
 
 import flux.stores.PendingModificationsStore.State
 import models.access.JsEntityAccess
-import models.accounting.Transaction
 import models.modification.{EntityModification, EntityType}
 
 import scala.collection.immutable.Seq
-import scala.collection.mutable
 
 final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess) extends StateStore[State] {
   jsEntityAccess.registerListener(JsEntityAccessListener)

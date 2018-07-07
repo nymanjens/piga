@@ -6,9 +6,7 @@ import common.GuavaReplacement.ImmutableBiMap
 import common.time.LocalDateTime
 import models._
 import models.access.ModelField
-import models.accounting._
 import models.modification._
-import models.money.ExchangeRateMeasurement
 import models.user.User
 
 import scala.collection.immutable.Seq

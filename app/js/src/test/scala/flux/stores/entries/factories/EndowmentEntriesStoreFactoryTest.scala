@@ -3,11 +3,7 @@ package flux.stores.entries.factories
 import java.time.Month.JANUARY
 
 import common.testing.FakeJsEntityAccess
-import common.testing.TestObjects._
 import common.time.LocalDateTimes.createDateTime
-import flux.stores.entries.GeneralEntry.toGeneralEntrySeq
-import models.accounting._
-import models.accounting.config.{Account, Category}
 import utest._
 
 import scala.async.Async.{async, await}

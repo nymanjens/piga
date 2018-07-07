@@ -4,9 +4,7 @@ import common.testing.TestObjects._
 import models.access.SingletonKey.{NextUpdateTokenKey, VersionKey}
 import models.access.webworker.LocalDatabaseWebWorkerApi
 import models.access.{DbResultSet, LocalDatabase, LocalDatabaseImpl}
-import models.accounting.{BalanceCheck, Transaction, TransactionGroup}
 import models.modification.EntityModification
-import models.money.ExchangeRateMeasurement
 import models.user.User
 import tests.ManualTests.{ManualTest, ManualTestSuite}
 

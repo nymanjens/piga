@@ -1,15 +1,12 @@
 package tools
 
 import java.nio.file.{Path, Paths}
-import java.time.Month.JANUARY
-import java.time.{LocalDate, LocalTime}
 
 import com.google.inject.Inject
 import common.ResourceFiles
-import common.time.{Clock, LocalDateTime}
+import common.time.Clock
 import models.access.JvmEntityAccess
 import models.modification.EntityModification
-import models.money.ExchangeRateMeasurement
 import models.user.Users
 import play.api.{Application, Mode}
 

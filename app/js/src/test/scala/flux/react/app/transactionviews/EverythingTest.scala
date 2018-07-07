@@ -2,9 +2,7 @@ package flux.react.app.transactionviews
 
 import common.testing.TestObjects._
 import common.testing.{FakeRouterContext, ReactTestWrapper, TestModule}
-import flux.stores.entries.factories.AllEntriesStoreFactory
 import japgolly.scalajs.react.vdom._
-import models.accounting._
 import utest._
 
 import scala.async.Async.{async, await}

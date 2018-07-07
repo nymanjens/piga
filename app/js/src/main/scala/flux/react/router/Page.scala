@@ -2,8 +2,6 @@ package flux.react.router
 
 import common.I18n
 import japgolly.scalajs.react.extra.router.Path
-import models.accounting.BalanceCheck
-import models.accounting.config.{Account, MoneyReservoir, Template}
 
 import scala.scalajs.js
 

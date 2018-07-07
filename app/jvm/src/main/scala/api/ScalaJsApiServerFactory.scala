@@ -5,17 +5,13 @@ import api.ScalaJsApi._
 import api.UpdateTokens.toUpdateToken
 import com.google.inject._
 import common.PlayI18n
-import common.money.Currency
-import common.time.{Clock, LocalDateTime}
+import common.time.Clock
 import models.Entity
 import models.access.{DbQuery, JvmEntityAccess}
-import models.accounting.config.Config
 import models.modification.{EntityModification, EntityType}
-import models.money.ExchangeRateMeasurement
 import models.user.{User, Users}
 
-import scala.collection.immutable.{Seq, TreeMap}
-import scala.collection.mutable
+import scala.collection.immutable.Seq
 
 final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
                                               entityAccess: JvmEntityAccess,

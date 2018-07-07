@@ -4,8 +4,6 @@ import common.testing.TestObjects._
 import common.testing.{FakeScalaJsApiClient, ModificationsBuffer, TestModule}
 import common.time.Clock
 import models.Entity
-import models.accounting.Transaction
-import models.modification.EntityType.TransactionType
 import models.modification.{EntityModification, EntityType}
 import utest._
 

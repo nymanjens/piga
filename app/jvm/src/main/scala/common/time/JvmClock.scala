@@ -3,10 +3,10 @@ package common.time
 import java.time.{Instant, LocalDate, LocalTime, ZoneId}
 
 import com.google.inject._
-import models.accounting.config.Config
 
-final class JvmClock @Inject()(accountingConfig: Config) extends Clock {
-  val zone = ZoneId.of(accountingConfig.constants.zoneId)
+final class JvmClock extends Clock {
+  // TODO: Make this configurable
+  val zone = ZoneId.of("Europe/Paris")
 
   override def now = {
     val date = LocalDate.now(zone)

@@ -6,7 +6,6 @@ import flux.react.uielements.input.{InputBase, InputValidator}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import jsfacades.ReactAutosuggest
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js

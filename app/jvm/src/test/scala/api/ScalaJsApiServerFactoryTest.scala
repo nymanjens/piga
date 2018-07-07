@@ -4,16 +4,11 @@ import api.ScalaJsApi.UserPrototype
 import api.UpdateTokens.toUpdateToken
 import com.google.inject._
 import common.GuavaReplacement.Iterables.getOnlyElement
-import common.money.Currency
 import common.testing.TestObjects._
 import common.testing.TestUtils._
 import common.testing._
-import models.access.DbQueryImplicits._
 import models.access.{DbQuery, JvmEntityAccess, ModelField}
-import models.accounting.Transaction
-import models.accounting.config._
 import models.modification.{EntityModification, EntityModificationEntity, EntityType}
-import models.money.ExchangeRateMeasurement
 import models.slick.SlickUtils.dbRun
 import models.user.User
 import org.junit.runner._

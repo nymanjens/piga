@@ -2,7 +2,6 @@ package models.money
 
 import java.time.Duration
 
-import common.money.Currency.{Eur, Gbp, Usd}
 import common.testing.{FakeJsEntityAccess, TestModule}
 import common.time.{Clock, LocalDateTime}
 import utest.{TestSuite, _}

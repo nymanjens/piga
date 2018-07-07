@@ -6,7 +6,6 @@ import models.Entity
 import models.access.ModelField.FieldType
 import models.modification.EntityType
 import models.modification.EntityType._
-import models.money.ExchangeRateMeasurement
 import models.user.User
 
 import scala.collection.immutable.Seq

@@ -2,8 +2,6 @@ package flux.action
 
 import api.ScalaJsApi.UserPrototype
 
-import scala.collection.immutable.Seq
-
 sealed trait Action
 
 object Action {

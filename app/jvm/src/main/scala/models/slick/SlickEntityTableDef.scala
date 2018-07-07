@@ -4,11 +4,9 @@ import java.nio.ByteBuffer
 
 import api.Picklers._
 import boopickle.Default.{Pickle, Unpickle}
-import common.accounting.Tags
 import common.time.LocalDateTime
 import models.Entity
 import models.modification.{EntityModification, EntityModificationEntity}
-import models.money.ExchangeRateMeasurement
 import models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
 import models.slick.SlickUtils.localDateTimeToSqlDateMapper
 import models.user.User

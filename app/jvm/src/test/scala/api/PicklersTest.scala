@@ -6,12 +6,9 @@ import api.Picklers._
 import api.ScalaJsApi._
 import boopickle.Default._
 import boopickle.Pickler
-import common.money.Currency
 import common.testing.TestObjects._
 import common.testing._
 import common.time.LocalDateTimes
-import models.accounting.Transaction
-import models.accounting.config.Config
 import models.modification.{EntityModification, EntityType}
 import org.junit.runner._
 import org.specs2.runner._

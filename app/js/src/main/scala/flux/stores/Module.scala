@@ -2,13 +2,9 @@ package flux.stores
 
 import api.ScalaJsApiClient
 import common.I18n
-import common.money.ExchangeRateManager
 import common.time.Clock
 import flux.action.Dispatcher
-import flux.stores.entries._
-import flux.stores.entries.factories._
 import models.access.{EntityModificationPushClientFactory, JsEntityAccess}
-import models.accounting.config.Config
 import models.user.User
 
 final class Module(implicit i18n: I18n,

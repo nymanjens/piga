@@ -1,9 +1,7 @@
 package flux.stores.entries
 
-import common.testing.TestObjects.{testCategory, _}
-import flux.stores.entries.ComplexQueryFilter.{Prefix, QueryPart}
+import common.testing.TestObjects._
 import models.access.EntityAccess
-import models.accounting.Transaction
 import utest._
 
 import scala.collection.immutable.Seq

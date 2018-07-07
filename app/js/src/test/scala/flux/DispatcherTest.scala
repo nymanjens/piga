@@ -1,6 +1,5 @@
 package flux
 
-import common.testing.TestObjects._
 import flux.action.{Action, Dispatcher}
 import utest._
 

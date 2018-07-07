@@ -1,7 +1,6 @@
 package flux.react.uielements.input.bootstrap
 
 import common.I18n
-import common.money.{Currency, DatedMoney, ExchangeRateManager, Money}
 import common.time.LocalDateTime
 import flux.react.ReactVdomUtils.^^
 import flux.react.uielements.input.InputBase

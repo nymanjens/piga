@@ -3,14 +3,7 @@ package flux.stores.entries.factories
 import java.time.Month
 import java.time.Month._
 
-import common.money.ReferenceMoney
 import common.testing.FakeJsEntityAccess
-import common.testing.TestObjects._
-import common.time.DatedMonth
-import flux.stores.entries.ComplexQueryFilter
-import flux.stores.entries.factories.SummaryForYearStoreFactory.SummaryForYear
-import models.accounting.Transaction
-import models.accounting.config.Account
 import utest._
 
 import scala.async.Async.{async, await}

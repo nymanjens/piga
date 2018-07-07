@@ -2,8 +2,6 @@ package common.time
 
 import java.time.{Duration, LocalDate, LocalTime, Month}
 
-import common.Require.requireNonNull
-
 /**
   * Drop-in replacement for java.time.LocalDateTime, which isn't supported by scala.js yet.
   */

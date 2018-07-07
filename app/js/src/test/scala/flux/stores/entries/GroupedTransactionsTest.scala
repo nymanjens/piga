@@ -1,6 +1,5 @@
 package flux.stores.entries
 
-import common.testing.TestObjects._
 import utest._
 
 import scala2js.Converters._

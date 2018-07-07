@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.Month._
 
 import com.google.inject.{Guice, Inject}
-import common.testing.{TestModule, FakeI18n, HookedSpecification}
+import common.testing.{FakeI18n, HookedSpecification, TestModule}
 import common.time.LocalDateTimes.createDateTime
 
 class DatedMonthTest extends HookedSpecification {

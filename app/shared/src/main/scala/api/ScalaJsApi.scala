@@ -2,14 +2,10 @@ package api
 
 import api.Picklers._
 import api.ScalaJsApi._
-import common.money.Currency
-import common.time.LocalDateTime
 import models.Entity
-import models.accounting.config.Config
 import models.modification.{EntityModification, EntityType}
 import models.user.User
 
-import scala.collection.SortedMap
 import scala.collection.immutable.Seq
 
 /** API for communication between client and server (clients calls server). */
