@@ -40,6 +40,9 @@ lazy val client: Project = (project in file("app/js"))
     scalaJSUseMainModuleInitializer in Test := false,
     // use uTest framework for tests
     testFrameworks += new TestFramework("utest.runner.Framework"),
+    // Fix for bug that produces a huge amount of warnings (https://github.com/webpack/webpack/issues/4518).
+    // Unfortunately, this means no source maps :-/
+    emitSourceMaps in fastOptJS := false,
     // scalajs-bundler NPM packages
     npmDependencies in Compile ++= Seq(
       "snabbdom" -> "0.5.3",
