@@ -11,10 +11,10 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("ClientApp")
-object ClientApp extends js.JSApp {
+object ClientApp {
 
   @JSExport
-  override def main(): Unit = async {
+  def main(): Unit = async {
     console.log("  Application starting")
 
     // create stylesheet
