@@ -73,7 +73,7 @@ object BuildSettings {
   /** Dependencies only used by the JVM project */
   val jvmDependencies = Def.setting(
     Seq(
-      "com.vmunier" %% "scalajs-scripts" % "1.1.0",
+      "com.vmunier" %% "scalajs-scripts" % "1.1.2",
       "com.lihaoyi" %% "utest" % versions.uTest % Test,
       "com.typesafe.play" %% "play-jdbc" % versions.play,
       "com.typesafe.play" %% "play-cache" % versions.play,

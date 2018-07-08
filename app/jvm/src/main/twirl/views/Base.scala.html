@@ -53,12 +53,6 @@
     @content
 
     @* ************ JAVASCRIPT ************ *@
-    @* Bundled JavaScript deps and the compiled scala.js code *@
-    @scalajs.html.jsdeps(
-        projectName = "client",
-        assets = path => routes.Assets.versioned(path).toString,
-        resourceExists = name => getClass.getResource(s"/public/$name") != null)
-
     @* startbootstrap-sb-admin-2 JavaScript *@
     <script src="@routes.Assets.versioned("bower_components/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js")"></script>
 
