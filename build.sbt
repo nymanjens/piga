@@ -8,7 +8,7 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("app/shared"))
     libraryDependencies ++= BuildSettings.sharedDependencies.value
   )
   // set up settings specific to the JS project
-  .jsConfigure(_ enablePlugins ScalaJSPlay)
+  // .jsConfigure(_ enablePlugins ScalaJSPlay)
 
 lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
 
@@ -28,18 +28,26 @@ lazy val client: Project = (project in file("app/js"))
     // by default we do development build, no eliding
     elideOptions := Seq(),
     scalacOptions ++= elideOptions.value,
-    jsDependencies ++= BuildSettings.jsDependencies.value,
+    
+    //jsDependencies ++= BuildSettings.jsDependencies.value,
     // RuntimeDOM is needed for tests
-    jsDependencies += RuntimeDOM % "test",
+    //jsDependencies += RuntimeDOM % "test",
     // yes, we want to package JS dependencies
-    skip in packageJSDependencies := false,
+    //skip in packageJSDependencies := false,
+
     // use Scala.js provided launcher code to start the client app
     scalaJSUseMainModuleInitializer := false,
     scalaJSUseMainModuleInitializer in Test := false,
     // use uTest framework for tests
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    // scalajs-bundler NPM packages
+    npmDependencies in Compile ++= Seq(
+      "snabbdom" -> "0.5.3",
+      "font-awesome" -> "4.7.0",
+      "url-loader" -> "0.5.9"
+    )
   )
-  .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
+  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
   .dependsOn(sharedJS)
 
 lazy val webworkerClientDeps: Project = (project in file("app/empty"))
@@ -51,14 +59,11 @@ lazy val webworkerClientDeps: Project = (project in file("app/empty"))
     // by default we do development build, no eliding
     elideOptions := Seq(),
     scalacOptions ++= elideOptions.value,
-    jsDependencies ++= BuildSettings.webworkerJsDependencies.value,
-    // yes, we want to package JS dependencies
-    skip in packageJSDependencies := false,
     // use Scala.js provided launcher code to start the client app
     scalaJSUseMainModuleInitializer := false,
     scalaJSUseMainModuleInitializer in Test := false
   )
-  .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
+  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
 
 // Client projects (just one in this case)
 lazy val clients = Seq(client, webworkerClientDeps)
@@ -77,11 +82,14 @@ lazy val server = (project in file("app/jvm"))
     javaOptions in Test := Seq("-Dconfig.resource=test-application.conf"),
     // connect to the client project
     scalaJSProjects := clients,
+    pipelineStages in Assets := Seq(scalaJSPipeline),
     pipelineStages := Seq(scalaJSProd, digest, gzip),
+    // Expose as sbt-web assets some files retrieved from the NPM packages of the `client` project
+    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "font-awesome").*** }.value,
     // compress CSS
     LessKeys.compress in Assets := true
   )
-  .enablePlugins(PlayScala)
+  .enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
   .disablePlugins(PlayFilters) // Don't use the default filters
   .disablePlugins(PlayLayoutPlugin) // use the standard directory layout instead of Play's custom
   .aggregate(clients.map(projectToRef): _*)
