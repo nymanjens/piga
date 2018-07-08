@@ -64,17 +64,14 @@ object JavascriptFiles {
     private val webworkerDepsProjectName: String = "webworker-client-deps"
 
     val clientApp: Asset =
-      firstExistingVersionedAsset(s"$clientAppProjectName-opt.js", s"$clientAppProjectName-fastopt.js")
-    val clientAppDeps: Asset =
-      firstExistingVersionedAsset(s"$clientAppProjectName-jsdeps.min.js", s"$clientAppProjectName-jsdeps.js")
+      firstExistingVersionedAsset(s"$clientAppProjectName-opt-bundle.js", s"$clientAppProjectName-fastopt-bundle.js")
     val webworkerDeps: Asset =
       firstExistingVersionedAsset(
-        s"$webworkerDepsProjectName-jsdeps.min.js",
-        s"$webworkerDepsProjectName-jsdeps.js")
+        s"$webworkerDepsProjectName-opt-bundle.js",
+        s"$webworkerDepsProjectName-fastopt-bundle.js")
 
     val all: Seq[Asset] = Seq(
       clientApp,
-      clientAppDeps,
       webworkerDeps,
       WebJarAsset("metisMenu/1.1.3/metisMenu.min.css"),
       WebJarAsset("font-awesome/4.6.2/css/font-awesome.min.css"),
