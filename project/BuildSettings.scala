@@ -127,7 +127,7 @@ object BuildSettings {
       webjarDeps.metisMenu / "metisMenu.min.js" dependsOn files.bootstrap,
       webjarDeps.mousetrap / "mousetrap.min.js",
       webjarDeps.mousetrap / "plugins/global-bind/mousetrap-global-bind.min.js",
-      // webjarDeps.reactContentEditable / "react-contenteditable.js" dependsOn files.reactDom,
+      webjarDeps.reactContentEditable / "lib/react-contenteditable.js" dependsOn files.reactDom,
       webjarDeps.reactTagInput / files.reactDnd dependsOn files.reactDom,
       webjarDeps.reactTagInput / "ReactTags.min.js" dependsOn files.reactDnd,
       webjarDeps.reactAutosuggest / "dist/standalone/autosuggest.min.js" dependsOn files.reactDom
