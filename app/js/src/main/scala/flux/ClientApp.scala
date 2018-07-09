@@ -1,6 +1,6 @@
 package flux
 
-import common.LoggingUtils.logExceptions
+import common.LoggingUtils.{logExceptions,logFailure}
 import org.scalajs.dom
 import org.scalajs.dom.console
 import org.scalajs.dom.raw.Event
@@ -10,10 +10,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
-@JSExportTopLevel("ClientApp")
 object ClientApp {
 
-  @JSExport
   def main(): Unit = async {
     console.log("  Application starting")
 
@@ -28,7 +26,7 @@ object ClientApp {
 
     val apiModule = new api.Module
     implicit val scalaJsApiClient = apiModule.scalaJsApiClient
-    implicit val initialDataResponse = await(scalaJsApiClient.getInitialData())
+    implicit val initialDataResponse = await(logFailure(scalaJsApiClient.getInitialData()))
 
     implicit val globalModule = new ClientAppModule()
 
