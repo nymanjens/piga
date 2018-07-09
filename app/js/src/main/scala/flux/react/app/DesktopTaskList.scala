@@ -38,12 +38,13 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
           title = "Piga Task List"
         ) {
           <.span(
-//          <.div(
-//            ^.contentEditable := true,
-//            ^.onInput ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
-//            ^.onBlur ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
-//            state.content)
-            ReactContentEditable(state.content, onChange = onChange)
+            <.div(
+              ^.contentEditable := true,
+              ^.onInput ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+              ^.onBlur ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+              state.content
+            )
+//            ReactContentEditable(state.content, onChange = onChange)
           )
         }
       )
