@@ -36,8 +36,7 @@ lazy val client: Project = (project in file("app/js"))
     //skip in packageJSDependencies := false,
 
     // use Scala.js provided launcher code to start the client app
-    scalaJSUseMainModuleInitializer := false,
-    scalaJSUseMainModuleInitializer in Test := false,
+    scalaJSUseMainModuleInitializer := true,
     // use uTest framework for tests
     testFrameworks += new TestFramework("utest.runner.Framework"),
     // Fix for bug that produces a huge amount of warnings (https://github.com/webpack/webpack/issues/4518).

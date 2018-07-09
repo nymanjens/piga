@@ -11,10 +11,6 @@
       projectName = "client",
       assets = path => routes.Assets.versioned(path).toString,
       resourceExists = name => getClass.getResource(s"/public/$name") != null)
-
-  <script>
-    ClientApp.main()
-  </script>
 }
 
 @Base("Piga", extrascript = extrascript) {
