@@ -108,6 +108,12 @@ object BuildSettings {
       "com.lihaoyi" %%% "utest" % versions.uTest % Test
     ))
 
+  val npmDependencies: Seq[(String, String)] = Seq(
+    "snabbdom" -> "0.5.3",
+    "url-loader" -> "0.5.9",
+    "jquery" -> "2.2.4"
+  )
+
   private object files {
     val jQuery = s"${versions.jQuery}/jquery.min.js"
     val bootstrap = s"${versions.bootstrap}/js/bootstrap.min.js"

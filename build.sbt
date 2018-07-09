@@ -44,11 +44,9 @@ lazy val client: Project = (project in file("app/js"))
     // Unfortunately, this means no source maps :-/
     emitSourceMaps in fastOptJS := false,
     // scalajs-bundler NPM packages
-    npmDependencies in Compile ++= Seq(
-      "snabbdom" -> "0.5.3",
-      "font-awesome" -> "4.7.0",
-      "url-loader" -> "0.5.9"
-    )
+    npmDependencies in Compile ++= BuildSettings.npmDependencies,
+    // Custom webpack config
+    webpackConfigFile := Some(baseDirectory.value / "webpack.config.js")
   )
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
   .dependsOn(sharedJS)
