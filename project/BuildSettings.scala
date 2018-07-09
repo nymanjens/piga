@@ -38,7 +38,7 @@ object BuildSettings {
     val play = "2.6.15" // Must be the same as the Play sbt-plugin in plugins.sbt
 
     val uTest = "0.4.7"
-    val scalajsReact = "1.0.0"
+    val scalajsReact = "1.2.1"
     val diode = "1.1.0"
     val jQuery = "2.2.4"
     val bootstrap = "3.3.6"
@@ -54,7 +54,7 @@ object BuildSettings {
     val metisMenu = "org.webjars" % "metisMenu" % "1.1.3" // Used by Start Bootstrap
     val mousetrap = "org.webjars.npm" % "mousetrap" % "1.6.1"
     val reactAutosuggest = "org.webjars.npm" % "react-autosuggest" % "9.3.2"
-    val react = "org.webjars.bower" % "react" % "15.3.2"
+    val react = "org.webjars.bower" % "react" % "16.1.0"
     val webjarsPlay = "org.webjars" %% "webjars-play" % "2.6.0-M1"
   }
 
