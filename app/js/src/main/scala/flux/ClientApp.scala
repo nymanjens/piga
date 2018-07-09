@@ -2,7 +2,7 @@ package flux
 
 import common.LoggingUtils.logExceptions
 import org.scalajs.dom
-import org.scalajs.dom.console
+import org.scalajs.dom.{Event, console}
 import org.scalajs.dom.raw.Event
 
 import scala.async.Async.{async, await}
@@ -39,7 +39,7 @@ object ClientApp {
   }
 
   private def logUncaughtErrors(): Unit = {
-    dom.window.onerror = (event, url, lineNumber, _) => console.log("  Uncaught error:", event)
+    dom.window.onerror = (event, url, lineNumber, _1, _2) => console.log("  Uncaught error:", event)
     dom.window.addEventListener("error", (event: Event) => {
       console.log("  Uncaught error:", event)
       false
