@@ -1,6 +1,6 @@
 package flux
 
-import common.LoggingUtils.{logExceptions,logFailure}
+import common.LoggingUtils.{logExceptions, logFailure}
 import org.scalajs.dom
 import org.scalajs.dom.console
 import org.scalajs.dom.raw.Event
@@ -28,10 +28,10 @@ object ClientApp {
     implicit val scalaJsApiClient = apiModule.scalaJsApiClient
     implicit val initialDataResponse = await(logFailure(scalaJsApiClient.getInitialData()))
 
-    implicit val globalModule = new ClientAppModule()
-
-    // tell React to render the router in the document body
     logExceptions {
+      implicit val globalModule = new ClientAppModule()
+
+      // tell React to render the router in the document body
       globalModule.router().renderIntoDOM(dom.document.getElementById("root"))
     }
   }
