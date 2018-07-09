@@ -54,7 +54,8 @@ object BuildSettings {
     val metisMenu = "org.webjars" % "metisMenu" % "1.1.3" // Used by Start Bootstrap
     val mousetrap = "org.webjars.npm" % "mousetrap" % "1.6.1"
     val reactAutosuggest = "org.webjars.npm" % "react-autosuggest" % "9.3.2"
-    val react = "org.webjars.bower" % "react" % "16.1.0"
+    val react = "org.webjars.npm" % "react" % "16.2.0"
+    val reactDom = "org.webjars.npm" % "react-dom" % "16.2.0"
     val webjarsPlay = "org.webjars" %% "webjars-play" % "2.6.0-M1"
   }
 
@@ -110,17 +111,17 @@ object BuildSettings {
   private object files {
     val jQuery = s"${versions.jQuery}/jquery.min.js"
     val bootstrap = s"${versions.bootstrap}/js/bootstrap.min.js"
-    val reactWithAddons = "react-with-addons.js"
-    val reactDom = "react-dom.js"
+    val react = "umd/react.development.js"
+    val reactDom = "umd/react-dom.development.js"
     val reactDnd = "ReactDnD.min.js"
   }
 
   /** Dependencies for external JS libs that are bundled into a single .js file according to dependency order */
   val jsDependencies = Def.setting(
     Seq(
-      webjarDeps.react / files.reactWithAddons minified "react-with-addons.min.js" commonJSName "React",
-      webjarDeps.react / files.reactDom minified "react-dom.min.js" dependsOn files.reactWithAddons commonJSName "ReactDOM",
-      webjarDeps.react % Test / "react-dom-server.js" minified "react-dom-server.min.js" dependsOn files.reactDom commonJSName "ReactDOMServer",
+      webjarDeps.react / files.react minified "umd/react.production.min.js" commonJSName "React",
+      webjarDeps.reactDom / files.reactDom minified "umd/react-dom.production.min.js" dependsOn files.react commonJSName "ReactDOM",
+      webjarDeps.reactDom % Test / "umd/react-dom-server.browser.development.js" minified "umd/react-dom-server.browser.production.min.js" dependsOn files.reactDom commonJSName "ReactDOMServer",
       webjarDeps.jQuery / files.jQuery,
       webjarDeps.bootstrap / files.bootstrap dependsOn files.jQuery,
       webjarDeps.metisMenu / "metisMenu.min.js" dependsOn files.bootstrap,
