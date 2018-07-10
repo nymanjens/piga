@@ -111,7 +111,10 @@ object BuildSettings {
   val npmDependencies: Seq[(String, String)] = Seq(
     "snabbdom" -> "0.5.3",
     "url-loader" -> "0.5.9",
-    "jquery" -> "2.2.4"
+    "jquery" -> "2.2.4",
+    "react" -> "16.2.0",
+    "react-dom" -> "16.2.0",
+    "global-mousetrap" -> "file:./app/js/src/main/resources/global-mousetrap"
   )
 
   private object files {
