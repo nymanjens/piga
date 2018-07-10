@@ -114,7 +114,7 @@ object BuildSettings {
     "jquery" -> "2.2.4",
     "react" -> "16.2.0",
     "react-dom" -> "16.2.0",
-    "global-mousetrap" -> "file:./app/js/src/main/resources/global-mousetrap"
+    "global-mousetrap" -> "file:./app/js/src/main/npm-packages/global-mousetrap"
   )
 
   private object files {
