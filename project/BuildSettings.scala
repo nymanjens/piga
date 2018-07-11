@@ -1,5 +1,5 @@
-import sbt._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import sbt._
 
 /**
   * Application settings. Configure the build for your application here.
@@ -108,13 +108,13 @@ object BuildSettings {
       "com.lihaoyi" %%% "utest" % versions.uTest % Test
     ))
 
-  val npmDependencies: Seq[(String, String)] = Seq(
+  def npmDependencies(projectRootDirectory: File): Seq[(String, String)] = Seq(
     "snabbdom" -> "0.5.3",
     "url-loader" -> "0.5.9",
     "jquery" -> "2.2.4",
     "react" -> "16.2.0",
     "react-dom" -> "16.2.0",
-    "global-mousetrap" -> "file:./app/js/src/main/npm-packages/global-mousetrap"
+    "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/src/main/npm-packages/global-mousetrap"}"
   )
 
   private object files {
