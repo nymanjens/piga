@@ -63,7 +63,7 @@ object TextInput {
     override def deregisterListener(listener: InputBase.Listener[String]) = ???
 
     override def focus(): Unit = {
-      component.backend.theInput.foreach(_.focus())
+      component.backend.theInput.unsafeGet().focus()
     }
   }
 
