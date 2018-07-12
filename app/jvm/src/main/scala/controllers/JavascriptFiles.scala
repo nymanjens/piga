@@ -30,10 +30,10 @@ final class JavascriptFiles @Inject()(implicit override val messagesApi: Message
   private lazy val localDatabaseWebWorkerResultCache: Result =
     Ok(s"""
           |importScripts("${JavascriptFiles.Assets.webworkerDeps.urlPath}");
-          |var exports = window;
-          |exports.require = window["ScalaJSBundlerLibrary"].require;
+          |var require = ScalaJSBundlerLibrary.require;
+          |var exports = {};
+          |var window = self;
           |importScripts("${JavascriptFiles.Assets.webworker.urlPath}");
-          |LocalDatabaseWebWorkerScript.run();
       """.stripMargin).as("application/javascript")
   def localDatabaseWebWorker = Action(_ => localDatabaseWebWorkerResultCache)
 
