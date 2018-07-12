@@ -7,7 +7,7 @@
 
 @extrascript = {
   @* The compiled scala.js code *@
-  @scalajs.html.selectScript(
+  @utils.ImportScalaJsProject(
       projectName = "client",
       assets = path => routes.Assets.versioned(path).toString,
       resourceExists = name => getClass.getResource(s"/public/$name") != null)
