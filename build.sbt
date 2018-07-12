@@ -41,8 +41,6 @@ lazy val client: Project = (project in file("app/js"))
     emitSourceMaps in fastOptJS := false,
     // scalajs-bundler NPM packages
     npmDependencies in Compile ++= BuildSettings.npmDependencies(baseDirectory.value / "../.."),
-    // Custom webpack config
-    webpackConfigFile := Some(baseDirectory.value / "webpack.config.js"),
     // Enable faster builds when developing
     webpackBundlingMode := BundlingMode.LibraryOnly()
   )
