@@ -109,6 +109,7 @@ object BuildSettings {
     ))
 
   def npmDependencies(projectRootDirectory: File): Seq[(String, String)] = Seq(
+    "lokijs" -> "1.4.2",
     "react" -> "16.2.0",
     "react-dom" -> "16.2.0",
     "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/src/main/npm-packages/global-mousetrap"}"
