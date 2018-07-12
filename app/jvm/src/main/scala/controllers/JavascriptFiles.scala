@@ -30,7 +30,9 @@ final class JavascriptFiles @Inject()(implicit override val messagesApi: Message
   private lazy val localDatabaseWebWorkerResultCache: Result =
     Ok(s"""
           |importScripts("${JavascriptFiles.Assets.webworkerDeps.urlPath}");
-          |importScripts("${JavascriptFiles.Assets.clientApp.urlPath}");
+          |var exports = window;
+          |exports.require = window["ScalaJSBundlerLibrary"].require;
+          |importScripts("${JavascriptFiles.Assets.webworker.urlPath}");
           |LocalDatabaseWebWorkerScript.run();
       """.stripMargin).as("application/javascript")
   def localDatabaseWebWorker = Action(_ => localDatabaseWebWorkerResultCache)
@@ -61,7 +63,7 @@ final class JavascriptFiles @Inject()(implicit override val messagesApi: Message
 object JavascriptFiles {
   private object Assets {
     private val clientAppProjectName: String = "client"
-    private val webworkerDepsProjectName: String = "webworker-client-deps"
+    private val webworkerProjectName: String = "webworker-client"
 
     val clientApp: Asset =
       firstExistingVersionedAsset(s"$clientAppProjectName-opt.js", s"$clientAppProjectName-fastopt.js")
@@ -69,14 +71,17 @@ object JavascriptFiles {
       firstExistingVersionedAsset(
         s"$clientAppProjectName-opt-library.js",
         s"$clientAppProjectName-fastopt-library.js")
+    val webworker: Asset =
+      firstExistingVersionedAsset(s"$webworkerProjectName-opt.js", s"$webworkerProjectName-fastopt.js")
     val webworkerDeps: Asset =
       firstExistingVersionedAsset(
-        s"$webworkerDepsProjectName-opt-bundle.js",
-        s"$webworkerDepsProjectName-fastopt-bundle.js")
+        s"$webworkerProjectName-opt-library.js",
+        s"$webworkerProjectName-fastopt-library.js")
 
     val all: Seq[Asset] = Seq(
       clientApp,
       clientAppDeps,
+      webworker,
       webworkerDeps,
       WebJarAsset("metisMenu/1.1.3/metisMenu.min.css"),
       WebJarAsset("font-awesome/4.6.2/css/font-awesome.min.css"),
@@ -91,6 +96,7 @@ object JavascriptFiles {
       VersionedAsset("stylesheets/main.min.css"),
       VersionedAsset("bower_components/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"),
       DynamicAsset(routes.JavascriptFiles.localDatabaseWebWorker)
+      // TODO: Revisit this list
     )
 
     private def firstExistingVersionedAsset(filenames: String*): Asset =

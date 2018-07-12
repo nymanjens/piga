@@ -52,23 +52,31 @@ lazy val client: Project = (project in file("app/js/client"))
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
   .dependsOn(sharedJsCopy, jsShared)
 
-lazy val webworkerClientDeps: Project = (project in file("app/empty"))
-  .settings(
-    name := "webworker-client-deps",
+lazy val webworkerClient: Project = (project in file("app/js/webworker"))
+    .settings(
+    name := "webworker-client",
     version := BuildSettings.version,
     scalaVersion := BuildSettings.versions.scala,
     scalacOptions ++= BuildSettings.scalacOptions,
+    libraryDependencies ++= BuildSettings.scalajsDependencies.value,
     // by default we do development build, no eliding
     elideOptions := Seq(),
     scalacOptions ++= elideOptions.value,
     // use Scala.js provided launcher code to start the client app
-    scalaJSUseMainModuleInitializer := false,
-    scalaJSUseMainModuleInitializer in Test := false
+    scalaJSUseMainModuleInitializer := true,
+    // Fix for bug that produces a huge amount of warnings (https://github.com/webpack/webpack/issues/4518).
+    // Unfortunately, this means no source maps :-/
+    emitSourceMaps in fastOptJS := false,
+    // scalajs-bundler NPM packages
+    npmDependencies in Compile ++= BuildSettings.npmDependencies(baseDirectory.value / "../../.."),
+    // Enable faster builds when developing
+    webpackBundlingMode := BundlingMode.LibraryOnly()
   )
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+  .dependsOn(sharedJsCopy, jsShared)
 
 // Client projects
-lazy val clientProjects = Seq(client, webworkerClientDeps)
+lazy val clientProjects = Seq(client, webworkerClient)
 
 lazy val server = (project in file("app/jvm"))
   .settings(
@@ -101,7 +109,7 @@ lazy val ReleaseCmd = Command.command("release") { state =>
   "set elideOptions in client := Seq(\"-Xelide-below\", \"WARNING\")" ::
     "client/clean" ::
     "client/test" ::
-    "webworkerClientDeps/clean" ::
+    "webworkerClient/clean" ::
     "server/clean" ::
     "server/test" ::
     "server/dist" ::
