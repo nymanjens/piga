@@ -8,14 +8,26 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("app/shared"))
     libraryDependencies ++= BuildSettings.sharedDependencies.value
   )
 
-lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
+lazy val sharedJvmCopy = shared.jvm.settings(name := "sharedJVM")
 
-lazy val sharedJS = shared.js.settings(name := "sharedJS")
+lazy val sharedJsCopy = shared.js.settings(name := "sharedJS")
 
 // use eliding to drop some debug code in the production build
 lazy val elideOptions = settingKey[Seq[String]]("Set limit for elidable functions")
 
-lazy val client: Project = (project in file("app/js"))
+lazy val jsShared: Project = (project in file("app/js/shared"))
+  .settings(
+    name := "jsShared",
+    scalaVersion := BuildSettings.versions.scala,
+    scalacOptions ++= BuildSettings.scalacOptions,
+    libraryDependencies ++= BuildSettings.scalajsDependencies.value,
+    // use uTest framework for tests
+    testFrameworks += new TestFramework("utest.runner.Framework")
+  )
+  .enablePlugins(ScalaJSWeb)
+  .dependsOn(sharedJsCopy)
+
+lazy val client: Project = (project in file("app/js/client"))
   .settings(
     name := "client",
     version := BuildSettings.version,
@@ -25,13 +37,6 @@ lazy val client: Project = (project in file("app/js"))
     // by default we do development build, no eliding
     elideOptions := Seq(),
     scalacOptions ++= elideOptions.value,
-    
-    //jsDependencies ++= BuildSettings.jsDependencies.value,
-    // RuntimeDOM is needed for tests
-    //jsDependencies += RuntimeDOM % "test",
-    // yes, we want to package JS dependencies
-    //skip in packageJSDependencies := false,
-
     // use Scala.js provided launcher code to start the client app
     scalaJSUseMainModuleInitializer := true,
     // use uTest framework for tests
@@ -40,32 +45,42 @@ lazy val client: Project = (project in file("app/js"))
     // Unfortunately, this means no source maps :-/
     emitSourceMaps in fastOptJS := false,
     // scalajs-bundler NPM packages
-    npmDependencies in Compile ++= BuildSettings.npmDependencies(baseDirectory.value / "../.."),
+    npmDependencies in Compile ++= BuildSettings.npmDependencies(baseDirectory.value / "../../.."),
     // Custom webpack config
     webpackConfigFile := Some(baseDirectory.value / "webpack.config.js"),
     // Enable faster builds when developing
     webpackBundlingMode := BundlingMode.LibraryOnly()
   )
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
-  .dependsOn(sharedJS)
+  .dependsOn(sharedJsCopy, jsShared)
 
-lazy val webworkerClientDeps: Project = (project in file("app/empty"))
-  .settings(
-    name := "webworker-client-deps",
+lazy val webworkerClient: Project = (project in file("app/js/webworker"))
+    .settings(
+    name := "webworker-client",
     version := BuildSettings.version,
     scalaVersion := BuildSettings.versions.scala,
     scalacOptions ++= BuildSettings.scalacOptions,
+    libraryDependencies ++= BuildSettings.scalajsDependencies.value,
     // by default we do development build, no eliding
     elideOptions := Seq(),
     scalacOptions ++= elideOptions.value,
     // use Scala.js provided launcher code to start the client app
-    scalaJSUseMainModuleInitializer := false,
-    scalaJSUseMainModuleInitializer in Test := false
+    scalaJSUseMainModuleInitializer := true,
+    // Fix for bug that produces a huge amount of warnings (https://github.com/webpack/webpack/issues/4518).
+    // Unfortunately, this means no source maps :-/
+    emitSourceMaps in fastOptJS := false,
+    // scalajs-bundler NPM packages
+    npmDependencies in Compile ++= BuildSettings.npmDependencies(baseDirectory.value / "../../.."),
+    // Custom webpack config
+    webpackConfigFile := Some(baseDirectory.value / "webpack.config.js"),
+    // Enable faster builds when developing
+    webpackBundlingMode := BundlingMode.LibraryOnly()
   )
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+  .dependsOn(sharedJsCopy, jsShared)
 
 // Client projects
-lazy val clients = Seq(client, webworkerClientDeps)
+lazy val clientProjects = Seq(client, webworkerClient)
 
 lazy val server = (project in file("app/jvm"))
   .settings(
@@ -79,7 +94,7 @@ lazy val server = (project in file("app/jvm"))
     javaOptions := Seq("-Dconfig.file=conf/application.conf"),
     javaOptions in Test := Seq("-Dconfig.resource=test-application.conf"),
     // connect to the client project
-    scalaJSProjects := clients,
+    scalaJSProjects := clientProjects,
     pipelineStages in Assets := Seq(scalaJSPipeline),
     pipelineStages := Seq(scalaJSProd, digest, gzip),
     // Expose as sbt-web assets some files retrieved from the NPM packages of the `client` project
@@ -90,15 +105,15 @@ lazy val server = (project in file("app/jvm"))
   .enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
   .disablePlugins(PlayFilters) // Don't use the default filters
   .disablePlugins(PlayLayoutPlugin) // use the standard directory layout instead of Play's custom
-  .aggregate(clients.map(projectToRef): _*)
-  .dependsOn(sharedJVM)
+  .aggregate(clientProjects.map(projectToRef): _*)
+  .dependsOn(sharedJvmCopy)
 
 // Command for building a release
 lazy val ReleaseCmd = Command.command("release") { state =>
   "set elideOptions in client := Seq(\"-Xelide-below\", \"WARNING\")" ::
     "client/clean" ::
     "client/test" ::
-    "webworkerClientDeps/clean" ::
+    "webworkerClient/clean" ::
     "server/clean" ::
     "server/test" ::
     "server/dist" ::

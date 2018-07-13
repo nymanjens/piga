@@ -32,8 +32,4 @@ final class Application @Inject()(implicit override val messagesApi: MessagesApi
   def reactAppWithoutCredentials = Action { implicit request =>
     Ok(views.html.reactApp())
   }
-
-  def manualTests() = AuthenticatedAction { implicit user => implicit request =>
-    Ok(views.html.manualTests())
-  }
 }

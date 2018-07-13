@@ -67,7 +67,7 @@ object LokiJs {
     def loadDatabase(dbName: String, callback: js.Function1[js.Any, Unit]): Unit = js.native
   }
   private object Adapter {
-    @JSImport("lokijs/loki-indexed-adapter.js", JSImport.Namespace)
+    @JSImport("lokijs/src/loki-indexed-adapter", JSImport.Namespace)
     @js.native
     final class IndexedAdapter(name: String) extends Adapter
 
