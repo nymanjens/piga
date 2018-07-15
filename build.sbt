@@ -102,6 +102,7 @@ lazy val server = (project in file("app/jvm"))
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "bootstrap").*** }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "metismenu").*** }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "font-awesome").*** }.value,
+    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "startbootstrap-sb-admin-2").*** }.value,
     // compress CSS
     LessKeys.compress in Assets := true
   )

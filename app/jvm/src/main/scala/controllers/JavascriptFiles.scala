@@ -91,12 +91,12 @@ object JavascriptFiles {
       UnversionedAsset("font-awesome/fonts/fontawesome-webfont.ttf?v=4.6.3"),
       VersionedAsset("lib/fontello/css/fontello.css"),
       UnversionedAsset("lib/fontello/font/fontello.woff2?49985636"),
-      VersionedAsset("bower_components/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css"),
+      VersionedAsset("startbootstrap-sb-admin-2/dist/css/sb-admin-2.css"),
       VersionedAsset("stylesheets/main.min.css"),
       VersionedAsset("jquery/dist/jquery.min.js"),
       VersionedAsset("bootstrap/dist/js/bootstrap.min.js"),
       VersionedAsset("metismenu/dist/metisMenu.min.js"),
-      VersionedAsset("bower_components/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"),
+      VersionedAsset("startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"),
       DynamicAsset(routes.JavascriptFiles.localDatabaseWebWorker)
       // TODO: Revisit this list
     )

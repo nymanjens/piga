@@ -95,6 +95,7 @@ object BuildSettings {
     "bootstrap" -> "3.3.6",
     "metismenu" -> "1.1.3",
     "font-awesome" -> "4.6.3",
+    "startbootstrap-sb-admin-2" -> "1.0.7",
     // Used in ScalaJS code
     "lokijs" -> "1.4.2",
     "react" -> "16.2.0",
