@@ -15,8 +15,7 @@ final class Application @Inject()(implicit override val messagesApi: MessagesApi
                                   entityAccess: JvmEntityAccess,
                                   scalaJsApiServerFactory: ScalaJsApiServerFactory,
                                   playConfiguration: play.api.Configuration,
-                                  env: play.api.Environment,
-                                  webJarAssets: controllers.WebJarAssets)
+                                  env: play.api.Environment)
     extends AbstractController(components)
     with I18nSupport {
 
@@ -31,9 +30,5 @@ final class Application @Inject()(implicit override val messagesApi: MessagesApi
 
   def reactAppWithoutCredentials = Action { implicit request =>
     Ok(views.html.reactApp())
-  }
-
-  def manualTests() = AuthenticatedAction { implicit user => implicit request =>
-    Ok(views.html.manualTests())
   }
 }
