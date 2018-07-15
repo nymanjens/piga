@@ -55,7 +55,7 @@ lazy val client: Project = (project in file("app/js/client"))
   .dependsOn(sharedJsCopy, jsShared)
 
 lazy val webworkerClient: Project = (project in file("app/js/webworker"))
-    .settings(
+  .settings(
     name := "webworker-client",
     version := BuildSettings.version,
     scalaVersion := BuildSettings.versions.scala,

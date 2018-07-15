@@ -44,21 +44,6 @@ object BuildSettings {
     val bootstrap = "3.3.6"
   }
 
-  private object webjarDeps {
-    val jQuery = "org.webjars" % "jquery" % versions.jQuery
-    val bootstrap = "org.webjars" % "bootstrap" % versions.bootstrap
-
-    val reactTagInput = "org.webjars.npm" % "react-tag-input" % "4.7.2"
-    val fontAwesome = "org.webjars" % "font-awesome" % "4.6.2"
-    val lokiJs = "org.webjars.bower" % "lokijs" % "1.4.2"
-    val metisMenu = "org.webjars" % "metisMenu" % "1.1.3" // Used by Start Bootstrap
-    val mousetrap = "org.webjars.npm" % "mousetrap" % "1.6.1"
-    val reactAutosuggest = "org.webjars.npm" % "react-autosuggest" % "9.3.2"
-    val react = "org.webjars.npm" % "react" % "16.2.0"
-    val reactDom = "org.webjars.npm" % "react-dom" % "16.2.0"
-    val webjarsPlay = "org.webjars" %% "webjars-play" % "2.6.0-M1"
-  }
-
   /**
     * These dependencies are shared between JS and JVM projects
     * the special %%% function selects the correct version for each project
@@ -87,8 +72,7 @@ object BuildSettings {
       "com.h2database" % "h2" % "1.4.195",
       "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
       "com.google.code.findbugs" % "jsr305" % "1.3.9",
-      "net.jcip" % "jcip-annotations" % "1.0",
-      webjarDeps.webjarsPlay
+      "net.jcip" % "jcip-annotations" % "1.0"
     ))
 
   /** Dependencies only used by the JS project (note the use of %%% instead of %%) */
