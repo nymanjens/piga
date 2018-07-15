@@ -22,8 +22,7 @@ final class JavascriptFiles @Inject()(implicit override val messagesApi: Message
                                       clock: Clock,
                                       entityAccess: JvmEntityAccess,
                                       playConfiguration: play.api.Configuration,
-                                      env: play.api.Environment,
-                                      webJarAssets: controllers.WebJarAssets)
+                                      env: play.api.Environment)
     extends AbstractController(components)
     with I18nSupport {
 
@@ -83,17 +82,20 @@ object JavascriptFiles {
       clientAppDeps,
       webworker,
       webworkerDeps,
-      WebJarAsset("metisMenu/1.1.3/metisMenu.min.css"),
-      WebJarAsset("font-awesome/4.6.2/css/font-awesome.min.css"),
-      WebJarAsset("font-awesome/4.6.2/fonts/fontawesome-webfont.woff2?v=4.6.2"),
-      WebJarAsset("font-awesome/4.6.2/fonts/fontawesome-webfont.woff?v=4.6.2 0"),
-      WebJarAsset("font-awesome/4.6.2/fonts/fontawesome-webfont.ttf?v=4.6.2"),
       VersionedAsset("images/favicon192x192.png"),
-      VersionedAsset("lib/bootstrap/css/bootstrap.min.css"),
+      VersionedAsset("bootstrap/dist/css/bootstrap.min.css"),
+      VersionedAsset("metismenu/dist/metisMenu.min.css"),
+      VersionedAsset("font-awesome/css/font-awesome.min.css"),
+      UnversionedAsset("font-awesome/fonts/fontawesome-webfont.woff2?v=4.6.3"),
+      UnversionedAsset("font-awesome/fonts/fontawesome-webfont.woff?v=4.6.3 0"),
+      UnversionedAsset("font-awesome/fonts/fontawesome-webfont.ttf?v=4.6.3"),
       VersionedAsset("lib/fontello/css/fontello.css"),
       UnversionedAsset("lib/fontello/font/fontello.woff2?49985636"),
       VersionedAsset("bower_components/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css"),
       VersionedAsset("stylesheets/main.min.css"),
+      VersionedAsset("jquery/dist/jquery.min.js"),
+      VersionedAsset("bootstrap/dist/js/bootstrap.min.js"),
+      VersionedAsset("metismenu/dist/metisMenu.min.js"),
       VersionedAsset("bower_components/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"),
       DynamicAsset(routes.JavascriptFiles.localDatabaseWebWorker)
       // TODO: Revisit this list
@@ -122,10 +124,6 @@ object JavascriptFiles {
     }
     case class UnversionedAsset(relativePath: String) extends ResourceAsset(relativePath) {
       override def urlPath = s"/assets/$relativePath"
-    }
-    case class WebJarAsset(relativePath: String) extends Asset {
-      override def maybeLocalResource = None
-      override def urlPath = routes.WebJarAssets.at(relativePath).path()
     }
     case class DynamicAsset(call: Call) extends Asset {
       override def maybeLocalResource = None

@@ -55,7 +55,7 @@ lazy val client: Project = (project in file("app/js/client"))
   .dependsOn(sharedJsCopy, jsShared)
 
 lazy val webworkerClient: Project = (project in file("app/js/webworker"))
-    .settings(
+  .settings(
     name := "webworker-client",
     version := BuildSettings.version,
     scalaVersion := BuildSettings.versions.scala,
@@ -98,6 +98,9 @@ lazy val server = (project in file("app/jvm"))
     pipelineStages in Assets := Seq(scalaJSPipeline),
     pipelineStages := Seq(scalaJSProd, digest, gzip),
     // Expose as sbt-web assets some files retrieved from the NPM packages of the `client` project
+    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "jquery").*** }.value,
+    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "bootstrap").*** }.value,
+    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "metismenu").*** }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "font-awesome").*** }.value,
     // compress CSS
     LessKeys.compress in Assets := true

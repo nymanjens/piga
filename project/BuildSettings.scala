@@ -44,21 +44,6 @@ object BuildSettings {
     val bootstrap = "3.3.6"
   }
 
-  private object webjarDeps {
-    val jQuery = "org.webjars" % "jquery" % versions.jQuery
-    val bootstrap = "org.webjars" % "bootstrap" % versions.bootstrap
-
-    val reactTagInput = "org.webjars.npm" % "react-tag-input" % "4.7.2"
-    val fontAwesome = "org.webjars" % "font-awesome" % "4.6.2"
-    val lokiJs = "org.webjars.bower" % "lokijs" % "1.4.2"
-    val metisMenu = "org.webjars" % "metisMenu" % "1.1.3" // Used by Start Bootstrap
-    val mousetrap = "org.webjars.npm" % "mousetrap" % "1.6.1"
-    val reactAutosuggest = "org.webjars.npm" % "react-autosuggest" % "9.3.2"
-    val react = "org.webjars.npm" % "react" % "16.2.0"
-    val reactDom = "org.webjars.npm" % "react-dom" % "16.2.0"
-    val webjarsPlay = "org.webjars" %% "webjars-play" % "2.6.0-M1"
-  }
-
   /**
     * These dependencies are shared between JS and JVM projects
     * the special %%% function selects the correct version for each project
@@ -87,11 +72,7 @@ object BuildSettings {
       "com.h2database" % "h2" % "1.4.195",
       "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
       "com.google.code.findbugs" % "jsr305" % "1.3.9",
-      "net.jcip" % "jcip-annotations" % "1.0",
-      webjarDeps.bootstrap,
-      webjarDeps.webjarsPlay,
-      webjarDeps.fontAwesome,
-      webjarDeps.metisMenu
+      "net.jcip" % "jcip-annotations" % "1.0"
     ))
 
   /** Dependencies only used by the JS project (note the use of %%% instead of %%) */
@@ -109,39 +90,15 @@ object BuildSettings {
     ))
 
   def npmDependencies(projectRootDirectory: File): Seq[(String, String)] = Seq(
+    // For assets only
+    "jquery" -> "1.11.1",
+    "bootstrap" -> "3.3.6",
+    "metismenu" -> "1.1.3",
+    "font-awesome" -> "4.6.3",
+    // Used in ScalaJS code
     "lokijs" -> "1.4.2",
     "react" -> "16.2.0",
     "react-dom" -> "16.2.0",
     "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/shared/src/main/npm-packages/global-mousetrap"}"
   )
-
-  private object files {
-    val jQuery = s"${versions.jQuery}/jquery.min.js"
-    val bootstrap = s"${versions.bootstrap}/js/bootstrap.min.js"
-    val react = "umd/react.development.js"
-    val reactDom = "umd/react-dom.development.js"
-    val reactDnd = "ReactDnD.min.js"
-  }
-
-  /** Dependencies for external JS libs that are bundled into a single .js file according to dependency order */
-  val jsDependencies = Def.setting(
-    Seq(
-      webjarDeps.react / files.react minified "umd/react.production.min.js" commonJSName "React",
-      webjarDeps.reactDom / files.reactDom minified "umd/react-dom.production.min.js" dependsOn files.react commonJSName "ReactDOM",
-      webjarDeps.reactDom % Test / "umd/react-dom-server.browser.development.js" minified "umd/react-dom-server.browser.production.min.js" dependsOn files.reactDom commonJSName "ReactDOMServer",
-      webjarDeps.jQuery / files.jQuery,
-      webjarDeps.bootstrap / files.bootstrap dependsOn files.jQuery,
-      webjarDeps.metisMenu / "metisMenu.min.js" dependsOn files.bootstrap,
-      webjarDeps.mousetrap / "mousetrap.min.js",
-      webjarDeps.mousetrap / "plugins/global-bind/mousetrap-global-bind.min.js",
-      webjarDeps.reactTagInput / files.reactDnd dependsOn files.reactDom,
-      webjarDeps.reactTagInput / "ReactTags.min.js" dependsOn files.reactDnd,
-      webjarDeps.reactAutosuggest / "dist/standalone/autosuggest.min.js" dependsOn files.reactDom
-    ))
-
-  val webworkerJsDependencies = Def.setting(
-    Seq(
-      webjarDeps.lokiJs / "lokijs.min.js",
-      webjarDeps.lokiJs / "loki-indexed-adapter.min.js"
-    ))
 }
