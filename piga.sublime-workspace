@@ -517,9 +517,6 @@
 			]
 		]
 	},
-	"buffers":
-	[
-	],
 	"build_system": "",
 	"build_system_choices":
 	[
@@ -907,14 +904,6 @@
 		"whole_word": false,
 		"wrap": true
 	},
-	"groups":
-	[
-		{
-			"sheets":
-			[
-			]
-		}
-	],
 	"incremental_find":
 	{
 		"height": 42.0
@@ -959,7 +948,6 @@
 		"height": 118.0
 	},
 	"pinned_build_system": "",
-	"project": "piga.sublime-project",
 	"replace":
 	{
 		"height": 64.0
@@ -1564,7 +1552,6 @@
 		],
 		"width": 0.0
 	},
-	"selected_group": 0,
 	"settings":
 	{
 	},
