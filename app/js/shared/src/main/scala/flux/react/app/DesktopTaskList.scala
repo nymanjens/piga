@@ -1,5 +1,6 @@
 package flux.react.app
 
+import common.GuavaReplacement.Splitter
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.react.router.RouterContext
@@ -44,15 +45,16 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
             //   ^.onBlur ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
             //   state.content
             // )
-//            ReactContentEditable(state.content, onChange = onChange)
+            ReactContentEditable(state.content, onChange = onChange)
           )
         }
       )
     }
 
-    private def onChange(value: String): Callback = LogExceptionsCallback {
-      $.modState(_.copy(content = value))
-      println(value)
+    private def onChange(value: String): Unit =  {
+      val newValue = s"<ul><li>${value.replace("<br>", "</li><li>")}</li></ul>"
+      println(newValue)
+      $.modState(_.copy(content = newValue))
     }
   }
 }
