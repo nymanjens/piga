@@ -1,12 +1,14 @@
 package flux.react.app
 
+import common.GuavaReplacement.Splitter
 import common.I18n
-import common.LoggingUtils.logExceptions
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.react.router.RouterContext
 import flux.react.uielements
 import flux.react.uielements.Panel
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import jsfacades.ReactContentEditable
 import models.access.EntityAccess
 import models.user.User
 
@@ -37,9 +39,22 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
           title = "Piga Task List"
         ) {
           <.span(
-            )
+            // <.div(
+            //   ^.contentEditable := true,
+            //   ^.onInput ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+            //   ^.onBlur ==> ((event: ReactEventFromInput) => onChange(event.target.value)),
+            //   state.content
+            // )
+            ReactContentEditable(state.content, onChange = onChange)
+          )
         }
       )
+    }
+
+    private def onChange(value: String): Unit =  {
+      val newValue = s"<ul><li>${value.replace("<br>", "</li><li>")}</li></ul>"
+      println(newValue)
+      $.modState(_.copy(content = newValue))
     }
   }
 }
