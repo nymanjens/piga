@@ -68,25 +68,36 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       console.log("ONCHANGE EVENT", sel)
     }
 
-    private case class IndexWithOffset(lineIndex: Int, lineOffset: Int) extends Ordered[IndexWithOffset] {
+    private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
+        extends Ordered[LineIndexWithOffset] {
       import scala.math.Ordered.orderingToOrdered
 
-      def compare(that: IndexWithOffset): Int =
+      def compare(that: LineIndexWithOffset): Int =
         (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
+    }
+    private object LineIndexWithOffset {
+      def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
+        val anchor = LineIndexWithOffset.fromNode(selection.anchorNode, selection.anchorOffset)
+        val focus = LineIndexWithOffset.fromNode(selection.focusNode, selection.focusOffset)
+        if (anchor < focus) (anchor, focus) else (focus, anchor)
+      }
+
+      def fromNode(node: dom.raw.Node, offset: Int): LineIndexWithOffset =
+        LineIndexWithOffset(lineIndex = parentElement(node).getAttribute("num").toInt, lineOffset = offset)
+
+      private def parentElement(node: dom.raw.Node): dom.raw.Element = {
+        if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
+          node.asInstanceOf[dom.raw.Element]
+        } else {
+          parentElement(node.parentNode)
+        }
+      }
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = LogExceptionsCallback {
       val eventKey = event.key
       if (eventKey.length == 1 && !event.ctrlKey) {
-        val selection: dom.raw.Selection = dom.window.getSelection()
-        val anchor =
-          IndexWithOffset(
-            lineIndex = parentElement(selection.anchorNode).getAttribute("num").toInt,
-            lineOffset = selection.anchorOffset)
-        val focus = IndexWithOffset(
-          lineIndex = parentElement(selection.focusNode).getAttribute("num").toInt,
-          lineOffset = selection.focusOffset)
-        val (start, end) = if (anchor < focus) (anchor, focus) else (focus, anchor)
+        val (start, end) = LineIndexWithOffset.tupleFromSelection(dom.window.getSelection())
 
         event.preventDefault()
 
@@ -104,8 +115,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
     private def replaceSelectionInState(state: State,
                                         replacement: String,
-                                        start: IndexWithOffset,
-                                        end: IndexWithOffset): State = {
+                                        start: LineIndexWithOffset,
+                                        end: LineIndexWithOffset): State = {
       if (start == end) {
         // Optimization
         val selectedLine = state.lines(start.lineIndex)
@@ -141,14 +152,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       require(index <= s.length, s"index = $index > length = ${s.length}")
       val (before, after) = s.splitAt(index)
       before + toInsert + after
-    }
-
-    private def parentElement(node: dom.raw.Node): dom.raw.Element = {
-      if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
-        node.asInstanceOf[dom.raw.Element]
-      } else {
-        parentElement(node.parentNode)
-      }
     }
 
     private def toContent(lines: Seq[String]): String = {
