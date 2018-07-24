@@ -11,6 +11,7 @@ import models.access.EntityAccess
 import org.scalajs
 import org.scalajs.dom
 import org.scalajs.dom.{console, document}
+import scala.collection.immutable.Seq
 
 import scala.scalajs.js
 
@@ -67,44 +68,58 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       console.log("ONCHANGE EVENT", sel)
     }
 
+    private case class IndexWithOffset(lineIndex: Int, lineOffset: Int)
+
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = LogExceptionsCallback {
       val eventKey = event.key
       if (eventKey.length == 1 && !event.ctrlKey) {
         val selection: dom.raw.Selection = dom.window.getSelection()
-        val selectedLi = parentElement(selection.anchorNode)
-        val selectedLineIndex = selectedLi.getAttribute("num").toInt
+        val start = IndexWithOffset(
+          lineIndex = parentElement(selection.anchorNode).getAttribute("num").toInt,
+          lineOffset = selection.anchorOffset)
+        val end = IndexWithOffset(
+          lineIndex = parentElement(selection.focusNode).getAttribute("num").toInt,
+          lineOffset = selection.focusOffset)
 
         event.preventDefault()
 
         $.modState(
-          state =>
-            replaceSelectionInState(
-              state,
-              replacement = eventKey,
-              selectedLineIndex,
-              lineOffset = selection.anchorOffset),
-          setSelection(selectedLineIndex, lineOffset = selection.anchorOffset + 1)
+          state => replaceSelectionInState(state, replacement = eventKey, start, end),
+          setSelection(lineIndex = start.lineIndex, lineOffset = start.lineOffset + 1)
         ).runNow()
 
       }
-      // TODO: Handle selections
       // TODO: Handle newlines
       // TODO: Handle ctrl+v
+      // TODO: Handle ctrl+(shift+)z
+      // TODO: Handle selection bounds outside editor
     }
 
     private def replaceSelectionInState(state: State,
                                         replacement: String,
-                                        selectedLineIndex: Int,
-                                        lineOffset: Int): State = {
-      val selectedLine = state.lines(selectedLineIndex)
-      val updatedLine = insertInString(selectedLine, index = lineOffset, replacement)
-
-      val updatedLines = state.lines.updated(selectedLineIndex, updatedLine)
-      state.copy(lines = updatedLines)
+                                        start: IndexWithOffset,
+                                        end: IndexWithOffset): State = {
+      if (start == end) {
+        // Optimization
+        val selectedLine = state.lines(start.lineIndex)
+        val updatedLine = insertInString(selectedLine, index = start.lineOffset, replacement)
+        state.copy(lines = state.lines.updated(start.lineIndex, updatedLine))
+      } else {
+        val updatedLine =
+          state.lines(start.lineIndex).substring(0, start.lineOffset) +
+            replacement +
+            state.lines(end.lineIndex).substring(end.lineOffset)
+        val updatedLines = state.lines.zipWithIndex.flatMap {
+          case (line, start.lineIndex)                                            => Some(updatedLine)
+          case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
+          case (line, _)                                                          => Some(line)
+        }
+        state.copy(lines = updatedLines)
+      }
     }
 
-    private def setSelection(selectedLineIndex: Int, lineOffset: Int): Callback = LogExceptionsCallback {
-      val selectedLine = dom.document.getElementById(s"teli-$selectedLineIndex")
+    private def setSelection(lineIndex: Int, lineOffset: Int): Callback = LogExceptionsCallback {
+      val selectedLine = dom.document.getElementById(s"teli-$lineIndex")
 
       val range = dom.document.createRange()
       range.setStart(selectedLine.firstChild, lineOffset)
