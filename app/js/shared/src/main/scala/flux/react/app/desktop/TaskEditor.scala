@@ -34,17 +34,37 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
       extends Ordered[LineIndexWithOffset] {
-    require(lineOffset >= 0)
 
-    import scala.math.Ordered.orderingToOrdered
-
-    override def compare(that: LineIndexWithOffset): Int =
+    override def compare(that: LineIndexWithOffset): Int = {
+      import scala.math.Ordered.orderingToOrdered
       (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
+    }
 
     def plusIndex(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex + diff, lineOffset)
     def minusIndex(diff: Int): LineIndexWithOffset = plusIndex(-diff)
     def plusOffset(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex, lineOffset + diff)
     def minusOffset(diff: Int): LineIndexWithOffset = plusOffset(-diff)
+
+    def plusOffsetInList(diff: Int)(implicit state: State): LineIndexWithOffset = {
+      def fixOffset(iwo: LineIndexWithOffset): LineIndexWithOffset = iwo.lineOffset match {
+        case offset if offset < 0 =>
+          if (iwo.lineIndex == 0) {
+            LineIndexWithOffset(0, 0)
+          } else {
+            fixOffset(
+              LineIndexWithOffset(iwo.lineIndex - 1, state.lines(iwo.lineIndex - 1).length + offset + 1))
+          }
+        case offset if offset > state.lines(iwo.lineIndex).length =>
+          if (iwo.lineIndex == state.lines.length - 1) {
+            LineIndexWithOffset(state.lines.length - 1, state.lines.last.length)
+          } else {
+            fixOffset(LineIndexWithOffset(iwo.lineIndex + 1, offset - state.lines(iwo.lineIndex).length - 1))
+          }
+        case _ => iwo
+      }
+      fixOffset(LineIndexWithOffset(lineIndex, lineOffset + diff))
+    }
+    def minusOffsetInList(diff: Int)(implicit state: State): LineIndexWithOffset = plusOffsetInList(-diff)
 
     def toStartOfLine: LineIndexWithOffset = copy(lineOffset = 0)
     def toEndOfLine(implicit state: State): LineIndexWithOffset =
@@ -53,8 +73,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def atStartOfLine: Boolean = lineOffset == 0
     def atEndOfLine(implicit state: State): Boolean = lineOffset == state.lines(lineIndex).length
 
-    def atStartOfDocument: Boolean = lineIndex == 0 && atStartOfLine
-    def atEndOfDocument(implicit state: State): Boolean = lineIndex == state.lines.size - 1 && atEndOfLine
+    def atStartOfList: Boolean = lineIndex == 0 && atStartOfLine
+    def atEndOfList(implicit state: State): Boolean = lineIndex == state.lines.size - 1 && atEndOfLine
   }
   private object LineIndexWithOffset {
     def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
@@ -127,27 +147,16 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case "Backspace" if !event.ctrlKey =>
           event.preventDefault()
           if (start == end) {
-            if (start.atStartOfDocument) {
-              Callback.empty
-            } else if (start.atStartOfLine) {
-              replaceSelectionInState(replacement = "", (start minusIndex 1).toEndOfLine, end)
-            } else {
-              replaceSelectionInState(replacement = "", start minusOffset 1, end)
-            }
-          } else { // selection is nonEmpty
+            replaceSelectionInState(replacement = "", start minusOffsetInList 1, end)
+          } else {
             replaceSelectionInState(replacement = "", start, end)
           }
 
         case "Delete" if !event.ctrlKey =>
+          event.preventDefault()
           if (start == end) {
-            if (start.atEndOfDocument) {
-              Callback.empty
-            } else if (start.atEndOfLine) {
-              replaceSelectionInState(replacement = "", start, (end plusIndex 1).toStartOfLine)
-            } else {
-              replaceSelectionInState(replacement = "", start, end plusOffset 1)
-            }
-          } else { // selection is nonEmpty
+            replaceSelectionInState(replacement = "", start, end plusOffsetInList 1)
+          } else {
             replaceSelectionInState(replacement = "", start, end)
           }
 
