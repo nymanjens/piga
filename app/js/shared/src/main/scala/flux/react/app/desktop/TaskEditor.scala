@@ -46,8 +46,15 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def plusOffset(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex, lineOffset + diff)
     def minusOffset(diff: Int): LineIndexWithOffset = plusOffset(-diff)
 
+    def toStartOfLine: LineIndexWithOffset = copy(lineOffset = 0)
     def toEndOfLine(implicit state: State): LineIndexWithOffset =
       copy(lineOffset = state.lines(lineIndex).length)
+
+    def atStartOfLine: Boolean = lineOffset == 0
+    def atEndOfLine(implicit state: State): Boolean = lineOffset == state.lines(lineIndex).length
+
+    def atStartOfDocument: Boolean = lineIndex == 0 && atStartOfLine
+    def atEndOfDocument(implicit state: State): Boolean = lineIndex == state.lines.size - 1 && atEndOfLine
   }
   private object LineIndexWithOffset {
     def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
@@ -120,13 +127,25 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case "Backspace" if !event.ctrlKey =>
           event.preventDefault()
           if (start == end) {
-            if (start.lineOffset > 0) {
-              replaceSelectionInState(replacement = "", start minusOffset 1, end)
-            } else if (start.lineIndex > 0) {
+            if (start.atStartOfDocument) {
+              Callback.empty
+            } else if (start.atStartOfLine) {
               replaceSelectionInState(replacement = "", (start minusIndex 1).toEndOfLine, end)
             } else {
-              // At start of document --> do nothing
+              replaceSelectionInState(replacement = "", start minusOffset 1, end)
+            }
+          } else { // selection is nonEmpty
+            replaceSelectionInState(replacement = "", start, end)
+          }
+
+        case "Delete" if !event.ctrlKey =>
+          if (start == end) {
+            if (start.atEndOfDocument) {
               Callback.empty
+            } else if (start.atEndOfLine) {
+              replaceSelectionInState(replacement = "", start, (end plusIndex 1).toStartOfLine)
+            } else {
+              replaceSelectionInState(replacement = "", start, end plusOffset 1)
             }
           } else { // selection is nonEmpty
             replaceSelectionInState(replacement = "", start, end)
@@ -135,7 +154,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case _ =>
           Callback.empty
       }
-      // TODO: Handle delete
       // TODO: Handle ctrl + backspace / delete
       // TODO: Handle ctrl+enter
       // TODO: Handle ctrl+v
