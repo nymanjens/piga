@@ -3,6 +3,7 @@ package flux.react.app
 import common.I18n
 import common.time.Clock
 import flux.action.Dispatcher
+import flux.react.app.desktop.DesktopTaskList
 import flux.stores._
 import models.access.JsEntityAccess
 import models.user.User
@@ -20,6 +21,7 @@ final class Module(implicit i18n: I18n,
 
   // Configuration of submodules
   private val userManagementModule = new flux.react.app.usermanagement.Module
+  private val desktopModule = new flux.react.app.desktop.Module
 
   implicit private lazy val menu: Menu = new Menu
   implicit private lazy val globalMessages: GlobalMessages = new GlobalMessages
@@ -34,5 +36,5 @@ final class Module(implicit i18n: I18n,
   implicit lazy val userProfile = userManagementModule.userProfile
   implicit lazy val userAdministration = userManagementModule.userAdministration
 
-  implicit lazy val desktopTaskList = new DesktopTaskList
+  implicit lazy val desktopTaskList = desktopModule.desktopTaskList
 }

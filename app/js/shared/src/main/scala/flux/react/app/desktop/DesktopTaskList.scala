@@ -1,7 +1,6 @@
-package flux.react.app
+package flux.react.app.desktop
 
-import scala.scalajs.js
-import common.{I18n, Unique}
+import common.I18n
 import common.LoggingUtils.logExceptions
 import flux.react.router.RouterContext
 import flux.react.uielements
@@ -11,13 +10,12 @@ import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.ReactContentEditable
 import models.access.EntityAccess
 import models.user.User
-import org.scalajs.dom
 import org.scalajs.dom.console
 import org.scalajs.dom.raw.KeyboardEvent
 
-import scala.scalajs.js.Dynamic
+import scala.scalajs.js
 
-private[app] final class DesktopTaskList(implicit user: User, entityAccess: EntityAccess, i18n: I18n) {
+private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess, i18n: I18n, taskEditor: TaskEditor) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -44,16 +42,17 @@ private[app] final class DesktopTaskList(implicit user: User, entityAccess: Enti
         Panel(
           title = "Piga Task List"
         ) {
-          <.span(
-            (for ((line, i) <- state.lines.zipWithIndex)
-              yield <.div(^.key := s"line-$i", "- ", line)).toVdomArray,
-            <.br(),
-            "----------------",
-            <.br(),
-            <.br(),
-            <.br(),
-            ReactContentEditable(toContent(state.lines), onChange = onChange, onKeyDown = handleKeyDown)
-          )
+//          <.span(
+//            (for ((line, i) <- state.lines.zipWithIndex)
+//              yield <.div(^.key := s"line-$i", "- ", line)).toVdomArray,
+//            <.br(),
+//            "----------------",
+//            <.br(),
+//            <.br(),
+//            <.br(),
+//            ReactContentEditable(toContent(state.lines), onChange = onChange, onKeyDown = handleKeyDown)
+//          )
+          <.span(taskEditor())
         }
       )
     }
