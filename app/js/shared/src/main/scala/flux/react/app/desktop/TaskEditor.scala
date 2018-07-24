@@ -32,6 +32,32 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class Props(router: RouterContext)
   private case class State(lines: Seq[String] = Seq("Hello", "World!"))
 
+  private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
+      extends Ordered[LineIndexWithOffset] {
+    import scala.math.Ordered.orderingToOrdered
+
+    def compare(that: LineIndexWithOffset): Int =
+      (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
+  }
+  private object LineIndexWithOffset {
+    def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
+      val anchor = LineIndexWithOffset.fromNode(selection.anchorNode, selection.anchorOffset)
+      val focus = LineIndexWithOffset.fromNode(selection.focusNode, selection.focusOffset)
+      if (anchor < focus) (anchor, focus) else (focus, anchor)
+    }
+
+    def fromNode(node: dom.raw.Node, offset: Int): LineIndexWithOffset =
+      LineIndexWithOffset(lineIndex = parentElement(node).getAttribute("num").toInt, lineOffset = offset)
+
+    private def parentElement(node: dom.raw.Node): dom.raw.Element = {
+      if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
+        node.asInstanceOf[dom.raw.Element]
+      } else {
+        parentElement(node.parentNode)
+      }
+    }
+  }
+
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
@@ -66,32 +92,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def onChange(event: ReactEventFromInput): Callback = LogExceptionsCallback {
       val sel: dom.raw.Selection = dom.window.getSelection()
       console.log("ONCHANGE EVENT", sel)
-    }
-
-    private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
-        extends Ordered[LineIndexWithOffset] {
-      import scala.math.Ordered.orderingToOrdered
-
-      def compare(that: LineIndexWithOffset): Int =
-        (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
-    }
-    private object LineIndexWithOffset {
-      def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
-        val anchor = LineIndexWithOffset.fromNode(selection.anchorNode, selection.anchorOffset)
-        val focus = LineIndexWithOffset.fromNode(selection.focusNode, selection.focusOffset)
-        if (anchor < focus) (anchor, focus) else (focus, anchor)
-      }
-
-      def fromNode(node: dom.raw.Node, offset: Int): LineIndexWithOffset =
-        LineIndexWithOffset(lineIndex = parentElement(node).getAttribute("num").toInt, lineOffset = offset)
-
-      private def parentElement(node: dom.raw.Node): dom.raw.Element = {
-        if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
-          node.asInstanceOf[dom.raw.Element]
-        } else {
-          parentElement(node.parentNode)
-        }
-      }
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = LogExceptionsCallback {
