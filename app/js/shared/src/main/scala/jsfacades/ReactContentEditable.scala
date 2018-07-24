@@ -4,6 +4,7 @@ import common.LoggingUtils
 import common.LoggingUtils.logExceptions
 import japgolly.scalajs.react.{Children, JsComponent}
 import org.scalajs.dom
+import org.scalajs.dom.raw.KeyboardEvent
 
 import scala.scalajs.js
 import scala2js.Converters._
@@ -13,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
 object ReactContentEditable {
 
   // **************** API ****************//
-  def apply(html: String, onChange: String => Unit) = {
+  def apply(html: String, onChange: String => Unit, onKeyDown: KeyboardEvent => Unit = _ => {}) = {
     val component = JsComponent[js.Object, Children.None, Null](RawComponent)
     component(
       Props(
@@ -21,7 +22,8 @@ object ReactContentEditable {
         onChange = evt =>
           logExceptions {
             onChange(evt.target.value.asInstanceOf[String])
-        }).toJsObject)
+        },
+        onKeyDown = onKeyDown).toJsObject)
   }
 
   // **************** Private inner types ****************//
@@ -29,12 +31,15 @@ object ReactContentEditable {
   @js.native
   private object RawComponent extends js.Object
 
-  private case class Props(html: String, onChange: js.Function1[js.Dynamic, Unit]) {
+  private case class Props(html: String,
+                           onChange: js.Function1[js.Dynamic, Unit],
+                           onKeyDown: js.Function1[KeyboardEvent, Unit]) {
     def toJsObject: js.Object =
       js.Dynamic.literal(
         html = html,
         disabled = false,
-        onChange = onChange
+        onChange = onChange,
+        onKeyDown = onKeyDown
       )
   }
 }
