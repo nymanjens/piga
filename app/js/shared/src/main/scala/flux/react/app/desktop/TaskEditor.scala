@@ -111,9 +111,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           setSelection(lineIndex = start.lineIndex + 1, lineOffset = 0)
         ).runNow()
       }
+      // TODO: Handle backspace / delete
       // TODO: Handle ctrl+v
       // TODO: Handle ctrl+(shift+)z
       // TODO: Handle selection bounds outside editor
+      // TODO: Disable ctrl+b, ctrl+u, ctrl+i
     }
 
     private def replaceSelectionInState(state: State,
