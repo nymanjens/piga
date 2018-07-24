@@ -34,10 +34,20 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
       extends Ordered[LineIndexWithOffset] {
+    require(lineOffset >= 0)
+
     import scala.math.Ordered.orderingToOrdered
 
-    def compare(that: LineIndexWithOffset): Int =
+    override def compare(that: LineIndexWithOffset): Int =
       (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
+
+    def plusIndex(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex + diff, lineOffset)
+    def minusIndex(diff: Int): LineIndexWithOffset = plusIndex(-diff)
+    def plusOffset(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex, lineOffset + diff)
+    def minusOffset(diff: Int): LineIndexWithOffset = plusOffset(-diff)
+
+    def toEndOfLine(implicit state: State): LineIndexWithOffset =
+      copy(lineOffset = state.lines(lineIndex).length)
   }
   private object LineIndexWithOffset {
     def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
@@ -94,74 +104,99 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       console.log("ONCHANGE EVENT", sel)
     }
 
-    private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = LogExceptionsCallback {
-      val eventKey = event.key
-      if (eventKey.length == 1 && !event.ctrlKey) {
-        event.preventDefault()
-        val (start, end) = LineIndexWithOffset.tupleFromSelection(dom.window.getSelection())
-        $.modState(
-          state => replaceSelectionInState(state, replacement = eventKey, start, end),
-          setSelection(lineIndex = start.lineIndex, lineOffset = start.lineOffset + 1)
-        ).runNow()
-      } else if (eventKey == "Enter" && !event.ctrlKey) {
-        event.preventDefault()
-        val (start, end) = LineIndexWithOffset.tupleFromSelection(dom.window.getSelection())
-        $.modState(
-          state => splitSelectionInState(state, start, end),
-          setSelection(lineIndex = start.lineIndex + 1, lineOffset = 0)
-        ).runNow()
+    private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
+      val (start, end) = LineIndexWithOffset.tupleFromSelection(dom.window.getSelection())
+      implicit val state = $.state.runNow()
+
+      event.key match {
+        case eventKey if eventKey.length == 1 && !event.ctrlKey =>
+          event.preventDefault()
+          replaceSelectionInState(replacement = eventKey, start, end)
+
+        case "Enter" if !event.ctrlKey =>
+          event.preventDefault()
+          splitSelectionInState(start, end)
+
+        case "Backspace" if !event.ctrlKey =>
+          event.preventDefault()
+          if (start == end) {
+            if (start.lineOffset > 0) {
+              replaceSelectionInState(replacement = "", start minusOffset 1, end)
+            } else if (start.lineIndex > 0) {
+              replaceSelectionInState(replacement = "", (start minusIndex 1).toEndOfLine, end)
+            } else {
+              // At start of document --> do nothing
+              Callback.empty
+            }
+          } else { // selection is nonEmpty
+            replaceSelectionInState(replacement = "", start, end)
+          }
+
+        case _ =>
+          Callback.empty
       }
-      // TODO: Handle backspace / delete
+      // TODO: Handle delete
+      // TODO: Handle ctrl + backspace / delete
+      // TODO: Handle ctrl+enter
       // TODO: Handle ctrl+v
       // TODO: Handle ctrl+(shift+)z
       // TODO: Handle selection bounds outside editor
       // TODO: Disable ctrl+b, ctrl+u, ctrl+i
+      // TODO: Handle tab to indent list
     }
 
-    private def replaceSelectionInState(state: State,
-                                        replacement: String,
+    private def replaceSelectionInState(replacement: String,
                                         start: LineIndexWithOffset,
-                                        end: LineIndexWithOffset): State = {
-      if (start == end) {
-        // Optimization
-        val selectedLine = state.lines(start.lineIndex)
-        val updatedLine = insertInString(selectedLine, index = start.lineOffset, replacement)
-        state.copy(lines = state.lines.updated(start.lineIndex, updatedLine))
-      } else {
-        val updatedLine =
-          state.lines(start.lineIndex).substring(0, start.lineOffset) +
-            replacement +
-            state.lines(end.lineIndex).substring(end.lineOffset)
-        state.copy(lines = state.lines.zipWithIndex.flatMap {
-          case (line, start.lineIndex)                                            => Some(updatedLine)
-          case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
-          case (line, _)                                                          => Some(line)
-        })
-      }
+                                        end: LineIndexWithOffset): Callback = {
+      $.modState(
+        state =>
+          if (start == end) {
+            // Optimization
+            val selectedLine = state.lines(start.lineIndex)
+            val updatedLine = insertInString(selectedLine, index = start.lineOffset, replacement)
+            state.copy(lines = state.lines.updated(start.lineIndex, updatedLine))
+          } else {
+            val updatedLine =
+              state.lines(start.lineIndex).substring(0, start.lineOffset) +
+                replacement +
+                state.lines(end.lineIndex).substring(end.lineOffset)
+            state.copy(lines = state.lines.zipWithIndex.flatMap {
+              case (line, start.lineIndex)                                            => Some(updatedLine)
+              case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
+              case (line, _)                                                          => Some(line)
+            })
+        },
+        setSelection(start plusOffset replacement.length)
+      )
     }
 
-    private def splitSelectionInState(state: State,
-                                      start: LineIndexWithOffset,
-                                      end: LineIndexWithOffset): State = {
-      val updatedStartLine = state.lines(start.lineIndex).substring(0, start.lineOffset)
-      val updatedEndLine = state.lines(end.lineIndex).substring(end.lineOffset)
+    private def splitSelectionInState(start: LineIndexWithOffset, end: LineIndexWithOffset): Callback = {
+      $.modState(
+        state => {
+          val updatedStartLine = state.lines(start.lineIndex).substring(0, start.lineOffset)
+          val updatedEndLine = state.lines(end.lineIndex).substring(end.lineOffset)
 
-      state.copy(lines = state.lines.zipWithIndex.flatMap {
-        case (line, start.lineIndex)                                            => Seq(updatedStartLine, updatedEndLine)
-        case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
-        case (line, _)                                                          => Seq(line)
-      })
+          state.copy(lines = state.lines.zipWithIndex.flatMap {
+            case (line, start.lineIndex)                                            => Seq(updatedStartLine, updatedEndLine)
+            case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
+            case (line, _)                                                          => Seq(line)
+          })
+        },
+        setSelection(LineIndexWithOffset(start.lineIndex + 1, 0))
+      )
     }
 
-    private def setSelection(lineIndex: Int, lineOffset: Int): Callback = LogExceptionsCallback {
-      val selectedLine = dom.document.getElementById(s"teli-$lineIndex")
-      require(!js.isUndefined(selectedLine), s"Could not find line with index teli-$lineIndex")
+    private def setSelection(indexWithOffset: LineIndexWithOffset): Callback = LogExceptionsCallback {
+      val selectedLine = dom.document.getElementById(s"teli-${indexWithOffset.lineIndex}")
+      require(
+        !js.isUndefined(selectedLine),
+        s"Could not find line with index teli-${indexWithOffset.lineIndex}")
 
       val range = dom.document.createRange()
-      if (lineOffset == 0) {
+      if (indexWithOffset.lineOffset == 0) {
         range.setStart(selectedLine, 0)
       } else {
-        range.setStart(selectedLine.firstChild, lineOffset)
+        range.setStart(selectedLine.firstChild, indexWithOffset.lineOffset)
       }
 
       val selection = dom.window.getSelection()
