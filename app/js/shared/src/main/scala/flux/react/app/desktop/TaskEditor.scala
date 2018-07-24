@@ -68,18 +68,25 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       console.log("ONCHANGE EVENT", sel)
     }
 
-    private case class IndexWithOffset(lineIndex: Int, lineOffset: Int)
+    private case class IndexWithOffset(lineIndex: Int, lineOffset: Int) extends Ordered[IndexWithOffset] {
+      import scala.math.Ordered.orderingToOrdered
+
+      def compare(that: IndexWithOffset): Int =
+        (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
+    }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = LogExceptionsCallback {
       val eventKey = event.key
       if (eventKey.length == 1 && !event.ctrlKey) {
         val selection: dom.raw.Selection = dom.window.getSelection()
-        val start = IndexWithOffset(
-          lineIndex = parentElement(selection.anchorNode).getAttribute("num").toInt,
-          lineOffset = selection.anchorOffset)
-        val end = IndexWithOffset(
+        val anchor =
+          IndexWithOffset(
+            lineIndex = parentElement(selection.anchorNode).getAttribute("num").toInt,
+            lineOffset = selection.anchorOffset)
+        val focus = IndexWithOffset(
           lineIndex = parentElement(selection.focusNode).getAttribute("num").toInt,
           lineOffset = selection.focusOffset)
+        val (start, end) = if (anchor < focus) (anchor, focus) else (focus, anchor)
 
         event.preventDefault()
 
