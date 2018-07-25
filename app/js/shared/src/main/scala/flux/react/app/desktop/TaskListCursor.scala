@@ -2,6 +2,7 @@ package flux.react.app.desktop
 
 import org.scalajs.dom
 
+import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
 private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
@@ -16,6 +17,7 @@ private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
   def minusOffset(diff: Int): TaskListCursor = plusOffset(-diff)
 
   def plusOffsetInList(diff: Int)(implicit tasks: Seq[Task]): TaskListCursor = {
+    @tailrec
     def fixOffset(c: TaskListCursor): TaskListCursor = c.offsetInTask match {
       case offset if offset < 0 =>
         if (c.listIndex == 0) {
@@ -34,6 +36,40 @@ private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
     fixOffset(TaskListCursor(listIndex, offsetInTask + diff))
   }
   def minusOffsetInList(diff: Int)(implicit tasks: Seq[Task]): TaskListCursor = plusOffsetInList(-diff)
+
+  def plusWord(implicit tasks: Seq[Task]): TaskListCursor = moveWord(step = 1)
+  def minusWord(implicit tasks: Seq[Task]): TaskListCursor = moveWord(step = -1)
+  private def moveWord(step: Int)(implicit tasks: Seq[Task]): TaskListCursor = {
+    val result = copy(offsetInTask = {
+      val task = tasks(listIndex).content
+      @tailrec
+      def move(offsetInTask: Int, seenWord: Boolean = false): Int = {
+        val nextOffset = offsetInTask + step
+        if (nextOffset < 0 || nextOffset > task.length) {
+          offsetInTask
+        } else {
+          val currentChar = if (step > 0) task.charAt(offsetInTask) else task.charAt(nextOffset)
+          val currentCharIsWord = currentChar.isLetterOrDigit
+          if (currentCharIsWord) {
+            move(nextOffset, seenWord = true)
+          } else {
+            if (seenWord) {
+              offsetInTask
+            } else {
+              move(nextOffset, seenWord = false)
+            }
+          }
+        }
+      }
+      move(offsetInTask)
+    })
+    if (this == result) {
+      // No movement happened --> move to the next/previous line
+      plusOffsetInList(step)
+    } else {
+      result
+    }
+  }
 }
 private object TaskListCursor {
   def tupleFromSelection(selection: dom.raw.Selection): (TaskListCursor, TaskListCursor) = {

@@ -85,8 +85,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           if (start == end) {
             if (ctrlPressed) {
-              // TODO: Fix
-              replaceSelectionInState(replacement = "", start, end)
+              replaceSelectionInState(replacement = "", start.minusWord, end)
             } else {
               replaceSelectionInState(replacement = "", start minusOffsetInList 1, end)
             }
@@ -94,10 +93,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             replaceSelectionInState(replacement = "", start, end)
           }
 
-        case "Delete" if !ctrlPressed =>
+        case "Delete" =>
           event.preventDefault()
           if (start == end) {
-            replaceSelectionInState(replacement = "", start, end plusOffsetInList 1)
+            if (ctrlPressed) {
+              replaceSelectionInState(replacement = "", start, end.plusWord)
+            } else {
+              replaceSelectionInState(replacement = "", start, end plusOffsetInList 1)
+            }
           } else {
             replaceSelectionInState(replacement = "", start, end)
           }
@@ -105,7 +108,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case _ =>
           Callback.empty
       }
-      // TODO: Handle ctrl + backspace / delete
       // TODO: Fix trailing / multiple spaces
       // TODO: Handle ctrl+enter
       // TODO: Handle ctrl+x, ctrl+v
