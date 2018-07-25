@@ -48,7 +48,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   VdomAttr("num") := i,
-                  task.content
+                  task.content.replace(" ", "\u00A0")
                 )).toVdomArray
           )
         ),
@@ -58,7 +58,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- ", task.content)).toVdomArray
+          yield <.div(^.key := s"task-$i", "- ", task.content.replace(" ", "\u00A0"))).toVdomArray
       )
     }
 
@@ -108,7 +108,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case _ =>
           Callback.empty
       }
-      // TODO: Fix trailing / multiple spaces
       // TODO: Handle ctrl+enter
       // TODO: Handle ctrl+x, ctrl+v
       // TODO: Handle ctrl+(shift+)z
