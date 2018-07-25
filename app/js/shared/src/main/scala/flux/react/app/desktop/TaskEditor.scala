@@ -2,6 +2,7 @@ package flux.react.app.desktop
 
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import flux.react.app.desktop.DomWalker.NodeWithOffset
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -29,7 +30,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
-  private case class State(tasks: Seq[Task] = Seq(Task("Hello"), Task("World!")))
+  private case class State(tasks: Seq[Task] = Seq(Task("Hel\nlo"), Task("World!")))
 
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
@@ -48,7 +49,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   VdomAttr("num") := i,
-                  task.content.replace(" ", "\u00A0")
+                  contentToHtml(task.content)
                 )).toVdomArray
           )
         ),
@@ -58,8 +59,24 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- ", task.content.replace(" ", "\u00A0"))).toVdomArray
+          yield <.div(^.key := s"task-$i", "- ", contentToHtml(task.content))).toVdomArray
       )
+    }
+
+    private def contentToHtml(content: String): VdomNode = {
+      val contentWithSpaces = content.replace(" ", "\u00A0")
+
+      def joinWithBr(lines: Stream[String], index: Int = 0): Stream[VdomNode] = lines match {
+        case a #:: b #:: rest =>
+          <.span(^.key := index, a) #::
+            (<.br(^.key := index + 1): VdomNode) #::
+            // Prepend b with newline so offsets keep working
+            joinWithBr(("\n" + b) #:: rest, index + 2)
+        case a #:: Stream.Empty => <.span(^.key := index, a) #:: Stream.empty[VdomNode]
+        case Stream.Empty       => Stream.empty[VdomNode]
+      }
+      val lines = joinWithBr(contentWithSpaces.split('\n').toStream).toVdomArray
+      lines
     }
 
     private def onChange(event: ReactEventFromInput): Callback = LogExceptionsCallback {
@@ -77,9 +94,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           replaceSelectionInState(replacement = eventKey, start, end)
 
-        case "Enter" if !ctrlPressed =>
+        case "Enter" =>
           event.preventDefault()
-          splitSelectionInState(start, end)
+          if (ctrlPressed) {
+            replaceSelectionInState(replacement = "\n", start, end)
+          } else {
+            splitSelectionInState(start, end)
+          }
 
         case "Backspace" =>
           event.preventDefault()
@@ -109,8 +130,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           Callback.empty
       }
       // TODO: Handle ctrl+enter
-      // TODO: Handle ctrl+x, ctrl+v
       // TODO: Handle ctrl+(shift+)z
+      // TODO: Handle ctrl+x, ctrl+v
+
       // TODO: Handle selection bounds outside editor
       // TODO: Disable ctrl+b, ctrl+u, ctrl+i
       // TODO: Handle tab to indent list
@@ -158,22 +180,24 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       )
     }
 
-    private def setSelection(indexWithOffset: TaskListCursor): Callback = LogExceptionsCallback {
-      val selectedTask = dom.document.getElementById(s"teli-${indexWithOffset.listIndex}")
-      require(
-        !js.isUndefined(selectedTask),
-        s"Could not find task with index teli-${indexWithOffset.listIndex}")
+    private def setSelection(cursor: TaskListCursor): Callback = LogExceptionsCallback {
+      val selectedTask = dom.document.getElementById(s"teli-${cursor.listIndex}")
+      require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.listIndex}")
 
-      val range = dom.document.createRange()
-      if (indexWithOffset.offsetInTask == 0) {
-        range.setStart(selectedTask, 0)
-      } else {
-        range.setStart(selectedTask.firstChild, indexWithOffset.offsetInTask)
+      DomWalker.depthFirstPreOrder(selectedTask).find {
+        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+          if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
+            val range = dom.document.createRange()
+            range.setStart(node, cursor.offsetInTask - offsetSoFar)
+            val selection = dom.window.getSelection()
+            selection.removeAllRanges()
+            selection.addRange(range)
+
+            true
+          } else {
+            false
+          }
       }
-
-      val selection = dom.window.getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
     }
 
     private def insertInString(s: String, index: Int, toInsert: String): String = {

@@ -1,5 +1,6 @@
 package flux.react.app.desktop
 
+import flux.react.app.desktop.DomWalker.NodeWithOffset
 import org.scalajs.dom
 
 import scala.annotation.tailrec
@@ -78,14 +79,19 @@ private object TaskListCursor {
     if (anchor < focus) (anchor, focus) else (focus, anchor)
   }
 
-  def fromNode(node: dom.raw.Node, offset: Int): TaskListCursor =
-    TaskListCursor(listIndex = parentElement(node).getAttribute("num").toInt, offsetInTask = offset)
+  def fromNode(node: dom.raw.Node, offset: Int): TaskListCursor = {
+    val parentLi = parentLiElement(node)
+    val nodeWithOffset = DomWalker.depthFirstPreOrder(parentLi).find(_.node isEqualNode node).get
+    TaskListCursor(
+      listIndex = parentLi.getAttribute("num").toInt,
+      offsetInTask = nodeWithOffset.offsetSoFar + offset)
+  }
 
-  private def parentElement(node: dom.raw.Node): dom.raw.Element = {
-    if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
+  private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
+    if (node.nodeType == dom.raw.Node.ELEMENT_NODE && node.asInstanceOf[dom.raw.Element].tagName == "LI") {
       node.asInstanceOf[dom.raw.Element]
     } else {
-      parentElement(node.parentNode)
+      parentLiElement(node.parentNode)
     }
   }
 }
