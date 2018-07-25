@@ -68,22 +68,23 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      implicit val tasks = $.state.runNow().tasks
       val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      implicit val tasks = $.state.runNow().tasks
+      val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
 
       event.key match {
-        case eventKey if eventKey.length == 1 && !event.ctrlKey =>
+        case eventKey if eventKey.length == 1 && !ctrlPressed =>
           event.preventDefault()
           replaceSelectionInState(replacement = eventKey, start, end)
 
-        case "Enter" if !event.ctrlKey =>
+        case "Enter" if !ctrlPressed =>
           event.preventDefault()
           splitSelectionInState(start, end)
 
         case "Backspace" =>
           event.preventDefault()
           if (start == end) {
-            if (event.ctrlKey) {
+            if (ctrlPressed) {
               // TODO: Fix
               replaceSelectionInState(replacement = "", start, end)
             } else {
@@ -93,7 +94,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             replaceSelectionInState(replacement = "", start, end)
           }
 
-        case "Delete" if !event.ctrlKey =>
+        case "Delete" if !ctrlPressed =>
           event.preventDefault()
           if (start == end) {
             replaceSelectionInState(replacement = "", start, end plusOffsetInList 1)
