@@ -8,10 +8,8 @@ import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
-import org.scalajs
 import org.scalajs.dom
-import org.scalajs.dom.raw.KeyboardEvent
-import org.scalajs.dom.{console, document}
+import org.scalajs.dom.console
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
@@ -31,58 +29,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
-  private case class State(lines: Seq[String] = Seq("Hello", "World!"))
-
-  private case class LineIndexWithOffset(lineIndex: Int, lineOffset: Int)
-      extends Ordered[LineIndexWithOffset] {
-
-    override def compare(that: LineIndexWithOffset): Int = {
-      import scala.math.Ordered.orderingToOrdered
-      (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
-    }
-
-    def plusOffset(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex, lineOffset + diff)
-    def minusOffset(diff: Int): LineIndexWithOffset = plusOffset(-diff)
-
-    def plusOffsetInList(diff: Int)(implicit state: State): LineIndexWithOffset = {
-      def fixOffset(iwo: LineIndexWithOffset): LineIndexWithOffset = iwo.lineOffset match {
-        case offset if offset < 0 =>
-          if (iwo.lineIndex == 0) {
-            LineIndexWithOffset(0, 0)
-          } else {
-            fixOffset(
-              LineIndexWithOffset(iwo.lineIndex - 1, state.lines(iwo.lineIndex - 1).length + offset + 1))
-          }
-        case offset if offset > state.lines(iwo.lineIndex).length =>
-          if (iwo.lineIndex == state.lines.length - 1) {
-            LineIndexWithOffset(state.lines.length - 1, state.lines.last.length)
-          } else {
-            fixOffset(LineIndexWithOffset(iwo.lineIndex + 1, offset - state.lines(iwo.lineIndex).length - 1))
-          }
-        case _ => iwo
-      }
-      fixOffset(LineIndexWithOffset(lineIndex, lineOffset + diff))
-    }
-    def minusOffsetInList(diff: Int)(implicit state: State): LineIndexWithOffset = plusOffsetInList(-diff)
-  }
-  private object LineIndexWithOffset {
-    def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
-      val anchor = LineIndexWithOffset.fromNode(selection.anchorNode, selection.anchorOffset)
-      val focus = LineIndexWithOffset.fromNode(selection.focusNode, selection.focusOffset)
-      if (anchor < focus) (anchor, focus) else (focus, anchor)
-    }
-
-    def fromNode(node: dom.raw.Node, offset: Int): LineIndexWithOffset =
-      LineIndexWithOffset(lineIndex = parentElement(node).getAttribute("num").toInt, lineOffset = offset)
-
-    private def parentElement(node: dom.raw.Node): dom.raw.Element = {
-      if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
-        node.asInstanceOf[dom.raw.Element]
-      } else {
-        parentElement(node.parentNode)
-      }
-    }
-  }
+  private case class State(tasks: Seq[Task] = Seq(Task("Hello"), Task("World!")))
 
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
@@ -95,13 +42,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.onBlur ==> onChange,
           ^.onKeyDown ==> handleKeyDown,
           <.ul(
-            (for ((line, i) <- state.lines.zipWithIndex)
+            (for ((task, i) <- state.tasks.zipWithIndex)
               yield
                 <.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   VdomAttr("num") := i,
-                  line
+                  task.content
                 )).toVdomArray
           )
         ),
@@ -110,8 +57,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         <.br(),
-        (for ((line, i) <- state.lines.zipWithIndex)
-          yield <.div(^.key := s"line-$i", "- ", line)).toVdomArray
+        (for ((task, i) <- state.tasks.zipWithIndex)
+          yield <.div(^.key := s"task-$i", "- ", task.content)).toVdomArray
       )
     }
 
@@ -121,8 +68,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      val (start, end) = LineIndexWithOffset.tupleFromSelection(dom.window.getSelection())
-      implicit val state = $.state.runNow()
+      implicit val tasks = $.state.runNow().tasks
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
 
       event.key match {
         case eventKey if eventKey.length == 1 && !event.ctrlKey =>
@@ -160,7 +107,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       // TODO: Handle ctrl + backspace / delete
       // TODO: Fix trailing / multiple spaces
       // TODO: Handle ctrl+enter
-      // TODO: Handle ctrl+v
+      // TODO: Handle ctrl+x, ctrl+v
       // TODO: Handle ctrl+(shift+)z
       // TODO: Handle selection bounds outside editor
       // TODO: Disable ctrl+b, ctrl+u, ctrl+i
@@ -168,57 +115,58 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def replaceSelectionInState(replacement: String,
-                                        start: LineIndexWithOffset,
-                                        end: LineIndexWithOffset): Callback = {
+                                        start: TaskListCursor,
+                                        end: TaskListCursor): Callback = {
       $.modState(
         state =>
           if (start == end) {
             // Optimization
-            val selectedLine = state.lines(start.lineIndex)
-            val updatedLine = insertInString(selectedLine, index = start.lineOffset, replacement)
-            state.copy(lines = state.lines.updated(start.lineIndex, updatedLine))
+            val selectedTask = state.tasks(start.listIndex)
+            val updatedTask =
+              Task(insertInString(selectedTask.content, index = start.offsetInTask, replacement))
+            state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
           } else {
-            val updatedLine =
-              state.lines(start.lineIndex).substring(0, start.lineOffset) +
+            val updatedTask = Task(
+              state.tasks(start.listIndex).content.substring(0, start.offsetInTask) +
                 replacement +
-                state.lines(end.lineIndex).substring(end.lineOffset)
-            state.copy(lines = state.lines.zipWithIndex.flatMap {
-              case (line, start.lineIndex)                                            => Some(updatedLine)
-              case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
-              case (line, _)                                                          => Some(line)
+                state.tasks(end.listIndex).content.substring(end.offsetInTask))
+            state.copy(tasks = state.tasks.zipWithIndex.flatMap {
+              case (task, start.`listIndex`)                                          => Some(updatedTask)
+              case (task, index) if start.listIndex < index && index <= end.listIndex => None
+              case (task, _)                                                          => Some(task)
             })
         },
         setSelection(start plusOffset replacement.length)
       )
     }
 
-    private def splitSelectionInState(start: LineIndexWithOffset, end: LineIndexWithOffset): Callback = {
+    private def splitSelectionInState(start: TaskListCursor, end: TaskListCursor): Callback = {
       $.modState(
         state => {
-          val updatedStartLine = state.lines(start.lineIndex).substring(0, start.lineOffset)
-          val updatedEndLine = state.lines(end.lineIndex).substring(end.lineOffset)
+          val updatedStartTask = Task(state.tasks(start.listIndex).content.substring(0, start.offsetInTask))
+          val updatedEndTask = Task(state.tasks(end.listIndex).content.substring(end.offsetInTask))
 
-          state.copy(lines = state.lines.zipWithIndex.flatMap {
-            case (line, start.lineIndex)                                            => Seq(updatedStartLine, updatedEndLine)
-            case (line, index) if start.lineIndex < index && index <= end.lineIndex => None
-            case (line, _)                                                          => Seq(line)
+          state.copy(tasks = state.tasks.zipWithIndex.flatMap {
+            case (task, start.`listIndex`)                                          => Seq(updatedStartTask, updatedEndTask)
+            case (task, index) if start.listIndex < index && index <= end.listIndex => None
+            case (task, _)                                                          => Seq(task)
           })
         },
-        setSelection(LineIndexWithOffset(start.lineIndex + 1, 0))
+        setSelection(TaskListCursor(start.listIndex + 1, 0))
       )
     }
 
-    private def setSelection(indexWithOffset: LineIndexWithOffset): Callback = LogExceptionsCallback {
-      val selectedLine = dom.document.getElementById(s"teli-${indexWithOffset.lineIndex}")
+    private def setSelection(indexWithOffset: TaskListCursor): Callback = LogExceptionsCallback {
+      val selectedTask = dom.document.getElementById(s"teli-${indexWithOffset.listIndex}")
       require(
-        !js.isUndefined(selectedLine),
-        s"Could not find line with index teli-${indexWithOffset.lineIndex}")
+        !js.isUndefined(selectedTask),
+        s"Could not find task with index teli-${indexWithOffset.listIndex}")
 
       val range = dom.document.createRange()
-      if (indexWithOffset.lineOffset == 0) {
-        range.setStart(selectedLine, 0)
+      if (indexWithOffset.offsetInTask == 0) {
+        range.setStart(selectedTask, 0)
       } else {
-        range.setStart(selectedLine.firstChild, indexWithOffset.lineOffset)
+        range.setStart(selectedTask.firstChild, indexWithOffset.offsetInTask)
       }
 
       val selection = dom.window.getSelection()
@@ -233,8 +181,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       before + toInsert + after
     }
 
-    private def toContent(lines: Seq[String]): String = {
-      s"<ul><li>${lines.mkString("</li><li>")}</li></ul>"
+    private def toContent(tasks: Seq[String]): String = {
+      s"<ul><li>${tasks.mkString("</li><li>")}</li></ul>"
     }
   }
 }
