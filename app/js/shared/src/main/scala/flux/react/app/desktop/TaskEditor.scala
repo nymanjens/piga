@@ -10,9 +10,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
 import org.scalajs
 import org.scalajs.dom
+import org.scalajs.dom.raw.KeyboardEvent
 import org.scalajs.dom.{console, document}
-import scala.collection.immutable.Seq
 
+import scala.collection.immutable.Seq
 import scala.scalajs.js
 
 private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n) {
@@ -40,8 +41,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       (this.lineIndex, this.lineOffset) compare ((that.lineIndex, that.lineOffset))
     }
 
-    def plusIndex(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex + diff, lineOffset)
-    def minusIndex(diff: Int): LineIndexWithOffset = plusIndex(-diff)
     def plusOffset(diff: Int): LineIndexWithOffset = LineIndexWithOffset(lineIndex, lineOffset + diff)
     def minusOffset(diff: Int): LineIndexWithOffset = plusOffset(-diff)
 
@@ -65,16 +64,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       fixOffset(LineIndexWithOffset(lineIndex, lineOffset + diff))
     }
     def minusOffsetInList(diff: Int)(implicit state: State): LineIndexWithOffset = plusOffsetInList(-diff)
-
-    def toStartOfLine: LineIndexWithOffset = copy(lineOffset = 0)
-    def toEndOfLine(implicit state: State): LineIndexWithOffset =
-      copy(lineOffset = state.lines(lineIndex).length)
-
-    def atStartOfLine: Boolean = lineOffset == 0
-    def atEndOfLine(implicit state: State): Boolean = lineOffset == state.lines(lineIndex).length
-
-    def atStartOfList: Boolean = lineIndex == 0 && atStartOfLine
-    def atEndOfList(implicit state: State): Boolean = lineIndex == state.lines.size - 1 && atEndOfLine
   }
   private object LineIndexWithOffset {
     def tupleFromSelection(selection: dom.raw.Selection): (LineIndexWithOffset, LineIndexWithOffset) = {
@@ -144,10 +133,15 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           splitSelectionInState(start, end)
 
-        case "Backspace" if !event.ctrlKey =>
+        case "Backspace" =>
           event.preventDefault()
           if (start == end) {
-            replaceSelectionInState(replacement = "", start minusOffsetInList 1, end)
+            if (event.ctrlKey) {
+              // TODO: Fix
+              replaceSelectionInState(replacement = "", start, end)
+            } else {
+              replaceSelectionInState(replacement = "", start minusOffsetInList 1, end)
+            }
           } else {
             replaceSelectionInState(replacement = "", start, end)
           }
@@ -164,6 +158,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           Callback.empty
       }
       // TODO: Handle ctrl + backspace / delete
+      // TODO: Fix trailing / multiple spaces
       // TODO: Handle ctrl+enter
       // TODO: Handle ctrl+v
       // TODO: Handle ctrl+(shift+)z
