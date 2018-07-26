@@ -31,12 +31,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
-  private case class State(tasks: Seq[Task] = Seq(Task("Hel\nlo"), Task("World!")))
+  private case class State(tasks: Seq[Task] = Seq(Task("Hel\nlo\n\n\n\n\nEND"), Task("World!")))
 
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
       <.span(
+        ^.className := "task-editor",
         <.div(
           ^.contentEditable := true,
           VdomAttr("suppressContentEditableWarning") := true,
