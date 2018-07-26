@@ -1,6 +1,7 @@
 package flux.react.app.desktop
 
-import common.I18n
+import common.GuavaReplacement.Splitter
+import common.{GuavaReplacement, I18n}
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.react.app.desktop.DomWalker.NodeWithOffset
 import flux.react.router.RouterContext
@@ -75,7 +76,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case a #:: Stream.Empty => <.span(^.key := index, a) #:: Stream.empty[VdomNode]
         case Stream.Empty       => Stream.empty[VdomNode]
       }
-      val lines = joinWithBr(contentWithSpaces.split('\n').toStream).toVdomArray
+      val lines = joinWithBr(Splitter.on('\n').split(contentWithSpaces).toStream).toVdomArray
       lines
     }
 
