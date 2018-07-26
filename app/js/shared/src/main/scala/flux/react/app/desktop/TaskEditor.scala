@@ -125,13 +125,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case _ =>
           Callback.empty
       }
-      // TODO: Handle ctrl+enter
-      // TODO: Handle ctrl+(shift+)z
-      // TODO: Handle ctrl+x, ctrl+v
-
-      // TODO: Handle selection bounds outside editor
-      // TODO: Disable ctrl+b, ctrl+u, ctrl+i
-      // TODO: Handle tab to indent list
     }
 
     private def replaceSelectionInState(replacement: String,
