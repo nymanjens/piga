@@ -69,6 +69,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val contentWithSpaces = content.replace(" ", "\u00A0")
 
       def joinWithBr(lines: Stream[String], index: Int = 0): Stream[VdomNode] = lines match {
+        // Fix for tailing newline issue. The last <br> is seemingly ignored unless a non-empty element is trailing
+        case a #:: "" #:: Stream.Empty =>
+          <.span(^.key := index, a) #::
+            (<.br(^.key := index + 1): VdomNode) #::
+            (<.span(^.key := index + 2, ^.dangerouslySetInnerHtml := "&nbsp;"): VdomNode) #::
+            Stream.empty[VdomNode]
         case a #:: b #:: rest =>
           <.span(^.key := index, a) #::
             (<.br(^.key := index + 1): VdomNode) #::
