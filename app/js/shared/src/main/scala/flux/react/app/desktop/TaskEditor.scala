@@ -67,16 +67,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def contentToHtml(content: String): VdomNode = {
       val contentWithSpaces = content.replace(" ", "\u00A0")
 
-      def joinWithBr(lines: Stream[String], index: Int = 0): Stream[VdomNode] = lines match {
-        case a #:: b #:: rest =>
-          <.span(^.key := index, a) #::
-            (<.br(^.key := index + 1): VdomNode) #::
-            // Prepend b with newline so offsets keep working
-            joinWithBr(("\n" + b) #:: rest, index + 2)
-        case a #:: Stream.Empty => <.span(^.key := index, a) #:: Stream.empty[VdomNode]
-        case Stream.Empty       => Stream.empty[VdomNode]
-      }
-      val lines = joinWithBr(Splitter.on('\n').split(contentWithSpaces).toStream).toVdomArray
+      def spaceIfNotFirst(index: Int): String = if (index == 0) "" else "*"
+      def joinAsDiv(lines: Iterable[String]): VdomArray = {
+        for ((line, index) <- lines.zipWithIndex) yield <.div(^.key := index, spaceIfNotFirst(index) + line)
+      }.toVdomArray
+      val lines = joinAsDiv(Splitter.on('\n').split(contentWithSpaces))
       lines
     }
 
