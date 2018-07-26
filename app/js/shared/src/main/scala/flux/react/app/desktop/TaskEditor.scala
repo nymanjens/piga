@@ -82,6 +82,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
       val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
       implicit val tasks = $.state.runNow().tasks
+      val shiftPressed = event.shiftKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
 
       event.key match {
@@ -91,7 +92,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
         case "Enter" =>
           event.preventDefault()
-          if (ctrlPressed) {
+          if (shiftPressed) {
             replaceSelectionInState(replacement = "\n", start, end)
           } else {
             splitSelectionInState(start, end)
