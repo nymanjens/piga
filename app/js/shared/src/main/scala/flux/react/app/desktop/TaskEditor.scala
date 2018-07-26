@@ -61,30 +61,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- ", contentToHtml(task.content))).toVdomArray
+          yield <.div(^.key := s"task-$i", "- ", <.pre(contentToHtml(task.content)))).toVdomArray
       )
     }
 
     private def contentToHtml(content: String): VdomNode = {
-      val contentWithSpaces = content.replace(" ", "\u00A0")
-
-      def joinWithBr(lines: Stream[String], index: Int = 0): Stream[VdomNode] = lines match {
-        // Fix for tailing newline issue. The last <br> is seemingly ignored unless a non-empty element is trailing
-        case a #:: "" #:: Stream.Empty =>
-          <.span(^.key := index, a) #::
-            (<.br(^.key := index + 1): VdomNode) #::
-            (<.span(^.key := index + 2, ^.dangerouslySetInnerHtml := "&nbsp;"): VdomNode) #::
-            Stream.empty[VdomNode]
-        case a #:: b #:: rest =>
-          <.span(^.key := index, a) #::
-            (<.br(^.key := index + 1): VdomNode) #::
-            // Prepend b with newline so offsets keep working
-            joinWithBr(("\n" + b) #:: rest, index + 2)
-        case a #:: Stream.Empty => <.span(^.key := index, a) #:: Stream.empty[VdomNode]
-        case Stream.Empty       => Stream.empty[VdomNode]
+      // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
+      if (content.endsWith("\n")) {
+        content + " "
+      } else {
+        content
       }
-      val lines = joinWithBr(Splitter.on('\n').split(contentWithSpaces).toStream).toVdomArray
-      lines
     }
 
     private def onChange(event: ReactEventFromInput): Callback = LogExceptionsCallback {
