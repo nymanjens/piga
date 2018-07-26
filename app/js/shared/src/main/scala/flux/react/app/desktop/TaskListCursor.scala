@@ -81,7 +81,7 @@ private object TaskListCursor {
 
   def fromNode(node: dom.raw.Node, offset: Int): TaskListCursor = {
     val parentLi = parentLiElement(node)
-    val nodeWithOffset = DomWalker.depthFirstPreOrder(parentLi).find(_.node isEqualNode node).get
+    val nodeWithOffset = DomWalker.depthFirstPreOrder(parentLi).find(_.node isSameNode node).get
     TaskListCursor(
       listIndex = parentLi.getAttribute("num").toInt,
       offsetInTask = nodeWithOffset.offsetSoFar + offset)
