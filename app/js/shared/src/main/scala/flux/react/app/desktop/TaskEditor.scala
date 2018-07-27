@@ -1,7 +1,7 @@
 package flux.react.app.desktop
 
 import common.GuavaReplacement.Splitter
-import common.{GuavaReplacement, I18n}
+import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.react.app.desktop.DomWalker.NodeWithOffset
 import flux.react.router.RouterContext
@@ -17,6 +17,9 @@ import scala.collection.immutable.Seq
 import scala.scalajs.js
 
 private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n) {
+
+  /** Character that isn't expected to show up in normal text that is used to indicate the separation of two tasks */
+  private val TASK_DELIMITER: Char = 23 // (End of Transmission Block)
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -95,7 +98,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           if (shiftPressed) {
             replaceSelectionInState(replacement = "\n", start, end)
           } else {
-            splitSelectionInState(start, end)
+            replaceSelectionInState(replacement = TASK_DELIMITER.toString, start, end)
           }
 
         case "Backspace" =>
@@ -130,42 +133,34 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def replaceSelectionInState(replacement: String,
                                         start: TaskListCursor,
                                         end: TaskListCursor): Callback = {
+      val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
+
       $.modState(
         state =>
-          if (start == end) {
+          if (start == end && replacements.length == 1) {
             // Optimization
             val selectedTask = state.tasks(start.listIndex)
             val updatedTask =
               Task(insertInString(selectedTask.content, index = start.offsetInTask, replacement))
             state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
           } else {
-            val updatedTask = Task(
-              state.tasks(start.listIndex).content.substring(0, start.offsetInTask) +
-                replacement +
-                state.tasks(end.listIndex).content.substring(end.offsetInTask))
+            val updatedTasks = for ((replacementPart, i) <- replacements.zipWithIndex)
+              yield {
+                def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
+                Task(
+                  ifIndexOrEmpty(0)(state.tasks(start.listIndex).content.substring(0, start.offsetInTask)) +
+                    replacementPart +
+                    ifIndexOrEmpty(replacements.length - 1)(
+                      state.tasks(end.listIndex).content.substring(end.offsetInTask))
+                )
+              }
             state.copy(tasks = state.tasks.zipWithIndex.flatMap {
-              case (task, start.`listIndex`)                                          => Some(updatedTask)
-              case (task, index) if start.listIndex < index && index <= end.listIndex => None
-              case (task, _)                                                          => Some(task)
+              case (task, start.`listIndex`)                                          => updatedTasks
+              case (task, index) if start.listIndex < index && index <= end.listIndex => Seq()
+              case (task, _)                                                          => Seq(task)
             })
         },
-        setSelection(start plusOffset replacement.length)
-      )
-    }
-
-    private def splitSelectionInState(start: TaskListCursor, end: TaskListCursor): Callback = {
-      $.modState(
-        state => {
-          val updatedStartTask = Task(state.tasks(start.listIndex).content.substring(0, start.offsetInTask))
-          val updatedEndTask = Task(state.tasks(end.listIndex).content.substring(end.offsetInTask))
-
-          state.copy(tasks = state.tasks.zipWithIndex.flatMap {
-            case (task, start.`listIndex`)                                          => Seq(updatedStartTask, updatedEndTask)
-            case (task, index) if start.listIndex < index && index <= end.listIndex => None
-            case (task, _)                                                          => Seq(task)
-          })
-        },
-        setSelection(TaskListCursor(start.listIndex + 1, 0))
+        setSelection((start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
       )
     }
 
@@ -194,10 +189,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       require(index <= s.length, s"index = $index > length = ${s.length}")
       val (before, after) = s.splitAt(index)
       before + toInsert + after
-    }
-
-    private def toContent(tasks: Seq[String]): String = {
-      s"<ul><li>${tasks.mkString("</li><li>")}</li></ul>"
     }
   }
 }

@@ -14,6 +14,10 @@ private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
     (this.listIndex, this.offsetInTask) compare ((that.listIndex, that.offsetInTask))
   }
 
+  def proceedNTasks(n: Int): TaskListCursor = n match {
+    case 0 => this
+    case _ => TaskListCursor(listIndex + n, 0)
+  }
   def plusOffset(diff: Int): TaskListCursor = TaskListCursor(listIndex, offsetInTask + diff)
   def minusOffset(diff: Int): TaskListCursor = plusOffset(-diff)
 
