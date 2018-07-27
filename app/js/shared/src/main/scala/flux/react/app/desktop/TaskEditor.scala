@@ -44,9 +44,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.div(
           ^.contentEditable := true,
           VdomAttr("suppressContentEditableWarning") := true,
-          ^.onInput ==> onChange,
-          ^.onBlur ==> onChange,
           ^.onKeyDown ==> handleKeyDown,
+          ^.onBeforeInput ==> handleBeforeInput,
+          ^.onPaste ==> handlePaste,
+          ^.onPasteCapture ==> handleEvent("onPasteCapture"),
+          ^.onCut ==> handleEvent("onCut"),
+          ^.onCopy ==> handleEvent("onCopy"),
+          ^.onBlur ==> handleEvent("onBlur"),
+          ^.onInput ==> handleEvent("onChange"),
           <.ul(
             (for ((task, i) <- state.tasks.zipWithIndex)
               yield
@@ -77,9 +82,77 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       }
     }
 
-    private def onChange(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val sel: dom.raw.Selection = dom.window.getSelection()
-      console.log("ONCHANGE EVENT", sel)
+    private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      console
+        .log(
+          s"$name EVENT",
+          event.nativeEvent,
+          event.eventType,
+          start.toString,
+          end.toString
+        )
+    }
+
+    private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
+      val html = {
+        val resultHolder = dom.document.createElement("span")
+        resultHolder.innerHTML = {
+          val htmlString =
+            event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
+          if (htmlString.nonEmpty) {
+            htmlString
+          } else {
+            event.nativeEvent
+              .asInstanceOf[js.Dynamic]
+              .clipboardData
+              .getData("text/plain")
+              .asInstanceOf[String]
+          }
+        }
+        resultHolder
+      }
+
+      val pastedText = {
+        val resultBuilder = StringBuilder.newBuilder
+        def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
+          def isElement(tagName: String): Boolean =
+            node.nodeType == dom.raw.Node.ELEMENT_NODE && node
+              .asInstanceOf[dom.raw.Element]
+              .tagName == tagName
+          if (node.nodeType == dom.raw.Node.TEXT_NODE) {
+            resultBuilder.append(
+              if (inListItem) {
+                node.asInstanceOf[dom.raw.Text].wholeText
+              } else {
+                node.asInstanceOf[dom.raw.Text].wholeText.replace('\n', TASK_DELIMITER)
+              }
+            )
+          }
+          if (isElement("BR")) {
+            resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
+          }
+          for (i <- 0 until node.childNodes.length) yield {
+            addPastedText(node.childNodes.item(i), inListItem = inListItem || isElement("LI"))
+          }
+          if (isElement("DIV") || isElement("LI")) {
+            resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
+          }
+        }
+        addPastedText(html, inListItem = false)
+        resultBuilder.toString.stripSuffix(TASK_DELIMITER.toString).stripSuffix("\n")
+      }
+
+      event.preventDefault()
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      replaceSelectionInState(replacement = pastedText, start, end)
+    }
+
+    private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      console
+        .log(s"onBeforeInput EVENT", event.nativeEvent, event.eventType, start.toString, end.toString)
+      event.preventDefault()
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
