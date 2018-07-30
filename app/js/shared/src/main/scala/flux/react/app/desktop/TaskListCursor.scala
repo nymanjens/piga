@@ -1,5 +1,7 @@
 package flux.react.app.desktop
 
+import common.DomNodeUtils
+import common.DomNodeUtils.nodeIsLi
 import flux.react.app.desktop.DomWalker.NodeWithOffset
 import org.scalajs.dom
 
@@ -97,7 +99,7 @@ private object TaskListCursor {
   }
 
   private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
-    if (node.nodeType == dom.raw.Node.ELEMENT_NODE && node.asInstanceOf[dom.raw.Element].tagName == "LI") {
+    if (nodeIsLi(node)) {
       node.asInstanceOf[dom.raw.Element]
     } else {
       parentLiElement(node.parentNode)

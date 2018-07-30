@@ -1,5 +1,6 @@
 package flux.react.app.desktop
 
+import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
@@ -116,10 +117,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val pastedText = {
         val resultBuilder = StringBuilder.newBuilder
         def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
-          def isElement(tagName: String): Boolean =
-            node.nodeType == dom.raw.Node.ELEMENT_NODE && node
-              .asInstanceOf[dom.raw.Element]
-              .tagName == tagName
           if (node.nodeType == dom.raw.Node.TEXT_NODE) {
             resultBuilder.append(
               if (inListItem) {
@@ -129,13 +126,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
               }
             )
           }
-          if (isElement("BR")) {
+          if (nodeIsBr(node)) {
             resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
           }
           for (i <- 0 until node.childNodes.length) yield {
-            addPastedText(node.childNodes.item(i), inListItem = inListItem || isElement("LI"))
+            addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
           }
-          if (isElement("DIV") || isElement("LI")) {
+          if (nodeIsDiv(node) || nodeIsLi(node)) {
             resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
           }
         }
