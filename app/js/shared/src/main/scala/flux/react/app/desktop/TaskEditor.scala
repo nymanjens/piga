@@ -9,6 +9,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
+import jsfacades.escapeHtml
 import models.access.EntityAccess
 import org.scalajs.dom
 import org.scalajs.dom.console
@@ -129,7 +130,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         val htmlText =
           "<ul><li>" +
             substasks
-              .map(_.content)
+              .map(t => escapeHtml(t.content))
               .mkString("</li><li>")
               .replace("\n", "<br />") +
             "</li></ul>"
