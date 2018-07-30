@@ -35,9 +35,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
-  private case class State(tasks: Seq[Task] = Seq(Task("Hel\nlo\n\n\n\n\nEND"), Task("World!")))
+  private case class State(
+      tasks: Seq[Task] = Seq(Task.withRandomId("Hel\nlo\n\n\n\n\nE<p>ND"), Task.withRandomId("World!")))
 
   private class Backend($ : BackendScope[Props, State]) {
+
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
       <.span(
@@ -136,7 +138,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             "</li></ul>"
         val plainText = substasks.map(_.content).mkString("\n")
 
-        dom.console.log(htmlText, plainText)
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/html", htmlText)
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/plain", plainText)
       }
@@ -248,13 +249,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             // Optimization
             val selectedTask = state.tasks(start.listIndex)
             val updatedTask =
-              Task(insertInString(selectedTask.content, index = start.offsetInTask, replacement))
+              Task.withRandomId(insertInString(selectedTask.content, index = start.offsetInTask, replacement))
             state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
           } else {
             val updatedTasks = for ((replacementPart, i) <- replacements.zipWithIndex)
               yield {
                 def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
-                Task(
+                Task.withRandomId(
                   ifIndexOrEmpty(0)(state.tasks(start.listIndex).content.substring(0, start.offsetInTask)) +
                     replacementPart +
                     ifIndexOrEmpty(replacements.length - 1)(
