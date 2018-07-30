@@ -227,6 +227,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             replaceSelectionInState(replacement = "", start, end)
           }
 
+        case "i" | "b" | "u" if ctrlPressed =>
+          // Disable modifiers
+          event.preventDefault()
+          Callback.empty
+
         case _ =>
           Callback.empty
       }
