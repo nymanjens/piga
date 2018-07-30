@@ -24,4 +24,21 @@ object DomNodeUtils {
     node.nodeType == dom.raw.Node.ELEMENT_NODE &&
     node.asInstanceOf[dom.raw.Element].tagName == tagName
   }
+
+  def walkDepthFirstPreOrder(node: dom.raw.Node): Iterable[NodeWithOffset] = {
+    var offsetSoFar = 0
+    def internal(node: dom.raw.Node): Iterable[NodeWithOffset] = {
+      val nodeLength = asTextNode(node).map(_.length) getOrElse 0
+      val nodeWithOffset = NodeWithOffset(node, offsetSoFar, offsetAtEnd = offsetSoFar + nodeLength)
+      offsetSoFar += nodeLength
+
+      val iterables = for (i <- 0 until node.childNodes.length) yield {
+        internal(node.childNodes.item(i))
+      }
+      nodeWithOffset +: iterables.flatten
+    }
+    internal(node)
+  }
+
+  case class NodeWithOffset(node: dom.raw.Node, offsetSoFar: Int, offsetAtEnd: Int)
 }

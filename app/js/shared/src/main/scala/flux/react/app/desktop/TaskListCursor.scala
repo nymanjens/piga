@@ -1,8 +1,6 @@
 package flux.react.app.desktop
 
-import common.DomNodeUtils
 import common.DomNodeUtils.nodeIsLi
-import flux.react.app.desktop.DomWalker.NodeWithOffset
 import org.scalajs.dom
 
 import scala.annotation.tailrec

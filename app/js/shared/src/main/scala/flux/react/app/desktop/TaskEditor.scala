@@ -4,7 +4,6 @@ import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import flux.react.app.desktop.DomWalker.NodeWithOffset
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -235,7 +234,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val selectedTask = dom.document.getElementById(s"teli-${cursor.listIndex}")
       require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.listIndex}")
 
-      DomWalker.depthFirstPreOrder(selectedTask).find {
+      walkDepthFirstPreOrder(selectedTask).find {
         case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
           if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
             val range = dom.document.createRange()
