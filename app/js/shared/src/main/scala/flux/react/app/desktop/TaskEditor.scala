@@ -47,9 +47,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.onKeyDown ==> handleKeyDown,
           ^.onBeforeInput ==> handleBeforeInput,
           ^.onPaste ==> handlePaste,
-          ^.onPasteCapture ==> handleEvent("onPasteCapture"),
-          ^.onCut ==> handleEvent("onCut"),
-          ^.onCopy ==> handleEvent("onCopy"),
+          ^.onCut ==> handleCut,
+          ^.onCopy ==> handleCopy,
           ^.onBlur ==> handleEvent("onBlur"),
           ^.onInput ==> handleEvent("onChange"),
           <.ul(
@@ -94,22 +93,58 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         )
     }
 
+    private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
+      event.preventDefault()
+
+      modifyEventClipboardData(event)
+      Callback.empty
+    }
+
+    private def handleCut(event: ReactEventFromInput): Callback = logExceptions {
+      event.preventDefault()
+
+      modifyEventClipboardData(event)
+
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      replaceSelectionInState(replacement = "", start, end)
+    }
+
+    private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
+      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val tasks = $.state.runNow().tasks
+
+      if (start != end) {
+        case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
+          def content: String = task.content.substring(startOffset, endOffset)
+        }
+        val substasks = tasks.zipWithIndex
+          .filter { case (task, index) => start.listIndex <= index && index <= end.listIndex }
+          .map {
+            case (task, index) =>
+              Subtask(
+                task,
+                startOffset = if (index == start.listIndex) start.offsetInTask else 0,
+                endOffset = if (index == end.listIndex) end.offsetInTask else task.content.length)
+          }
+        val htmlText =
+          "<ul><li>" +
+            substasks
+              .map(_.content)
+              .mkString("</li><li>")
+              .replace("\n", "<br />") +
+            "</li></ul>"
+        val plainText = substasks.map(_.content).mkString("\n")
+
+        dom.console.log(htmlText, plainText)
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/html", htmlText)
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/plain", plainText)
+      }
+    }
+
     private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
       val html = {
         val resultHolder = dom.document.createElement("span")
-        resultHolder.innerHTML = {
-          val htmlString =
-            event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
-          if (htmlString.nonEmpty) {
-            htmlString
-          } else {
-            event.nativeEvent
-              .asInstanceOf[js.Dynamic]
-              .clipboardData
-              .getData("text/plain")
-              .asInstanceOf[String]
-          }
-        }
+        resultHolder.innerHTML = getAnyClipboardString(event)
         resultHolder
       }
 
@@ -247,6 +282,16 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           } else {
             false
           }
+      }
+    }
+
+    private def getAnyClipboardString(event: ReactEventFromInput): String = {
+      val htmlString =
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
+      if (htmlString.nonEmpty) {
+        htmlString
+      } else {
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
       }
     }
 
