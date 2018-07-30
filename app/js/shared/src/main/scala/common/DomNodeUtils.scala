@@ -8,6 +8,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object DomNodeUtils {
 
+  def asTextNode(node: dom.raw.Node): Option[dom.raw.Text] = {
+    if (node.nodeType == dom.raw.Node.TEXT_NODE) {
+      Some(node.asInstanceOf[dom.raw.Text])
+    } else {
+      None
+    }
+  }
+
   def nodeIsLi(node: dom.raw.Node): Boolean = nodeIsElement(node, "LI")
   def nodeIsBr(node: dom.raw.Node): Boolean = nodeIsElement(node, "BR")
   def nodeIsDiv(node: dom.raw.Node): Boolean = nodeIsElement(node, "DIV")

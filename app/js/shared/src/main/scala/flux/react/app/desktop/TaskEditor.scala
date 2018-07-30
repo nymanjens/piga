@@ -117,14 +117,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val pastedText = {
         val resultBuilder = StringBuilder.newBuilder
         def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
-          if (node.nodeType == dom.raw.Node.TEXT_NODE) {
-            resultBuilder.append(
-              if (inListItem) {
-                node.asInstanceOf[dom.raw.Text].wholeText
-              } else {
-                node.asInstanceOf[dom.raw.Text].wholeText.replace('\n', TASK_DELIMITER)
-              }
-            )
+          asTextNode(node) match {
+            case Some(textNode) =>
+              resultBuilder.append(
+                if (inListItem) textNode.wholeText else textNode.wholeText.replace('\n', TASK_DELIMITER))
+            case None =>
           }
           if (nodeIsBr(node)) {
             resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
