@@ -46,6 +46,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private class Backend($ : BackendScope[Props, State]) {
 
+    private def editHistory: EditHistory = new EditHistory()
+
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
       <.span(
