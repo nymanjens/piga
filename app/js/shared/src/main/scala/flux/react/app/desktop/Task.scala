@@ -2,12 +2,16 @@ package flux.react.app.desktop
 
 import models.modification.EntityModification
 
-import scala.collection.immutable.Seq
+private[desktop] case class Task(id: Long, orderToken: OrderToken, content: String) extends Ordered[Task] {
 
-private[desktop] case class Task(id: Long, content: String)
+  override def compare(that: Task): Int = {
+    this.orderToken compare that.orderToken
+  }
+}
 private[desktop] object Task {
-  def withRandomId(content: String): Task = Task(
+  def withRandomId(orderToken: OrderToken, content: String): Task = Task(
     id = EntityModification.generateRandomId(),
+    orderToken = orderToken,
     content = content
   )
 }

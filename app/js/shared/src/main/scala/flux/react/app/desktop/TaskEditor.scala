@@ -36,7 +36,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
   private case class State(
-      tasks: Seq[Task] = Seq(Task.withRandomId("Hel\nlo\n\n\n\n\nE<p>ND"), Task.withRandomId("World!")))
+      tasks: TaskSequence = new TaskSequence(
+        Seq(
+          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\n\n\n\n\nE<p>ND"),
+          Task.withRandomId(
+            OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
+            "World!")
+        )))
 
   private class Backend($ : BackendScope[Props, State]) {
 
@@ -71,7 +77,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- ", <.pre(contentToHtml(task.content)))).toVdomArray
+          yield <.div(^.key := s"task-$i", "- ", contentToHtml(task.content))).toVdomArray
       )
     }
 
@@ -249,24 +255,40 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             // Optimization
             val selectedTask = state.tasks(start.listIndex)
             val updatedTask =
-              Task.withRandomId(insertInString(selectedTask.content, index = start.offsetInTask, replacement))
+              Task.withRandomId(
+                orderToken = selectedTask.orderToken,
+                content = insertInString(selectedTask.content, index = start.offsetInTask, replacement))
             state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
           } else {
+            def orderTokenBetween(previous: Option[OrderToken],
+                                  next: Option[OrderToken],
+                                  numTokensBetween: Int,
+                                  tokenIndexBetween: Int): OrderToken = {
+              ???
+            }
+
+            val previousTask = state.tasks.option(start.listIndex - 1)
+            val nextTask = state.tasks.option(end.listIndex + 1)
             val updatedTasks = for ((replacementPart, i) <- replacements.zipWithIndex)
               yield {
                 def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
                 Task.withRandomId(
+                  orderToken = orderTokenBetween(
+                    previousTask.map(_.orderToken),
+                    nextTask.map(_.orderToken),
+                    replacements.length,
+                    i),
                   ifIndexOrEmpty(0)(state.tasks(start.listIndex).content.substring(0, start.offsetInTask)) +
                     replacementPart +
                     ifIndexOrEmpty(replacements.length - 1)(
                       state.tasks(end.listIndex).content.substring(end.offsetInTask))
                 )
               }
-            state.copy(tasks = state.tasks.zipWithIndex.flatMap {
+            state.copy(tasks = new TaskSequence(state.tasks.zipWithIndex.flatMap {
               case (task, start.`listIndex`)                                          => updatedTasks
               case (task, index) if start.listIndex < index && index <= end.listIndex => Seq()
               case (task, _)                                                          => Seq(task)
-            })
+            }))
         },
         setSelection((start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
       )
