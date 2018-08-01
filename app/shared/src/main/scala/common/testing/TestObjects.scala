@@ -41,7 +41,8 @@ object TestObjects {
   val testUpdateToken: UpdateToken = s"123782:12378"
 
   val testModificationA: EntityModification = EntityModification.Add(testUserRedacted)
-  val testModificationB: EntityModification = EntityModification.Add(testUserB.copy(passwordHash = "<redacted>"))
+  val testModificationB: EntityModification =
+    EntityModification.Add(testUserB.copy(passwordHash = "<redacted>"))
   def testModification: EntityModification = testModificationA
 
   val testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(

@@ -124,9 +124,8 @@ lazy val ReleaseCmd = Command.command("releaseOptimized") { state =>
     "server/dist" ::
     "set optimizeForRelease in client := false" ::
     "set optimizeForRelease in webworkerClient := false" ::
-     state
- }
-
+    state
+}
 
 // loads the Play server project at sbt startup
 onLoad in Global := (Command.process("project server", _: State)) compose (onLoad in Global).value

@@ -40,8 +40,7 @@ private[webworker] final class LocalDatabaseWebWorkerApiImpl extends LocalDataba
   private def toResultSet(lokiQuery: LocalDatabaseWebWorkerApi.LokiQuery): Option[LokiJs.ResultSet] = {
     lokiDb.getCollection(lokiQuery.collectionName) match {
       case None =>
-        println(
-          s"  Warning: Tried to query ${lokiQuery.collectionName}, but that collection doesn't exist")
+        println(s"  Warning: Tried to query ${lokiQuery.collectionName}, but that collection doesn't exist")
         None
 
       case Some(lokiCollection) =>

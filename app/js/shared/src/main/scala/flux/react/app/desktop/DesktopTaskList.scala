@@ -15,7 +15,9 @@ import org.scalajs.dom.raw.KeyboardEvent
 
 import scala.scalajs.js
 
-private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess, i18n: I18n, taskEditor: TaskEditor) {
+private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
+                                         i18n: I18n,
+                                         taskEditor: TaskEditor) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
