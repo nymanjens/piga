@@ -4,8 +4,12 @@ import common.ScalaUtils.visibleForTesting
 
 import scala.annotation.tailrec
 
-case class OrderToken private (@visibleForTesting private[common] val parts: List[Int])
+case class OrderToken @visibleForTesting private[common] (private val parts: List[Int])
     extends Ordered[OrderToken] {
+  require(parts.nonEmpty)
+  require(
+    parts.tail.isEmpty || parts.last != OrderToken.missingPartValue,
+    s"Redundant ${OrderToken.missingPartValue} at end of $parts")
 
   override def compare(that: OrderToken): Int = {
     @tailrec
@@ -14,7 +18,7 @@ case class OrderToken private (@visibleForTesting private[common] val parts: Lis
       case (Nil, _)                                           => innerCompare(OrderToken.missingPartValue :: Nil, parts2)
       case (_, Nil)                                           => innerCompare(parts1, OrderToken.missingPartValue :: Nil)
       case (head1 :: rest1, head2 :: rest2) if head1 == head2 => innerCompare(rest1, rest2)
-      case (head1 :: _, head2 :: _)                           => head1 - head2
+      case (head1 :: _, head2 :: _)                           => head1 compare head2
     }
     innerCompare(this.parts, that.parts)
   }
@@ -24,13 +28,15 @@ object OrderToken {
   private val missingPartValue = 0
 
   def middleBetween(lower: Option[OrderToken], higher: Option[OrderToken]): OrderToken = {
-    require(lower <= higher)
+    require(
+      lower.isEmpty || higher.isEmpty || lower.get <= higher.get,
+      s"Not true that lower=$lower <= higher=$higher")
 
-    def splitHeadAndNext(listOption: Option[List[Int]], noneOptionValue: Int): (Int, Option[List[Int]]) =
+    def splitHeadAndNext(listOption: Option[List[Int]], noneOptionValue: Int): (Long, Option[List[Int]]) =
       listOption match {
-        case None               => (noneOptionValue, None)
-        case Some(Nil)          => (missingPartValue, Some(Nil))
-        case Some(head :: rest) => (head, Some(rest))
+        case None               => (noneOptionValue.toLong, None)
+        case Some(Nil)          => (missingPartValue.toLong, Some(Nil))
+        case Some(head :: rest) => (head.toLong, Some(rest))
       }
 
     type HasCarryOver = Boolean
@@ -42,12 +48,12 @@ object OrderToken {
       if (lowerHead == Int.MaxValue && higherHead == Int.MinValue) {
         val (resultRest, resultHasCarryOver) = middleBetweenWithCarryOver(lowerNext, higherNext)
         if (resultHasCarryOver) {
-          (higherHead :: resultRest, resultHasCarryOver)
+          (higherHead.toInt :: resultRest, resultHasCarryOver)
         } else {
-          (lowerHead :: resultRest, resultHasCarryOver)
+          (lowerHead.toInt :: resultRest, resultHasCarryOver)
         }
       } else {
-        val result = (lowerHead.toLong + (higherHead.toLong + Int.MaxValue.toLong)) / 2
+        val result = (lowerHead + (higherHead + Int.MaxValue.toLong)) / 2
         if (result <= Int.MaxValue) {
           (result.toInt :: Nil, /* HasCarryOver */ false)
         } else {
@@ -61,15 +67,15 @@ object OrderToken {
       val (higherHead, higherNext) = splitHeadAndNext(higher, Int.MaxValue)
 
       if (lowerHead == higherHead) {
-        lowerHead :: innerMiddleBetween(lowerNext, higherNext)
+        lowerHead.toInt :: innerMiddleBetween(lowerNext, higherNext)
       } else if (higherHead - lowerHead >= 2) {
-        ((lowerHead.toLong + higherHead.toLong) / 2).toInt :: Nil
+        ((lowerHead + higherHead) / 2).toInt :: Nil
       } else if (higherHead - lowerHead == 1) {
         val (resultRest, resultHasCarryOver) = middleBetweenWithCarryOver(lowerNext, higherNext)
         if (resultHasCarryOver) {
-          higherHead :: resultRest
+          higherHead.toInt :: resultRest
         } else {
-          lowerHead :: resultRest
+          lowerHead.toInt :: resultRest
         }
       } else {
         throw new IllegalArgumentException(s"lowerHead=$lowerHead, higherHead=$higherHead")
