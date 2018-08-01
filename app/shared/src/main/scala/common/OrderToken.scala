@@ -1,20 +1,20 @@
-package flux.react.app.desktop
+package common
 
-import java.lang.Math.max
+import common.ScalaUtils.visibleForTesting
 
 import scala.annotation.tailrec
-import scala.collection.immutable.Seq
 
-private[desktop] case class OrderToken private (private val parts: List[Int]) extends Ordered[OrderToken] {
+case class OrderToken private (@visibleForTesting private[common] val parts: List[Int])
+    extends Ordered[OrderToken] {
 
   override def compare(that: OrderToken): Int = {
     @tailrec
     def innerCompare(parts1: List[Int], parts2: List[Int]): Int = (parts1, parts2) match {
-      case (Nil, Nil)                                           => 0
-      case (Nil, _)                                             => innerCompare(OrderToken.missingPartValue :: Nil, parts2)
-      case (_, Nil)                                             => innerCompare(parts1, OrderToken.missingPartValue :: Nil)
-      case (head1 :: rest1, head2 :: rest2) if (head1 == head2) => innerCompare(rest1, rest2)
-      case (head1 :: _, head2 :: _)                             => head1 - head2
+      case (Nil, Nil)                                         => 0
+      case (Nil, _)                                           => innerCompare(OrderToken.missingPartValue :: Nil, parts2)
+      case (_, Nil)                                           => innerCompare(parts1, OrderToken.missingPartValue :: Nil)
+      case (head1 :: rest1, head2 :: rest2) if head1 == head2 => innerCompare(rest1, rest2)
+      case (head1 :: _, head2 :: _)                           => head1 - head2
     }
     innerCompare(this.parts, that.parts)
   }

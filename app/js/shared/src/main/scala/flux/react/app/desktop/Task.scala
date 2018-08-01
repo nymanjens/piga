@@ -1,5 +1,6 @@
 package flux.react.app.desktop
 
+import common.OrderToken
 import models.modification.EntityModification
 
 private[desktop] case class Task(id: Long, orderToken: OrderToken, content: String) extends Ordered[Task] {
