@@ -16,7 +16,7 @@ import scala.collection.immutable.Seq
 @RunWith(classOf[JUnitRunner])
 class JvmEntityAccessTest extends HookedSpecification {
 
-  implicit private val user = testUser
+  implicit private val adminUser = createUser().copy(loginName = "admin")
 
   @Inject implicit private val fakeClock: FakeClock = null
 
@@ -39,11 +39,11 @@ class JvmEntityAccessTest extends HookedSpecification {
     }
 
     "EntityModification.Add" in new WithApplication {
-      val transaction = createTransaction()
+      val user = createUser()
 
-      entityAccess.persistEntityModifications(EntityModification.Add(transaction))
+      entityAccess.persistEntityModifications(EntityModification.Add(user))
 
-      entityAccess.newQuerySync[Transaction]().data() mustEqual Seq(transaction)
+      entityAccess.newQuerySync[User]().data() mustEqual Seq(user)
     }
 
     "EntityModification.Update" in new WithApplication {
@@ -57,32 +57,32 @@ class JvmEntityAccessTest extends HookedSpecification {
     }
 
     "EntityModification.Delete" in new WithApplication {
-      val transaction1 = createTransaction()
-      entityAccess.persistEntityModifications(EntityModification.Add(transaction1))
+      val user1 = createUser()
+      entityAccess.persistEntityModifications(EntityModification.Add(user1))
 
-      entityAccess.persistEntityModifications(EntityModification.createDelete(transaction1))
+      entityAccess.persistEntityModifications(EntityModification.createDelete(user1))
 
-      entityAccess.newQuerySync[Transaction]().data() mustEqual Seq()
+      entityAccess.newQuerySync[User]().data() mustEqual Seq()
     }
 
     "EntityModification.Add is idempotent" in new WithApplication {
-      val transaction1 = createTransaction()
-      val updatedTransaction1 = transaction1.copy(flowInCents = 198237)
-      val transaction2 = createTransaction()
+      val user1 = createUser()
+      val updatedUser1 = user1.copy(name = "other name")
+      val user2 = createUser()
 
       entityAccess.persistEntityModifications(
-        EntityModification.Add(transaction1),
-        EntityModification.Add(transaction1),
-        EntityModification.Add(updatedTransaction1),
-        EntityModification.Add(transaction2)
+        EntityModification.Add(user1),
+        EntityModification.Add(user1),
+        EntityModification.Add(updatedUser1),
+        EntityModification.Add(user2)
       )
 
-      entityAccess.newQuerySync[Transaction]().data().toSet mustEqual Set(transaction1, transaction2)
+      entityAccess.newQuerySync[User]().data().toSet mustEqual Set(user1, user2)
     }
 
     "EntityModification.Update is idempotent" in new WithApplication {
       val user1 = createUser()
-      val updatedUser1 = user1.copy(name = "other nme")
+      val updatedUser1 = user1.copy(name = "other name")
       val user2 = createUser()
       entityAccess.persistEntityModifications(EntityModification.Add(user1))
 
@@ -96,19 +96,19 @@ class JvmEntityAccessTest extends HookedSpecification {
     }
 
     "EntityModification.Delete is idempotent" in new WithApplication {
-      val transaction1 = createTransaction()
-      val transaction2 = createTransaction()
-      val transaction3 = createTransaction()
-      entityAccess.persistEntityModifications(EntityModification.Add(transaction1))
-      entityAccess.persistEntityModifications(EntityModification.Add(transaction2))
+      val user1 = createUser()
+      val user2 = createUser()
+      val user3 = createUser()
+      entityAccess.persistEntityModifications(EntityModification.Add(user1))
+      entityAccess.persistEntityModifications(EntityModification.Add(user2))
 
       entityAccess.persistEntityModifications(
-        EntityModification.createDelete(transaction2),
-        EntityModification.createDelete(transaction2),
-        EntityModification.createDelete(transaction3)
+        EntityModification.createDelete(user2),
+        EntityModification.createDelete(user2),
+        EntityModification.createDelete(user3)
       )
 
-      entityAccess.newQuerySync[Transaction]().data() mustEqual Seq(transaction1)
+      entityAccess.newQuerySync[User]().data() mustEqual Seq(user1)
     }
   }
 

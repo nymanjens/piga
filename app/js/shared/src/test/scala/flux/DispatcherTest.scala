@@ -1,5 +1,7 @@
 package flux
 
+import common.testing.TestObjects
+import common.testing.TestObjects.testUserPrototype
 import flux.action.{Action, Dispatcher}
 import utest._
 
@@ -13,7 +15,7 @@ object DispatcherTest extends TestSuite {
 
   override def tests = TestSuite {
     val dispatcher: Dispatcher.Impl = new Dispatcher.Impl()
-    val testAction = Action.RemoveTransactionGroup(testTransactionGroupWithId)
+    val testAction = Action.UpsertUser(testUserPrototype)
 
     "dispatches actions to listeners, including Done action" - async {
       val dispatchedActions: mutable.Buffer[Action] = mutable.Buffer()

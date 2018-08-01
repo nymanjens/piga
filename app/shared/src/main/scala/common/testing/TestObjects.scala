@@ -2,7 +2,7 @@ package common.testing
 
 import java.time.Month._
 
-import api.ScalaJsApi.{GetInitialDataResponse, UpdateToken}
+import api.ScalaJsApi.{GetInitialDataResponse, UpdateToken, UserPrototype}
 import common.time.{LocalDateTime, LocalDateTimes}
 import models.modification.EntityModification
 import models.user.User
@@ -29,6 +29,13 @@ object TestObjects {
   )
   def testUser: User = testUserA
   def testUserRedacted: User = testUser.copy(passwordHash = "<redacted>")
+
+  val testUserPrototype = UserPrototype.create(
+    id = testUser.id,
+    loginName = testUser.loginName,
+    plainTextPassword = "dlkfjasfd",
+    name = testUser.name,
+    isAdmin = testUser.isAdmin)
 
   val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
   val testUpdateToken: UpdateToken = s"123782:12378"

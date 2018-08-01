@@ -1,5 +1,6 @@
 package api
 
+import models.access.DbQueryImplicits._
 import api.ScalaJsApi.UserPrototype
 import api.UpdateTokens.toUpdateToken
 import com.google.inject._
@@ -30,7 +31,6 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
 
   @Inject implicit private val fakeClock: FakeClock = null
   @Inject implicit private val entityAccess: JvmEntityAccess = null
-  @Inject implicit private val accountingConfig: Config = null
 
   @Inject private val serverFactory: ScalaJsApiServerFactory = null
 
@@ -39,28 +39,23 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
   }
 
   "getInitialData()" in new WithApplication {
-    entityAccess.persistEntityModifications(
-      EntityModification.Add(testUserA),
-      EntityModification.Add(testUserB),
-      EntityModification.createAddWithRandomId(
-        ExchangeRateMeasurement(date1, "GBP", ratioReferenceToForeignCurrency = 1.3))
-    )
+    fakeClock.setTime(testDate)
+    TestUtils.persist(testUserA)
+    TestUtils.persist(testUserB)
 
     val response = serverFactory.create().getInitialData()
 
-    response.accountingConfig mustEqual accountingConfig
     response.user mustEqual user
-    response.allUsers.toSet mustEqual Set(testUserA, testUserB)
-    response.ratioReferenceToForeignCurrency mustEqual Map(Currency.Gbp -> SortedMap(date1 -> 1.3))
+    response.nextUpdateToken mustEqual toUpdateToken(testDate)
   }
 
   "getAllEntities()" in new WithApplication {
     fakeClock.setTime(testDate)
-    TestUtils.persist(testTransactionWithId)
+    TestUtils.persist(testUser)
 
-    val response = serverFactory.create().getAllEntities(Seq(EntityType.TransactionType))
+    val response = serverFactory.create().getAllEntities(Seq(EntityType.UserType))
 
-    response.entities(EntityType.TransactionType) mustEqual Seq(testTransactionWithId)
+    response.entities(EntityType.UserType) mustEqual Seq(testUser)
     response.nextUpdateToken mustEqual toUpdateToken(testDate)
   }
 
@@ -76,20 +71,19 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
   }
 
   "executeDataQuery()" in new WithApplication {
-    val transaction1 = persistTransaction(category = testCategoryA)
-    val transaction2 = persistTransaction(category = testCategoryA)
-    persistTransaction(category = testCategoryB)
+    TestUtils.persist(testUserA)
+    TestUtils.persist(testUserB)
 
     val entities = serverFactory
       .create()
       .executeDataQuery(
         PicklableDbQuery.fromRegular(
-          DbQuery[Transaction](
-            filter = ModelField.Transaction.categoryCode === testCategoryA.code,
+          DbQuery[User](
+            filter = ModelField.User.loginName === testUserA.loginName,
             sorting = None,
             limit = None)))
 
-    entities.toSet mustEqual Set(transaction1, transaction2)
+    entities.toSet mustEqual Set(testUserA)
   }
 
   "upsertUser()" should {
@@ -103,8 +97,6 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
       storedUser.loginName mustEqual "tester"
       storedUser.name mustEqual "Tester"
       storedUser.isAdmin mustEqual false
-      storedUser.expandCashFlowTablesByDefault mustEqual true
-      storedUser.expandLiquidationTablesByDefault mustEqual true
     }
 
     "update" should {

@@ -7,27 +7,6 @@ import org.specs2.mutable._
 
 class TimeUtilsTest extends Specification {
 
-  "requireStartOfMonth" in {
-    TimeUtils.requireStartOfMonth(LocalDate.of(1991, APRIL, 1))
-    TimeUtils.requireStartOfMonth(LocalDate.of(1991, APRIL, 3)) must throwA[IllegalArgumentException]
-  }
-
-  "allMonths" in {
-    TimeUtils.allMonths mustEqual Seq(
-      JANUARY,
-      FEBRUARY,
-      MARCH,
-      APRIL,
-      MAY,
-      JUNE,
-      JULY,
-      AUGUST,
-      SEPTEMBER,
-      OCTOBER,
-      NOVEMBER,
-      DECEMBER)
-  }
-
   "parseDateString" in {
     TimeUtils.parseDateString("1992-07-22") mustEqual LocalDateTimes.createDateTime(1992, JULY, 22)
     TimeUtils.parseDateString("2001-7-3") mustEqual LocalDateTimes.createDateTime(2001, JULY, 3)

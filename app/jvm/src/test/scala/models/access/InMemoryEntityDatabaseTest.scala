@@ -4,6 +4,7 @@ import common.testing.TestObjects.testUser
 import common.testing._
 import models.Entity
 import models.access.DbQuery.Sorting
+import models.access.DbQueryImplicits._
 import models.access.InMemoryEntityDatabase.EntitiesFetcher
 import models.modification.{EntityModification, EntityType}
 import models.user.User
@@ -79,15 +80,7 @@ class InMemoryEntityDatabaseTest extends HookedSpecification {
   private def runTestsAssumingUser123(database: InMemoryEntityDatabase) = {
     val executor = database.queryExecutor[User]
 
-    "non-cached sorting" in {
-      DbResultSet
-        .fromExecutor(executor)
-        .limit(2)
-        .sort(Sorting.ascBy(ModelField.User.name))
-        .data() mustEqual Seq(user3, user2)
-    }
     "filtered" in {
-      import models.access.DbQueryImplicits._
       DbResultSet
         .fromExecutor(executor)
         .filter(ModelField.User.name === "name2")

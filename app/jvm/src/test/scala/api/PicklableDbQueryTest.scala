@@ -2,8 +2,9 @@ package api
 
 import api.Picklers._
 import common.testing._
-import common.time.LocalDateTime
+import models.access.DbQueryImplicits._
 import models.access.{DbQuery, ModelField}
+import models.user.User
 import org.junit.runner._
 import org.specs2.runner._
 
@@ -19,26 +20,23 @@ class PicklableDbQueryTest extends HookedSpecification {
 
     "null object" in {
       testFromRegularToRegular(
-        DbQuery[Transaction](filter = DbQuery.Filter.NullFilter(), sorting = None, limit = None))
+        DbQuery[User](filter = DbQuery.Filter.NullFilter(), sorting = None, limit = None))
     }
-    "sorting and limit" in {
+    "limit" in {
       testFromRegularToRegular(
-        DbQuery[Transaction](
+        DbQuery[User](
           filter = DbQuery.Filter.NullFilter(),
-          sorting = Some(
-            DbQuery.Sorting.ascBy(ModelField.Transaction.createdDate).thenDescBy(ModelField.Transaction.id)),
+          sorting = None,
           limit = Some(192)
         ))
     }
     "filters" in {
-      val filters: Seq[DbQuery.Filter[Transaction]] = Seq(
-        ModelField.Transaction.issuerId === 5,
-        ModelField.Transaction.issuerId !== 5,
-        (ModelField.Transaction.issuerId < 5) || (ModelField.Transaction.createdDate > LocalDateTime.MIN),
-        (ModelField.Transaction.description containsIgnoreCase "abc") && (ModelField.Transaction.tags contains "abc")
+      val filters: Seq[DbQuery.Filter[User]] = Seq(
+        (ModelField.User.loginName === "a") && (ModelField.User.loginName !== "b"),
+        ModelField.User.name containsIgnoreCase "abc"
       )
       for (filter <- filters) yield {
-        testFromRegularToRegular(DbQuery[Transaction](filter = filter, sorting = None, limit = Some(192)))
+        testFromRegularToRegular(DbQuery[User](filter = filter, sorting = None, limit = Some(192)))
       }
     }
   }

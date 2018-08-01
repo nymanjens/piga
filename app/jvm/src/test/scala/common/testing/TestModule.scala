@@ -9,7 +9,6 @@ import models.ModelsModule
 final class TestModule extends AbstractModule {
 
   override def configure() = {
-    install(new ConfigModule)
     install(new ModelsModule)
     install(new ScalaJsApiModule)
     bindSingleton(classOf[Clock], classOf[FakeClock])
@@ -26,6 +25,6 @@ final class TestModule extends AbstractModule {
 
   private def bindSingleton[T](interface: Class[T], implementation: Class[_ <: T]): Unit = {
     bind(interface).to(implementation)
-    bind(implementation).asEagerSingleton
+    bind(implementation).asEagerSingleton()
   }
 }
