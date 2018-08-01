@@ -5,6 +5,7 @@ import common.testing.{FakeScalaJsApiClient, ModificationsBuffer, TestModule}
 import common.time.Clock
 import models.Entity
 import models.modification.{EntityModification, EntityType}
+import models.user.User
 import utest._
 
 import scala.async.Async.{async, await}
@@ -27,13 +28,13 @@ object JsEntityAccessImplTest extends TestSuite {
     val localDatabasePromise: Promise[LocalDatabase] = Promise()
     implicit val remoteDatabaseProxy: HybridRemoteDatabaseProxy =
       HybridRemoteDatabaseProxy.create(localDatabasePromise.future)
-    val entityAccess = new JsEntityAccessImpl(allUsers = Seq())
+    val entityAccess = new JsEntityAccessImpl()
 
     "Fake local database not yet loaded" - {
       "newQuery" - async {
-        fakeApiClient.addEntities(testTransactionWithId)
+        fakeApiClient.addEntities(testUser)
 
-        await(entityAccess.newQuery[Transaction]().data()) ==> Seq(testTransactionWithId)
+        await(entityAccess.newQuery[User]().data()) ==> Seq(testUser)
       }
 
       "persistModifications()" - async {
@@ -77,14 +78,14 @@ object JsEntityAccessImplTest extends TestSuite {
         val entityAccess1 = {
           implicit val remoteDatabaseProxy = HybridRemoteDatabaseProxy.create(localDatabasePromise.future)
           await(remoteDatabaseProxy.localDatabaseReadyFuture)
-          new JsEntityAccessImpl(allUsers = Seq())
+          new JsEntityAccessImpl()
         }
         fakeApiClient.persistEntityModifications(Seq(testModificationB))
 
         val entityAccess2 = {
           implicit val remoteDatabaseProxy = HybridRemoteDatabaseProxy.create(localDatabasePromise.future)
           await(remoteDatabaseProxy.localDatabaseReadyFuture)
-          new JsEntityAccessImpl(allUsers = Seq())
+          new JsEntityAccessImpl()
         }
 
         fakeLocalDatabase.allModifications ==> Seq(testModificationA)

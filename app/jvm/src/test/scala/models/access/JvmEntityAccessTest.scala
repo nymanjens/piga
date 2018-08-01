@@ -33,7 +33,7 @@ class JvmEntityAccessTest extends HookedSpecification {
       entityAccess.persistEntityModifications(testModification)
 
       val modificationEntity = getOnlyElement(dbRun(entityAccess.newSlickQuery[EntityModificationEntity]()))
-      modificationEntity.userId mustEqual user.id
+      modificationEntity.userId mustEqual adminUser.id
       modificationEntity.modification mustEqual testModification
       modificationEntity.date mustEqual testDate
     }

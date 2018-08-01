@@ -7,6 +7,7 @@ import boopickle.Pickler
 import common.testing.TestObjects._
 import common.testing._
 import models.modification.{EntityModification, EntityType}
+import models.user.User
 import org.junit.runner._
 import org.specs2.runner._
 
@@ -22,6 +23,7 @@ class PicklersTest extends HookedSpecification {
   "EntityModification" in {
     testPickleAndUnpickle[EntityModification](EntityModification.Add(testUserRedacted))
     testPickleAndUnpickle[EntityModification](EntityModification.Update(testUserRedacted))
+    testPickleAndUnpickle[EntityModification](EntityModification.Remove[User](123054))
   }
 
   "GetInitialDataResponse" in {
@@ -36,7 +38,7 @@ class PicklersTest extends HookedSpecification {
   "GetAllEntitiesResponse" in {
     testPickleAndUnpickle[GetAllEntitiesResponse](
       GetAllEntitiesResponse(
-        entitiesMap = Map(EntityType.UserType -> Seq(testUser)),
+        entitiesMap = Map(EntityType.UserType -> Seq(testUserRedacted)),
         nextUpdateToken = testUpdateToken))
   }
 

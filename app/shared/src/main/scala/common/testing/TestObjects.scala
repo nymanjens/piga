@@ -40,8 +40,8 @@ object TestObjects {
   val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
   val testUpdateToken: UpdateToken = s"123782:12378"
 
-  val testModificationA: EntityModification = EntityModification.Add(testUserA)
-  val testModificationB: EntityModification = EntityModification.Add(testUserB)
+  val testModificationA: EntityModification = EntityModification.Add(testUserRedacted)
+  val testModificationB: EntityModification = EntityModification.Add(testUserB.copy(passwordHash = "<redacted>"))
   def testModification: EntityModification = testModificationA
 
   val testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
