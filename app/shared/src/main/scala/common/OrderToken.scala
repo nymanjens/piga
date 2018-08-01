@@ -8,15 +8,15 @@ case class OrderToken @visibleForTesting private[common] (private val parts: Lis
     extends Ordered[OrderToken] {
   require(parts.nonEmpty)
   require(
-    parts.tail.isEmpty || parts.last != OrderToken.missingPartValue,
-    s"Redundant ${OrderToken.missingPartValue} at end of $parts")
+    parts.tail.isEmpty || parts.last != OrderToken.middleValue,
+    s"Redundant ${OrderToken.middleValue} at end of $parts")
 
   override def compare(that: OrderToken): Int = {
     @tailrec
     def innerCompare(parts1: List[Int], parts2: List[Int]): Int = (parts1, parts2) match {
       case (Nil, Nil)                                         => 0
-      case (Nil, _)                                           => innerCompare(OrderToken.missingPartValue :: Nil, parts2)
-      case (_, Nil)                                           => innerCompare(parts1, OrderToken.missingPartValue :: Nil)
+      case (Nil, _)                                           => innerCompare(OrderToken.middleValue :: Nil, parts2)
+      case (_, Nil)                                           => innerCompare(parts1, OrderToken.middleValue :: Nil)
       case (head1 :: rest1, head2 :: rest2) if head1 == head2 => innerCompare(rest1, rest2)
       case (head1 :: _, head2 :: _)                           => head1 compare head2
     }
@@ -25,19 +25,14 @@ case class OrderToken @visibleForTesting private[common] (private val parts: Lis
 }
 
 object OrderToken {
-  private val missingPartValue = 0
+  private val middleValue: Int = 0
+
+  val middle: OrderToken = OrderToken(List(middleValue))
 
   def middleBetween(lower: Option[OrderToken], higher: Option[OrderToken]): OrderToken = {
     require(
       lower.isEmpty || higher.isEmpty || lower.get <= higher.get,
       s"Not true that lower=$lower <= higher=$higher")
-
-    def splitHeadAndNext(listOption: Option[List[Int]], noneOptionValue: Int): (Long, Option[List[Int]]) =
-      listOption match {
-        case None               => (noneOptionValue.toLong, None)
-        case Some(Nil)          => (missingPartValue.toLong, Some(Nil))
-        case Some(head :: rest) => (head.toLong, Some(rest))
-      }
 
     type HasCarryOver = Boolean
     def middleBetweenWithCarryOver(lower: Option[List[Int]],
@@ -82,10 +77,50 @@ object OrderToken {
       }
     }
 
+    def doSanityCheck(result: OrderToken): Unit = {
+      if (lower.isDefined) {
+        require(lower.get <= result, s"Not true that ${lower.get} <= $result")
+      }
+      if (higher.isDefined) {
+        require(higher.get >= result, s"Not true that ${higher.get} >= $result")
+      }
+    }
+
     if (lower.isDefined && lower == higher) {
       lower.get
     } else {
-      OrderToken(innerMiddleBetween(lower.map(_.parts), higher.map(_.parts)))
+      val result = OrderToken(
+        removeTrailingMiddleValues(innerMiddleBetween(lower.map(_.parts), higher.map(_.parts))))
+      doSanityCheck(result)
+      result
+    }
+  }
+
+  private def splitHeadAndNext(listOption: Option[List[Int]],
+                               noneOptionValue: Int): (Long, Option[List[Int]]) =
+    listOption match {
+      case None               => (noneOptionValue.toLong, None)
+      case Some(Nil)          => (middleValue.toLong, Some(Nil))
+      case Some(head :: rest) => (head.toLong, Some(rest))
+    }
+
+  private def removeTrailingMiddleValues(list: List[Int]): List[Int] = {
+    def inner(list: List[Int]): List[Int] = list match {
+      case Nil => Nil
+      case `middleValue` :: tail =>
+        inner(tail) match {
+          case Nil          => Nil
+          case trimmmedTail => middleValue :: trimmmedTail
+        }
+      case head :: tail => head :: inner(tail)
+    }
+
+    // Optimization
+    if (list.last == middleValue) {
+      // Don't remove first middle value
+      list.head :: inner(list.tail)
+    } else {
+      list
     }
   }
 }
