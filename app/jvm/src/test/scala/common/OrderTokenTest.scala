@@ -32,26 +32,31 @@ class OrderTokenTest extends Specification {
     "manual test cases" in {
       def someToken(parts: Int*): Option[OrderToken] = Some(OrderToken(List(parts: _*)))
 
-      OrderToken.middleBetween(None, None) mustEqual OrderToken(List(0))
-      OrderToken.middleBetween(someToken(-10), someToken(10)) mustEqual OrderToken(List(0))
-      OrderToken.middleBetween(someToken(99, -10, 99), someToken(99, 10)) mustEqual OrderToken(List(99))
+      "tralilng zeros are removed" in {
+        OrderToken.middleBetween(None, None) mustEqual OrderToken(List(0))
+        OrderToken.middleBetween(someToken(-10), someToken(10)) mustEqual OrderToken(List(0))
+        OrderToken.middleBetween(someToken(99, -10, 99), someToken(99, 10)) mustEqual OrderToken(List(99))
+      }
 
-      OrderToken.middleBetween(
-        someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 2, 123),
-        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 4, 456)) mustEqual
-        OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 1))
-      OrderToken.middleBetween(
-        someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 4, 123),
-        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 7)) mustEqual
-        OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue))
-      OrderToken.middleBetween(
-        someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 4),
-        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 5)) mustEqual
-        OrderToken(List(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue))
-
-      OrderToken.middleBetween(
-        someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 2),
-        someToken(10, 21, 0, 0, 4)) mustEqual OrderToken(List(10, 21, Int.MaxValue / 2))
+      "one difference without carry-over" in {
+        OrderToken.middleBetween(
+          someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 4),
+          someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 3)) mustEqual
+          OrderToken(List(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue))
+        OrderToken.middleBetween(
+          someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 2),
+          someToken(10, 21, 0, 0, 4)) mustEqual OrderToken(List(10, 21, Int.MinValue / 2 - 1))
+      }
+      "one difference with carry-over" in {
+        OrderToken.middleBetween(
+          someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 3, 123),
+          someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 4)) mustEqual
+          OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue))
+        OrderToken.middleBetween(
+          someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 2, 123),
+          someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 5, 456)) mustEqual
+          OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 1))
+      }
     }
     "always append is sorted" in {
       def alwaysAppendTokenStream(nextValue: OrderToken = OrderToken.middle): Stream[OrderToken] = {
