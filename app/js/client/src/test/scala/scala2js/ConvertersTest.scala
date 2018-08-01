@@ -18,7 +18,7 @@ object ConvertersTest extends TestSuite {
 
   override def tests = TestSuite {
     "fromModelField" - {
-      Converters.fromModelField(ModelField.Transaction.categoryCode) ==> Converters.StringConverter
+      Converters.fromModelField(ModelField.User.loginName) ==> Converters.StringConverter
       Converters.fromModelField(ModelField.id[User]) ==> Converters.LongConverter
     }
     "LongConverter" - {
@@ -40,10 +40,6 @@ object ConvertersTest extends TestSuite {
 
     "fromEntityType" - {
       fromEntityType(EntityType.UserType) ==> UserConverter
-      fromEntityType(EntityType.TransactionType) ==> TransactionConverter
-      fromEntityType(EntityType.TransactionGroupType) ==> TransactionGroupConverter
-      fromEntityType(EntityType.BalanceCheckType) ==> BalanceCheckConverter
-      fromEntityType(EntityType.ExchangeRateMeasurementType) ==> ExchangeRateMeasurementConverter
     }
 
     "seqConverter" - {
@@ -63,40 +59,23 @@ object ConvertersTest extends TestSuite {
     }
 
     "EntityTypeConverter" - {
-      testToJsAndBack[EntityType.any](EntityType.BalanceCheckType)
-      testToJsAndBack[EntityType.any](EntityType.TransactionType)
+      testToJsAndBack[EntityType.any](EntityType.UserType)
     }
 
     "EntityModificationConverter" - {
       "Add" - {
-        testToJsAndBack[EntityModification](EntityModification.Add(testTransactionWithIdA))
+        testToJsAndBack[EntityModification](EntityModification.Add(testUserRedacted))
       }
       "Update" - {
         testToJsAndBack[EntityModification](EntityModification.Update(testUserA))
       }
       "Remove" - {
-        testToJsAndBack[EntityModification](EntityModification.Remove[Transaction](19238))
+        testToJsAndBack[EntityModification](EntityModification.Remove[User](19238))
       }
     }
 
     "UserConverter: testToJsAndBack" - {
       testToJsAndBack[User](testUserRedacted)
-    }
-
-    "TransactionConverter: testToJsAndBack" - {
-      testToJsAndBack[Transaction](testTransactionWithId)
-    }
-
-    "TransactionGroup: testToJsAndBack" - {
-      testToJsAndBack[TransactionGroup](testTransactionGroupWithId)
-    }
-
-    "BalanceCheck: testToJsAndBack" - {
-      testToJsAndBack[BalanceCheck](testBalanceCheckWithId)
-    }
-
-    "ExchangeRateMeasurement: testToJsAndBack" - {
-      testToJsAndBack[ExchangeRateMeasurement](testExchangeRateMeasurementWithId)
     }
   }
 
