@@ -48,11 +48,12 @@ object OrderToken {
           (lowerHead.toInt :: resultRest, resultHasCarryOver)
         }
       } else {
-        val result = (lowerHead + (higherHead + Int.MaxValue.toLong)) / 2
+        val intRange = Int.MaxValue.toLong - Int.MinValue.toLong
+        val result = (lowerHead + (higherHead + intRange)) / 2
         if (result <= Int.MaxValue) {
           (result.toInt :: Nil, /* HasCarryOver */ false)
         } else {
-          ((result - Int.MaxValue).toInt :: Nil, /* HasCarryOver */ true)
+          ((result - intRange).toInt :: Nil, /* HasCarryOver */ true)
         }
       }
     }

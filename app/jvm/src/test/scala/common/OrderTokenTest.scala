@@ -39,14 +39,14 @@ class OrderTokenTest extends Specification {
       OrderToken.middleBetween(
         someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 2, 123),
         someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 4, 456)) mustEqual
-        OrderToken(List(10, 21, Int.MinValue, Int.MinValue, 1))
+        OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 1))
       OrderToken.middleBetween(
         someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 4, 123),
-        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 5)) mustEqual
+        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 7)) mustEqual
         OrderToken(List(10, 21, Int.MinValue, Int.MinValue, Int.MinValue))
       OrderToken.middleBetween(
         someToken(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue - 4),
-        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 4)) mustEqual
+        someToken(10, 21, Int.MinValue, Int.MinValue, Int.MinValue + 5)) mustEqual
         OrderToken(List(10, 20, Int.MaxValue, Int.MaxValue, Int.MaxValue))
 
       OrderToken.middleBetween(
