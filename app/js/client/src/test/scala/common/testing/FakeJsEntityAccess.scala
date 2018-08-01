@@ -37,9 +37,6 @@ final class FakeJsEntityAccess extends JsEntityAccess {
       override def count(dbQuery: DbQuery[E]): Future[Int] = addDelay(delegate.count(dbQuery))
     })
   }
-  override def newQuerySyncForUser() = {
-    DbResultSet.fromExecutor(queryExecutor[User])
-  }
   override def pendingModifications: PendingModifications = _pendingModifications
   override def persistModifications(modifications: Seq[EntityModification]): Future[Unit] = {
     modificationsBuffer.addModifications(modifications)
