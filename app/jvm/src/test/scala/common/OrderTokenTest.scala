@@ -2,7 +2,7 @@ package common
 
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
-
+import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.util.Random
 
@@ -28,8 +28,6 @@ class OrderTokenTest extends Specification {
 
   "middleBetween" in {
     "manual test cases" in {
-      def someToken(parts: Int*): Option[OrderToken] = Some(OrderToken(List(parts: _*)))
-
       "tralilng zeros are removed" in {
         OrderToken.middleBetween(None, None) mustEqual OrderToken(List(0))
         OrderToken.middleBetween(someToken(-10), someToken(10)) mustEqual OrderToken(List(0))
@@ -94,4 +92,33 @@ class OrderTokenTest extends Specification {
       }
     }
   }
+  "evenlyDistributedValuesBetween" in {
+    "With None bounds" in {
+      OrderToken.evenlyDistributedValuesBetween(1, None, None) mustEqual Seq(OrderToken(List(0)))
+      OrderToken.evenlyDistributedValuesBetween(3, None, None) mustEqual
+        Seq(OrderToken(List(Int.MinValue / 2)), OrderToken(List(0)), OrderToken(List(Int.MaxValue / 2)))
+    }
+    "With single None bound" in {
+      OrderToken.evenlyDistributedValuesBetween(4, None, someToken(0)) mustEqual
+        Seq(
+          OrderToken(List(Int.MinValue - Int.MinValue / 8)),
+          OrderToken(List(Int.MinValue - Int.MinValue / 4)),
+          OrderToken(List(Int.MinValue / 2)),
+          OrderToken(List(Int.MinValue / 4))
+        )
+    }
+    "With all bounds defined" in {
+      OrderToken.evenlyDistributedValuesBetween(6, someToken(0), someToken(10)) mustEqual
+        Seq(
+          OrderToken(List(1)),
+          OrderToken(List(2)),
+          OrderToken(List(3)),
+          OrderToken(List(5)),
+          OrderToken(List(6)),
+          OrderToken(List(7))
+        )
+    }
+  }
+
+  private def someToken(parts: Int*): Option[OrderToken] = Some(OrderToken(List(parts: _*)))
 }

@@ -3,6 +3,8 @@ package common
 import common.ScalaUtils.visibleForTesting
 
 import scala.annotation.tailrec
+import scala.collection.{SeqView, mutable}
+import scala.collection.immutable.Seq
 
 case class OrderToken @visibleForTesting private[common] (private val parts: List[Int])
     extends Ordered[OrderToken] {
@@ -95,6 +97,37 @@ object OrderToken {
       doSanityCheck(result)
       result
     }
+  }
+
+  def evenlyDistributedValuesBetween(numValues: Int,
+                                     lower: Option[OrderToken],
+                                     higher: Option[OrderToken]): Seq[OrderToken] = {
+    val resultBuffer = (for (i <- 0 until numValues) yield null.asInstanceOf[OrderToken]).toBuffer
+
+    def resultFiller(resultIndexBaseline: Int = 0,
+                     numValues: Int,
+                     lower: Option[OrderToken],
+                     higher: Option[OrderToken]): Unit = {
+      val middle = middleBetween(lower, higher)
+      val middleIndexOffset = numValues / 2
+      resultBuffer.update(resultIndexBaseline + middleIndexOffset, middle)
+      if (middleIndexOffset > 0) {
+        resultFiller(
+          resultIndexBaseline = resultIndexBaseline,
+          numValues = middleIndexOffset,
+          lower = lower,
+          higher = Some(middle))
+      }
+      if (middleIndexOffset + 1 < numValues) {
+        resultFiller(
+          resultIndexBaseline = resultIndexBaseline + middleIndexOffset + 1,
+          numValues = numValues - (middleIndexOffset + 1),
+          lower = Some(middle),
+          higher = higher)
+      }
+    }
+    resultFiller(numValues = numValues, lower = lower, higher = higher)
+    resultBuffer.toVector
   }
 
   private def splitHeadAndNext(listOption: Option[List[Int]],
