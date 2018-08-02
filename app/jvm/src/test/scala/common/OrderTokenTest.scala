@@ -1,12 +1,10 @@
 package common
 
-import org.specs2.execute.ResultLike
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 
-import scala.util.Random
-import scala.collection.immutable.Seq
 import scala.collection.mutable
+import scala.util.Random
 
 class OrderTokenTest extends Specification {
 
