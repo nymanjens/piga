@@ -262,24 +262,19 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                 content = insertInString(selectedTask.content, index = start.offsetInTask, replacement))
             state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
           } else {
-            def orderTokenBetween(previous: Option[OrderToken],
-                                  next: Option[OrderToken],
-                                  numTokensBetween: Int,
-                                  tokenIndexBetween: Int): OrderToken = {
-              ???
-            }
-
             val previousTask = state.tasks.option(start.listIndex - 1)
             val nextTask = state.tasks.option(end.listIndex + 1)
-            val updatedTasks = for ((replacementPart, i) <- replacements.zipWithIndex)
+            val newOrderTokens =
+              OrderToken.evenlyDistributedValuesBetween(
+                numValues = replacements.length,
+                lower = previousTask.map(_.orderToken),
+                higher = nextTask.map(_.orderToken)
+              )
+            val updatedTasks = for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
               yield {
                 def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
                 Task.withRandomId(
-                  orderToken = orderTokenBetween(
-                    previousTask.map(_.orderToken),
-                    nextTask.map(_.orderToken),
-                    replacements.length,
-                    i),
+                  orderToken = newOrderToken,
                   ifIndexOrEmpty(0)(state.tasks(start.listIndex).content.substring(0, start.offsetInTask)) +
                     replacementPart +
                     ifIndexOrEmpty(replacements.length - 1)(
