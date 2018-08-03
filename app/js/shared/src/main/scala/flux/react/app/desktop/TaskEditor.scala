@@ -252,25 +252,19 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
 
       $.modState(
-        state =>
-          if (start == end && replacements.length == 1) {
-            // Optimization
-            val selectedTask = state.tasks(start.listIndex)
-            val updatedTask =
-              Task.withRandomId(
-                orderToken = selectedTask.orderToken,
-                content = insertInString(selectedTask.content, index = start.offsetInTask, replacement))
-            state.copy(tasks = state.tasks.updated(start.listIndex, updatedTask))
-          } else {
+        state => {
+          val newOrderTokens = {
             val previousTask = state.tasks.option(start.listIndex - 1)
             val nextTask = state.tasks.option(end.listIndex + 1)
-            val newOrderTokens =
-              OrderToken.evenlyDistributedValuesBetween(
-                numValues = replacements.length,
-                lower = previousTask.map(_.orderToken),
-                higher = nextTask.map(_.orderToken)
-              )
-            val updatedTasks = for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
+            OrderToken.evenlyDistributedValuesBetween(
+              numValues = replacements.length,
+              lower = previousTask.map(_.orderToken),
+              higher = nextTask.map(_.orderToken)
+            )
+          }
+          val tasksToReplace = for (i <- start.listIndex to end.listIndex) yield state.tasks(i)
+          val updatedTasks =
+            for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
               yield {
                 def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
                 Task.withRandomId(
@@ -281,11 +275,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                       state.tasks(end.listIndex).content.substring(end.offsetInTask))
                 )
               }
-            state.copy(tasks = new TaskSequence(state.tasks.zipWithIndex.flatMap {
-              case (task, start.`listIndex`)                                          => updatedTasks
-              case (task, index) if start.listIndex < index && index <= end.listIndex => Seq()
-              case (task, _)                                                          => Seq(task)
-            }))
+          state.copy(tasks = state.tasks.replaced(toReplace = tasksToReplace, toAdd = updatedTasks))
         },
         setSelection((start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
       )
@@ -319,13 +309,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       } else {
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
       }
-    }
-
-    private def insertInString(s: String, index: Int, toInsert: String): String = {
-      require(index >= 0, s"index = $index < 0")
-      require(index <= s.length, s"index = $index > length = ${s.length}")
-      val (before, after) = s.splitAt(index)
-      before + toInsert + after
     }
   }
 }

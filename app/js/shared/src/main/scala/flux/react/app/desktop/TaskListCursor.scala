@@ -4,7 +4,6 @@ import common.DomNodeUtils.nodeIsLi
 import org.scalajs.dom
 
 import scala.annotation.tailrec
-import scala.collection.immutable.Seq
 
 private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
     extends Ordered[TaskListCursor] {
@@ -32,7 +31,7 @@ private[desktop] case class TaskListCursor(listIndex: Int, offsetInTask: Int)
         }
       case offset if offset > tasks(c.listIndex).content.length =>
         if (c.listIndex == tasks.length - 1) {
-          TaskListCursor(tasks.length - 1, tasks.last.content.length)
+          TaskListCursor(tasks.length - 1, tasks(tasks.length - 1).content.length)
         } else {
           fixOffset(TaskListCursor(c.listIndex + 1, offset - tasks(c.listIndex).content.length - 1))
         }
