@@ -5,6 +5,7 @@ import common.GuavaReplacement.Splitter
 import common.{I18n, OrderToken}
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.time.Clock
+import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -94,7 +95,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val selection = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       console
         .log(
           s"$name EVENT",
@@ -116,12 +117,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
       modifyEventClipboardData(event)
 
-      val selection = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       replaceSelectionInState(replacement = "", selection)
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
-      val TaskSeqSelection(start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val IndexedSelection(start, end) = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       val tasks = $.state.runNow().tasks
 
       if (start != end) {
@@ -182,18 +183,18 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       }
 
       event.preventDefault()
-      val selection = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       replaceSelectionInState(replacement = pastedText, selection)
     }
 
     private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val selection = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       console.log(s"onBeforeInput EVENT", event.nativeEvent, event.eventType, selection.toString)
       event.preventDefault()
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      val TaskSeqSelection(start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
+      val IndexedSelection(start, end) = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
@@ -201,38 +202,38 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed =>
           event.preventDefault()
-          replaceSelectionInState(replacement = eventKey, TaskSeqSelection(start, end))
+          replaceSelectionInState(replacement = eventKey, IndexedSelection(start, end))
 
         case "Enter" =>
           event.preventDefault()
           if (shiftPressed) {
-            replaceSelectionInState(replacement = "\n", TaskSeqSelection(start, end))
+            replaceSelectionInState(replacement = "\n", IndexedSelection(start, end))
           } else {
-            replaceSelectionInState(replacement = TASK_DELIMITER.toString, TaskSeqSelection(start, end))
+            replaceSelectionInState(replacement = TASK_DELIMITER.toString, IndexedSelection(start, end))
           }
 
         case "Backspace" =>
           event.preventDefault()
           if (start == end) {
             if (ctrlPressed) {
-              replaceSelectionInState(replacement = "", TaskSeqSelection(start.minusWord, end))
+              replaceSelectionInState(replacement = "", IndexedSelection(start.minusWord, end))
             } else {
-              replaceSelectionInState(replacement = "", TaskSeqSelection(start minusOffsetInSeq 1, end))
+              replaceSelectionInState(replacement = "", IndexedSelection(start minusOffsetInSeq 1, end))
             }
           } else {
-            replaceSelectionInState(replacement = "", TaskSeqSelection(start, end))
+            replaceSelectionInState(replacement = "", IndexedSelection(start, end))
           }
 
         case "Delete" =>
           event.preventDefault()
           if (start == end) {
             if (ctrlPressed) {
-              replaceSelectionInState(replacement = "", TaskSeqSelection(start, end.plusWord))
+              replaceSelectionInState(replacement = "", IndexedSelection(start, end.plusWord))
             } else {
-              replaceSelectionInState(replacement = "", TaskSeqSelection(start, end plusOffsetInSeq 1))
+              replaceSelectionInState(replacement = "", IndexedSelection(start, end plusOffsetInSeq 1))
             }
           } else {
-            replaceSelectionInState(replacement = "", TaskSeqSelection(start, end))
+            replaceSelectionInState(replacement = "", IndexedSelection(start, end))
           }
 
         case "i" | "b" | "u" if ctrlPressed =>
@@ -240,13 +241,20 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           Callback.empty
 
+        case "z" if ctrlPressed && !shiftPressed =>
+          ???
+        case "z" if ctrlPressed && shiftPressed =>
+          ???
+        case "y" if ctrlPressed =>
+          ???
+
         case _ =>
           Callback.empty
       }
     }
 
-    private def replaceSelectionInState(replacement: String, selection: TaskSeqSelection): Callback = {
-      val TaskSeqSelection(start, end) = selection
+    private def replaceSelectionInState(replacement: String, selection: IndexedSelection): Callback = {
+      val IndexedSelection(start, end) = selection
       val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
 
       $.modState(
@@ -279,7 +287,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       )
     }
 
-    private def setSelection(cursor: TaskSeqCursor): Callback = LogExceptionsCallback {
+    private def setSelection(cursor: IndexedCursor): Callback = LogExceptionsCallback {
       val selectedTask = dom.document.getElementById(s"teli-${cursor.seqIndex}")
       require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.seqIndex}")
 

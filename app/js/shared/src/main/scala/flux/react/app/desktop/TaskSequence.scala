@@ -1,5 +1,9 @@
 package flux.react.app.desktop
 
+import common.DomNodeUtils.nodeIsLi
+import org.scalajs.dom
+
+import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
 private[desktop] final class TaskSequence(tasks: Seq[Task]) {
@@ -48,5 +52,126 @@ private[desktop] final class TaskSequence(tasks: Seq[Task]) {
     }
 
     inner(0, tasks.length - 1)
+  }
+}
+private[desktop] object TaskSequence {
+
+  private[desktop] case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
+
+    override def compare(that: IndexedCursor): Int = {
+      import scala.math.Ordered.orderingToOrdered
+      (this.seqIndex, this.offsetInTask) compare ((that.seqIndex, that.offsetInTask))
+    }
+
+    def detach(implicit tasks: TaskSequence): DetachedCursor =
+      DetachedCursor(task = tasks(seqIndex), offsetInTask = offsetInTask)
+
+    def proceedNTasks(n: Int): IndexedCursor = n match {
+      case 0 => this
+      case _ => IndexedCursor(seqIndex + n, 0)
+    }
+    def plusOffset(diff: Int): IndexedCursor = IndexedCursor(seqIndex, offsetInTask + diff)
+    def minusOffset(diff: Int): IndexedCursor = plusOffset(-diff)
+
+    def plusOffsetInSeq(diff: Int)(implicit tasks: TaskSequence): IndexedCursor = {
+      @tailrec
+      def fixOffset(c: IndexedCursor): IndexedCursor = c.offsetInTask match {
+        case offset if offset < 0 =>
+          if (c.seqIndex == 0) {
+            IndexedCursor(0, 0)
+          } else {
+            fixOffset(IndexedCursor(c.seqIndex - 1, tasks(c.seqIndex - 1).content.length + offset + 1))
+          }
+        case offset if offset > tasks(c.seqIndex).content.length =>
+          if (c.seqIndex == tasks.length - 1) {
+            IndexedCursor(tasks.length - 1, tasks(tasks.length - 1).content.length)
+          } else {
+            fixOffset(IndexedCursor(c.seqIndex + 1, offset - tasks(c.seqIndex).content.length - 1))
+          }
+        case _ => c
+      }
+      fixOffset(IndexedCursor(seqIndex, offsetInTask + diff))
+    }
+    def minusOffsetInSeq(diff: Int)(implicit tasks: TaskSequence): IndexedCursor = plusOffsetInSeq(-diff)
+
+    def plusWord(implicit tasks: TaskSequence): IndexedCursor = moveWord(step = 1)
+    def minusWord(implicit tasks: TaskSequence): IndexedCursor = moveWord(step = -1)
+    private def moveWord(step: Int)(implicit tasks: TaskSequence): IndexedCursor = {
+      val result = copy(offsetInTask = {
+        val task = tasks(seqIndex).content
+        @tailrec
+        def move(offsetInTask: Int, seenWord: Boolean = false): Int = {
+          val nextOffset = offsetInTask + step
+          if (nextOffset < 0 || nextOffset > task.length) {
+            offsetInTask
+          } else {
+            val currentChar = if (step > 0) task.charAt(offsetInTask) else task.charAt(nextOffset)
+            val currentCharIsWord = currentChar.isLetterOrDigit
+            if (currentCharIsWord) {
+              move(nextOffset, seenWord = true)
+            } else {
+              if (seenWord) {
+                offsetInTask
+              } else {
+                move(nextOffset, seenWord = false)
+              }
+            }
+          }
+        }
+        move(offsetInTask)
+      })
+      if (this == result) {
+        // No movement happened --> move to the next/previous line
+        plusOffsetInSeq(step)
+      } else {
+        result
+      }
+    }
+  }
+  private[desktop] object IndexedCursor {
+    def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
+      val anchor = IndexedCursor.fromNode(selection.anchorNode, selection.anchorOffset)
+      val focus = IndexedCursor.fromNode(selection.focusNode, selection.focusOffset)
+      if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
+    }
+
+    def fromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
+      val parentLi = parentLiElement(node)
+
+      val offsetInTask = {
+        val preCursorRange = dom.document.createRange()
+        preCursorRange.selectNodeContents(parentLi)
+        preCursorRange.setEnd(node, offset)
+        preCursorRange.toString.length
+      }
+
+      IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
+    }
+
+    private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
+      if (nodeIsLi(node)) {
+        node.asInstanceOf[dom.raw.Element]
+      } else {
+        parentLiElement(node.parentNode)
+      }
+    }
+  }
+
+  private[desktop] case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
+    require(start <= end)
+
+    def detach(implicit tasks: TaskSequence): DetachedSelection = DetachedSelection(start.detach, end.detach)
+  }
+  private[desktop] object IndexedSelection {
+    def collapsed(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
+  }
+
+  private[desktop] case class DetachedCursor(task: Task, offsetInTask: Int) {
+    def attachToTasks(implicit tasks: TaskSequence): IndexedCursor =
+      IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
+  }
+  private[desktop] case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
+    def attachToTasks(implicit tasks: TaskSequence): IndexedSelection =
+      IndexedSelection(start = start.attachToTasks, end = end.attachToTasks)
   }
 }
