@@ -312,28 +312,35 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
-      val IndexedSelection(cursor, cursor2) = selection
-      require(cursor == cursor2, "TODO: Implement setSelection() for non-collapsed selection")
-      val selectedTask = dom.document.getElementById(s"teli-${cursor.seqIndex}")
-      require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.seqIndex}")
+      def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
+        val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
+        require(!js.isUndefined(task), s"Could not find task with index teli-${cursor.seqIndex}")
+        task
+      }
+      def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
+        walkDepthFirstPreOrder(getTaskElement(cursor)).find {
+          case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+            if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
+              func(node, cursor.offsetInTask - offsetSoFar)
 
-      walkDepthFirstPreOrder(selectedTask).find {
-        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-          if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
-            val range = dom.document.createRange()
-            range.setStart(node, cursor.offsetInTask - offsetSoFar)
-            val selection = dom.window.getSelection()
-            selection.removeAllRanges()
-            selection.addRange(range)
-
-            true
-          } else {
-            false
-          }
+              true
+            } else {
+              false
+            }
+        }
       }
 
-      if (!elementIsFullyInView(selectedTask)) {
-        selectedTask
+      val IndexedSelection(start, end) = selection
+      val resultRange = dom.document.createRange()
+      findCursorInDom(start)(resultRange.setStart)
+      findCursorInDom(end)(resultRange.setEnd)
+
+      val windowSelection = dom.window.getSelection()
+      windowSelection.removeAllRanges()
+      windowSelection.addRange(resultRange)
+
+      if (!elementIsFullyInView(getTaskElement(end))) {
+        getTaskElement(end)
           .asInstanceOf[js.Dynamic]
           .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
       }
