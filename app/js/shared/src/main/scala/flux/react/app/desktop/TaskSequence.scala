@@ -39,7 +39,9 @@ private[desktop] final class TaskSequence(tasks: Seq[Task]) {
       require(lowerIndex <= upperIndex, s"$task is not in $tasks")
       val index = (upperIndex + lowerIndex) / 2
       tasks(index) match {
-        case `task`                              => index
+        case t if t.id == task.id =>
+          require(task == t)
+          index
         case t if task.orderToken < t.orderToken => inner(lowerIndex, upperIndex - 1)
         case _                                   => inner(index + 1, upperIndex)
       }

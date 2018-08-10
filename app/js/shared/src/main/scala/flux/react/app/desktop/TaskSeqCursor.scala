@@ -75,10 +75,10 @@ private[desktop] case class TaskSeqCursor(seqIndex: Int, offsetInTask: Int) exte
   }
 }
 private object TaskSeqCursor {
-  def tupleFromSelection(selection: dom.raw.Selection): (TaskSeqCursor, TaskSeqCursor) = {
+  def tupleFromSelection(selection: dom.raw.Selection): TaskSeqSelection = {
     val anchor = TaskSeqCursor.fromNode(selection.anchorNode, selection.anchorOffset)
     val focus = TaskSeqCursor.fromNode(selection.focusNode, selection.focusOffset)
-    if (anchor < focus) (anchor, focus) else (focus, anchor)
+    if (anchor < focus) TaskSeqSelection(anchor, focus) else TaskSeqSelection(focus, anchor)
   }
 
   def fromNode(node: dom.raw.Node, offset: Int): TaskSeqCursor = {
