@@ -48,7 +48,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private class Backend($ : BackendScope[Props, State]) {
 
-    private def editHistory: EditHistory = new EditHistory()
+    private val editHistory: EditHistory = new EditHistory()
 
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
@@ -244,7 +244,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case "z" if ctrlPressed && !shiftPressed =>
           applyHistoryEdit(editHistory.undo())
 
-        case "z" if ctrlPressed && shiftPressed =>
+        case "Z" if ctrlPressed && shiftPressed =>
           applyHistoryEdit(editHistory.redo())
 
         case "y" if ctrlPressed =>
@@ -258,11 +258,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit]): Callback = maybeEdit match {
       case None => Callback.empty
       case Some(edit) =>
+        val oldTasks = $.state.runNow().tasks
+        val newTasks = oldTasks.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
         $.modState(
-          state =>
-            state
-              .copy(tasks = state.tasks.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)),
-          setSelection(edit.selectionAfterEdit.attachToTasks($.state.runNow().tasks))
+          _.copy(tasks = newTasks),
+          setSelection(edit.selectionAfterEdit.attachToTasks(newTasks))
         )
     }
 
@@ -282,7 +282,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         )
       }
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
-      val updatedTasks =
+      val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
           yield {
             def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
@@ -294,16 +294,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                   oldTasks(end.seqIndex).content.substring(end.offsetInTask))
             )
           }
+      val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
       $.modState(
-        _.copy(tasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = updatedTasks)), {
+        _.copy(tasks = newTasks), {
           val selectionAfterEdit = IndexedSelection.collapsed(
             (start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
           editHistory.addEdit(
             removedTasks = tasksToReplace,
-            addedTasks = updatedTasks,
+            addedTasks = tasksToAdd,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
-            selectionAfterEdit = selectionAfterEdit.detach($.state.runNow().tasks)
+            selectionAfterEdit = selectionAfterEdit.detach(newTasks)
           )
           setSelection(selectionAfterEdit)
         }
