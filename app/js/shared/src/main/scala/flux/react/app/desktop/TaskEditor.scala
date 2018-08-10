@@ -299,6 +299,21 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             false
           }
       }
+
+      if (!elementIsFullyInView(selectedTask)) {
+        selectedTask
+          .asInstanceOf[js.Dynamic]
+          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
+      }
+    }
+
+    private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
+      val rect = element.getBoundingClientRect
+
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= dom.window.innerHeight &&
+      rect.right <= dom.window.innerWidth
     }
 
     private def getAnyClipboardString(event: ReactEventFromInput): String = {
