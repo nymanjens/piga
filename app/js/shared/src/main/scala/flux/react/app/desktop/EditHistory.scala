@@ -3,6 +3,7 @@ package flux.react.app.desktop
 import java.time.Instant
 
 import common.time.Clock
+import flux.react.app.desktop.EditHistory.Edit
 import flux.react.app.desktop.TaskSequence.DetachedSelection
 
 import scala.collection.immutable.Seq
@@ -49,12 +50,13 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
       None
     }
   }
+}
 
-  // **************** inner types **************** //
+private[desktop] object EditHistory {
   private[desktop] class Edit(val removedTasks: Seq[Task],
                               val addedTasks: Seq[Task],
-                              selectionBeforeEdit: DetachedSelection,
-                              selectionAfterEdit: DetachedSelection,
+                              val selectionBeforeEdit: DetachedSelection,
+                              val selectionAfterEdit: DetachedSelection,
                               timestamp: Instant) {
     def reverse: Edit =
       new Edit(

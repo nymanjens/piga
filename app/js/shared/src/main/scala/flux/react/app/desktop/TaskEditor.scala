@@ -242,52 +242,77 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           Callback.empty
 
         case "z" if ctrlPressed && !shiftPressed =>
-          ???
+          applyHistoryEdit(editHistory.undo())
+
         case "z" if ctrlPressed && shiftPressed =>
-          ???
+          applyHistoryEdit(editHistory.redo())
+
         case "y" if ctrlPressed =>
-          ???
+          applyHistoryEdit(editHistory.redo())
 
         case _ =>
           Callback.empty
       }
     }
 
-    private def replaceSelectionInState(replacement: String, selection: IndexedSelection): Callback = {
-      val IndexedSelection(start, end) = selection
-      val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit]): Callback = maybeEdit match {
+      case None => Callback.empty
+      case Some(edit) =>
+        $.modState(
+          state =>
+            state
+              .copy(tasks = state.tasks.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)),
+          setSelection(edit.selectionAfterEdit.attachToTasks($.state.runNow().tasks))
+        )
+    }
 
-      $.modState(
-        state => {
-          val newOrderTokens = {
-            val previousTask = state.tasks.option(start.seqIndex - 1)
-            val nextTask = state.tasks.option(end.seqIndex + 1)
-            OrderToken.evenlyDistributedValuesBetween(
-              numValues = replacements.length,
-              lower = previousTask.map(_.orderToken),
-              higher = nextTask.map(_.orderToken)
+    private def replaceSelectionInState(replacement: String,
+                                        selectionBeforeEdit: IndexedSelection): Callback = {
+      val IndexedSelection(start, end) = selectionBeforeEdit
+      val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
+      val oldTasks = $.state.runNow().tasks
+
+      val newOrderTokens = {
+        val previousTask = oldTasks.option(start.seqIndex - 1)
+        val nextTask = oldTasks.option(end.seqIndex + 1)
+        OrderToken.evenlyDistributedValuesBetween(
+          numValues = replacements.length,
+          lower = previousTask.map(_.orderToken),
+          higher = nextTask.map(_.orderToken)
+        )
+      }
+      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+      val updatedTasks =
+        for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
+          yield {
+            def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
+            Task.withRandomId(
+              orderToken = newOrderToken,
+              ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
+                replacementPart +
+                ifIndexOrEmpty(replacements.length - 1)(
+                  oldTasks(end.seqIndex).content.substring(end.offsetInTask))
             )
           }
-          val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield state.tasks(i)
-          val updatedTasks =
-            for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
-              yield {
-                def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
-                Task.withRandomId(
-                  orderToken = newOrderToken,
-                  ifIndexOrEmpty(0)(state.tasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
-                    replacementPart +
-                    ifIndexOrEmpty(replacements.length - 1)(
-                      state.tasks(end.seqIndex).content.substring(end.offsetInTask))
-                )
-              }
-          state.copy(tasks = state.tasks.replaced(toReplace = tasksToReplace, toAdd = updatedTasks))
-        },
-        setSelection((start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
+
+      $.modState(
+        _.copy(tasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = updatedTasks)), {
+          val selectionAfterEdit = IndexedSelection.collapsed(
+            (start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
+          editHistory.addEdit(
+            removedTasks = tasksToReplace,
+            addedTasks = updatedTasks,
+            selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
+            selectionAfterEdit = selectionAfterEdit.detach($.state.runNow().tasks)
+          )
+          setSelection(selectionAfterEdit)
+        }
       )
     }
 
-    private def setSelection(cursor: IndexedCursor): Callback = LogExceptionsCallback {
+    private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
+      val IndexedSelection(cursor, cursor2) = selection
+      require(cursor == cursor2, "TODO: Implement setSelection() for non-collapsed selection")
       val selectedTask = dom.document.getElementById(s"teli-${cursor.seqIndex}")
       require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.seqIndex}")
 
