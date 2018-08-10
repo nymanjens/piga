@@ -304,7 +304,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             removedTasks = tasksToReplace,
             addedTasks = tasksToAdd,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
-            selectionAfterEdit = selectionAfterEdit.detach(newTasks)
+            selectionAfterEdit = selectionAfterEdit.detach(newTasks),
+            replacementString = replacement
           )
           setSelection(selectionAfterEdit)
         }

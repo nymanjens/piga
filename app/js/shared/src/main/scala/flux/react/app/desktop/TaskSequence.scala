@@ -171,6 +171,8 @@ private[desktop] object TaskSequence {
       IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
   }
   private[desktop] case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
+    def isCollapsed: Boolean = start == end
+
     def attachToTasks(implicit tasks: TaskSequence): IndexedSelection =
       IndexedSelection(start = start.attachToTasks, end = end.attachToTasks)
   }
