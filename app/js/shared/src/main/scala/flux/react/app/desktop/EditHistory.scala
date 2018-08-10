@@ -69,7 +69,7 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
       edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isCollapsed
     def sameLineIsEdited: Boolean = edit1.addedTasks == edit2.removedTasks
     def tooMuchTimeBetween: Boolean =
-      Duration.between(edit1.timestamp, edit2.timestamp) > Duration.ofSeconds(10)
+      Duration.between(edit1.timestamp, edit2.timestamp) > Duration.ofSeconds(3)
     def isCombiningWord: Boolean = {
       val newChar = getOnlyElement(edit2.replacementString.toVector)
       if (edit1.replacementString.last.isLetterOrDigit) {
