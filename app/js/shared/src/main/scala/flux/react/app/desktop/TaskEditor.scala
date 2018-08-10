@@ -93,7 +93,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       console
         .log(
           s"$name EVENT",
@@ -116,12 +116,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
       modifyEventClipboardData(event)
 
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       replaceSelectionInState(replacement = "", start, end)
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       val tasks = $.state.runNow().tasks
 
       if (start != end) {
@@ -129,13 +129,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           def content: String = task.content.substring(startOffset, endOffset)
         }
         val substasks = tasks.zipWithIndex
-          .filter { case (task, index) => start.listIndex <= index && index <= end.listIndex }
+          .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
           .map {
             case (task, index) =>
               Subtask(
                 task,
-                startOffset = if (index == start.listIndex) start.offsetInTask else 0,
-                endOffset = if (index == end.listIndex) end.offsetInTask else task.content.length)
+                startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
+                endOffset = if (index == end.seqIndex) end.offsetInTask else task.content.length)
           }
         val htmlText =
           "<ul><li>" +
@@ -182,19 +182,19 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       }
 
       event.preventDefault()
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       replaceSelectionInState(replacement = pastedText, start, end)
     }
 
     private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       console
         .log(s"onBeforeInput EVENT", event.nativeEvent, event.eventType, start.toString, end.toString)
       event.preventDefault()
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      val (start, end) = TaskListCursor.tupleFromSelection(dom.window.getSelection())
+      val (start, end) = TaskSeqCursor.tupleFromSelection(dom.window.getSelection())
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
@@ -218,7 +218,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             if (ctrlPressed) {
               replaceSelectionInState(replacement = "", start.minusWord, end)
             } else {
-              replaceSelectionInState(replacement = "", start minusOffsetInList 1, end)
+              replaceSelectionInState(replacement = "", start minusOffsetInSeq 1, end)
             }
           } else {
             replaceSelectionInState(replacement = "", start, end)
@@ -230,7 +230,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             if (ctrlPressed) {
               replaceSelectionInState(replacement = "", start, end.plusWord)
             } else {
-              replaceSelectionInState(replacement = "", start, end plusOffsetInList 1)
+              replaceSelectionInState(replacement = "", start, end plusOffsetInSeq 1)
             }
           } else {
             replaceSelectionInState(replacement = "", start, end)
@@ -247,32 +247,32 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def replaceSelectionInState(replacement: String,
-                                        start: TaskListCursor,
-                                        end: TaskListCursor): Callback = {
+                                        start: TaskSeqCursor,
+                                        end: TaskSeqCursor): Callback = {
       val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
 
       $.modState(
         state => {
           val newOrderTokens = {
-            val previousTask = state.tasks.option(start.listIndex - 1)
-            val nextTask = state.tasks.option(end.listIndex + 1)
+            val previousTask = state.tasks.option(start.seqIndex - 1)
+            val nextTask = state.tasks.option(end.seqIndex + 1)
             OrderToken.evenlyDistributedValuesBetween(
               numValues = replacements.length,
               lower = previousTask.map(_.orderToken),
               higher = nextTask.map(_.orderToken)
             )
           }
-          val tasksToReplace = for (i <- start.listIndex to end.listIndex) yield state.tasks(i)
+          val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield state.tasks(i)
           val updatedTasks =
             for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
               yield {
                 def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
                 Task.withRandomId(
                   orderToken = newOrderToken,
-                  ifIndexOrEmpty(0)(state.tasks(start.listIndex).content.substring(0, start.offsetInTask)) +
+                  ifIndexOrEmpty(0)(state.tasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
                     replacementPart +
                     ifIndexOrEmpty(replacements.length - 1)(
-                      state.tasks(end.listIndex).content.substring(end.offsetInTask))
+                      state.tasks(end.seqIndex).content.substring(end.offsetInTask))
                 )
               }
           state.copy(tasks = state.tasks.replaced(toReplace = tasksToReplace, toAdd = updatedTasks))
@@ -281,9 +281,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       )
     }
 
-    private def setSelection(cursor: TaskListCursor): Callback = LogExceptionsCallback {
-      val selectedTask = dom.document.getElementById(s"teli-${cursor.listIndex}")
-      require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.listIndex}")
+    private def setSelection(cursor: TaskSeqCursor): Callback = LogExceptionsCallback {
+      val selectedTask = dom.document.getElementById(s"teli-${cursor.seqIndex}")
+      require(!js.isUndefined(selectedTask), s"Could not find task with index teli-${cursor.seqIndex}")
 
       walkDepthFirstPreOrder(selectedTask).find {
         case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
