@@ -40,10 +40,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class State(
       tasks: TaskSequence = new TaskSequence(
         Seq(
-          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\n\n\n\n\nE<p>ND"),
+          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\n\n\n\n\nE<p>ND", indentation = 0),
+          Task.withRandomId(OrderToken.middleBetween(None, None), "<indented>", indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            "World!")
+            "World!",
+            indentation = 0)
         )))
 
   private class Backend($ : BackendScope[Props, State]) {
@@ -81,7 +83,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- ", contentToHtml(task.content))).toVdomArray
+          yield
+            <.div(^.key := s"task-$i", "- [", task.indentation, "]", contentToHtml(task.content))).toVdomArray
       )
     }
 
@@ -194,7 +197,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      val IndexedSelection(start, end) = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val IndexedSelection(start, end) = selection
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
@@ -235,6 +239,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           } else {
             replaceSelectionInState(replacement = "", IndexedSelection(start, end))
           }
+
+        case "Tab" =>
+          indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
 
         case "i" | "b" | "u" if ctrlPressed =>
           // Disable modifiers
@@ -291,21 +298,41 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
               ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
                 replacementPart +
                 ifIndexOrEmpty(replacements.length - 1)(
-                  oldTasks(end.seqIndex).content.substring(end.offsetInTask))
+                  oldTasks(end.seqIndex).content.substring(end.offsetInTask)),
+              indentation = oldTasks(start.seqIndex).indentation
             )
           }
+
+      replaceInStateWithHistory(
+        tasksToReplace = tasksToReplace,
+        tasksToAdd = tasksToAdd,
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEdit = IndexedSelection.collapsed(
+          (start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length),
+        replacementString = replacement
+      )
+    }
+
+    private def indentSelectionInState(indentIncrease: Int, selection: IndexedSelection): Callback = {
+      ???
+    }
+
+    private def replaceInStateWithHistory(tasksToReplace: Seq[Task],
+                                          tasksToAdd: Seq[Task],
+                                          selectionBeforeEdit: IndexedSelection,
+                                          selectionAfterEdit: IndexedSelection,
+                                          replacementString: String): Callback = {
+      val oldTasks = $.state.runNow().tasks
       val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
       $.modState(
         _.copy(tasks = newTasks), {
-          val selectionAfterEdit = IndexedSelection.collapsed(
-            (start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length)
           editHistory.addEdit(
             removedTasks = tasksToReplace,
             addedTasks = tasksToAdd,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
             selectionAfterEdit = selectionAfterEdit.detach(newTasks),
-            replacementString = replacement
+            replacementString = replacementString
           )
           setSelection(selectionAfterEdit)
         }
