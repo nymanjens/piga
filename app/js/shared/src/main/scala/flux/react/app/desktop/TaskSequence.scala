@@ -46,9 +46,21 @@ private[desktop] final class TaskSequence(tasks: Seq[Task]) {
         case t if t.id == task.id =>
           require(task == t)
           index
-        case t if task.orderToken < t.orderToken => inner(lowerIndex, upperIndex - 1)
-        case _                                   => inner(index + 1, upperIndex)
+        case t if task.orderToken < t.orderToken  => inner(lowerIndex, upperIndex - 1)
+        case t if task.orderToken == t.orderToken => findWithEqualOrderTokenAround(index)
+        case _                                    => inner(index + 1, upperIndex)
       }
+    }
+    def findWithEqualOrderTokenAround(index: Int): Int = {
+      var i = index
+      while (i > 0 && tasks(i - 1).orderToken == task.orderToken) {
+        i -= 1
+      }
+      while (tasks(i).id != task.id) {
+        require(tasks(i).orderToken == task.orderToken, s"$task is not in $tasks")
+        i += 1
+      }
+      i
     }
 
     inner(0, tasks.length - 1)

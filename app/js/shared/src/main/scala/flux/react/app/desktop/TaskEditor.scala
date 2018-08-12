@@ -241,6 +241,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           }
 
         case "Tab" =>
+          event.preventDefault()
           indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
 
         case "i" | "b" | "u" if ctrlPressed =>
@@ -314,14 +315,30 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def indentSelectionInState(indentIncrease: Int, selection: IndexedSelection): Callback = {
-      ???
+      val oldTasks = $.state.runNow().tasks
+
+      val IndexedSelection(start, end) = selection
+      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+      val tasksToAdd = tasksToReplace.map(
+        task =>
+          Task.withRandomId(
+            orderToken = task.orderToken,
+            content = task.content,
+            indentation = zeroIfNegative(task.indentation + indentIncrease)))
+
+      replaceInStateWithHistory(
+        tasksToReplace = tasksToReplace,
+        tasksToAdd = tasksToAdd,
+        selectionBeforeEdit = selection,
+        selectionAfterEdit = selection
+      )
     }
 
     private def replaceInStateWithHistory(tasksToReplace: Seq[Task],
                                           tasksToAdd: Seq[Task],
                                           selectionBeforeEdit: IndexedSelection,
                                           selectionAfterEdit: IndexedSelection,
-                                          replacementString: String): Callback = {
+                                          replacementString: String = ""): Callback = {
       val oldTasks = $.state.runNow().tasks
       val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
@@ -392,5 +409,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
       }
     }
+
+    private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
   }
 }
