@@ -72,6 +72,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                 <.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
+                  ^.style := js.Dictionary("margin-left" -> s"${task.indentation * 30}px"),
                   VdomAttr("num") := i,
                   contentToHtml(task.content)
                 )).toVdomArray
