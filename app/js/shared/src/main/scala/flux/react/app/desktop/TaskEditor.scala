@@ -391,10 +391,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
     val partsBuilder = mutable.Buffer[Replacement.Part]()
     var nextContent = ""
-    var nextRelativeIndentation = 0
+    var nextRelativeIndentation = -1
 
     def addNextPart(): Unit = {
-      partsBuilder.append(Replacement.Part(nextContent, nextRelativeIndentation))
+      partsBuilder.append(Replacement.Part(nextContent.trim, zeroIfNegative(nextRelativeIndentation)))
       nextContent = ""
     }
     def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
@@ -419,6 +419,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           addNextPart()
         }
       }
+      if (nodeIsList(node)) {
+        nextRelativeIndentation += 1
+      }
+
       for (i <- 0 until node.childNodes.length) yield {
         addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
       }
@@ -433,6 +437,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       }
       if (nodeIsLi(node)) {
         addNextPart()
+      }
+      if (nodeIsList(node)) {
+        nextRelativeIndentation -= 1
       }
     }
 

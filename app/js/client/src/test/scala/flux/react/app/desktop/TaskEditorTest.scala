@@ -48,7 +48,7 @@ object TaskEditorTest extends TestSuite {
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
         ) ==>
           taskEditor.ClipboardData(
-            htmlText = """
+            htmlText = removeWhitespace("""
               <ul>
                 <ul>
                   <li>a</li>
@@ -60,7 +60,7 @@ object TaskEditorTest extends TestSuite {
                 </ul>
                 <li>c</li>
               </ul>
-            """.replace(" ", "").replace("\n", ""),
+            """),
             plainText = "a\nb\nc"
           )
       }
@@ -68,12 +68,37 @@ object TaskEditorTest extends TestSuite {
     "clipboardStringToReplacement" - {
       def replacementPart(content: String, indentation: Int = 0) =
         taskEditor.Replacement.Part(content, indentation)
-      "without list" - {
-        taskEditor.clipboardStringToReplacement("""<p>a<br />b</p><div>c</div>d""") ==>
-          taskEditor.Replacement.create("a", replacementPart("b"), replacementPart("c"), replacementPart("d"))
+      "without list tags" - {
+        "with html" - {
+          taskEditor.clipboardStringToReplacement(removeWhitespace("""
+              <p>a<br />b</p>
+              <div>c</div>
+              d
+            """)) ==>
+            taskEditor.Replacement
+              .create("a", replacementPart("b"), replacementPart("c"), replacementPart("d"))
+        }
+        "plain text" - {
+          taskEditor.clipboardStringToReplacement("""
+              |x
+              |y
+            """.stripMargin.trim) ==>
+            taskEditor.Replacement.create("x", replacementPart("y"))
+        }
       }
-      "with list" - {
-        // TODO
+      "with list tags" - {
+        "single level" - {
+          taskEditor.clipboardStringToReplacement(removeWhitespace("""
+             <ul>
+               <li>
+                 <p>a<br />b</p>
+                 <div>c</div>
+               </li>
+               <li>xyz</li>
+             </ul>
+            """)) ==>
+            taskEditor.Replacement.create("a\nb\nc", replacementPart("xyz"))
+        }
       }
     }
     "convertToClipboardData(clipboardStringToReplacement)" - {
@@ -97,23 +122,25 @@ object TaskEditorTest extends TestSuite {
       "converts newline to <br>" - {
         roundTrip("<ul><li>a<br />b</li></ul>")
       }
-//      "handles indentation" - {
-//        roundTrip("""
-//              <ul>
-//                <ul>
-//                  <li>a</li>
-//                  <ul>
-//                    <ul>
-//                      <li>b</li>
-//                    </ul>
-//                  </ul>
-//                </ul>
-//                <li>c</li>
-//              </ul>
-//            """.replace(" ", "").replace("\n", ""))
-//      }
+      "handles indentation" - {
+        roundTrip("""
+              <ul>
+                <ul>
+                  <li>a</li>
+                  <ul>
+                    <ul>
+                      <li>b</li>
+                    </ul>
+                  </ul>
+                </ul>
+                <li>c</li>
+              </ul>
+            """.replace(" ", "").replace("\n", ""))
+      }
     }
   }
+
+  private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private def newTask(content: String, indentation: Int = 0): Task =
     Task.withRandomId(orderToken = orderTokenA, content = content, indentation = indentation)
