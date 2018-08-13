@@ -75,8 +75,7 @@ object TextInputTest extends TestSuite {
   }
 
   private final class ComponentTester(unrenderedComponent: VdomElement) {
-    private val renderedComponent = ReactTestUtils.renderIntoDocument(unrenderedComponent)
-    private val wrappedComponent = new ReactTestWrapper(renderedComponent)
+    private val wrappedComponent = ReactTestWrapper.renderComponent(unrenderedComponent)
 
     def valueProxy: InputBase.Proxy[String] = {
       testRef()
