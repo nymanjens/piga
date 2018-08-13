@@ -16,6 +16,7 @@ object DomNodeUtils {
     }
   }
 
+  def nodeIsList(node: dom.raw.Node): Boolean = nodeIsElement(node, "UL") || nodeIsElement(node, "OL")
   def nodeIsLi(node: dom.raw.Node): Boolean = nodeIsElement(node, "LI")
   def nodeIsBr(node: dom.raw.Node): Boolean = nodeIsElement(node, "BR")
   def nodeIsDiv(node: dom.raw.Node): Boolean = nodeIsElement(node, "DIV")

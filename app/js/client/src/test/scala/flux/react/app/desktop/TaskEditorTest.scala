@@ -65,6 +65,9 @@ object TaskEditorTest extends TestSuite {
           )
       }
     }
+    "clipboardStringToReplacement" - {
+      //clipboardStringToReplacement
+    }
   }
 
   private def newTask(content: String, indentation: Int = 0): Task =

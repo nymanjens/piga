@@ -18,6 +18,7 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 
 import scala.collection.immutable.Seq
+import scala.collection.mutable
 import scala.scalajs.js
 
 private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock) {
@@ -139,38 +140,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
-      val html = {
-        val resultHolder = dom.document.createElement("span")
-        resultHolder.innerHTML = getAnyClipboardString(event)
-        resultHolder
-      }
-
-      val pastedText = {
-        val resultBuilder = StringBuilder.newBuilder
-        def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
-          asTextNode(node) match {
-            case Some(textNode) =>
-              resultBuilder.append(
-                if (inListItem) textNode.wholeText else textNode.wholeText.replace('\n', TASK_DELIMITER))
-            case None =>
-          }
-          if (nodeIsBr(node)) {
-            resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
-          }
-          for (i <- 0 until node.childNodes.length) yield {
-            addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
-          }
-          if (nodeIsDiv(node) || nodeIsLi(node)) {
-            resultBuilder.append(if (inListItem) '\n' else TASK_DELIMITER)
-          }
-        }
-        addPastedText(html, inListItem = false)
-        resultBuilder.toString.stripSuffix(TASK_DELIMITER.toString).stripSuffix("\n")
-      }
-
       event.preventDefault()
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      replaceSelectionInState(replacement = Replacement.fromString(pastedText), selection)
+      replaceSelectionInState(
+        replacement = clipboardStringToReplacement(getAnyClipboardString(event)),
+        selection)
     }
 
     private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
@@ -347,7 +321,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
 
   // **************** Helper classes and methods **************** //
-  @visibleForTesting private[desktop] case class Replacement private (parts: List[Replacement.Part]) {
+  @visibleForTesting private[desktop] case class Replacement(parts: Seq[Replacement.Part]) {
     def contentString: String = parts.map(_.contentString).mkString
   }
   @visibleForTesting private[desktop] object Replacement {
@@ -405,6 +379,66 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       },
       plainText = subtasks.map(_.content).mkString("\n")
     )
+  }
+
+  @visibleForTesting private[desktop] def clipboardStringToReplacement(
+      clipboardString: String): Replacement = {
+    val html = {
+      val resultHolder = dom.document.createElement("span")
+      resultHolder.innerHTML = clipboardString
+      resultHolder
+    }
+
+    val partsBuilder = mutable.Buffer[Replacement.Part]()
+    var nextContent = ""
+    var nextRelativeIndentation = 0
+
+    def addNextPart(): Unit = {
+      partsBuilder.append(Replacement.Part(nextContent, nextRelativeIndentation))
+      nextContent = ""
+    }
+    def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
+      asTextNode(node) match {
+        case Some(textNode) =>
+          if (inListItem) {
+            nextContent += textNode.wholeText
+          } else {
+            for ((line, i) <- Splitter.on('\n').split(textNode.wholeText).zipWithIndex) {
+              if (i != 0) {
+                addNextPart()
+              }
+              nextContent = line
+            }
+          }
+        case None =>
+      }
+      if (nodeIsBr(node)) {
+        if (inListItem) {
+          nextContent += '\n'
+        } else {
+          addNextPart()
+        }
+      }
+      for (i <- 0 until node.childNodes.length) yield {
+        addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
+      }
+      if (nodeIsDiv(node)) {
+        if (inListItem) {
+          nextContent += '\n'
+        } else {
+          addNextPart()
+        }
+      }
+      if (nodeIsLi(node)) {
+        addNextPart()
+      }
+    }
+
+    addPastedText(html, inListItem = false)
+    if (nextContent.nonEmpty) {
+      addNextPart()
+    }
+    Replacement(partsBuilder.toVector)
   }
 
   private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
