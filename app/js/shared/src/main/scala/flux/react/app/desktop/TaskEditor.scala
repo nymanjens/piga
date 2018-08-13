@@ -2,10 +2,10 @@ package flux.react.app.desktop
 
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
-import common.{I18n, OrderToken}
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
+import common.{I18n, OrderToken}
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
@@ -407,7 +407,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
               if (i != 0) {
                 addNextPart()
               }
-              nextContent = line
+              nextContent += line
             }
           }
         case None =>
@@ -422,7 +422,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       for (i <- 0 until node.childNodes.length) yield {
         addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
       }
-      if (nodeIsDiv(node)) {
+
+      // handle tag closings
+      if (nodeIsDiv(node) || nodeIsP(node)) {
         if (inListItem) {
           nextContent += '\n'
         } else {

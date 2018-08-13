@@ -66,7 +66,52 @@ object TaskEditorTest extends TestSuite {
       }
     }
     "clipboardStringToReplacement" - {
-      //clipboardStringToReplacement
+      def replacementPart(content: String, indentation: Int = 0) =
+        taskEditor.Replacement.Part(content, indentation)
+      "without list" - {
+        taskEditor.clipboardStringToReplacement("""<p>a<br />b</p><div>c</div>d""") ==>
+          taskEditor.Replacement.create("a", replacementPart("b"), replacementPart("c"), replacementPart("d"))
+      }
+      "with list" - {
+        // TODO
+      }
+    }
+    "convertToClipboardData(clipboardStringToReplacement)" - {
+      def roundTrip(html: String): Unit = {
+        val replacement = taskEditor.clipboardStringToReplacement(html)
+        val clipboardData = taskEditor.convertToClipboardData(
+          new TaskSequence(replacement.parts.map(p =>
+            newTask(content = p.content, indentation = 10 + p.indentationRelativeToCurrent))),
+          IndexedSelection(
+            start = IndexedCursor(0, 0),
+            end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.content.length))
+        )
+        clipboardData.htmlText ==> html
+      }
+      "covers multiple lines" - {
+        roundTrip("<ul><li>bc</li><li>defg</li><li>hi</li></ul>")
+      }
+      "escapes html" - {
+        roundTrip("<ul><li>a&lt;b&gt;c</li></ul>")
+      }
+      "converts newline to <br>" - {
+        roundTrip("<ul><li>a<br />b</li></ul>")
+      }
+//      "handles indentation" - {
+//        roundTrip("""
+//              <ul>
+//                <ul>
+//                  <li>a</li>
+//                  <ul>
+//                    <ul>
+//                      <li>b</li>
+//                    </ul>
+//                  </ul>
+//                </ul>
+//                <li>c</li>
+//              </ul>
+//            """.replace(" ", "").replace("\n", ""))
+//      }
     }
   }
 

@@ -20,6 +20,7 @@ object DomNodeUtils {
   def nodeIsLi(node: dom.raw.Node): Boolean = nodeIsElement(node, "LI")
   def nodeIsBr(node: dom.raw.Node): Boolean = nodeIsElement(node, "BR")
   def nodeIsDiv(node: dom.raw.Node): Boolean = nodeIsElement(node, "DIV")
+  def nodeIsP(node: dom.raw.Node): Boolean = nodeIsElement(node, "P")
 
   def nodeIsElement(node: dom.raw.Node, tagName: String): Boolean = {
     node.nodeType == dom.raw.Node.ELEMENT_NODE &&
