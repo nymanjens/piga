@@ -123,7 +123,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       modifyEventClipboardData(event)
 
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      replaceSelectionInState(replacement = "", selection)
+      replaceSelectionInState(replacement = Replacement.empty, selection)
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
@@ -170,7 +170,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
       event.preventDefault()
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      replaceSelectionInState(replacement = pastedText, selection)
+      replaceSelectionInState(replacement = Replacement.fromString(pastedText), selection)
     }
 
     private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
@@ -189,38 +189,44 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed =>
           event.preventDefault()
-          replaceSelectionInState(replacement = eventKey, IndexedSelection(start, end))
+          replaceSelectionInState(
+            replacement = Replacement.fromString(eventKey),
+            IndexedSelection(start, end))
 
         case "Enter" =>
           event.preventDefault()
           if (shiftPressed) {
-            replaceSelectionInState(replacement = "\n", IndexedSelection(start, end))
+            replaceSelectionInState(replacement = Replacement.fromString("\n"), IndexedSelection(start, end))
           } else {
-            replaceSelectionInState(replacement = TASK_DELIMITER.toString, IndexedSelection(start, end))
+            replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
 
         case "Backspace" =>
           event.preventDefault()
           if (start == end) {
             if (ctrlPressed) {
-              replaceSelectionInState(replacement = "", IndexedSelection(start.minusWord, end))
+              replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
             } else {
-              replaceSelectionInState(replacement = "", IndexedSelection(start minusOffsetInSeq 1, end))
+              replaceSelectionInState(
+                replacement = Replacement.empty,
+                IndexedSelection(start minusOffsetInSeq 1, end))
             }
           } else {
-            replaceSelectionInState(replacement = "", IndexedSelection(start, end))
+            replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
         case "Delete" =>
           event.preventDefault()
           if (start == end) {
             if (ctrlPressed) {
-              replaceSelectionInState(replacement = "", IndexedSelection(start, end.plusWord))
+              replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
             } else {
-              replaceSelectionInState(replacement = "", IndexedSelection(start, end plusOffsetInSeq 1))
+              replaceSelectionInState(
+                replacement = Replacement.empty,
+                IndexedSelection(start, end plusOffsetInSeq 1))
             }
           } else {
-            replaceSelectionInState(replacement = "", IndexedSelection(start, end))
+            replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
         case "Tab" =>
@@ -257,33 +263,33 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         )
     }
 
-    private def replaceSelectionInState(replacement: String,
+    private def replaceSelectionInState(replacement: Replacement,
                                         selectionBeforeEdit: IndexedSelection): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
-      val replacements = Splitter.on(TASK_DELIMITER).split(replacement)
       val oldTasks = $.state.runNow().tasks
 
       val newOrderTokens = {
         val previousTask = oldTasks.option(start.seqIndex - 1)
         val nextTask = oldTasks.option(end.seqIndex + 1)
         OrderToken.evenlyDistributedValuesBetween(
-          numValues = replacements.length,
+          numValues = replacement.parts.length,
           lower = previousTask.map(_.orderToken),
           higher = nextTask.map(_.orderToken)
         )
       }
+      val baseIndentation = oldTasks(start.seqIndex).indentation
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
       val tasksToAdd =
-        for (((replacementPart, newOrderToken), i) <- (replacements zip newOrderTokens).zipWithIndex)
+        for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
             def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
             Task.withRandomId(
               orderToken = newOrderToken,
               ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
-                replacementPart +
-                ifIndexOrEmpty(replacements.length - 1)(
+                replacementPart.content +
+                ifIndexOrEmpty(replacement.parts.length - 1)(
                   oldTasks(end.seqIndex).content.substring(end.offsetInTask)),
-              indentation = oldTasks(start.seqIndex).indentation
+              indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
             )
           }
 
@@ -292,8 +298,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection.collapsed(
-          (start proceedNTasks (replacements.length - 1)) plusOffset replacements.last.length),
-        replacementString = replacement
+          (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
+        replacementString = replacement.contentString
       )
     }
 
@@ -340,7 +346,22 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
   }
 
-  // **************** Helper methods **************** //
+  // **************** Helper classes and methods **************** //
+  @visibleForTesting private[desktop] case class Replacement private (parts: List[Replacement.Part]) {
+    def contentString: String = parts.map(_.contentString).mkString
+  }
+  @visibleForTesting private[desktop] object Replacement {
+    def create(firstPartContent: String, otherParts: Part*): Replacement =
+      Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
+    def fromString(string: String): Replacement = Replacement.create(string)
+    def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
+      Replacement.create("", Part(content = "", indentationRelativeToCurrent = indentationRelativeToCurrent))
+    def empty: Replacement = Replacement.create("")
+
+    case class Part(content: String, indentationRelativeToCurrent: Int) {
+      def contentString: String = content
+    }
+  }
   @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
   @visibleForTesting private[desktop] def convertToClipboardData(
       tasks: TaskSequence,
