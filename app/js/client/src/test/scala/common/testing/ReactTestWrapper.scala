@@ -16,8 +16,8 @@ final class ReactTestWrapper(private val componentM: MountedOutput) {
       childComponent => {
         val child = new ReactTestWrapper(childComponent)
         (clazz.isEmpty || child.classes.contains(clazz.toLowerCase)) &&
-          (tagName.isEmpty || child.tagName == tagName.toLowerCase) &&
-          (tpe.isEmpty || child.typeAttribute == tpe.toLowerCase)
+        (tagName.isEmpty || child.tagName == tagName.toLowerCase) &&
+        (tpe.isEmpty || child.typeAttribute == tpe.toLowerCase)
       }
     )
     childComponentMs.map(new ReactTestWrapper(_))
