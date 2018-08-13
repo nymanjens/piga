@@ -4,6 +4,7 @@ import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.{I18n, OrderToken}
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
@@ -40,7 +41,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class State(
       tasks: TaskSequence = new TaskSequence(
         Seq(
-          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\n\n\n\n\nE<p>ND", indentation = 0),
+          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\nE<p>ND", indentation = 0),
           Task.withRandomId(OrderToken.middleBetween(None, None), "<indented>", indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
@@ -72,7 +73,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                 <.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
-                  ^.style := js.Dictionary("margin-left" -> s"${task.indentation * 30}px"),
+                  ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
                   VdomAttr("num") := i,
                   contentToHtml(task.content)
                 )).toVdomArray
@@ -126,30 +127,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
-      val IndexedSelection(start, end) = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       val tasks = $.state.runNow().tasks
 
-      if (start != end) {
-        case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
-          def content: String = task.content.substring(startOffset, endOffset)
-        }
-        val substasks = tasks.zipWithIndex
-          .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
-          .map {
-            case (task, index) =>
-              Subtask(
-                task,
-                startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
-                endOffset = if (index == end.seqIndex) end.offsetInTask else task.content.length)
-          }
-        val htmlText =
-          "<ul><li>" +
-            substasks
-              .map(t => escapeHtml(t.content))
-              .mkString("</li><li>")
-              .replace("\n", "<br />") +
-            "</li></ul>"
-        val plainText = substasks.map(_.content).mkString("\n")
+      if (selection.start != selection.end) {
+        val ClipboardData(htmlText, plainText) = convertToClipboardData(tasks, selection)
 
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/html", htmlText)
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/plain", plainText)
@@ -356,61 +338,107 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         }
       )
     }
-
-    private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
-      def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
-        val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
-        require(!js.isUndefined(task), s"Could not find task with index teli-${cursor.seqIndex}")
-        task
-      }
-      def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
-        walkDepthFirstPreOrder(getTaskElement(cursor)).find {
-          case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-            if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
-              func(node, cursor.offsetInTask - offsetSoFar)
-
-              true
-            } else {
-              false
-            }
-        }
-      }
-
-      val IndexedSelection(start, end) = selection
-      val resultRange = dom.document.createRange()
-      findCursorInDom(start)(resultRange.setStart)
-      findCursorInDom(end)(resultRange.setEnd)
-
-      val windowSelection = dom.window.getSelection()
-      windowSelection.removeAllRanges()
-      windowSelection.addRange(resultRange)
-
-      if (!elementIsFullyInView(getTaskElement(end))) {
-        getTaskElement(end)
-          .asInstanceOf[js.Dynamic]
-          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
-      }
-    }
-
-    private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
-      val rect = element.getBoundingClientRect
-
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <= dom.window.innerHeight &&
-      rect.right <= dom.window.innerWidth
-    }
-
-    private def getAnyClipboardString(event: ReactEventFromInput): String = {
-      val htmlString =
-        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
-      if (htmlString.nonEmpty) {
-        htmlString
-      } else {
-        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
-      }
-    }
-
-    private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
   }
+
+  // **************** Helper methods **************** //
+  @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
+  @visibleForTesting private[desktop] def convertToClipboardData(
+      tasks: TaskSequence,
+      selection: IndexedSelection): ClipboardData = {
+    case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
+      def content: String = task.content.substring(startOffset, endOffset)
+      def indentation: Int = task.indentation
+    }
+
+    val IndexedSelection(start, end) = selection
+    val subtasks = tasks.zipWithIndex
+      .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
+      .map {
+        case (task, index) =>
+          Subtask(
+            task,
+            startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
+            endOffset = if (index == end.seqIndex) end.offsetInTask else task.content.length)
+      }
+    ClipboardData(
+      htmlText = {
+        val resultBuilder = StringBuilder.newBuilder
+        val baseIndentation = subtasks.map(_.indentation).min - 1
+        var lastIndentation = baseIndentation
+        for (subtask <- subtasks) {
+          for (i <- lastIndentation until subtask.indentation) {
+            resultBuilder.append("<ul>")
+          }
+          for (i <- subtask.task.indentation until lastIndentation) {
+            resultBuilder.append("</ul>")
+          }
+          resultBuilder.append("<li>")
+          resultBuilder.append(escapeHtml(subtask.content).replace("\n", "<br />"))
+          resultBuilder.append("</li>")
+          lastIndentation = subtask.indentation
+        }
+        for (i <- baseIndentation until lastIndentation) {
+          resultBuilder.append("</ul>")
+        }
+        resultBuilder.toString
+      },
+      plainText = subtasks.map(_.content).mkString("\n")
+    )
+  }
+
+  private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
+    def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
+      val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
+      require(!js.isUndefined(task), s"Could not find task with index teli-${cursor.seqIndex}")
+      task
+    }
+    def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
+      walkDepthFirstPreOrder(getTaskElement(cursor)).find {
+        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+          if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
+            func(node, cursor.offsetInTask - offsetSoFar)
+
+            true
+          } else {
+            false
+          }
+      }
+    }
+
+    val IndexedSelection(start, end) = selection
+    val resultRange = dom.document.createRange()
+    findCursorInDom(start)(resultRange.setStart)
+    findCursorInDom(end)(resultRange.setEnd)
+
+    val windowSelection = dom.window.getSelection()
+    windowSelection.removeAllRanges()
+    windowSelection.addRange(resultRange)
+
+    if (!elementIsFullyInView(getTaskElement(end))) {
+      getTaskElement(end)
+        .asInstanceOf[js.Dynamic]
+        .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
+    }
+  }
+
+  private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
+    val rect = element.getBoundingClientRect
+
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= dom.window.innerHeight &&
+    rect.right <= dom.window.innerWidth
+  }
+
+  private def getAnyClipboardString(event: ReactEventFromInput): String = {
+    val htmlString =
+      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
+    if (htmlString.nonEmpty) {
+      htmlString
+    } else {
+      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
+    }
+  }
+
+  private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
 }

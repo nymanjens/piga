@@ -147,7 +147,7 @@ private[desktop] object TaskSequence {
       if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
     }
 
-    def fromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
+    private def fromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
       val parentLi = parentLiElement(node)
 
       val offsetInTask = {
