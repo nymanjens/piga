@@ -143,7 +143,7 @@ object TaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private def newTask(content: String, indentation: Int = 0): Task =
-    Task.withRandomId(orderToken = orderTokenA, content = content, indentation = indentation)
+    Task.withRandomId(orderToken = orderTokenA, contentTags = content, indentation = indentation)
 
   private class Module extends common.testing.TestModule {
     val taskEditor = new TaskEditor

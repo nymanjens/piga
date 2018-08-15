@@ -92,13 +92,13 @@ private[desktop] object TaskSequence {
           if (c.seqIndex == 0) {
             IndexedCursor(0, 0)
           } else {
-            fixOffset(IndexedCursor(c.seqIndex - 1, tasks(c.seqIndex - 1).content.length + offset + 1))
+            fixOffset(IndexedCursor(c.seqIndex - 1, tasks(c.seqIndex - 1).contentString.length + offset + 1))
           }
-        case offset if offset > tasks(c.seqIndex).content.length =>
+        case offset if offset > tasks(c.seqIndex).contentString.length =>
           if (c.seqIndex == tasks.length - 1) {
-            IndexedCursor(tasks.length - 1, tasks(tasks.length - 1).content.length)
+            IndexedCursor(tasks.length - 1, tasks(tasks.length - 1).contentString.length)
           } else {
-            fixOffset(IndexedCursor(c.seqIndex + 1, offset - tasks(c.seqIndex).content.length - 1))
+            fixOffset(IndexedCursor(c.seqIndex + 1, offset - tasks(c.seqIndex).contentString.length - 1))
           }
         case _ => c
       }
@@ -110,7 +110,7 @@ private[desktop] object TaskSequence {
     def minusWord(implicit tasks: TaskSequence): IndexedCursor = moveWord(step = -1)
     private def moveWord(step: Int)(implicit tasks: TaskSequence): IndexedCursor = {
       val result = copy(offsetInTask = {
-        val task = tasks(seqIndex).content
+        val task = tasks(seqIndex).contentString
         @tailrec
         def move(offsetInTask: Int, seenWord: Boolean = false): Int = {
           val nextOffset = offsetInTask + step
