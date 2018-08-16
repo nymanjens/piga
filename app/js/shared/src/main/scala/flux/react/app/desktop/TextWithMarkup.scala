@@ -15,27 +15,27 @@ case class TextWithMarkup(parts: List[Part]) {
   lazy val toVdomNode: VdomNode = {
     trait FormattingOption[T] {
       def getValue(part: Part): T
-      def apply(value: T, children: VdomNode): VdomNode
+      def apply(value: T, key: String, children: VdomNode): VdomNode
     }
     object Bold extends FormattingOption[Boolean] {
       override def getValue(part: Part): Boolean = part.formatting.bold
-      override def apply(value: Boolean, children: VdomNode): VdomNode =
-        if (value) <.b(children) else children
+      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
+        if (value) <.b(^.key := key, children) else children
     }
     object Italic extends FormattingOption[Boolean] {
       override def getValue(part: Part): Boolean = part.formatting.italic
-      override def apply(value: Boolean, children: VdomNode): VdomNode =
-        if (value) <.i(children) else children
+      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
+        if (value) <.i(^.key := key, children) else children
     }
     object Code extends FormattingOption[Boolean] {
       override def getValue(part: Part): Boolean = part.formatting.code
-      override def apply(value: Boolean, children: VdomNode): VdomNode =
-        if (value) <.code(children) else children
+      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
+        if (value) <.code(^.key := key, children) else children
     }
     object Link extends FormattingOption[Option[String]] {
       override def getValue(part: Part): Option[String] = part.formatting.link
-      override def apply(value: Option[String], children: VdomNode): VdomNode =
-        if (value.isDefined) <.a(^.href := value.get, children) else children
+      override def apply(value: Option[String], key: String, children: VdomNode): VdomNode =
+        if (value.isDefined) <.a(^.href := value.get, ^.key := key, children) else children
     }
 
     def addSpaceAfterTrailingNewline(parts: List[Part]): List[Part] = {
@@ -46,6 +46,7 @@ case class TextWithMarkup(parts: List[Part]) {
         parts
       }
     }
+    var keyCounter = 0
     def toVdomNodeInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): VdomNode = {
       formattingLeft match {
         case Nil => parts.map(_.text).mkString
@@ -57,8 +58,12 @@ case class TextWithMarkup(parts: List[Part]) {
 
             def pushToBuffer(): Unit = {
               if (partBuffer.nonEmpty) {
-                resultBuffer.append(formattingOption
-                  .apply(currentFormattingValue, toVdomNodeInner(partBuffer.toList, otherFormattingOptions)))
+                resultBuffer.append(
+                  formattingOption.apply(
+                    value = currentFormattingValue,
+                    key = keyCounter + "_" + partBuffer.map(_.text).mkString,
+                    children = toVdomNodeInner(partBuffer.toList, otherFormattingOptions)))
+                keyCounter += 1
                 partBuffer.clear()
               }
             }
@@ -70,6 +75,7 @@ case class TextWithMarkup(parts: List[Part]) {
                 case newFormattingValue =>
                   pushToBuffer()
                   currentFormattingValue = newFormattingValue
+                  partBuffer.append(part)
               }
               pushToBuffer()
             }
