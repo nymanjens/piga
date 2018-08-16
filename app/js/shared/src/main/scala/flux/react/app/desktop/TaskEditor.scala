@@ -6,7 +6,7 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
-import flux.react.app.desktop.Task.MarkupTag
+import flux.react.app.desktop.FlatMarkupText.Formatting
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
@@ -45,15 +45,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         Seq(
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            Seq(MarkupTag.Bold(Seq(MarkupTag.Text("Hello"))), MarkupTag.Text("\nmy")),
-            indentation = 0),
+            FlatMarkupText(
+              Seq(FlatMarkupText.Part("Hello", Formatting(bold = true)), FlatMarkupText.Part("\nmy"))),
+            indentation = 0
+          ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            Seq(MarkupTag.Text("<indented>")),
+            FlatMarkupText(Seq(FlatMarkupText.Part("<indented>"))),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            Seq(MarkupTag.Text("world")),
+            FlatMarkupText(Seq(FlatMarkupText.Part("world"))),
             indentation = 0)
         )))
 
@@ -83,7 +85,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
                   VdomAttr("num") := i,
-                  contentToHtml(task.contentTags)
+                  task.content.toVdomNode
                 )).toVdomArray
           )
         ),
@@ -93,27 +95,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield
-            <.div(^.key := s"task-$i", "- [", task.indentation, "]", contentToHtml(task.contentTags))).toVdomArray
+          yield <.div(^.key := s"task-$i", "- [", task.indentation, "]", task.content.toVdomNode)).toVdomArray
       )
-    }
-
-    private def contentToHtml(content: Seq[MarkupTag]): VdomNode = {
-      def toVdomNode(x: VdomNode): VdomNode = x
-
-      def innerContentToHtml(content: Seq[MarkupTag],
-                             addSpaceAfterTrailingNewline: Boolean = false): VdomNode =
-        content.map {
-          case MarkupTag.Text(text) =>
-            // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
-            toVdomNode(
-              if (addSpaceAfterTrailingNewline && text.endsWith("\n")) text + " " else text
-            )
-
-          case MarkupTag.Bold(children) => toVdomNode(<.b(innerContentToHtml(children)))
-        }.toVdomArray
-
-      innerContentToHtml(content, addSpaceAfterTrailingNewline = true)
     }
 
     private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
@@ -272,15 +255,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
-            def ifIndexOrEmpty(index: Int)(tags: Seq[MarkupTag]): Seq[MarkupTag] =
-              if (i == index) tags else Seq()
+            def ifIndexOrEmpty(index: Int)(tags: FlatMarkupText): FlatMarkupText =
+              if (i == index) tags else FlatMarkupText.empty
             Task.withRandomId(
               orderToken = newOrderToken,
-              contentTags = ifIndexOrEmpty(0)(
-                MarkupTag.sub(oldTasks(start.seqIndex).contentTags, 0, start.offsetInTask)) ++
-                replacementPart.contentTags ++
+              contentTags = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
+                replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
-                  MarkupTag.sub(oldTasks(end.seqIndex).contentTags, end.offsetInTask)),
+                  oldTasks(end.seqIndex).content.sub(end.offsetInTask)),
               indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
             )
           }
@@ -304,7 +286,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         task =>
           Task.withRandomId(
             orderToken = task.orderToken,
-            contentTags = task.contentTags,
+            contentTags = task.content,
             indentation = zeroIfNegative(task.indentation + indentIncrease)))
 
       replaceInStateWithHistory(
@@ -343,19 +325,18 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def contentString: String = parts.map(_.contentString).mkString
   }
   @visibleForTesting private[desktop] object Replacement {
-    def create(firstPartContent: Seq[MarkupTag], otherParts: Part*): Replacement =
+    def create(firstPartContent: FlatMarkupText, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
-    def fromString(string: String): Replacement = Replacement.create(Seq(MarkupTag.Text(string)))
+    def fromString(string: String): Replacement =
+      Replacement.create(FlatMarkupText(Seq(FlatMarkupText.Part(string))))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
-        Seq(MarkupTag.Text("")),
-        Part(
-          contentTags = Seq(MarkupTag.Text("")),
-          indentationRelativeToCurrent = indentationRelativeToCurrent))
-    def empty: Replacement = Replacement.create(Seq(MarkupTag.Text("")))
+        FlatMarkupText.empty,
+        Part(content = FlatMarkupText.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
+    def empty: Replacement = Replacement.create(FlatMarkupText.empty)
 
-    case class Part(contentTags: Seq[MarkupTag], indentationRelativeToCurrent: Int) {
-      def contentString: String = MarkupTag.contentString(contentTags)
+    case class Part(content: FlatMarkupText, indentationRelativeToCurrent: Int) {
+      def contentString: String = content.contentString
     }
   }
   @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
@@ -417,7 +398,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     var nextRelativeIndentation = -1
 
     def addNextPart(): Unit = {
-      partsBuilder.append(Replacement.Part(Seq(MarkupTag.Text(nextContent.trim)), zeroIfNegative(nextRelativeIndentation)))
+      partsBuilder.append(
+        Replacement.Part(
+          FlatMarkupText(Seq(FlatMarkupText.Part(nextContent.trim))),
+          zeroIfNegative(nextRelativeIndentation)))
       nextContent = ""
     }
     def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
