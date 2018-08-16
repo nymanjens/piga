@@ -91,9 +91,25 @@ case class TextWithMarkup(parts: List[Part]) {
   def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
 
   def formattingAtCursor(offset: Int): Formatting = {
-    // TODO: empty part --> includde
-    // TODO: in link and next cursor not in link --> no link
-    ???
+    def formattingAtCursorInner(parts: List[Part], offset: Int): Formatting =
+      parts match {
+        case Nil => Formatting.none
+        case part :: rest if offset <= part.text.length =>
+          if (part.formatting.link.nonEmpty && offset == part.text.length) {
+            val nextFormatting = formattingAtCursorInner(rest, offset = 0)
+            // If in link and next cursor not in link --> no link
+            if (part.formatting.link != nextFormatting.link) {
+              part.formatting.copy(link = None)
+            } else {
+              part.formatting
+            }
+          } else {
+            part.formatting
+          }
+        case part :: rest =>
+          formattingAtCursorInner(rest, offset - part.text.length)
+      }
+    formattingAtCursorInner(parts, offset)
   }
 
   def sub(beginOffset: Int, endOffset: Int = -1): TextWithMarkup = {

@@ -158,18 +158,21 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
+      val formatting = tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
 
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed =>
           event.preventDefault()
           replaceSelectionInState(
-            replacement = Replacement.fromString(eventKey),
+            replacement = Replacement.fromString(eventKey, formatting),
             IndexedSelection(start, end))
 
         case "Enter" =>
           event.preventDefault()
           if (shiftPressed) {
-            replaceSelectionInState(replacement = Replacement.fromString("\n"), IndexedSelection(start, end))
+            replaceSelectionInState(
+              replacement = Replacement.fromString("\n", formatting),
+              IndexedSelection(start, end))
           } else {
             replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
@@ -327,8 +330,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   @visibleForTesting private[desktop] object Replacement {
     def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
-    def fromString(string: String): Replacement =
-      Replacement.create(TextWithMarkup(List(TextWithMarkup.Part(string))))
+    def fromString(string: String, formatting: Formatting): Replacement =
+      Replacement.create(TextWithMarkup(List(TextWithMarkup.Part(string, formatting))))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
         TextWithMarkup.empty,
