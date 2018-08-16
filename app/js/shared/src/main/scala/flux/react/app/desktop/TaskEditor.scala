@@ -46,16 +46,16 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
             FlatMarkupText(
-              Seq(FlatMarkupText.Part("Hello", Formatting(bold = true)), FlatMarkupText.Part("\nmy"))),
+              List(FlatMarkupText.Part("Hello", Formatting(bold = true)), FlatMarkupText.Part("\nmy"))),
             indentation = 0
           ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            FlatMarkupText(Seq(FlatMarkupText.Part("<indented>"))),
+            FlatMarkupText(List(FlatMarkupText.Part("<indented>"))),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            FlatMarkupText(Seq(FlatMarkupText.Part("world"))),
+            FlatMarkupText(List(FlatMarkupText.Part("world"))),
             indentation = 0)
         )))
 
@@ -328,7 +328,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def create(firstPartContent: FlatMarkupText, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
     def fromString(string: String): Replacement =
-      Replacement.create(FlatMarkupText(Seq(FlatMarkupText.Part(string))))
+      Replacement.create(FlatMarkupText(List(FlatMarkupText.Part(string))))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
         FlatMarkupText.empty,
@@ -400,7 +400,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def addNextPart(): Unit = {
       partsBuilder.append(
         Replacement.Part(
-          FlatMarkupText(Seq(FlatMarkupText.Part(nextContent.trim))),
+          FlatMarkupText(List(FlatMarkupText.Part(nextContent.trim))),
           zeroIfNegative(nextRelativeIndentation)))
       nextContent = ""
     }
