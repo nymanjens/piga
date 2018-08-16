@@ -6,7 +6,7 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
-import flux.react.app.desktop.FlatMarkupText.Formatting
+import flux.react.app.desktop.TextWithMarkup.Formatting
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
@@ -45,17 +45,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         Seq(
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            FlatMarkupText(
-              List(FlatMarkupText.Part("Hello", Formatting(bold = true)), FlatMarkupText.Part("\nmy"))),
+            TextWithMarkup(
+              List(TextWithMarkup.Part("Hello", Formatting(bold = true)), TextWithMarkup.Part("\nmy"))),
             indentation = 0
           ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            FlatMarkupText(List(FlatMarkupText.Part("<indented>"))),
+            TextWithMarkup(List(TextWithMarkup.Part("<indented>"))),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            FlatMarkupText(List(FlatMarkupText.Part("world"))),
+            TextWithMarkup(List(TextWithMarkup.Part("world"))),
             indentation = 0)
         )))
 
@@ -255,8 +255,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
-            def ifIndexOrEmpty(index: Int)(tags: FlatMarkupText): FlatMarkupText =
-              if (i == index) tags else FlatMarkupText.empty
+            def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
+              if (i == index) tags else TextWithMarkup.empty
             Task.withRandomId(
               orderToken = newOrderToken,
               contentTags = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
@@ -325,17 +325,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def contentString: String = parts.map(_.contentString).mkString
   }
   @visibleForTesting private[desktop] object Replacement {
-    def create(firstPartContent: FlatMarkupText, otherParts: Part*): Replacement =
+    def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
     def fromString(string: String): Replacement =
-      Replacement.create(FlatMarkupText(List(FlatMarkupText.Part(string))))
+      Replacement.create(TextWithMarkup(List(TextWithMarkup.Part(string))))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
-        FlatMarkupText.empty,
-        Part(content = FlatMarkupText.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
-    def empty: Replacement = Replacement.create(FlatMarkupText.empty)
+        TextWithMarkup.empty,
+        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
+    def empty: Replacement = Replacement.create(TextWithMarkup.empty)
 
-    case class Part(content: FlatMarkupText, indentationRelativeToCurrent: Int) {
+    case class Part(content: TextWithMarkup, indentationRelativeToCurrent: Int) {
       def contentString: String = content.contentString
     }
   }
@@ -400,7 +400,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def addNextPart(): Unit = {
       partsBuilder.append(
         Replacement.Part(
-          FlatMarkupText(List(FlatMarkupText.Part(nextContent.trim))),
+          TextWithMarkup(List(TextWithMarkup.Part(nextContent.trim))),
           zeroIfNegative(nextRelativeIndentation)))
       nextContent = ""
     }

@@ -1,12 +1,12 @@
 package flux.react.app.desktop
 
 import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
-import flux.react.app.desktop.FlatMarkupText.{Formatting, Part}
+import flux.react.app.desktop.TextWithMarkup.{Formatting, Part}
 import japgolly.scalajs.react.vdom.VdomNode
 
 import scala.collection.immutable.Seq
 
-case class FlatMarkupText(parts: List[Part]) {
+case class TextWithMarkup(parts: List[Part]) {
 
   lazy val contentString: String = parts.map(_.text).mkString
 
@@ -18,7 +18,7 @@ case class FlatMarkupText(parts: List[Part]) {
     contentString
   }
 
-  def +(that: FlatMarkupText): FlatMarkupText = FlatMarkupText(this.parts ++ that.parts)
+  def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
 
   def formattingAtCursor(offset: Int): Formatting = {
     // TODO: empty part --> includde
@@ -26,7 +26,7 @@ case class FlatMarkupText(parts: List[Part]) {
     ???
   }
 
-  def sub(beginOffset: Int, endOffset: Int = -1): FlatMarkupText = {
+  def sub(beginOffset: Int, endOffset: Int = -1): TextWithMarkup = {
     def subInner(parts: List[Part], beginOffset: Int, endOffset: Int): List[Part] = parts match {
       case Nil => Nil
       case part :: rest if beginOffset < part.text.length && endOffset <= part.text.length =>
@@ -36,19 +36,19 @@ case class FlatMarkupText(parts: List[Part]) {
       case part :: rest =>
         subInner(rest, beginOffset - part.text.length, endOffset - part.text.length)
     }
-    FlatMarkupText(
+    TextWithMarkup(
       subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
   }
 }
 
-object FlatMarkupText {
+object TextWithMarkup {
 
-  val empty: FlatMarkupText = FlatMarkupText(Nil)
+  val empty: TextWithMarkup = TextWithMarkup(Nil)
 
-  def canonicalize(text: FlatMarkupText): FlatMarkupText = text // TODO: Implement
+  def canonicalize(text: TextWithMarkup): TextWithMarkup = text // TODO: Implement
 
   case class Part(text: String, formatting: Formatting = Formatting.none) {
-    private[FlatMarkupText] def sub(beginOffset: Int, endOffset: Int = -1): Part =
+    private[TextWithMarkup] def sub(beginOffset: Int, endOffset: Int = -1): Part =
       copy(
         text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset))
   }
