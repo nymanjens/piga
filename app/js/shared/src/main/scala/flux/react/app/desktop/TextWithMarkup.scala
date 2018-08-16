@@ -15,7 +15,12 @@ case class TextWithMarkup(parts: List[Part]) {
 
     // TODO: addSpaceAfterTrailingNewline
     // TODO
-    contentString
+    if (contentString.endsWith("\n")) {
+      // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
+      contentString + ' '
+    } else {
+      contentString
+    }
   }
 
   def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
