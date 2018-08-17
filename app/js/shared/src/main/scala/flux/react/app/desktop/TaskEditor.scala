@@ -219,6 +219,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           toggleFormatting((form, value) => form.copy(code = value), selection)
 
+        case "\\" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => Formatting.none, selection)
+
         case "u" if ctrlPressed =>
           // Disable underline modifier
           event.preventDefault()
