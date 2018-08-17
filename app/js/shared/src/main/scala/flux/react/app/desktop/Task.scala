@@ -16,11 +16,11 @@ final class Task private (val id: Long,
   def contentString: String = content.contentString
 }
 object Task {
-  def withRandomId(orderToken: OrderToken, contentTags: TextWithMarkup, indentation: Int): Task =
+  def withRandomId(orderToken: OrderToken, content: TextWithMarkup, indentation: Int): Task =
     new Task(
       id = EntityModification.generateRandomId(),
       orderToken = orderToken,
-      content = TextWithMarkup.canonicalize(contentTags),
+      content = content.canonicalized,
       indentation = indentation
     )
 }

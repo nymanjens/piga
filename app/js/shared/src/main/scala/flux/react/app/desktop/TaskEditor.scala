@@ -75,7 +75,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.onPaste ==> handlePaste,
           ^.onCut ==> handleCut,
           ^.onCopy ==> handleCopy,
-          ^.onBlur ==> handleEvent("onBlur"),
           ^.onInput ==> handleEvent("onChange"),
           <.ul(
             (for ((task, i) <- state.tasks.zipWithIndex)
@@ -157,11 +156,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val IndexedSelection(start, end) = selection
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
+      val altPressed = event.altKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
       val formatting = tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
 
       event.key match {
-        case eventKey if eventKey.length == 1 && !ctrlPressed =>
+        case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
           event.preventDefault()
           replaceSelectionInState(
             replacement = Replacement.fromString(eventKey, formatting),
@@ -209,18 +209,31 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
 
-        case "i" | "b" | "u" if ctrlPressed =>
-          // Disable modifiers
+        case "i" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(italic = value), selection)
+        case "b" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(bold = value), selection)
+        case "C" if shiftPressed && altPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(code = value), selection)
+
+        case "u" if ctrlPressed =>
+          // Disable underline modifier
           event.preventDefault()
           Callback.empty
 
         case "z" if ctrlPressed && !shiftPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.undo())
 
         case "Z" if ctrlPressed && shiftPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
         case "y" if ctrlPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
         case _ =>
@@ -262,7 +275,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
               if (i == index) tags else TextWithMarkup.empty
             Task.withRandomId(
               orderToken = newOrderToken,
-              contentTags = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
+              content = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
                   oldTasks(end.seqIndex).content.sub(end.offsetInTask)),
@@ -289,7 +302,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         task =>
           Task.withRandomId(
             orderToken = task.orderToken,
-            contentTags = task.content,
+            content = task.content,
             indentation = zeroIfNegative(task.indentation + indentIncrease)))
 
       replaceInStateWithHistory(
@@ -298,6 +311,52 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
+    }
+
+    private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
+                                 selection: IndexedSelection)(implicit tasks: TaskSequence): Callback = {
+      val IndexedSelection(start, end) = selection
+
+      def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
+        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
+          for (task <- tasks)
+            yield
+              Task.withRandomId(
+                orderToken = task.orderToken,
+                content = task.content
+                  .withFormatting(
+                    beginOffset = if (task == tasks.head) start.offsetInTask else 0,
+                    endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
+                    formatting => updateFunc(formatting, value)
+                  ),
+                indentation = task.indentation
+              )
+
+        val oldTasks = $.state.runNow().tasks
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+        val tasksToAdd = {
+          val candidate = setFormatting(tasksToReplace, value = true)
+          if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
+            setFormatting(tasksToReplace, value = false)
+          } else {
+            candidate
+          }
+        }
+
+        replaceInStateWithHistory(
+          tasksToReplace = tasksToReplace,
+          tasksToAdd = tasksToAdd,
+          selectionBeforeEdit = selection,
+          selectionAfterEdit = selection
+        )
+      }
+
+      if (start == end) {
+        // update whole line
+        toggleFormattingInternal(start.toStartOfTask, end.toEndOfTask)
+      } else {
+        toggleFormattingInternal(start, end)
+      }
     }
 
     private def replaceInStateWithHistory(tasksToReplace: Seq[Task],

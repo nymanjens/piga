@@ -139,6 +139,10 @@ private[desktop] object TaskSequence {
         result
       }
     }
+
+    def toStartOfTask: IndexedCursor = IndexedCursor(seqIndex, offsetInTask = 0)
+    def toEndOfTask(implicit tasks: TaskSequence): IndexedCursor =
+      IndexedCursor(seqIndex, offsetInTask = tasks(seqIndex).contentString.length)
   }
   private[desktop] object IndexedCursor {
     def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {

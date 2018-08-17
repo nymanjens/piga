@@ -122,16 +122,38 @@ case class TextWithMarkup(parts: List[Part]) {
       case part :: rest =>
         subInner(rest, beginOffset - part.text.length, endOffset - part.text.length)
     }
-    TextWithMarkup(
-      subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
+
+    if (beginOffset == endOffset) {
+      TextWithMarkup.empty
+    } else {
+      TextWithMarkup(
+        subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
+    }
+  }
+
+  def withFormatting(beginOffset: Int,
+                     endOffset: Int,
+                     updateFunc: Formatting => Formatting): TextWithMarkup = {
+    def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
+      TextWithMarkup(textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
+    }
+    sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
+  }
+
+  def canonicalized: TextWithMarkup = TextWithMarkup {
+    def canonicalizedInner(parts: List[Part]): List[Part] = parts match {
+      case part1 :: part2 :: rest if part1.formatting == part2.formatting =>
+        canonicalizedInner(Part(part1.text + part2.text, part1.formatting) :: rest)
+      case Nil          => Nil
+      case part :: rest => part :: canonicalizedInner(rest)
+    }
+    canonicalizedInner(parts)
   }
 }
 
 object TextWithMarkup {
 
   val empty: TextWithMarkup = TextWithMarkup(Nil)
-
-  def canonicalize(text: TextWithMarkup): TextWithMarkup = text // TODO: Implement
 
   case class Part(text: String, formatting: Formatting = Formatting.none) {
 
