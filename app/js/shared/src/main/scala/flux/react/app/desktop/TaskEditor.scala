@@ -218,7 +218,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case "C" if shiftPressed && altPressed =>
           event.preventDefault()
           toggleFormatting((form, value) => form.copy(code = value), selection)
-
         case "\\" if ctrlPressed =>
           event.preventDefault()
           toggleFormatting((form, value) => Formatting.none, selection)
