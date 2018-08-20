@@ -2,7 +2,7 @@ package flux.react.app.desktop
 
 import common.LoggingUtils
 import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
-import flux.react.app.desktop.TextWithMarkup.{Formatting, Part}
+import flux.react.app.desktop.TextWithMarkup.{Formatting, FormattingOption, Part}
 import japgolly.scalajs.react.vdom.{VdomArray, VdomNode}
 
 import scala.collection.immutable.Seq
@@ -13,31 +13,6 @@ case class TextWithMarkup(parts: List[Part]) {
   lazy val contentString: String = parts.map(_.text).mkString
 
   lazy val toVdomNode: VdomNode = {
-    trait FormattingOption[T] {
-      def getValue(part: Part): T
-      def apply(value: T, key: String, children: VdomNode): VdomNode
-    }
-    object Bold extends FormattingOption[Boolean] {
-      override def getValue(part: Part): Boolean = part.formatting.bold
-      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
-        if (value) <.b(^.key := key, children) else children
-    }
-    object Italic extends FormattingOption[Boolean] {
-      override def getValue(part: Part): Boolean = part.formatting.italic
-      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
-        if (value) <.i(^.key := key, children) else children
-    }
-    object Code extends FormattingOption[Boolean] {
-      override def getValue(part: Part): Boolean = part.formatting.code
-      override def apply(value: Boolean, key: String, children: VdomNode): VdomNode =
-        if (value) <.code(^.key := key, children) else children
-    }
-    object Link extends FormattingOption[Option[String]] {
-      override def getValue(part: Part): Option[String] = part.formatting.link
-      override def apply(value: Option[String], key: String, children: VdomNode): VdomNode =
-        if (value.isDefined) <.a(^.href := value.get, ^.key := key, children) else children
-    }
-
     def addSpaceAfterTrailingNewline(parts: List[Part]): List[Part] = {
       if (parts.nonEmpty && parts.last.text.endsWith("\n")) {
         // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
@@ -46,24 +21,59 @@ case class TextWithMarkup(parts: List[Part]) {
         parts
       }
     }
-    var keyCounter = 0
-    def toVdomNodeInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): VdomNode = {
+
+    val applyFormattingOption = new FormattingOption.Applier[VdomNode] {
+      private var keyCounter = 0
+
+      override def apply[T](option: FormattingOption[T],
+                            value: T,
+                            children: VdomNode,
+                            childrenParts: Iterable[Part]): VdomNode = {
+        def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
+        def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
+        def key: String = {
+          keyCounter += 1
+          keyCounter + "_" + childrenParts.map(_.text).mkString
+        }
+
+        option match {
+          case FormattingOption.Bold   => if (asBoolean(value)) <.b(^.key := key, children) else children
+          case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := key, children) else children
+          case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := key, children) else children
+          case FormattingOption.Link =>
+            if (asOption(value).isDefined) <.a(^.href := asOption(value).get, ^.key := key, children)
+            else children
+        }
+      }
+    }
+
+    serializeToDom[VdomNode](
+      applyFormattingOption = applyFormattingOption,
+      liftString = s => s,
+      mergeResults = _.toVdomArray)
+  }
+
+  private def serializeToDom[R](applyFormattingOption: FormattingOption.Applier[R],
+                                liftString: String => R,
+                                mergeResults: Iterable[R] => R): R = {
+    def serializeToDomInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): R = {
       formattingLeft match {
-        case Nil => parts.map(_.text).mkString
+        case Nil => liftString(parts.map(_.text).mkString)
         case formattingOption :: otherFormattingOptions =>
-          def inner[T](formattingOption: FormattingOption[T]): VdomNode = {
+          def inner[T](formattingOption: FormattingOption[T]): R = {
             var currentFormattingValue: T = null.asInstanceOf[T]
             val partBuffer = mutable.Buffer[Part]()
-            val resultBuffer = mutable.Buffer[VdomNode]()
+            val resultBuffer = mutable.Buffer[R]()
 
             def pushToBuffer(): Unit = {
               if (partBuffer.nonEmpty) {
                 resultBuffer.append(
-                  formattingOption.apply(
+                  applyFormattingOption(
+                    option = formattingOption,
                     value = currentFormattingValue,
-                    key = keyCounter + "_" + partBuffer.map(_.text).mkString,
-                    children = toVdomNodeInner(partBuffer.toList, otherFormattingOptions)))
-                keyCounter += 1
+                    children = serializeToDomInner(partBuffer.toList, otherFormattingOptions),
+                    childrenParts = partBuffer
+                  ))
                 partBuffer.clear()
               }
             }
@@ -79,13 +89,14 @@ case class TextWithMarkup(parts: List[Part]) {
               }
               pushToBuffer()
             }
-            resultBuffer.toVdomArray
+            mergeResults(resultBuffer)
           }
           inner(formattingOption)
       }
     }
 
-    toVdomNodeInner(addSpaceAfterTrailingNewline(parts), formattingLeft = List(Link, Code, Italic, Bold))
+    import FormattingOption._
+    serializeToDomInner(parts, formattingLeft = List(Link, Code, Italic, Bold))
   }
 
   def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
@@ -170,5 +181,27 @@ object TextWithMarkup {
                         link: Option[String] = None)
   object Formatting {
     val none = Formatting()
+  }
+
+  private[TextWithMarkup] trait FormattingOption[T] {
+    def getValue(part: Part): T
+  }
+  private[TextWithMarkup] object FormattingOption {
+    private[TextWithMarkup] trait Applier[R] {
+      def apply[T](option: FormattingOption[T], value: T, children: R, childrenParts: Iterable[Part]): R
+    }
+
+    object Bold extends FormattingOption[Boolean] {
+      override def getValue(part: Part): Boolean = part.formatting.bold
+    }
+    object Italic extends FormattingOption[Boolean] {
+      override def getValue(part: Part): Boolean = part.formatting.italic
+    }
+    object Code extends FormattingOption[Boolean] {
+      override def getValue(part: Part): Boolean = part.formatting.code
+    }
+    object Link extends FormattingOption[Option[String]] {
+      override def getValue(part: Part): Option[String] = part.formatting.link
+    }
   }
 }
