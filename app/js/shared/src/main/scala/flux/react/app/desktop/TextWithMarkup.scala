@@ -47,56 +47,37 @@ case class TextWithMarkup(parts: List[Part]) {
       }
     }
 
-    serializeToDom[VdomNode](
+    TextWithMarkup.serializeToDom[VdomNode](
+      addSpaceAfterTrailingNewline(parts),
       applyFormattingOption = applyFormattingOption,
       liftString = s => s,
       mergeResults = _.toVdomArray)
   }
 
-  private def serializeToDom[R](applyFormattingOption: FormattingOption.Applier[R],
-                                liftString: String => R,
-                                mergeResults: Iterable[R] => R): R = {
-    def serializeToDomInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): R = {
-      formattingLeft match {
-        case Nil => liftString(parts.map(_.text).mkString)
-        case formattingOption :: otherFormattingOptions =>
-          def inner[T](formattingOption: FormattingOption[T]): R = {
-            var currentFormattingValue: T = null.asInstanceOf[T]
-            val partBuffer = mutable.Buffer[Part]()
-            val resultBuffer = mutable.Buffer[R]()
+  def toHtml: String = {
+    val applyFormattingOption = new FormattingOption.Applier[String] {
+      override def apply[T](option: FormattingOption[T],
+                            value: T,
+                            children: String,
+                            childrenParts: Iterable[Part]): String = {
+        def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
+        def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
 
-            def pushToBuffer(): Unit = {
-              if (partBuffer.nonEmpty) {
-                resultBuffer.append(
-                  applyFormattingOption(
-                    option = formattingOption,
-                    value = currentFormattingValue,
-                    children = serializeToDomInner(partBuffer.toList, otherFormattingOptions),
-                    childrenParts = partBuffer
-                  ))
-                partBuffer.clear()
-              }
-            }
-
-            for (part <- parts) {
-              formattingOption.getValue(part) match {
-                case value if value == currentFormattingValue =>
-                  partBuffer.append(part)
-                case newFormattingValue =>
-                  pushToBuffer()
-                  currentFormattingValue = newFormattingValue
-                  partBuffer.append(part)
-              }
-              pushToBuffer()
-            }
-            mergeResults(resultBuffer)
-          }
-          inner(formattingOption)
+        option match {
+          case FormattingOption.Bold   => if (asBoolean(value)) s"<b>$children</b>" else children
+          case FormattingOption.Italic => if (asBoolean(value)) s"<i>$children</i>" else children
+          case FormattingOption.Code   => if (asBoolean(value)) s"<code>$children</code>" else children
+          case FormattingOption.Link =>
+            if (asOption(value).isDefined) s"""<a href="${asOption(value).get}">$children</a>""" else children
+        }
       }
     }
 
-    import FormattingOption._
-    serializeToDomInner(parts, formattingLeft = List(Link, Code, Italic, Bold))
+    TextWithMarkup.serializeToDom[String](
+      parts,
+      applyFormattingOption = applyFormattingOption,
+      liftString = s => s,
+      mergeResults = _.mkString)
   }
 
   def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
@@ -166,6 +147,7 @@ object TextWithMarkup {
 
   val empty: TextWithMarkup = TextWithMarkup(Nil)
 
+  // **************** public inner types **************** //
   case class Part(text: String, formatting: Formatting = Formatting.none) {
 
     private[TextWithMarkup] def sub(beginOffset: Int, endOffset: Int = -1): Part =
@@ -183,6 +165,7 @@ object TextWithMarkup {
     val none = Formatting()
   }
 
+  // **************** private inner types **************** //
   private[TextWithMarkup] trait FormattingOption[T] {
     def getValue(part: Part): T
   }
@@ -203,5 +186,53 @@ object TextWithMarkup {
     object Link extends FormattingOption[Option[String]] {
       override def getValue(part: Part): Option[String] = part.formatting.link
     }
+  }
+
+  // **************** private helper methods **************** //
+  private def serializeToDom[R](parts: List[Part],
+                                applyFormattingOption: FormattingOption.Applier[R],
+                                liftString: String => R,
+                                mergeResults: Iterable[R] => R): R = {
+    def serializeToDomInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): R = {
+      formattingLeft match {
+        case Nil => liftString(parts.map(_.text).mkString)
+        case formattingOption :: otherFormattingOptions =>
+          def inner[T](formattingOption: FormattingOption[T]): R = {
+            var currentFormattingValue: T = null.asInstanceOf[T]
+            val partBuffer = mutable.Buffer[Part]()
+            val resultBuffer = mutable.Buffer[R]()
+
+            def pushToBuffer(): Unit = {
+              if (partBuffer.nonEmpty) {
+                resultBuffer.append(
+                  applyFormattingOption(
+                    option = formattingOption,
+                    value = currentFormattingValue,
+                    children = serializeToDomInner(partBuffer.toList, otherFormattingOptions),
+                    childrenParts = partBuffer
+                  ))
+                partBuffer.clear()
+              }
+            }
+
+            for (part <- parts) {
+              formattingOption.getValue(part) match {
+                case value if value == currentFormattingValue =>
+                  partBuffer.append(part)
+                case newFormattingValue =>
+                  pushToBuffer()
+                  currentFormattingValue = newFormattingValue
+                  partBuffer.append(part)
+              }
+              pushToBuffer()
+            }
+            mergeResults(resultBuffer)
+          }
+          inner(formattingOption)
+      }
+    }
+
+    import FormattingOption._
+    serializeToDomInner(parts, formattingLeft = List(Link, Code, Italic, Bold))
   }
 }
