@@ -4,6 +4,7 @@ import common.LoggingUtils
 import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
 import flux.react.app.desktop.TextWithMarkup.{Formatting, FormattingOption, Part}
 import japgolly.scalajs.react.vdom.{VdomArray, VdomNode}
+import jsfacades.escapeHtml
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -76,7 +77,7 @@ case class TextWithMarkup(parts: List[Part]) {
     TextWithMarkup.serializeToDom[String](
       parts,
       applyFormattingOption = applyFormattingOption,
-      liftString = s => s,
+      liftString = s => escapeHtml(s).replace("\n", "<br />"),
       mergeResults = _.mkString)
   }
 

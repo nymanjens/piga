@@ -397,8 +397,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       tasks: TaskSequence,
       selection: IndexedSelection): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
-      // TODO: Make content MarkupTag
-      def content: String = task.contentString.substring(startOffset, endOffset)
+      def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
       def indentation: Int = task.indentation
     }
 
@@ -425,7 +424,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             resultBuilder.append("</ul>")
           }
           resultBuilder.append("<li>")
-          resultBuilder.append(escapeHtml(subtask.content).replace("\n", "<br />"))
+          resultBuilder.append(subtask.content.toHtml)
           resultBuilder.append("</li>")
           lastIndentation = subtask.indentation
         }
