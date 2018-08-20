@@ -71,11 +71,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.contentEditable := true,
           VdomAttr("suppressContentEditableWarning") := true,
           ^.onKeyDown ==> handleKeyDown,
-          ^.onBeforeInput ==> handleBeforeInput,
           ^.onPaste ==> handlePaste,
           ^.onCut ==> handleCut,
           ^.onCopy ==> handleCopy,
           ^.onInput ==> handleEvent("onChange"),
+          ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
             (for ((task, i) <- state.tasks.zipWithIndex)
               yield
@@ -100,13 +100,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
     private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      console
-        .log(
-          s"$name EVENT",
-          event.nativeEvent,
-          event.eventType,
-          selection.toString
-        )
+      console.log(s"$name EVENT", event.nativeEvent, event.eventType, selection.toString)
     }
 
     private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
@@ -143,12 +137,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       replaceSelectionInState(
         replacement = clipboardStringToReplacement(getAnyClipboardString(event)),
         selection)
-    }
-
-    private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      console.log(s"onBeforeInput EVENT", event.nativeEvent, event.eventType, selection.toString)
-      event.preventDefault()
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
