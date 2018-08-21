@@ -20,7 +20,7 @@ object Task {
     new Task(
       id = EntityModification.generateRandomId(),
       orderToken = orderToken,
-      content = content.canonicalized,
+      content = content,
       indentation = indentation
     )
 }

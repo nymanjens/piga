@@ -85,7 +85,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       mergeResults = _.mkString)
   }
 
-  def +(that: TextWithMarkup): TextWithMarkup = new TextWithMarkup(this.parts ++ that.parts)
+  def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup.createCanonical(this.parts ++ that.parts)
 
   def formattingAtCursor(offset: Int): Formatting = {
     def formattingAtCursorInner(parts: List[Part], offset: Int): Formatting =
@@ -123,7 +123,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     if (beginOffset == endOffset) {
       TextWithMarkup.empty
     } else {
-      new TextWithMarkup(
+      TextWithMarkup.createCanonical(
         subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
     }
   }
@@ -132,20 +132,10 @@ final class TextWithMarkup private (private val parts: List[Part]) {
                      endOffset: Int,
                      updateFunc: Formatting => Formatting): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
-      new TextWithMarkup(
+      TextWithMarkup.createCanonical(
         textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
-  }
-
-  def canonicalized: TextWithMarkup = {
-    def canonicalizedInner(parts: List[Part]): List[Part] = parts match {
-      case part1 :: part2 :: rest if part1.formatting == part2.formatting =>
-        canonicalizedInner(Part(part1.text + part2.text, part1.formatting) :: rest)
-      case Nil          => Nil
-      case part :: rest => part :: canonicalizedInner(rest)
-    }
-    new TextWithMarkup(canonicalizedInner(parts))
   }
 
   // **************** Object methods **************** //
@@ -202,7 +192,7 @@ object TextWithMarkup {
     }
 
     val parts = fromHtmlNodesInner(nodes.toVector, formatting = Formatting.none)
-    new TextWithMarkup(parts.toList).canonicalized
+    TextWithMarkup.createCanonical(parts.toList)
   }
 
   // **************** public inner types **************** //
@@ -247,6 +237,16 @@ object TextWithMarkup {
   }
 
   // **************** private helper methods **************** //
+  private def createCanonical(parts: Iterable[Part]): TextWithMarkup = {
+    def createCanonicalInner(parts: List[Part]): List[Part] = parts match {
+      case part1 :: part2 :: rest if part1.formatting == part2.formatting =>
+        createCanonicalInner(Part(part1.text + part2.text, part1.formatting) :: rest)
+      case Nil          => Nil
+      case part :: rest => part :: createCanonicalInner(rest)
+    }
+    new TextWithMarkup(createCanonicalInner(parts.toList))
+  }
+
   private def serializeToDom[R](parts: List[Part],
                                 applyFormattingOption: FormattingOption.Applier[R],
                                 liftString: String => R,
