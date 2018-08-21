@@ -1,19 +1,11 @@
 package flux.react.app.desktop
 
-import api.ScalaJsApi.UserPrototype
-import common.testing.Awaiter
-import common.testing.TestObjects._
-import flux.action.Action
-import models.modification.EntityModification
-import utest._
-
-import scala.async.Async.{async, await}
-import scala.collection.immutable.Seq
-import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala2js.Converters._
 import common.testing.JsTestObjects._
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
+import scala2js.Converters._
+import utest._
+
+import scala.collection.immutable.Seq
 
 object TaskEditorTest extends TestSuite {
 
@@ -67,7 +59,7 @@ object TaskEditorTest extends TestSuite {
     }
     "clipboardStringToReplacement" - {
       def replacementPart(content: String, indentation: Int = 0) =
-        taskEditor.Replacement.Part(content, indentation)
+        taskEditor.Replacement.Part(TextWithMarkup.withoutFormatting(content), indentation)
       "without list tags" - {
         "with html" - {
           taskEditor.clipboardStringToReplacement(removeWhitespace("""
@@ -76,14 +68,18 @@ object TaskEditorTest extends TestSuite {
               d
             """)) ==>
             taskEditor.Replacement
-              .create("a", replacementPart("b"), replacementPart("c"), replacementPart("d"))
+              .create(
+                TextWithMarkup.withoutFormatting("a"),
+                replacementPart("b"),
+                replacementPart("c"),
+                replacementPart("d"))
         }
         "plain text" - {
           taskEditor.clipboardStringToReplacement("""
               |x
               |y
             """.stripMargin.trim) ==>
-            taskEditor.Replacement.create("x", replacementPart("y"))
+            taskEditor.Replacement.create(TextWithMarkup.withoutFormatting("x"), replacementPart("y"))
         }
       }
       "with list tags" - {
@@ -97,7 +93,7 @@ object TaskEditorTest extends TestSuite {
                <li>xyz</li>
              </ul>
             """)) ==>
-            taskEditor.Replacement.create("a\nb\nc", replacementPart("xyz"))
+            taskEditor.Replacement.create(TextWithMarkup.withoutFormatting("a\nb\nc"), replacementPart("xyz"))
         }
       }
     }
@@ -105,11 +101,16 @@ object TaskEditorTest extends TestSuite {
       def roundTrip(html: String): Unit = {
         val replacement = taskEditor.clipboardStringToReplacement(html)
         val clipboardData = taskEditor.convertToClipboardData(
-          new TaskSequence(replacement.parts.map(p =>
-            newTask(content = p.content, indentation = 10 + p.indentationRelativeToCurrent))),
+          new TaskSequence(
+            replacement.parts.map(
+              p =>
+                Task.withRandomId(
+                  orderToken = orderTokenA,
+                  content = p.content,
+                  indentation = 10 + p.indentationRelativeToCurrent))),
           IndexedSelection(
             start = IndexedCursor(0, 0),
-            end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.content.length))
+            end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.contentString.length))
         )
         clipboardData.htmlText ==> html
       }
@@ -143,7 +144,10 @@ object TaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private def newTask(content: String, indentation: Int = 0): Task =
-    Task.withRandomId(orderToken = orderTokenA, content = content, indentation = indentation)
+    Task.withRandomId(
+      orderToken = orderTokenA,
+      content = TextWithMarkup.withoutFormatting(content),
+      indentation = indentation)
 
   private class Module extends common.testing.TestModule {
     val taskEditor = new TaskEditor

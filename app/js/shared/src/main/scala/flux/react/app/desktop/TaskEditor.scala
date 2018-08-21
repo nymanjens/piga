@@ -435,7 +435,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         }
         resultBuilder.toString
       },
-      plainText = subtasks.map(_.content).mkString("\n")
+      plainText = subtasks.map(_.content.contentString).mkString("\n")
     )
   }
 
