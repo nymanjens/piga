@@ -51,7 +51,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            TextWithMarkup.fromStringWithoutFormatting("<indented>"),
+            TextWithMarkup.withoutFormatting("<indented>"),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
@@ -465,7 +465,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
             partsBuilder.append(
               Replacement.Part(
-                TextWithMarkup.fromStringWithoutFormatting(line),
+                TextWithMarkup.withoutFormatting(line),
                 zeroIfNegative(nextRelativeIndentation)))
           }
           childNodesWithoutLi.clear()
