@@ -45,8 +45,9 @@ case class TextWithMarkup(parts: List[Part]) {
           case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := key, children) else children
           case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := key, children) else children
           case FormattingOption.Link =>
-            if (asOption(value).isDefined) <.a(^.href := asOption(value).get, ^.key := key, children)
-            else children
+            if (asOption(value).isDefined) {
+              <.a(^.href := asOption(value).get, ^.target := "blank", ^.key := key, children)
+            } else children
         }
       }
     }
@@ -180,6 +181,11 @@ object TextWithMarkup {
               ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
             case ParsedNode.P(e) if !last =>
               ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
+            case ParsedNode.B(e)    => fromHtmlNodesInner(children(e), formatting.copy(bold = true))
+            case ParsedNode.I(e)    => fromHtmlNodesInner(children(e), formatting.copy(italic = true))
+            case ParsedNode.Code(e) => fromHtmlNodesInner(children(e), formatting.copy(code = true))
+            case ParsedNode.A(e) =>
+              fromHtmlNodesInner(children(e), formatting.copy(link = Some(e.getAttribute("href"))))
             case _ => fromHtmlNodesInner(children(node), formatting)
           }
         }

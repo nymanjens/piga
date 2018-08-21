@@ -51,12 +51,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            TextWithMarkup(List(TextWithMarkup.Part("<indented>"))),
+            TextWithMarkup.fromStringWithoutFormatting("<indented>"),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            TextWithMarkup(List(TextWithMarkup.Part("world"))),
-            indentation = 0)
+            TextWithMarkup(
+              List(TextWithMarkup.Part("world", formatting = Formatting(link = Some("http://example.com"))))),
+            indentation = 0
+          )
         )))
 
   private class Backend($ : BackendScope[Props, State]) {
