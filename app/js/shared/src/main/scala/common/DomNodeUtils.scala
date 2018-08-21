@@ -34,10 +34,7 @@ object DomNodeUtils {
       val nodeWithOffset = NodeWithOffset(node, offsetSoFar, offsetAtEnd = offsetSoFar + nodeLength)
       offsetSoFar += nodeLength
 
-      val iterables = for (i <- 0 until node.childNodes.length) yield {
-        internal(node.childNodes.item(i))
-      }
-      nodeWithOffset +: iterables.flatten
+      nodeWithOffset +: children(node).flatMap(internal)
     }
     internal(node)
   }
