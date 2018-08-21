@@ -11,12 +11,6 @@ object TextWithMarkupTest extends TestSuite {
       val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
       textWithMarkup.contentString ==> "abcd"
     }
-    "+" - {
-      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
-      textWithMarkup ==>
-        TextWithMarkup(
-          List(Part("a"), Part("bc", Formatting(italic = true)), Part("d", Formatting(bold = true))))
-    }
     "sub" - {
       val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d") + italic("efg")
 
@@ -52,8 +46,10 @@ object TextWithMarkupTest extends TestSuite {
       textWithMarkup.formattingAtCursor(4) ==> Formatting(italic = true)
       textWithMarkup.formattingAtCursor(5) ==> Formatting(bold = true)
     }
-    "canonicalized" - {
-      // TODO
+    "canonicalized equality check" - {
+      TextWithMarkup("a") + TextWithMarkup("b") ==> TextWithMarkup("ab")
+      italic("a") + italic("b") ==> italic("ab")
+      bold("abc").withFormatting(1, 2, _.copy(bold = true)) ==> bold("abc")
     }
     "toHtml" - {
       // TODO

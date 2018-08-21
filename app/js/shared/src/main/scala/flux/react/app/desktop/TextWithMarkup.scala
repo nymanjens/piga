@@ -12,7 +12,7 @@ import jsfacades.escapeHtml
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-case class TextWithMarkup(parts: List[Part]) {
+final class TextWithMarkup private (private val parts: List[Part]) {
 
   lazy val contentString: String = parts.map(_.text).mkString
 
@@ -85,7 +85,7 @@ case class TextWithMarkup(parts: List[Part]) {
       mergeResults = _.mkString)
   }
 
-  def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup(this.parts ++ that.parts)
+  def +(that: TextWithMarkup): TextWithMarkup = new TextWithMarkup(this.parts ++ that.parts)
 
   def formattingAtCursor(offset: Int): Formatting = {
     def formattingAtCursorInner(parts: List[Part], offset: Int): Formatting =
@@ -123,7 +123,7 @@ case class TextWithMarkup(parts: List[Part]) {
     if (beginOffset == endOffset) {
       TextWithMarkup.empty
     } else {
-      TextWithMarkup(
+      new TextWithMarkup(
         subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
     }
   }
@@ -132,28 +132,36 @@ case class TextWithMarkup(parts: List[Part]) {
                      endOffset: Int,
                      updateFunc: Formatting => Formatting): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
-      TextWithMarkup(textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
+      new TextWithMarkup(
+        textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
 
-  def canonicalized: TextWithMarkup = TextWithMarkup {
+  def canonicalized: TextWithMarkup = {
     def canonicalizedInner(parts: List[Part]): List[Part] = parts match {
       case part1 :: part2 :: rest if part1.formatting == part2.formatting =>
         canonicalizedInner(Part(part1.text + part2.text, part1.formatting) :: rest)
       case Nil          => Nil
       case part :: rest => part :: canonicalizedInner(rest)
     }
-    canonicalizedInner(parts)
+    new TextWithMarkup(canonicalizedInner(parts))
   }
+
+  // **************** Object methods **************** //
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case that: TextWithMarkup => this.parts == that.parts
+    case _                    => false
+  }
+  override def hashCode(): Int = parts.hashCode()
 }
 
 object TextWithMarkup {
 
-  val empty: TextWithMarkup = TextWithMarkup(Nil)
+  val empty: TextWithMarkup = new TextWithMarkup(Nil)
 
   def apply(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup(List(Part(string, formatting)))
+    new TextWithMarkup(List(Part(string, formatting)))
 
   def fromHtml(string: String): TextWithMarkup = {
     val html = {
@@ -194,11 +202,11 @@ object TextWithMarkup {
     }
 
     val parts = fromHtmlNodesInner(nodes.toVector, formatting = Formatting.none)
-    TextWithMarkup(parts.toList).canonicalized
+    new TextWithMarkup(parts.toList).canonicalized
   }
 
   // **************** public inner types **************** //
-  case class Part(text: String, formatting: Formatting = Formatting.none) {
+  private case class Part(text: String, formatting: Formatting = Formatting.none) {
 
     def sub(beginOffset: Int, endOffset: Int = -1): Part =
       copy(
