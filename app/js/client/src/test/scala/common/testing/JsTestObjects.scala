@@ -10,10 +10,10 @@ object JsTestObjects {
 
   val taskA = Task.withRandomId(
     orderToken = orderTokenA,
-    content = TextWithMarkup.withoutFormatting("abcd"),
+    content = TextWithMarkup("abcd"),
     indentation = 1)
   val taskB = Task.withRandomId(
     orderToken = orderTokenB,
-    content = TextWithMarkup.withoutFormatting("xyz"),
+    content = TextWithMarkup("xyz"),
     indentation = 3)
 }

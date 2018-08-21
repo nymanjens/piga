@@ -2,7 +2,7 @@ package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
-import flux.react.app.desktop.TextWithMarkup.{Formatting, withoutFormatting}
+import flux.react.app.desktop.TextWithMarkup.Formatting
 import scala2js.Converters._
 import utest._
 
@@ -28,7 +28,7 @@ object TaskEditorTest extends TestSuite {
             Seq(
               Task.withRandomId(
                 orderToken = orderTokenA,
-                content = withoutFormatting("a") + italic("b"),
+                content = TextWithMarkup("a") + italic("b"),
                 indentation = 0))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
@@ -74,7 +74,7 @@ object TaskEditorTest extends TestSuite {
       def replacement(firstPartContent: TextWithMarkup, parts: taskEditor.Replacement.Part*) =
         taskEditor.Replacement.create(firstPartContent, parts: _*)
       def replacementPart(content: String, indentation: Int = 0) =
-        taskEditor.Replacement.Part(withoutFormatting(content), indentation)
+        taskEditor.Replacement.Part(TextWithMarkup(content), indentation)
       def replacementPartFormatted(content: TextWithMarkup, indentation: Int = 0) =
         taskEditor.Replacement.Part(content, indentation)
 
@@ -86,29 +86,29 @@ object TaskEditorTest extends TestSuite {
               d
             """)) ==>
             replacement(
-              withoutFormatting("a"),
+              TextWithMarkup("a"),
               replacementPart("b"),
               replacementPart("c"),
               replacementPart("d"))
         }
         "br" - {
           taskEditor.clipboardStringToReplacement("abc<br/>def") ==>
-            replacement(withoutFormatting("abc"), replacementPart("def"))
+            replacement(TextWithMarkup("abc"), replacementPart("def"))
         }
         "newline" - {
           taskEditor.clipboardStringToReplacement("abc\ndef") ==>
-            replacement(withoutFormatting("abc"), replacementPart("def"))
+            replacement(TextWithMarkup("abc"), replacementPart("def"))
         }
         "ignores formatting" - {
           taskEditor.clipboardStringToReplacement("<b>abc</b>") ==>
-            replacement(withoutFormatting("abc"))
+            replacement(TextWithMarkup("abc"))
         }
         "plain text" - {
           taskEditor.clipboardStringToReplacement("""
               |x
               |y
             """.stripMargin.trim) ==>
-            replacement(withoutFormatting("x"), replacementPart("y"))
+            replacement(TextWithMarkup("x"), replacementPart("y"))
         }
       }
       "with list tags" - {
@@ -122,7 +122,7 @@ object TaskEditorTest extends TestSuite {
                <li>xyz</li>
              </ul>
             """)) ==>
-            replacement(withoutFormatting("a\nb\nc"), replacementPart("xyz"))
+            replacement(TextWithMarkup("a\nb\nc"), replacementPart("xyz"))
         }
       }
       "inside and outside list tags" - {
@@ -135,8 +135,8 @@ object TaskEditorTest extends TestSuite {
              </ul>
             """)) ==>
           replacement(
-            withoutFormatting("abc"),
-            replacementPartFormatted(withoutFormatting("d") + italic("e") + withoutFormatting("f")))
+            TextWithMarkup("abc"),
+            replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
       }
     }
     "convertToClipboardData(clipboardStringToReplacement)" - {
@@ -197,7 +197,7 @@ object TaskEditorTest extends TestSuite {
   private def newTask(content: String, indentation: Int = 0): Task =
     Task.withRandomId(
       orderToken = orderTokenA,
-      content = withoutFormatting(content),
+      content = TextWithMarkup(content),
       indentation = indentation)
 
   private class Module extends common.testing.TestModule {

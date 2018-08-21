@@ -45,18 +45,16 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         Seq(
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            TextWithMarkup(
-              List(TextWithMarkup.Part("Hello", Formatting(bold = true)), TextWithMarkup.Part("\nmy"))),
+            TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
             indentation = 0
           ),
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
-            TextWithMarkup.withoutFormatting("<indented>"),
+            TextWithMarkup("<indented>"),
             indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            TextWithMarkup(
-              List(TextWithMarkup.Part("world", formatting = Formatting(link = Some("http://example.com"))))),
+            TextWithMarkup("world", formatting = Formatting(link = Some("http://example.com"))),
             indentation = 0
           )
         )))
@@ -383,7 +381,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
     def fromString(string: String, formatting: Formatting): Replacement =
-      Replacement.create(TextWithMarkup(List(TextWithMarkup.Part(string, formatting))))
+      Replacement.create(TextWithMarkup(string, formatting))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
         TextWithMarkup.empty,
@@ -464,9 +462,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi: _*)
           for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
             partsBuilder.append(
-              Replacement.Part(
-                TextWithMarkup.withoutFormatting(line),
-                zeroIfNegative(nextRelativeIndentation)))
+              Replacement.Part(TextWithMarkup(line), zeroIfNegative(nextRelativeIndentation)))
           }
           childNodesWithoutLi.clear()
         }

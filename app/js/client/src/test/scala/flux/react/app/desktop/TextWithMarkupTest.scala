@@ -2,7 +2,7 @@ package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
-import flux.react.app.desktop.TextWithMarkup.{Formatting, Part, withoutFormatting}
+import flux.react.app.desktop.TextWithMarkup.{Formatting, Part}
 import scala2js.Converters._
 import utest._
 
@@ -12,30 +12,30 @@ object TextWithMarkupTest extends TestSuite {
 
   override def tests = TestSuite {
     "contentString" - {
-      val textWithMarkup = withoutFormatting("a") + italic("bc") + bold("d")
+      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
       textWithMarkup.contentString ==> "abcd"
     }
     "+" - {
-      val textWithMarkup = withoutFormatting("a") + italic("bc") + bold("d")
+      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
       textWithMarkup ==>
         TextWithMarkup(
           List(Part("a"), Part("bc", Formatting(italic = true)), Part("d", Formatting(bold = true))))
     }
     "sub" - {
-      val textWithMarkup = withoutFormatting("a") + italic("bc") + bold("d") + italic("efg")
+      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d") + italic("efg")
 
       textWithMarkup.sub(0, 0) ==> TextWithMarkup.empty
       textWithMarkup.sub(3, 3) ==> TextWithMarkup.empty
       textWithMarkup.sub(0) ==> textWithMarkup
 
       textWithMarkup.sub(3) ==> bold("d") + italic("efg")
-      textWithMarkup.sub(0, 3) ==> withoutFormatting("a") + italic("bc")
-      textWithMarkup.sub(0, 2) ==> withoutFormatting("a") + italic("b")
+      textWithMarkup.sub(0, 3) ==> TextWithMarkup("a") + italic("bc")
+      textWithMarkup.sub(0, 2) ==> TextWithMarkup("a") + italic("b")
       textWithMarkup.sub(5, 6) ==> italic("f")
       textWithMarkup.sub(5, 7) ==> italic("fg")
     }
     "withFormatting" - {
-      val textWithMarkup = withoutFormatting("abc") + italic("def")
+      val textWithMarkup = TextWithMarkup("abc") + italic("def")
 
       textWithMarkup.withFormatting(beginOffset = 1, endOffset = 4, _.copy(link = Some("example.com"))) ==>
         TextWithMarkup("a") +
@@ -44,7 +44,7 @@ object TextWithMarkupTest extends TestSuite {
           italic("ef")
     }
     "formattingAtCursor" - {
-      val textWithMarkup = withoutFormatting("a") +
+      val textWithMarkup = TextWithMarkup("a") +
         TextWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))) +
         italic("d") +
         bold("e")
