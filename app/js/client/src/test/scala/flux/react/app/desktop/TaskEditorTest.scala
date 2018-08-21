@@ -85,11 +85,7 @@ object TaskEditorTest extends TestSuite {
               <div>c</div>
               d
             """)) ==>
-            replacement(
-              TextWithMarkup("a"),
-              replacementPart("b"),
-              replacementPart("c"),
-              replacementPart("d"))
+            replacement(TextWithMarkup("a"), replacementPart("b"), replacementPart("c"), replacementPart("d"))
         }
         "br" - {
           taskEditor.clipboardStringToReplacement("abc<br/>def") ==>
@@ -194,10 +190,7 @@ object TaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private def newTask(content: String, indentation: Int = 0): Task =
-    Task.withRandomId(
-      orderToken = orderTokenA,
-      content = TextWithMarkup(content),
-      indentation = indentation)
+    Task.withRandomId(orderToken = orderTokenA, content = TextWithMarkup(content), indentation = indentation)
 
   private class Module extends common.testing.TestModule {
     val taskEditor = new TaskEditor
