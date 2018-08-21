@@ -1,12 +1,8 @@
 package flux.react.app.desktop
 
-import common.testing.JsTestObjects._
-import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.app.desktop.TextWithMarkup.{Formatting, Part}
 import scala2js.Converters._
 import utest._
-
-import scala.collection.immutable.Seq
 
 object TextWithMarkupTest extends TestSuite {
 
