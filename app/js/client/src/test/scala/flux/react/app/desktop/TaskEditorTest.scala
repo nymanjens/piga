@@ -22,6 +22,18 @@ object TaskEditorTest extends TestSuite {
             htmlText = "<ul><li>bc</li><li>defg</li><li>hi</li></ul>",
             plainText = "bc\ndefg\nhi")
       }
+      "with formatting" - {
+        taskEditor.convertToClipboardData(
+          new TaskSequence(
+            Seq(
+              Task.withRandomId(
+                orderToken = orderTokenA,
+                content = withoutFormatting("a") + italic("b"),
+                indentation = 0))),
+          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
+        ) ==>
+          taskEditor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
+      }
       "escapes html" - {
         taskEditor.convertToClipboardData(
           new TaskSequence(Seq(newTask("a<b>cd"))),
@@ -65,8 +77,6 @@ object TaskEditorTest extends TestSuite {
         taskEditor.Replacement.Part(withoutFormatting(content), indentation)
       def replacementPartFormatted(content: TextWithMarkup, indentation: Int = 0) =
         taskEditor.Replacement.Part(content, indentation)
-      def italic(string: String): TextWithMarkup =
-        TextWithMarkup(List(TextWithMarkup.Part(string, Formatting(italic = true))))
 
       "without list tags" - {
         "p and div" - {
@@ -83,6 +93,10 @@ object TaskEditorTest extends TestSuite {
         }
         "br" - {
           taskEditor.clipboardStringToReplacement("abc<br/>def") ==>
+            replacement(withoutFormatting("abc"), replacementPart("def"))
+        }
+        "newline" - {
+          taskEditor.clipboardStringToReplacement("abc\ndef") ==>
             replacement(withoutFormatting("abc"), replacementPart("def"))
         }
         "ignores formatting" - {
@@ -145,6 +159,12 @@ object TaskEditorTest extends TestSuite {
       "covers multiple lines" - {
         roundTrip("<ul><li>bc</li><li>defg</li><li>hi</li></ul>")
       }
+      "with formatting" - {
+        roundTrip("<ul><li><b>this is bold</b></li></ul>")
+        roundTrip("<ul><li><i>this is italic</i></li></ul>")
+        roundTrip("<ul><li><code>this is code</code></li></ul>")
+        roundTrip("""<ul><li><a href="http://example.com">this is a link</a></li></ul>""")
+      }
       "escapes html" - {
         roundTrip("<ul><li>a&lt;b&gt;c</li></ul>")
       }
@@ -168,6 +188,9 @@ object TaskEditorTest extends TestSuite {
       }
     }
   }
+
+  private def italic(string: String): TextWithMarkup =
+    TextWithMarkup(List(TextWithMarkup.Part(string, Formatting(italic = true))))
 
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
