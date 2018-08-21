@@ -189,8 +189,7 @@ object TaskEditorTest extends TestSuite {
     }
   }
 
-  private def italic(string: String): TextWithMarkup =
-    TextWithMarkup(List(TextWithMarkup.Part(string, Formatting(italic = true))))
+  private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
 
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 

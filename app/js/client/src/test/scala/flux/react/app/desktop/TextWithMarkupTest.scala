@@ -67,8 +67,6 @@ object TextWithMarkupTest extends TestSuite {
     }
   }
 
-  private def italic(string: String): TextWithMarkup =
-    TextWithMarkup(List(Part(string, Formatting(italic = true))))
-  private def bold(string: String): TextWithMarkup =
-    TextWithMarkup(List(Part(string, Formatting(bold = true))))
+  private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
+  private def bold(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(bold = true))
 }
