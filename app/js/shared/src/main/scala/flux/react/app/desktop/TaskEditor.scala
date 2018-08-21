@@ -445,67 +445,53 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       resultHolder
     }
 
-    val partsBuilder = mutable.Buffer[Replacement.Part]()
-    var nextContent = ""
-    var nextRelativeIndentation = -1
-
-    def addNextPart(): Unit = {
-      partsBuilder.append(
-        Replacement.Part(
-          TextWithMarkup(List(TextWithMarkup.Part(nextContent.trim))),
-          zeroIfNegative(nextRelativeIndentation)))
-      nextContent = ""
-    }
-    def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
-      asTextNode(node) match {
-        case Some(textNode) =>
-          if (inListItem) {
-            nextContent += textNode.wholeText
-          } else {
-            for ((line, i) <- Splitter.on('\n').split(textNode.wholeText).zipWithIndex) {
-              if (i != 0) {
-                addNextPart()
-              }
-              nextContent += line
-            }
-          }
-        case None =>
-      }
-      if (nodeIsBr(node)) {
-        if (inListItem) {
-          nextContent += '\n'
-        } else {
-          addNextPart()
-        }
-      }
-      if (nodeIsList(node)) {
-        nextRelativeIndentation += 1
-      }
-
-      for (i <- 0 until node.childNodes.length) yield {
-        addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
-      }
-
-      // handle tag closings
-      if (nodeIsDiv(node) || nodeIsP(node)) {
-        if (inListItem) {
-          nextContent += '\n'
-        } else {
-          addNextPart()
-        }
-      }
+    def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
-        addNextPart()
-      }
-      if (nodeIsList(node)) {
-        nextRelativeIndentation -= 1
+        true
+      } else {
+        children(node).exists(containsListItem)
       }
     }
 
-    addPastedText(html, inListItem = false)
-    if (nextContent.nonEmpty) {
-      addNextPart()
+    val partsBuilder = mutable.Buffer[Replacement.Part]()
+
+    def addPastedText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
+      val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
+      def pushChildNodesWithoutLi(): Unit = {
+        if (childNodesWithoutLi.nonEmpty) {
+          val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi: _*)
+          for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
+            partsBuilder.append(
+              Replacement.Part(
+                TextWithMarkup.fromStringWithoutFormatting(line),
+                zeroIfNegative(nextRelativeIndentation)))
+          }
+          childNodesWithoutLi.clear()
+        }
+      }
+
+      for (node <- nodes) {
+        if (containsListItem(node)) {
+          pushChildNodesWithoutLi()
+          if (nodeIsLi(node)) {
+            partsBuilder.append(
+              Replacement.Part(TextWithMarkup.fromHtmlNodes(node), zeroIfNegative(nextRelativeIndentation)))
+          } else {
+            addPastedText(
+              children(node),
+              nextRelativeIndentation =
+                if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
+
+          }
+        } else {
+          childNodesWithoutLi.append(node)
+        }
+      }
+
+      pushChildNodesWithoutLi()
     }
+
+    addPastedText(Seq(html), nextRelativeIndentation = -1)
     Replacement(partsBuilder.toVector)
   }
 

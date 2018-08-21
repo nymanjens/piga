@@ -1,5 +1,8 @@
 package flux.react.app.desktop
 
+import common.DomNodeUtils._
+import common.GuavaReplacement.Splitter
+import org.scalajs.dom
 import common.LoggingUtils
 import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
 import flux.react.app.desktop.TextWithMarkup.{Formatting, FormattingOption, Part}
@@ -148,14 +151,53 @@ object TextWithMarkup {
 
   val empty: TextWithMarkup = TextWithMarkup(Nil)
 
+  def fromStringWithoutFormatting(string: String): TextWithMarkup = TextWithMarkup(List(Part(string)))
+
+  def fromHtml(string: String): TextWithMarkup = {
+    val html = {
+      val resultHolder = dom.document.createElement("span")
+      resultHolder.innerHTML = string
+      resultHolder
+    }
+    fromHtmlNodes(html)
+  }
+
+  def fromHtmlNodes(nodes: dom.raw.Node*): TextWithMarkup = {
+    def ensureTrailingNewline(parts: Seq[Part]): Seq[Part] = parts match {
+      case Seq()                                => Seq()
+      case _ if !parts.last.text.endsWith("\n") => parts.updated(parts.size - 1, parts.last + "\n")
+      case _                                    => parts
+    }
+    def fromHtmlNodesInner(nodes: Seq[dom.raw.Node], formatting: Formatting): Seq[Part] = {
+      for {
+        (node, i) <- nodes.zipWithIndex
+        part <- {
+          val last = i == nodes.length - 1
+          parseNode(node) match {
+            case ParsedNode.Text(string) => Seq(Part(string, formatting))
+            case ParsedNode.Br(_)        => Seq(Part("\n", formatting))
+            case ParsedNode.Div(e) if !last =>
+              ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
+            case ParsedNode.P(e) if !last =>
+              ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
+            case _ => fromHtmlNodesInner(children(node), formatting)
+          }
+        }
+      } yield part
+    }
+
+    val parts = fromHtmlNodesInner(nodes.toVector, formatting = Formatting.none)
+    TextWithMarkup(parts.toList).canonicalized
+  }
+
   // **************** public inner types **************** //
   case class Part(text: String, formatting: Formatting = Formatting.none) {
 
-    private[TextWithMarkup] def sub(beginOffset: Int, endOffset: Int = -1): Part =
+    def sub(beginOffset: Int, endOffset: Int = -1): Part =
       copy(
         text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset))
 
-    private[TextWithMarkup] def +(thatText: String): Part = copy(text = this.text + thatText)
+    def +(thatText: String): Part = copy(text = this.text + thatText)
   }
 
   case class Formatting(bold: Boolean = false,
