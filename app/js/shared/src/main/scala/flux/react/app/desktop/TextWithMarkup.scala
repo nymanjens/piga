@@ -153,6 +153,8 @@ object TextWithMarkup {
   val empty: TextWithMarkup = TextWithMarkup(Nil)
 
   def withoutFormatting(string: String): TextWithMarkup = TextWithMarkup(List(Part(string)))
+  def apply(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
+    TextWithMarkup(List(Part(string, formatting)))
 
   def fromHtml(string: String): TextWithMarkup = {
     val html = {
