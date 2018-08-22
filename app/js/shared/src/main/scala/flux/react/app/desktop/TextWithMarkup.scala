@@ -144,6 +144,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     case _                    => false
   }
   override def hashCode(): Int = parts.hashCode()
+  override def toString: String = toHtml
 }
 
 object TextWithMarkup {

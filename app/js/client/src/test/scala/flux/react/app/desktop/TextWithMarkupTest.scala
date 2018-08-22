@@ -52,10 +52,67 @@ object TextWithMarkupTest extends TestSuite {
       bold("abc").withFormatting(1, 2, _.copy(bold = true)) ==> bold("abc")
     }
     "toHtml" - {
-      // TODO
+      "br" - {
+        TextWithMarkup("A\n\nB").toHtml ==> "A<br /><br />B"
+      }
+      "b" - {
+        (TextWithMarkup("A") + bold("B") + TextWithMarkup("C")).toHtml ==> "A<b>B</b>C"
+      }
+      "i" - {
+        italic("ABC").toHtml ==> "<i>ABC</i>"
+      }
+      "b and i" - {
+        (italic("AB") + TextWithMarkup("C", Formatting(bold = true, italic = true))).toHtml ==> "<i>AB<b>C</b></i>"
+      }
+      "code" - {
+        TextWithMarkup("ABC", Formatting(code = true)).toHtml ==> "<code>ABC</code>"
+      }
+      "link" - {
+        TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
+          TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""")
+      }
+      "link and b" - {
+        val textWithMarkup =
+          (TextWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
+            .withFormatting(1, 4, _.copy(bold = true))
+        textWithMarkup.toHtml ==> """<a href="example.com">AB<b>C</b></a><b>D</b>"""
+      }
     }
     "fromHtml" - {
-      // TODO
+      "p" - {
+        TextWithMarkup.fromHtml("<p>A</p>") ==> TextWithMarkup("A")
+        TextWithMarkup.fromHtml("<p>A</p><p>B</p>") ==> TextWithMarkup("A\nB")
+      }
+      "div" - {
+        TextWithMarkup.fromHtml("<div>A</div>") ==> TextWithMarkup("A")
+        TextWithMarkup.fromHtml("<div>A</div><div>B</div>") ==> TextWithMarkup("A\nB")
+      }
+      "div and p" - {
+        TextWithMarkup.fromHtml("<div><p>A</p></div><div><p>B</p></div>") ==> TextWithMarkup("A\nB")
+      }
+      "br" - {
+        TextWithMarkup.fromHtml("A<br/><br/>B") ==> TextWithMarkup("A\n\nB")
+      }
+      "b" - {
+        TextWithMarkup.fromHtml("A<b>B</b>C") ==> TextWithMarkup("A") + bold("B") + TextWithMarkup("C")
+      }
+      "i" - {
+        TextWithMarkup.fromHtml("<i>ABC</i>") ==> italic("ABC")
+      }
+      "b and i" - {
+        TextWithMarkup.fromHtml("<i>AB<b>C</b></i>") ==>
+          italic("AB") + TextWithMarkup("C", Formatting(bold = true, italic = true))
+      }
+      "code" - {
+        TextWithMarkup.fromHtml("<code>ABC</code>") ==> TextWithMarkup("ABC", Formatting(code = true))
+      }
+      "link" - {
+        TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""") ==>
+          TextWithMarkup("ABC", Formatting(link = Some("example.com")))
+      }
+      "ignores irrelevant elements" - {
+        TextWithMarkup.fromHtml("A<span>B</span>") ==> TextWithMarkup("AB")
+      }
     }
   }
 
