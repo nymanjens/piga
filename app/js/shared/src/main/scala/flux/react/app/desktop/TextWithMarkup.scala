@@ -138,6 +138,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
 
+  def anyLink: Option[String] = parts.toStream.flatMap(_.formatting.link).headOption
+
   // **************** Object methods **************** //
   override def equals(obj: scala.Any): Boolean = obj match {
     case that: TextWithMarkup => this.parts == that.parts

@@ -177,6 +177,7 @@ private[desktop] object TaskSequence {
     require(start <= end)
 
     def detach(implicit tasks: TaskSequence): DetachedSelection = DetachedSelection(start.detach, end.detach)
+    def isCollapsed: Boolean = start == end
   }
   private[desktop] object IndexedSelection {
     def collapsed(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)

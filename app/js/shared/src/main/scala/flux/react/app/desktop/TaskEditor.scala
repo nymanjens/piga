@@ -227,6 +227,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
+        case "k" if ctrlPressed =>
+          // Edit link
+          event.preventDefault()
+          editLink(selection)
+
         case _ =>
           Callback.empty
       }
@@ -347,6 +352,106 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         toggleFormattingInternal(start.toStartOfTask, end.toEndOfTask)
       } else {
         toggleFormattingInternal(start, end)
+      }
+    }
+
+    private def editLink(originalSelection: IndexedSelection): Callback = {
+      implicit val oldTasks = $.state.runNow().tasks
+
+      def anyContainingLink(selection: IndexedSelection): Option[String] = {
+        if (selection.isCollapsed) {
+          val cursor = selection.start
+          val expandedSelection = IndexedSelection(
+            if (cursor.offsetInTask == 0) cursor else cursor minusOffset 1,
+            if (cursor == cursor.toEndOfTask) cursor else cursor plusOffset 1)
+          if (expandedSelection.isCollapsed) {
+            None
+          } else {
+            anyContainingLink(expandedSelection)
+          }
+        } else {
+          val IndexedSelection(start, end) = selection
+          val texts = for (i <- start.seqIndex to end.seqIndex) yield {
+            oldTasks(i).content.sub(
+              beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
+              endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
+          }
+          texts.flatMap(_.anyLink).headOption
+        }
+      }
+
+      def expandSelection(selection: IndexedSelection): IndexedSelection = {
+        def expand(link: String, cursor: IndexedCursor, direction: Int): IndexedCursor = {
+          val content = oldTasks(cursor.seqIndex).content
+          cursor.offsetInTask match {
+            case 0 if direction < 0                                                => cursor
+            case offset if offset == content.contentString.length && direction > 0 => cursor
+            case offset =>
+              val nextChar =
+                if (direction == -1) content.sub(offset - 1, offset) else content.sub(offset, offset + 1)
+              if (nextChar.anyLink == Some(link)) {
+                expand(link, cursor plusOffset direction, direction)
+              } else {
+                cursor
+              }
+          }
+        }
+
+        val IndexedSelection(start, end) = selection
+        anyContainingLink(selection) match {
+          case Some(link) if selection.isCollapsed =>
+            IndexedSelection(expand(link, start, -1), expand(link, end, 1))
+          case _ => selection
+        }
+      }
+
+      class CancelException extends Exception
+      def newLinkFromDialog(defaultValue: Option[String]): Option[String] = {
+        val result = dom.window.prompt("Edit link", defaultValue getOrElse "")
+        result match {
+          case null => throw new CancelException
+          case ""   => None
+          case s    => Some(s)
+        }
+      }
+
+      def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
+        val IndexedSelection(start, end) = selection
+
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+        val tasksToAdd = {
+          for (task <- tasksToReplace)
+            yield
+              Task.withRandomId(
+                orderToken = task.orderToken,
+                content = task.content
+                  .withFormatting(
+                    beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
+                    endOffset =
+                      if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
+                    updateFunc = _.copy(link = newLink)
+                  ),
+                indentation = task.indentation
+              )
+        }
+
+        replaceInStateWithHistory(
+          tasksToReplace = tasksToReplace,
+          tasksToAdd = tasksToAdd,
+          selectionBeforeEdit = originalSelection,
+          selectionAfterEdit = selection
+        )
+      }
+
+      expandSelection(originalSelection) match {
+        case s if s.isCollapsed => Callback.empty
+        case expandedSelection =>
+          try {
+            val newLink = newLinkFromDialog(anyContainingLink(originalSelection))
+            editLinkInternal(expandedSelection, newLink)
+          } catch {
+            case _: CancelException => Callback.empty
+          }
       }
     }
 
