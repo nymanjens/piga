@@ -6,6 +6,7 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
+import flux.react.app.desktop.TextWithMarkup.Formatting
 import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
@@ -42,12 +43,20 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class State(
       tasks: TaskSequence = new TaskSequence(
         Seq(
-          Task.withRandomId(OrderToken.middleBetween(None, None), "Hel\nlo\nE<p>ND", indentation = 0),
-          Task.withRandomId(OrderToken.middleBetween(None, None), "<indented>", indentation = 2),
+          Task.withRandomId(
+            OrderToken.middleBetween(None, None),
+            TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
+            indentation = 0
+          ),
+          Task.withRandomId(
+            OrderToken.middleBetween(None, None),
+            TextWithMarkup("<indented>"),
+            indentation = 2),
           Task.withRandomId(
             OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            "World!",
-            indentation = 0)
+            TextWithMarkup("world", formatting = Formatting(link = Some("http://example.com"))),
+            indentation = 0
+          )
         )))
 
   private class Backend($ : BackendScope[Props, State]) {
@@ -62,12 +71,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.contentEditable := true,
           VdomAttr("suppressContentEditableWarning") := true,
           ^.onKeyDown ==> handleKeyDown,
-          ^.onBeforeInput ==> handleBeforeInput,
           ^.onPaste ==> handlePaste,
           ^.onCut ==> handleCut,
           ^.onCopy ==> handleCopy,
-          ^.onBlur ==> handleEvent("onBlur"),
           ^.onInput ==> handleEvent("onChange"),
+          ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
             (for ((task, i) <- state.tasks.zipWithIndex)
               yield
@@ -76,7 +84,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
                   VdomAttr("num") := i,
-                  contentToHtml(task.content)
+                  task.content.toVdomNode
                 )).toVdomArray
           )
         ),
@@ -86,29 +94,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         (for ((task, i) <- state.tasks.zipWithIndex)
-          yield
-            <.div(^.key := s"task-$i", "- [", task.indentation, "]", contentToHtml(task.content))).toVdomArray
+          yield <.div(^.key := s"task-$i", "- [", task.indentation, "]", task.content.toVdomNode)).toVdomArray
       )
-    }
-
-    private def contentToHtml(content: String): VdomNode = {
-      // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
-      if (content.endsWith("\n")) {
-        content + " "
-      } else {
-        content
-      }
     }
 
     private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      console
-        .log(
-          s"$name EVENT",
-          event.nativeEvent,
-          event.eventType,
-          selection.toString
-        )
+      console.log(s"$name EVENT", event.nativeEvent, event.eventType, selection.toString)
     }
 
     private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
@@ -147,30 +139,28 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         selection)
     }
 
-    private def handleBeforeInput(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      console.log(s"onBeforeInput EVENT", event.nativeEvent, event.eventType, selection.toString)
-      event.preventDefault()
-    }
-
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
       implicit val tasks = $.state.runNow().tasks
       val shiftPressed = event.shiftKey
+      val altPressed = event.altKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
+      val formatting = tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
 
       event.key match {
-        case eventKey if eventKey.length == 1 && !ctrlPressed =>
+        case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
           event.preventDefault()
           replaceSelectionInState(
-            replacement = Replacement.fromString(eventKey),
+            replacement = Replacement.fromString(eventKey, formatting),
             IndexedSelection(start, end))
 
         case "Enter" =>
           event.preventDefault()
           if (shiftPressed) {
-            replaceSelectionInState(replacement = Replacement.fromString("\n"), IndexedSelection(start, end))
+            replaceSelectionInState(
+              replacement = Replacement.fromString("\n", formatting),
+              IndexedSelection(start, end))
           } else {
             replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
@@ -207,18 +197,34 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           event.preventDefault()
           indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
 
-        case "i" | "b" | "u" if ctrlPressed =>
-          // Disable modifiers
+        case "i" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(italic = value), selection)
+        case "b" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(bold = value), selection)
+        case "C" if shiftPressed && altPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => form.copy(code = value), selection)
+        case "\\" if ctrlPressed =>
+          event.preventDefault()
+          toggleFormatting((form, value) => Formatting.none, selection)
+
+        case "u" if ctrlPressed =>
+          // Disable underline modifier
           event.preventDefault()
           Callback.empty
 
         case "z" if ctrlPressed && !shiftPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.undo())
 
         case "Z" if ctrlPressed && shiftPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
         case "y" if ctrlPressed =>
+          event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
         case _ =>
@@ -256,13 +262,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
-            def ifIndexOrEmpty(index: Int)(string: String): String = if (i == index) string else ""
+            def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
+              if (i == index) tags else TextWithMarkup.empty
             Task.withRandomId(
               orderToken = newOrderToken,
-              ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.substring(0, start.offsetInTask)) +
+              content = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
-                  oldTasks(end.seqIndex).content.substring(end.offsetInTask)),
+                  oldTasks(end.seqIndex).content.sub(end.offsetInTask)),
               indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
             )
           }
@@ -297,6 +304,52 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       )
     }
 
+    private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
+                                 selection: IndexedSelection)(implicit tasks: TaskSequence): Callback = {
+      val IndexedSelection(start, end) = selection
+
+      def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
+        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
+          for (task <- tasks)
+            yield
+              Task.withRandomId(
+                orderToken = task.orderToken,
+                content = task.content
+                  .withFormatting(
+                    beginOffset = if (task == tasks.head) start.offsetInTask else 0,
+                    endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
+                    formatting => updateFunc(formatting, value)
+                  ),
+                indentation = task.indentation
+              )
+
+        val oldTasks = $.state.runNow().tasks
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+        val tasksToAdd = {
+          val candidate = setFormatting(tasksToReplace, value = true)
+          if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
+            setFormatting(tasksToReplace, value = false)
+          } else {
+            candidate
+          }
+        }
+
+        replaceInStateWithHistory(
+          tasksToReplace = tasksToReplace,
+          tasksToAdd = tasksToAdd,
+          selectionBeforeEdit = selection,
+          selectionAfterEdit = selection
+        )
+      }
+
+      if (start == end) {
+        // update whole line
+        toggleFormattingInternal(start.toStartOfTask, end.toEndOfTask)
+      } else {
+        toggleFormattingInternal(start, end)
+      }
+    }
+
     private def replaceInStateWithHistory(tasksToReplace: Seq[Task],
                                           tasksToAdd: Seq[Task],
                                           selectionBeforeEdit: IndexedSelection,
@@ -325,15 +378,18 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def contentString: String = parts.map(_.contentString).mkString
   }
   @visibleForTesting private[desktop] object Replacement {
-    def create(firstPartContent: String, otherParts: Part*): Replacement =
+    def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
-    def fromString(string: String): Replacement = Replacement.create(string)
+    def fromString(string: String, formatting: Formatting): Replacement =
+      Replacement.create(TextWithMarkup(string, formatting))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
-      Replacement.create("", Part(content = "", indentationRelativeToCurrent = indentationRelativeToCurrent))
-    def empty: Replacement = Replacement.create("")
+      Replacement.create(
+        TextWithMarkup.empty,
+        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
+    def empty: Replacement = Replacement.create(TextWithMarkup.empty)
 
-    case class Part(content: String, indentationRelativeToCurrent: Int) {
-      def contentString: String = content
+    case class Part(content: TextWithMarkup, indentationRelativeToCurrent: Int) {
+      def contentString: String = content.contentString
     }
   }
   @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
@@ -341,7 +397,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       tasks: TaskSequence,
       selection: IndexedSelection): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
-      def content: String = task.content.substring(startOffset, endOffset)
+      def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
       def indentation: Int = task.indentation
     }
 
@@ -353,7 +409,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           Subtask(
             task,
             startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
-            endOffset = if (index == end.seqIndex) end.offsetInTask else task.content.length)
+            endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length)
       }
     ClipboardData(
       htmlText = {
@@ -368,7 +424,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             resultBuilder.append("</ul>")
           }
           resultBuilder.append("<li>")
-          resultBuilder.append(escapeHtml(subtask.content).replace("\n", "<br />"))
+          resultBuilder.append(subtask.content.toHtml)
           resultBuilder.append("</li>")
           lastIndentation = subtask.indentation
         }
@@ -377,7 +433,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         }
         resultBuilder.toString
       },
-      plainText = subtasks.map(_.content).mkString("\n")
+      plainText = subtasks.map(_.content.contentString).mkString("\n")
     )
   }
 
@@ -389,64 +445,51 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       resultHolder
     }
 
-    val partsBuilder = mutable.Buffer[Replacement.Part]()
-    var nextContent = ""
-    var nextRelativeIndentation = -1
-
-    def addNextPart(): Unit = {
-      partsBuilder.append(Replacement.Part(nextContent.trim, zeroIfNegative(nextRelativeIndentation)))
-      nextContent = ""
-    }
-    def addPastedText(node: dom.raw.Node, inListItem: Boolean): Unit = {
-      asTextNode(node) match {
-        case Some(textNode) =>
-          if (inListItem) {
-            nextContent += textNode.wholeText
-          } else {
-            for ((line, i) <- Splitter.on('\n').split(textNode.wholeText).zipWithIndex) {
-              if (i != 0) {
-                addNextPart()
-              }
-              nextContent += line
-            }
-          }
-        case None =>
-      }
-      if (nodeIsBr(node)) {
-        if (inListItem) {
-          nextContent += '\n'
-        } else {
-          addNextPart()
-        }
-      }
-      if (nodeIsList(node)) {
-        nextRelativeIndentation += 1
-      }
-
-      for (i <- 0 until node.childNodes.length) yield {
-        addPastedText(node.childNodes.item(i), inListItem = inListItem || nodeIsLi(node))
-      }
-
-      // handle tag closings
-      if (nodeIsDiv(node) || nodeIsP(node)) {
-        if (inListItem) {
-          nextContent += '\n'
-        } else {
-          addNextPart()
-        }
-      }
+    def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
-        addNextPart()
-      }
-      if (nodeIsList(node)) {
-        nextRelativeIndentation -= 1
+        true
+      } else {
+        children(node).exists(containsListItem)
       }
     }
 
-    addPastedText(html, inListItem = false)
-    if (nextContent.nonEmpty) {
-      addNextPart()
+    val partsBuilder = mutable.Buffer[Replacement.Part]()
+
+    def addPastedText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
+      val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
+      def pushChildNodesWithoutLi(): Unit = {
+        if (childNodesWithoutLi.nonEmpty) {
+          val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi: _*)
+          for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
+            partsBuilder.append(
+              Replacement.Part(TextWithMarkup(line), zeroIfNegative(nextRelativeIndentation)))
+          }
+          childNodesWithoutLi.clear()
+        }
+      }
+
+      for (node <- nodes) {
+        if (containsListItem(node)) {
+          pushChildNodesWithoutLi()
+          if (nodeIsLi(node)) {
+            partsBuilder.append(
+              Replacement.Part(TextWithMarkup.fromHtmlNodes(node), zeroIfNegative(nextRelativeIndentation)))
+          } else {
+            addPastedText(
+              children(node),
+              nextRelativeIndentation =
+                if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
+
+          }
+        } else {
+          childNodesWithoutLi.append(node)
+        }
+      }
+
+      pushChildNodesWithoutLi()
     }
+
+    addPastedText(Seq(html), nextRelativeIndentation = -1)
     Replacement(partsBuilder.toVector)
   }
 
