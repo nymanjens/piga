@@ -215,8 +215,9 @@ object TextWithMarkup {
   }
 
   // **************** private inner types **************** //
-  private[TextWithMarkup] trait FormattingOption[T] {
+  private[TextWithMarkup] abstract class FormattingOption[T] {
     def getValue(part: Part): T
+    override def toString: String = getClass.getSimpleName
   }
   private[TextWithMarkup] object FormattingOption {
     private[TextWithMarkup] trait Applier[R] {
@@ -283,8 +284,8 @@ object TextWithMarkup {
                   currentFormattingValue = newFormattingValue
                   partBuffer.append(part)
               }
-              pushToBuffer()
             }
+            pushToBuffer()
             mergeResults(resultBuffer)
           }
           inner(formattingOption)
