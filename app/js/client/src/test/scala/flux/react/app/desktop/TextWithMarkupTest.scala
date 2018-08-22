@@ -69,12 +69,12 @@ object TextWithMarkupTest extends TestSuite {
       }
       "link" - {
         TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
-          TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""")
+          """<a href="example.com">ABC</a>"""
       }
       "link and b" - {
         val textWithMarkup =
           (TextWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
-            .withFormatting(1, 4, _.copy(bold = true))
+            .withFormatting(2, 4, _.copy(bold = true))
         textWithMarkup.toHtml ==> """<a href="example.com">AB<b>C</b></a><b>D</b>"""
       }
     }
