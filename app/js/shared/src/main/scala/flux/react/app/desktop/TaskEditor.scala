@@ -155,7 +155,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             replacement = Replacement.fromString(eventKey, formatting),
             IndexedSelection(start, end))
 
-        case "Enter" =>
+        case "Enter" if !ctrlPressed =>
           event.preventDefault()
           if (shiftPressed) {
             replaceSelectionInState(
@@ -164,6 +164,14 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           } else {
             replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
+
+        case "Enter" if ctrlPressed =>
+          // Open link
+          getAnyLinkInSelection(selection) match {
+            case Some(link) => dom.window.open(link, "_blank")
+            case None       =>
+          }
+          Callback.empty
 
         case "Backspace" =>
           event.preventDefault()
@@ -358,28 +366,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def editLink(originalSelection: IndexedSelection): Callback = {
       implicit val oldTasks = $.state.runNow().tasks
 
-      def anyContainingLink(selection: IndexedSelection): Option[String] = {
-        if (selection.isCollapsed) {
-          val cursor = selection.start
-          val expandedSelection = IndexedSelection(
-            if (cursor.offsetInTask == 0) cursor else cursor minusOffset 1,
-            if (cursor == cursor.toEndOfTask) cursor else cursor plusOffset 1)
-          if (expandedSelection.isCollapsed) {
-            None
-          } else {
-            anyContainingLink(expandedSelection)
-          }
-        } else {
-          val IndexedSelection(start, end) = selection
-          val texts = for (i <- start.seqIndex to end.seqIndex) yield {
-            oldTasks(i).content.sub(
-              beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
-              endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
-          }
-          texts.flatMap(_.anyLink).headOption
-        }
-      }
-
       def expandSelection(selection: IndexedSelection): IndexedSelection = {
         def expand(link: String, cursor: IndexedCursor, direction: Int): IndexedCursor = {
           val content = oldTasks(cursor.seqIndex).content
@@ -398,7 +384,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         }
 
         val IndexedSelection(start, end) = selection
-        anyContainingLink(selection) match {
+        getAnyLinkInSelection(selection) match {
           case Some(link) if selection.isCollapsed =>
             IndexedSelection(expand(link, start, -1), expand(link, end, 1))
           case _ => selection
@@ -447,7 +433,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         case s if s.isCollapsed => Callback.empty
         case expandedSelection =>
           try {
-            val newLink = newLinkFromDialog(anyContainingLink(originalSelection))
+            val newLink = newLinkFromDialog(getAnyLinkInSelection(originalSelection))
             editLinkInternal(expandedSelection, newLink)
           } catch {
             case _: CancelException => Callback.empty
@@ -649,6 +635,29 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       htmlString
     } else {
       event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
+    }
+  }
+
+  private def getAnyLinkInSelection(selection: IndexedSelection)(
+      implicit tasks: TaskSequence): Option[String] = {
+    if (selection.isCollapsed) {
+      val cursor = selection.start
+      val expandedSelection = IndexedSelection(
+        if (cursor.offsetInTask == 0) cursor else cursor minusOffset 1,
+        if (cursor == cursor.toEndOfTask) cursor else cursor plusOffset 1)
+      if (expandedSelection.isCollapsed) {
+        None
+      } else {
+        getAnyLinkInSelection(expandedSelection)
+      }
+    } else {
+      val IndexedSelection(start, end) = selection
+      val texts = for (i <- start.seqIndex to end.seqIndex) yield {
+        tasks(i).content.sub(
+          beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
+          endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
+      }
+      texts.flatMap(_.anyLink).headOption
     }
   }
 
