@@ -1,11 +1,13 @@
 package flux.react.app.desktop
 
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import org.scalajs.dom
 import common.LoggingUtils
 import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
 import flux.react.app.desktop.TextWithMarkup.{Formatting, FormattingOption, Part}
+import japgolly.scalajs.react.ReactEventFromInput
 import japgolly.scalajs.react.vdom.{VdomArray, VdomNode}
 import jsfacades.escapeHtml
 
@@ -45,9 +47,24 @@ final class TextWithMarkup private (private val parts: List[Part]) {
           case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := key, children) else children
           case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := key, children) else children
           case FormattingOption.Link =>
-            if (asOption(value).isDefined) {
-              <.a(^.href := asOption(value).get, ^.target := "blank", ^.key := key, children)
-            } else children
+            asOption(value) match {
+              case Some(link) =>
+                <.a(
+                  ^.href := asOption(value).get,
+                  ^.target := "blank",
+                  ^.key := key,
+                  ^.onClick ==> { e =>
+                    LogExceptionsCallback {
+                      if (e.ctrlKey) {
+                        e.preventDefault()
+                        dom.window.open(link, "_blank")
+                      }
+                    }.void
+                  },
+                  children
+                )
+              case None => children
+            }
         }
       }
     }
