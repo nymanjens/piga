@@ -32,20 +32,13 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
       timestamp = clock.nowInstant
     )
 
-    if (newEdit.isNoOp && edits.nonEmpty) {
-      // don't add this one to the history by merging it with the last edit
-      edits.remove(nextRedoEditIndex + 1, edits.length - nextRedoEditIndex - 1)
+    if (lastEditCanBeMerged && shouldBeMerged(edits.last, newEdit)) {
       edits.update(nextRedoEditIndex - 1, edits.last mergedWith newEdit)
-      lastEditCanBeMerged = false
     } else {
-      if (lastEditCanBeMerged && shouldBeMerged(edits.last, newEdit)) {
-        edits.update(nextRedoEditIndex - 1, edits.last mergedWith newEdit)
-      } else {
-        edits.remove(nextRedoEditIndex, edits.length - nextRedoEditIndex)
-        edits.append(newEdit)
-        nextRedoEditIndex = edits.length
-        lastEditCanBeMerged = newEdit.addsSingleCharOnSameLine
-      }
+      edits.remove(nextRedoEditIndex, edits.length - nextRedoEditIndex)
+      edits.append(newEdit)
+      nextRedoEditIndex = edits.length
+      lastEditCanBeMerged = newEdit.addsSingleCharOnSameLine
     }
   }
 
@@ -106,20 +99,6 @@ private[desktop] object EditHistory {
         replacementString = null,
         timestamp = timestamp
       )
-
-    private[EditHistory] def isNoOp: Boolean = {
-      if (removedTasks.size == addedTasks.size) {
-        if (removedTasks.isEmpty) {
-          true
-        } else {
-          (removedTasks.sorted zip addedTasks.sorted).forall {
-            case (t1, t2) => t1 equalsIgnoringId t2
-          }
-        }
-      } else {
-        false
-      }
-    }
 
     private[EditHistory] def mergedWith(that: Edit): Edit = {
       val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet

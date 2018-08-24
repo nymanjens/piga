@@ -446,21 +446,39 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                                           selectionBeforeEdit: IndexedSelection,
                                           selectionAfterEdit: IndexedSelection,
                                           replacementString: String = ""): Callback = {
-      val oldTasks = $.state.runNow().tasks
-      val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
-
-      $.modState(
-        _.copy(tasks = newTasks), {
-          editHistory.addEdit(
-            removedTasks = tasksToReplace,
-            addedTasks = tasksToAdd,
-            selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
-            selectionAfterEdit = selectionAfterEdit.detach(newTasks),
-            replacementString = replacementString
-          )
-          setSelection(selectionAfterEdit)
+      def isNoOp: Boolean = {
+        if (tasksToReplace.size == tasksToAdd.size && selectionBeforeEdit == selectionAfterEdit) {
+          if (tasksToReplace.isEmpty) {
+            true
+          } else {
+            (tasksToReplace.sorted zip tasksToAdd.sorted).forall {
+              case (t1, t2) => t1 equalsIgnoringId t2
+            }
+          }
+        } else {
+          false
         }
-      )
+      }
+
+      if (isNoOp) {
+        Callback.empty
+      } else {
+        val oldTasks = $.state.runNow().tasks
+        val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
+
+        $.modState(
+          _.copy(tasks = newTasks), {
+            editHistory.addEdit(
+              removedTasks = tasksToReplace,
+              addedTasks = tasksToAdd,
+              selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
+              selectionAfterEdit = selectionAfterEdit.detach(newTasks),
+              replacementString = replacementString
+            )
+            setSelection(selectionAfterEdit)
+          }
+        )
+      }
     }
   }
 
