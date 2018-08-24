@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
-private[desktop] final class TaskSequence(tasks: Seq[Task]) {
+final class TaskSequence(tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): TaskSequence =
@@ -66,9 +66,9 @@ private[desktop] final class TaskSequence(tasks: Seq[Task]) {
     inner(0, tasks.length - 1)
   }
 }
-private[desktop] object TaskSequence {
+object TaskSequence {
 
-  private[desktop] case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
+  case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
 
     override def compare(that: IndexedCursor): Int = {
       import scala.math.Ordered.orderingToOrdered
@@ -144,7 +144,7 @@ private[desktop] object TaskSequence {
     def toEndOfTask(implicit tasks: TaskSequence): IndexedCursor =
       IndexedCursor(seqIndex, offsetInTask = tasks(seqIndex).contentString.length)
   }
-  private[desktop] object IndexedCursor {
+  object IndexedCursor {
     def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
       val anchor = IndexedCursor.fromNode(selection.anchorNode, selection.anchorOffset)
       val focus = IndexedCursor.fromNode(selection.focusNode, selection.focusOffset)
@@ -173,21 +173,21 @@ private[desktop] object TaskSequence {
     }
   }
 
-  private[desktop] case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
+  case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
     require(start <= end)
 
     def detach(implicit tasks: TaskSequence): DetachedSelection = DetachedSelection(start.detach, end.detach)
     def isCollapsed: Boolean = start == end
   }
-  private[desktop] object IndexedSelection {
+  object IndexedSelection {
     def collapsed(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
   }
 
-  private[desktop] case class DetachedCursor(task: Task, offsetInTask: Int) {
+  case class DetachedCursor(task: Task, offsetInTask: Int) {
     def attachToTasks(implicit tasks: TaskSequence): IndexedCursor =
       IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
   }
-  private[desktop] case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
+  case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isCollapsed: Boolean = start == end
 
     def attachToTasks(implicit tasks: TaskSequence): IndexedSelection =

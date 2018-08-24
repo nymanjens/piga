@@ -121,15 +121,17 @@ private[desktop] object EditHistory {
       }
     }
 
-    private[EditHistory] def mergedWith(other: Edit): Edit =
+    private[EditHistory] def mergedWith(that: Edit): Edit = {
+      val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
       new Edit(
-        removedTasks = this.removedTasks,
-        addedTasks = other.addedTasks,
+        removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
+        addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
         selectionBeforeEdit = this.selectionBeforeEdit,
-        selectionAfterEdit = other.selectionAfterEdit,
-        replacementString = this.replacementString + other.replacementString,
-        timestamp = other.timestamp
+        selectionAfterEdit = that.selectionAfterEdit,
+        replacementString = this.replacementString + that.replacementString,
+        timestamp = that.timestamp
       )
+    }
 
     private[EditHistory] def addsSingleCharOnSameLine: Boolean =
       addedTasks.size == 1 && replacementString.length == 1 && replacementString.charAt(0) != '\n'
