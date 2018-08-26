@@ -3,6 +3,7 @@ package flux.react.app.desktop
 import java.util.Objects
 
 import common.OrderToken
+import models.document.TaskEntity
 import models.modification.EntityModification
 
 final class Task private (val id: Long,
@@ -36,4 +37,11 @@ object Task {
       content = content,
       indentation = indentation
     )
+
+  def fromTaskEntity(taskEntity: TaskEntity): Task =
+    new Task(
+      id = taskEntity.id,
+      orderToken = taskEntity.orderToken,
+      content = TextWithMarkup.fromHtml(taskEntity.contentHtml),
+      indentation = taskEntity.indentation)
 }
