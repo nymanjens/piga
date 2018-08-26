@@ -7,21 +7,23 @@ import models.document.TaskEntity
 import models.modification.EntityModification
 
 final class Task private (val id: Long,
-                          val orderToken: OrderToken,
                           val content: TextWithMarkup,
+                          val orderToken: OrderToken,
                           val indentation: Int)
     extends Ordered[Task] {
-
-  override def compare(that: Task): Int = {
-    this.orderToken compare that.orderToken
-  }
 
   def contentString: String = content.contentString
 
   def equalsIgnoringId(that: Task): Boolean = {
-    this.orderToken == that.orderToken && this.content == that.content && this.indentation == that.indentation
+    this.content == that.content && this.orderToken == that.orderToken && this.indentation == that.indentation
   }
 
+  // **************** Ordered methods **************** //
+  override def compare(that: Task): Int = {
+    this.orderToken compare that.orderToken
+  }
+
+  // **************** Object methods **************** //
   override def toString: String = s"Task($id, $contentString)"
   override def equals(o: scala.Any): Boolean = o match {
     case that: Task => this.id == that.id
@@ -30,18 +32,18 @@ final class Task private (val id: Long,
   override def hashCode(): Int = id.hashCode()
 }
 object Task {
-  def withRandomId(orderToken: OrderToken, content: TextWithMarkup, indentation: Int): Task =
+  def withRandomId(content: TextWithMarkup, orderToken: OrderToken, indentation: Int): Task =
     new Task(
       id = EntityModification.generateRandomId(),
-      orderToken = orderToken,
       content = content,
+      orderToken = orderToken,
       indentation = indentation
     )
 
   def fromTaskEntity(taskEntity: TaskEntity): Task =
     new Task(
       id = taskEntity.id,
-      orderToken = taskEntity.orderToken,
       content = TextWithMarkup.fromHtml(taskEntity.contentHtml),
+      orderToken = taskEntity.orderToken,
       indentation = taskEntity.indentation)
 }

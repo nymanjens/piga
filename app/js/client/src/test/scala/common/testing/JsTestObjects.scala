@@ -30,7 +30,7 @@ object JsTestObjects {
 
   def newTask(contentString: String, orderToken: OrderToken = orderTokenB, indentation: Int = 1): Task =
     Task.withRandomId(
-      orderToken = orderToken,
       content = TextWithMarkup(contentString),
+      orderToken = orderToken,
       indentation = indentation)
 }

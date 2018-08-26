@@ -41,17 +41,17 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       document: Document = new Document(
         Seq(
           Task.withRandomId(
-            OrderToken.middleBetween(None, None),
-            TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
+            content = TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
+            orderToken = OrderToken.middleBetween(None, None),
             indentation = 0
           ),
           Task.withRandomId(
-            OrderToken.middleBetween(None, None),
-            TextWithMarkup("<indented>"),
+            content = TextWithMarkup("<indented>"),
+            orderToken = OrderToken.middleBetween(None, None),
             indentation = 2),
           Task.withRandomId(
-            OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            TextWithMarkup("world", formatting = Formatting(link = Some("http://example.com"))),
+            content = TextWithMarkup("world", formatting = Formatting(link = Some("http://example.com"))),
+            orderToken = OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
             indentation = 0
           )
         )))
@@ -281,12 +281,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
               if (i == index) tags else TextWithMarkup.empty
             Task.withRandomId(
-              orderToken = newOrderToken,
               content = ifIndexOrEmpty(0)(
                 oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
                   oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)),
+              orderToken = newOrderToken,
               indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
             )
           }
@@ -309,8 +309,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       val tasksToAdd = tasksToReplace.map(
         task =>
           Task.withRandomId(
-            orderToken = task.orderToken,
             content = task.content,
+            orderToken = task.orderToken,
             indentation = zeroIfNegative(task.indentation + indentIncrease)))
 
       replaceInStateWithHistory(
@@ -330,13 +330,13 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           for (task <- tasks)
             yield
               Task.withRandomId(
-                orderToken = task.orderToken,
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                     endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
                     formatting => updateFunc(formatting, value)
                   ),
+                orderToken = task.orderToken,
                 indentation = task.indentation
               )
 
@@ -413,7 +413,6 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           for (task <- tasksToReplace)
             yield
               Task.withRandomId(
-                orderToken = task.orderToken,
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
@@ -421,6 +420,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                       if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
                     updateFunc = _.copy(link = newLink)
                   ),
+                orderToken = task.orderToken,
                 indentation = task.indentation
               )
         }

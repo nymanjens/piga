@@ -27,8 +27,8 @@ object TaskEditorTest extends TestSuite {
           new Document(
             Seq(
               Task.withRandomId(
-                orderToken = orderTokenA,
                 content = TextWithMarkup("a") + italic("b"),
+                orderToken = orderTokenA,
                 indentation = 0))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
@@ -143,8 +143,8 @@ object TaskEditorTest extends TestSuite {
             replacement.parts.map(
               p =>
                 Task.withRandomId(
-                  orderToken = orderTokenA,
                   content = p.content,
+                  orderToken = orderTokenA,
                   indentation = 10 + p.indentationRelativeToCurrent))),
           IndexedSelection(
             start = IndexedCursor(0, 0),
@@ -190,7 +190,7 @@ object TaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private def newTask(content: String, indentation: Int = 0): Task =
-    Task.withRandomId(orderToken = orderTokenA, content = TextWithMarkup(content), indentation = indentation)
+    Task.withRandomId(content = TextWithMarkup(content), orderToken = orderTokenA, indentation = indentation)
 
   private class Module extends common.testing.TestModule {
     val taskEditor = new TaskEditor
