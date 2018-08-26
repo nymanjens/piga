@@ -192,13 +192,13 @@ object Document {
   }
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {
-    def attachToTasks(implicit tasks: Document): IndexedCursor =
+    def attachToDocument(implicit tasks: Document): IndexedCursor =
       IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isCollapsed: Boolean = start == end
 
-    def attachToTasks(implicit tasks: Document): IndexedSelection =
-      IndexedSelection(start = start.attachToTasks, end = end.attachToTasks)
+    def attachToDocument(implicit tasks: Document): IndexedSelection =
+      IndexedSelection(start = start.attachToDocument, end = end.attachToDocument)
   }
 }

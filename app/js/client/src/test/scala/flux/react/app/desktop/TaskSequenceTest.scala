@@ -57,7 +57,7 @@ object DocumentTest extends TestSuite {
 
         selection.detach ==>
           DetachedSelection(DetachedCursor(task1, 0), DetachedCursor(task2, 5))
-        selection.detach.attachToTasks ==> selection
+        selection.detach.attachToDocument ==> selection
       }
     }
   }

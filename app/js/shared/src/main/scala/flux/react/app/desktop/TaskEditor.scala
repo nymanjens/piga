@@ -252,7 +252,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         val newTasks = oldTasks.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
         $.modState(
           _.copy(tasks = newTasks),
-          setSelection(edit.selectionAfterEdit.attachToTasks(newTasks))
+          setSelection(edit.selectionAfterEdit.attachToDocument(newTasks))
         )
     }
 
