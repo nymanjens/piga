@@ -1,7 +1,7 @@
 package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
-import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
+import flux.react.app.desktop.Document.{IndexedCursor, IndexedSelection}
 import flux.react.app.desktop.TextWithMarkup.Formatting
 import scala2js.Converters._
 import utest._
@@ -16,7 +16,7 @@ object TaskEditorTest extends TestSuite {
     "convertToClipboardData" - {
       "covers multiple lines" - {
         taskEditor.convertToClipboardData(
-          new TaskSequence(Seq(newTask("abc"), newTask("defg"), newTask("hij"))),
+          new Document(Seq(newTask("abc"), newTask("defg"), newTask("hij"))),
           IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))) ==>
           taskEditor.ClipboardData(
             htmlText = "<ul><li>bc</li><li>defg</li><li>hi</li></ul>",
@@ -24,7 +24,7 @@ object TaskEditorTest extends TestSuite {
       }
       "with formatting" - {
         taskEditor.convertToClipboardData(
-          new TaskSequence(
+          new Document(
             Seq(
               Task.withRandomId(
                 orderToken = orderTokenA,
@@ -36,19 +36,19 @@ object TaskEditorTest extends TestSuite {
       }
       "escapes html" - {
         taskEditor.convertToClipboardData(
-          new TaskSequence(Seq(newTask("a<b>cd"))),
+          new Document(Seq(newTask("a<b>cd"))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a&lt;b&gt;c</li></ul>", plainText = "a<b>c")
       }
       "converts newline to <br>" - {
         taskEditor.convertToClipboardData(
-          new TaskSequence(Seq(newTask("a\nb"))),
+          new Document(Seq(newTask("a\nb"))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a<br />b</li></ul>", plainText = "a\nb")
       }
       "handles indentation" - {
         taskEditor.convertToClipboardData(
-          new TaskSequence(
+          new Document(
             Seq(newTask("a", indentation = 2), newTask("b", indentation = 4), newTask("c", indentation = 1))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
         ) ==>
@@ -139,7 +139,7 @@ object TaskEditorTest extends TestSuite {
       def roundTrip(html: String): Unit = {
         val replacement = taskEditor.clipboardStringToReplacement(html)
         val clipboardData = taskEditor.convertToClipboardData(
-          new TaskSequence(
+          new Document(
             replacement.parts.map(
               p =>
                 Task.withRandomId(

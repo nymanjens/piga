@@ -1,7 +1,7 @@
 package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
-import flux.react.app.desktop.TaskSequence.{
+import flux.react.app.desktop.Document.{
   DetachedCursor,
   DetachedSelection,
   IndexedCursor,

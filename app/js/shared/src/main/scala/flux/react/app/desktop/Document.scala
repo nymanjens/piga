@@ -6,19 +6,19 @@ import org.scalajs.dom
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
-final class TaskSequence(private[TaskSequence] val tasks: Seq[Task]) {
+final class Document(private[Document] val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
-  def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): TaskSequence =
+  def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
     (toReplace.toVector, toAdd.toVector) match {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
         // Optimization
         val taskIndex = indexOf(replace)
-        new TaskSequence(tasks.updated(taskIndex, add))
+        new Document(tasks.updated(taskIndex, add))
 
       case (toReplaceSeq, toAddSeq) =>
         val toReplaceSet = toReplaceSeq.toSet
-        new TaskSequence(tasks.flatMap {
+        new Document(tasks.flatMap {
           case task if task == toReplaceSeq.head  => toAddSeq
           case task if toReplaceSet contains task => Seq()
           case task                               => Seq(task)
@@ -39,11 +39,11 @@ final class TaskSequence(private[TaskSequence] val tasks: Seq[Task]) {
 
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = o match {
-    case that: TaskSequence => this.tasks == that.tasks
+    case that: Document => this.tasks == that.tasks
     case _                  => false
   }
   override def hashCode(): Int = tasks.hashCode()
-  override def toString: String = s"TaskSequence($tasks)"
+  override def toString: String = s"Document($tasks)"
 
   // **************** Private methods **************** //
   def indexOf(task: Task): Int = {
@@ -74,7 +74,7 @@ final class TaskSequence(private[TaskSequence] val tasks: Seq[Task]) {
     inner(0, tasks.length - 1)
   }
 }
-object TaskSequence {
+object Document {
 
   case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
 
@@ -83,7 +83,7 @@ object TaskSequence {
       (this.seqIndex, this.offsetInTask) compare ((that.seqIndex, that.offsetInTask))
     }
 
-    def detach(implicit tasks: TaskSequence): DetachedCursor =
+    def detach(implicit tasks: Document): DetachedCursor =
       DetachedCursor(task = tasks(seqIndex), offsetInTask = offsetInTask)
 
     def proceedNTasks(n: Int): IndexedCursor = n match {
@@ -93,7 +93,7 @@ object TaskSequence {
     def plusOffset(diff: Int): IndexedCursor = IndexedCursor(seqIndex, offsetInTask + diff)
     def minusOffset(diff: Int): IndexedCursor = plusOffset(-diff)
 
-    def plusOffsetInSeq(diff: Int)(implicit tasks: TaskSequence): IndexedCursor = {
+    def plusOffsetInSeq(diff: Int)(implicit tasks: Document): IndexedCursor = {
       @tailrec
       def fixOffset(c: IndexedCursor): IndexedCursor = c.offsetInTask match {
         case offset if offset < 0 =>
@@ -112,11 +112,11 @@ object TaskSequence {
       }
       fixOffset(IndexedCursor(seqIndex, offsetInTask + diff))
     }
-    def minusOffsetInSeq(diff: Int)(implicit tasks: TaskSequence): IndexedCursor = plusOffsetInSeq(-diff)
+    def minusOffsetInSeq(diff: Int)(implicit tasks: Document): IndexedCursor = plusOffsetInSeq(-diff)
 
-    def plusWord(implicit tasks: TaskSequence): IndexedCursor = moveWord(step = 1)
-    def minusWord(implicit tasks: TaskSequence): IndexedCursor = moveWord(step = -1)
-    private def moveWord(step: Int)(implicit tasks: TaskSequence): IndexedCursor = {
+    def plusWord(implicit tasks: Document): IndexedCursor = moveWord(step = 1)
+    def minusWord(implicit tasks: Document): IndexedCursor = moveWord(step = -1)
+    private def moveWord(step: Int)(implicit tasks: Document): IndexedCursor = {
       val result = copy(offsetInTask = {
         val task = tasks(seqIndex).contentString
         @tailrec
@@ -149,7 +149,7 @@ object TaskSequence {
     }
 
     def toStartOfTask: IndexedCursor = IndexedCursor(seqIndex, offsetInTask = 0)
-    def toEndOfTask(implicit tasks: TaskSequence): IndexedCursor =
+    def toEndOfTask(implicit tasks: Document): IndexedCursor =
       IndexedCursor(seqIndex, offsetInTask = tasks(seqIndex).contentString.length)
   }
   object IndexedCursor {
@@ -184,7 +184,7 @@ object TaskSequence {
   case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
     require(start <= end)
 
-    def detach(implicit tasks: TaskSequence): DetachedSelection = DetachedSelection(start.detach, end.detach)
+    def detach(implicit tasks: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
     def isCollapsed: Boolean = start == end
   }
   object IndexedSelection {
@@ -192,13 +192,13 @@ object TaskSequence {
   }
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {
-    def attachToTasks(implicit tasks: TaskSequence): IndexedCursor =
+    def attachToTasks(implicit tasks: Document): IndexedCursor =
       IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isCollapsed: Boolean = start == end
 
-    def attachToTasks(implicit tasks: TaskSequence): IndexedSelection =
+    def attachToTasks(implicit tasks: Document): IndexedSelection =
       IndexedSelection(start = start.attachToTasks, end = end.attachToTasks)
   }
 }

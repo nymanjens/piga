@@ -1,13 +1,13 @@
 package common.testing
 
 import common.OrderToken
-import flux.react.app.desktop.TaskSequence.{
+import flux.react.app.desktop.Document.{
   DetachedCursor,
   DetachedSelection,
   IndexedCursor,
   IndexedSelection
 }
-import flux.react.app.desktop.{Task, TaskSequence, TextWithMarkup}
+import flux.react.app.desktop.{Task, Document, TextWithMarkup}
 
 object JsTestObjects {
 

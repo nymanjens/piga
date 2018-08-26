@@ -7,7 +7,7 @@ import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
 import flux.react.app.desktop.TextWithMarkup.Formatting
-import flux.react.app.desktop.TaskSequence.{IndexedCursor, IndexedSelection}
+import flux.react.app.desktop.Document.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -41,7 +41,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
   private case class State(
-      tasks: TaskSequence = new TaskSequence(
+      tasks: Document = new Document(
         Seq(
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
@@ -318,7 +318,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
-                                 selection: IndexedSelection)(implicit tasks: TaskSequence): Callback = {
+                                 selection: IndexedSelection)(implicit tasks: Document): Callback = {
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
@@ -503,7 +503,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
   @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
   @visibleForTesting private[desktop] def convertToClipboardData(
-      tasks: TaskSequence,
+      tasks: Document,
       selection: IndexedSelection): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
       def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
@@ -657,7 +657,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
 
   private def getAnyLinkInSelection(selection: IndexedSelection)(
-      implicit tasks: TaskSequence): Option[String] = {
+      implicit tasks: Document): Option[String] = {
     if (selection.isCollapsed) {
       val cursor = selection.start
       val expandedSelection = IndexedSelection(

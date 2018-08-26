@@ -3,7 +3,7 @@ package flux.react.app.desktop
 import common.testing.JsTestObjects._
 import common.testing.TestModule
 import flux.react.app.desktop.EditHistory.Edit
-import flux.react.app.desktop.TaskSequence.{
+import flux.react.app.desktop.Document.{
   DetachedCursor,
   DetachedSelection,
   IndexedCursor,
@@ -14,33 +14,33 @@ import utest._
 
 import scala.collection.immutable.Seq
 
-object TaskSequenceTest extends TestSuite {
+object DocumentTest extends TestSuite {
   val taskBB = newTask("Task BB", orderToken = orderTokenB)
   val taskEE = newTask("Task EE", orderToken = orderTokenE)
 
   override def tests = TestSuite {
     "replaced" - {
-      val taskSequence = createTaskSequence(taskA, taskB, taskC)
+      val document = createDocument(taskA, taskB, taskC)
 
-      taskSequence.replaced(toReplace = Seq(taskB), toAdd = Seq(taskBB)) ==>
-        createTaskSequence(taskA, taskBB, taskC)
-      taskSequence.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
-        createTaskSequence(taskA, taskD, taskE)
+      document.replaced(toReplace = Seq(taskB), toAdd = Seq(taskBB)) ==>
+        createDocument(taskA, taskBB, taskC)
+      document.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
+        createDocument(taskA, taskD, taskE)
     }
     "indexOf" - {
-      val taskSequence = createTaskSequence(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
+      val document = createDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
 
-      taskSequence.indexOf(taskA) ==> 0
-      taskSequence.indexOf(taskB) ==> 1
-      taskSequence.indexOf(taskBB) ==> 2
-      taskSequence.indexOf(taskC) ==> 3
-      taskSequence.indexOf(taskD) ==> 4
-      taskSequence.indexOf(taskE) ==> 5
-      taskSequence.indexOf(taskEE) ==> 6
+      document.indexOf(taskA) ==> 0
+      document.indexOf(taskB) ==> 1
+      document.indexOf(taskBB) ==> 2
+      document.indexOf(taskC) ==> 3
+      document.indexOf(taskD) ==> 4
+      document.indexOf(taskE) ==> 5
+      document.indexOf(taskEE) ==> 6
     }
     "IndexedCursor" - {
       "plusWord" - {
-        implicit val taskSequence = createTaskSequence(newTask("the red apple"))
+        implicit val document = createDocument(newTask("the red apple"))
         IndexedCursor(0, 0).plusWord ==> IndexedCursor(0, 3)
         IndexedCursor(0, 3).plusWord ==> IndexedCursor(0, 7)
         IndexedCursor(0, 4).plusWord ==> IndexedCursor(0, 7)
@@ -52,7 +52,7 @@ object TaskSequenceTest extends TestSuite {
       "detach" - {
         val task1 = newTask("the red apple")
         val task2 = newTask("the blue apple")
-        implicit val taskSequence = createTaskSequence(task1, task2)
+        implicit val document = createDocument(task1, task2)
         val selection = IndexedSelection(IndexedCursor(0, 0), IndexedCursor(1, 5))
 
         selection.detach ==>
@@ -62,5 +62,5 @@ object TaskSequenceTest extends TestSuite {
     }
   }
 
-  private def createTaskSequence(tasks: Task*): TaskSequence = new TaskSequence(Seq(tasks: _*))
+  private def createDocument(tasks: Task*): Document = new Document(Seq(tasks: _*))
 }
