@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
-final class Document(private[Document] val tasks: Seq[Task]) {
+final class Document(val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
@@ -25,22 +25,10 @@ final class Document(private[Document] val tasks: Seq[Task]) {
         })
     }
 
-  def option(index: Int): Option[Task] = index match {
-    case i if i < 0             => None
-    case i if i >= tasks.length => None
-    case _                      => Some(tasks(index))
-  }
-
-  // **************** Methods that delegate to Seq[Task] **************** //
-  def zipWithIndex: Seq[(Task, Int)] = tasks.zipWithIndex
-  def length: Int = tasks.length
-
-  def apply(index: Int): Task = tasks(index)
-
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = o match {
     case that: Document => this.tasks == that.tasks
-    case _                  => false
+    case _              => false
   }
   override def hashCode(): Int = tasks.hashCode()
   override def toString: String = s"Document($tasks)"
@@ -83,8 +71,8 @@ object Document {
       (this.seqIndex, this.offsetInTask) compare ((that.seqIndex, that.offsetInTask))
     }
 
-    def detach(implicit tasks: Document): DetachedCursor =
-      DetachedCursor(task = tasks(seqIndex), offsetInTask = offsetInTask)
+    def detach(implicit document: Document): DetachedCursor =
+      DetachedCursor(task = document.tasks(seqIndex), offsetInTask = offsetInTask)
 
     def proceedNTasks(n: Int): IndexedCursor = n match {
       case 0 => this
@@ -93,7 +81,8 @@ object Document {
     def plusOffset(diff: Int): IndexedCursor = IndexedCursor(seqIndex, offsetInTask + diff)
     def minusOffset(diff: Int): IndexedCursor = plusOffset(-diff)
 
-    def plusOffsetInSeq(diff: Int)(implicit tasks: Document): IndexedCursor = {
+    def plusOffsetInSeq(diff: Int)(implicit document: Document): IndexedCursor = {
+      val tasks = document.tasks
       @tailrec
       def fixOffset(c: IndexedCursor): IndexedCursor = c.offsetInTask match {
         case offset if offset < 0 =>
@@ -112,13 +101,13 @@ object Document {
       }
       fixOffset(IndexedCursor(seqIndex, offsetInTask + diff))
     }
-    def minusOffsetInSeq(diff: Int)(implicit tasks: Document): IndexedCursor = plusOffsetInSeq(-diff)
+    def minusOffsetInSeq(diff: Int)(implicit document: Document): IndexedCursor = plusOffsetInSeq(-diff)
 
-    def plusWord(implicit tasks: Document): IndexedCursor = moveWord(step = 1)
-    def minusWord(implicit tasks: Document): IndexedCursor = moveWord(step = -1)
-    private def moveWord(step: Int)(implicit tasks: Document): IndexedCursor = {
+    def plusWord(implicit document: Document): IndexedCursor = moveWord(step = 1)
+    def minusWord(implicit document: Document): IndexedCursor = moveWord(step = -1)
+    private def moveWord(step: Int)(implicit document: Document): IndexedCursor = {
       val result = copy(offsetInTask = {
-        val task = tasks(seqIndex).contentString
+        val task = document.tasks(seqIndex).contentString
         @tailrec
         def move(offsetInTask: Int, seenWord: Boolean = false): Int = {
           val nextOffset = offsetInTask + step
@@ -149,8 +138,8 @@ object Document {
     }
 
     def toStartOfTask: IndexedCursor = IndexedCursor(seqIndex, offsetInTask = 0)
-    def toEndOfTask(implicit tasks: Document): IndexedCursor =
-      IndexedCursor(seqIndex, offsetInTask = tasks(seqIndex).contentString.length)
+    def toEndOfTask(implicit document: Document): IndexedCursor =
+      IndexedCursor(seqIndex, offsetInTask = document.tasks(seqIndex).contentString.length)
   }
   object IndexedCursor {
     def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
@@ -184,7 +173,7 @@ object Document {
   case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
     require(start <= end)
 
-    def detach(implicit tasks: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
+    def detach(implicit document: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
     def isCollapsed: Boolean = start == end
   }
   object IndexedSelection {
@@ -192,13 +181,13 @@ object Document {
   }
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {
-    def attachToDocument(implicit tasks: Document): IndexedCursor =
-      IndexedCursor(seqIndex = tasks.indexOf(task), offsetInTask = offsetInTask)
+    def attachToDocument(implicit document: Document): IndexedCursor =
+      IndexedCursor(seqIndex = document.indexOf(task), offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isCollapsed: Boolean = start == end
 
-    def attachToDocument(implicit tasks: Document): IndexedSelection =
+    def attachToDocument(implicit document: Document): IndexedSelection =
       IndexedSelection(start = start.attachToDocument, end = end.attachToDocument)
   }
 }

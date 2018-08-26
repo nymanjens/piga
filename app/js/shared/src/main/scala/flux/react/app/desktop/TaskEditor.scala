@@ -24,9 +24,6 @@ import scala.scalajs.js
 
 private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock) {
 
-  /** Character that isn't expected to show up in normal text that is used to indicate the separation of two tasks */
-  private val TASK_DELIMITER: Char = 23 // (End of Transmission Block)
-
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
     .initialState(State())
@@ -41,7 +38,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   // **************** Private inner types ****************//
   private case class Props(router: RouterContext)
   private case class State(
-      tasks: Document = new Document(
+      document: Document = new Document(
         Seq(
           Task.withRandomId(
             OrderToken.middleBetween(None, None),
@@ -77,7 +74,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
           ^.onInput ==> handleEvent("onChange"),
           ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
-            (for ((task, i) <- state.tasks.zipWithIndex)
+            (for ((task, i) <- state.document.tasks.zipWithIndex)
               yield
                 <.li(
                   ^.key := s"li-$i",
@@ -93,7 +90,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
         <.br(),
         <.br(),
         <.br(),
-        (for ((task, i) <- state.tasks.zipWithIndex)
+        (for ((task, i) <- state.document.tasks.zipWithIndex)
           yield <.div(^.key := s"task-$i", "- [", task.indentation, "]", task.content.toVdomNode)).toVdomArray
       )
     }
@@ -121,10 +118,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      val tasks = $.state.runNow().tasks
+      val document = $.state.runNow().document
 
       if (selection.start != selection.end) {
-        val ClipboardData(htmlText, plainText) = convertToClipboardData(tasks, selection)
+        val ClipboardData(htmlText, plainText) = convertToClipboardData(document, selection)
 
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/html", htmlText)
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/plain", plainText)
@@ -142,11 +139,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
-      implicit val tasks = $.state.runNow().tasks
+      implicit val document = $.state.runNow().document
       val shiftPressed = event.shiftKey
       val altPressed = event.altKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
-      val formatting = tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+      val formatting = document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
 
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
@@ -248,30 +245,36 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit]): Callback = maybeEdit match {
       case None => Callback.empty
       case Some(edit) =>
-        val oldTasks = $.state.runNow().tasks
-        val newTasks = oldTasks.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
+        val oldDocument = $.state.runNow().document
+        val newDocument = oldDocument.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
         $.modState(
-          _.copy(tasks = newTasks),
-          setSelection(edit.selectionAfterEdit.attachToDocument(newTasks))
+          _.copy(document = newDocument),
+          setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
         )
     }
 
     private def replaceSelectionInState(replacement: Replacement,
                                         selectionBeforeEdit: IndexedSelection): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
-      val oldTasks = $.state.runNow().tasks
+      val oldDocument = $.state.runNow().document
+
+      def tasksOption(document: Document, index: Int): Option[Task] = index match {
+        case i if i < 0                      => None
+        case i if i >= document.tasks.length => None
+        case _                               => Some(document.tasks(index))
+      }
 
       val newOrderTokens = {
-        val previousTask = oldTasks.option(start.seqIndex - 1)
-        val nextTask = oldTasks.option(end.seqIndex + 1)
+        val previousTask = tasksOption(oldDocument, start.seqIndex - 1)
+        val nextTask = tasksOption(oldDocument, end.seqIndex + 1)
         OrderToken.evenlyDistributedValuesBetween(
           numValues = replacement.parts.length,
           lower = previousTask.map(_.orderToken),
           higher = nextTask.map(_.orderToken)
         )
       }
-      val baseIndentation = oldTasks(start.seqIndex).indentation
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+      val baseIndentation = oldDocument.tasks(start.seqIndex).indentation
+      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
@@ -279,10 +282,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
               if (i == index) tags else TextWithMarkup.empty
             Task.withRandomId(
               orderToken = newOrderToken,
-              content = ifIndexOrEmpty(0)(oldTasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
+              content = ifIndexOrEmpty(0)(
+                oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
-                  oldTasks(end.seqIndex).content.sub(end.offsetInTask)),
+                  oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)),
               indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
             )
           }
@@ -298,10 +302,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def indentSelectionInState(indentIncrease: Int, selection: IndexedSelection): Callback = {
-      val oldTasks = $.state.runNow().tasks
+      val oldDocument = $.state.runNow().document
 
       val IndexedSelection(start, end) = selection
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd = tasksToReplace.map(
         task =>
           Task.withRandomId(
@@ -318,7 +322,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
-                                 selection: IndexedSelection)(implicit tasks: Document): Callback = {
+                                 selection: IndexedSelection)(implicit document: Document): Callback = {
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
@@ -336,8 +340,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
                 indentation = task.indentation
               )
 
-        val oldTasks = $.state.runNow().tasks
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+        val oldDocument = $.state.runNow().document
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
         val tasksToAdd = {
           val candidate = setFormatting(tasksToReplace, value = true)
           if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
@@ -364,11 +368,11 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     private def editLink(originalSelection: IndexedSelection): Callback = {
-      implicit val oldTasks = $.state.runNow().tasks
+      implicit val oldDocument = $.state.runNow().document
 
       def expandSelection(selection: IndexedSelection): IndexedSelection = {
         def expand(link: String, cursor: IndexedCursor, direction: Int): IndexedCursor = {
-          val content = oldTasks(cursor.seqIndex).content
+          val content = oldDocument.tasks(cursor.seqIndex).content
           cursor.offsetInTask match {
             case 0 if direction < 0                                                => cursor
             case offset if offset == content.contentString.length && direction > 0 => cursor
@@ -404,7 +408,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
         val IndexedSelection(start, end) = selection
 
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldTasks(i)
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
         val tasksToAdd = {
           for (task <- tasksToReplace)
             yield
@@ -463,16 +467,16 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       if (isNoOp) {
         Callback.empty
       } else {
-        val oldTasks = $.state.runNow().tasks
-        val newTasks = oldTasks.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
+        val oldDocument = $.state.runNow().document
+        val newDocument = oldDocument.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
         $.modState(
-          _.copy(tasks = newTasks), {
+          _.copy(document = newDocument), {
             editHistory.addEdit(
               removedTasks = tasksToReplace,
               addedTasks = tasksToAdd,
-              selectionBeforeEdit = selectionBeforeEdit.detach(oldTasks),
-              selectionAfterEdit = selectionAfterEdit.detach(newTasks),
+              selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
+              selectionAfterEdit = selectionAfterEdit.detach(newDocument),
               replacementString = replacementString
             )
             setSelection(selectionAfterEdit)
@@ -503,7 +507,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
   @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
   @visibleForTesting private[desktop] def convertToClipboardData(
-      tasks: Document,
+      document: Document,
       selection: IndexedSelection): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
       def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
@@ -511,7 +515,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     }
 
     val IndexedSelection(start, end) = selection
-    val subtasks = tasks.zipWithIndex
+    val subtasks = document.tasks.zipWithIndex
       .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
       .map {
         case (task, index) =>
@@ -657,7 +661,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
 
   private def getAnyLinkInSelection(selection: IndexedSelection)(
-      implicit tasks: Document): Option[String] = {
+      implicit document: Document): Option[String] = {
     if (selection.isCollapsed) {
       val cursor = selection.start
       val expandedSelection = IndexedSelection(
@@ -671,9 +675,12 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     } else {
       val IndexedSelection(start, end) = selection
       val texts = for (i <- start.seqIndex to end.seqIndex) yield {
-        tasks(i).content.sub(
-          beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
-          endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
+        document
+          .tasks(i)
+          .content
+          .sub(
+            beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
+            endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
       }
       texts.flatMap(_.anyLink).headOption
     }
