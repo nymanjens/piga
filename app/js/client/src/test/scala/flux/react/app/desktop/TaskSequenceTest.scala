@@ -3,7 +3,12 @@ package flux.react.app.desktop
 import common.testing.JsTestObjects._
 import common.testing.TestModule
 import flux.react.app.desktop.EditHistory.Edit
-import flux.react.app.desktop.TaskSequence.IndexedCursor
+import flux.react.app.desktop.TaskSequence.{
+  DetachedCursor,
+  DetachedSelection,
+  IndexedCursor,
+  IndexedSelection
+}
 import scala2js.Converters._
 import utest._
 
@@ -41,6 +46,18 @@ object TaskSequenceTest extends TestSuite {
         IndexedCursor(0, 4).plusWord ==> IndexedCursor(0, 7)
         IndexedCursor(0, 7).plusWord ==> IndexedCursor(0, 13)
         IndexedCursor(0, 13).plusWord ==> IndexedCursor(0, 13)
+      }
+    }
+    "IndexedSelection" - {
+      "detach" - {
+        val task1 = newTask("the red apple")
+        val task2 = newTask("the blue apple")
+        implicit val taskSequence = createTaskSequence(task1, task2)
+        val selection = IndexedSelection(IndexedCursor(0, 0), IndexedCursor(1, 5))
+
+        selection.detach ==>
+          DetachedSelection(DetachedCursor(task1, 0), DetachedCursor(task2, 5))
+        selection.detach.attachToTasks ==> selection
       }
     }
   }
