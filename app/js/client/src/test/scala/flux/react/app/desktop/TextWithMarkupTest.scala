@@ -46,6 +46,10 @@ object TextWithMarkupTest extends TestSuite {
       textWithMarkup.formattingAtCursor(4) ==> Formatting(italic = true)
       textWithMarkup.formattingAtCursor(5) ==> Formatting(bold = true)
     }
+    "anyLink" - {
+      TextWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))).anyLink ==>
+        Some("example.com")
+    }
     "canonicalized equality check" - {
       TextWithMarkup("a") + TextWithMarkup("b") ==> TextWithMarkup("ab")
       italic("a") + italic("b") ==> italic("ab")

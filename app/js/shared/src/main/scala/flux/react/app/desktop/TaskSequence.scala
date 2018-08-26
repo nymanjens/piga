@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
-final class TaskSequence(tasks: Seq[Task]) {
+final class TaskSequence(private[TaskSequence] val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): TaskSequence =
@@ -36,6 +36,14 @@ final class TaskSequence(tasks: Seq[Task]) {
   def length: Int = tasks.length
 
   def apply(index: Int): Task = tasks(index)
+
+  // **************** Object methods **************** //
+  override def equals(o: scala.Any): Boolean = o match {
+    case that: TaskSequence => this.tasks == that.tasks
+    case _                  => false
+  }
+  override def hashCode(): Int = tasks.hashCode()
+  override def toString: String = s"TaskSequence($tasks)"
 
   // **************** Private methods **************** //
   def indexOf(task: Task): Int = {

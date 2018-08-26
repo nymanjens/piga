@@ -82,6 +82,4 @@ object EditHistoryTest extends TestSuite {
     edit.get.removedTasks ==> Seq(removedTask)
     edit.get.addedTasks ==> Seq(addedTask)
   }
-  private def newTask(contentString: String): Task =
-    Task.withRandomId(orderToken = orderTokenA, content = TextWithMarkup(contentString), indentation = 1)
 }
