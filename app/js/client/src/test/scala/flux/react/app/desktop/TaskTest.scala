@@ -1,12 +1,7 @@
 package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
-import flux.react.app.desktop.Document.{
-  DetachedCursor,
-  DetachedSelection,
-  IndexedCursor,
-  IndexedSelection
-}
+import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
 import models.document.TaskEntity
 import scala2js.Converters._
 import utest._
@@ -19,7 +14,12 @@ object TaskTest extends TestSuite {
     "equals and hashCode" - {
       val task1A = Task.withRandomId(content = TextWithMarkup("a"), orderToken = orderTokenA, indentation = 1)
       val task1B = Task.fromTaskEntity(
-        TaskEntity(contentHtml = "a", orderToken = orderTokenA, indentation = 1, idOption = Some(task1A.id)))
+        TaskEntity(
+          documentId = 123,
+          contentHtml = "a",
+          orderToken = orderTokenA,
+          indentation = 1,
+          idOption = Some(task1A.id)))
       val task2 = Task.withRandomId(content = TextWithMarkup("a"), orderToken = orderTokenA, indentation = 1)
 
       task1A == task1B ==> true
