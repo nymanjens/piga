@@ -7,7 +7,7 @@ case class TaskEntity(documentId: Long,
                       contentHtml: String,
                       orderToken: OrderToken,
                       indentation: Int,
-                      idOption: Option[Long])
+                      idOption: Option[Long] = None)
     extends Entity {
 
   override def withId(id: Long) = copy(idOption = Some(id))

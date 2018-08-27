@@ -4,11 +4,14 @@ import java.nio.ByteBuffer
 
 import api.Picklers._
 import boopickle.Default.{Pickle, Unpickle}
+import common.OrderToken
 import common.time.LocalDateTime
 import models.Entity
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification.{EntityModification, EntityModificationEntity}
 import models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
 import models.slick.SlickUtils.localDateTimeToSqlDateMapper
+import models.slick.SlickUtils.orderTokenToBytesMapper
 import models.user.User
 
 import scala.collection.immutable.Seq
@@ -52,6 +55,37 @@ object SlickEntityTableDef {
 
       override def * =
         (loginName, passwordHash, name, isAdmin, id.?) <> (User.tupled, User.unapply)
+    }
+  }
+
+  implicit object DocumentEntityDef extends SlickEntityTableDef[DocumentEntity] {
+
+    override val tableName: String = "DOCUMENT_ENTITIES"
+    override def table(tag: SlickTag): Table = new Table(tag)
+
+    /* override */
+    final class Table(tag: SlickTag) extends EntityTable[DocumentEntity](tag, tableName) {
+      def name = column[String]("name")
+
+      override def * =
+        (name, id.?) <> (DocumentEntity.tupled, DocumentEntity.unapply)
+    }
+  }
+
+  implicit object TaskEntityDef extends SlickEntityTableDef[TaskEntity] {
+
+    override val tableName: String = "TASK_ENTITIES"
+    override def table(tag: SlickTag): Table = new Table(tag)
+
+    /* override */
+    final class Table(tag: SlickTag) extends EntityTable[TaskEntity](tag, tableName) {
+      def documentId = column[Long]("documentId")
+      def contentHtml = column[String]("contentHtml")
+      def orderToken = column[OrderToken]("orderToken")
+      def indentation = column[Int]("indentation")
+
+      override def * =
+        (documentId, contentHtml, orderToken, indentation, id.?) <> (TaskEntity.tupled, TaskEntity.unapply)
     }
   }
 

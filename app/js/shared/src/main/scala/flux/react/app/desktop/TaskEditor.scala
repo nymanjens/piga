@@ -39,7 +39,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class Props(router: RouterContext)
   private case class State(
       document: Document = new Document(
-        Seq(
+        id = 1234,
+        name = "Test document",
+        tasks = Seq(
           Task.withRandomId(
             content = TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
             orderToken = OrderToken.middleBetween(None, None),
@@ -54,7 +56,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
             orderToken = OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
             indentation = 0
           )
-        )))
+        )
+      ))
 
   private class Backend($ : BackendScope[Props, State]) {
 

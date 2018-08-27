@@ -1,12 +1,19 @@
 package flux.react.app.desktop
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.async.Async.{async, await}
 import common.DomNodeUtils.nodeIsLi
+import models.access.DbQuery.Sorting
+import models.access.{JsEntityAccess, ModelField}
+import models.access.DbQueryImplicits._
+import models.document.{DocumentEntity, TaskEntity}
 import org.scalajs.dom
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
+import scala.concurrent.Future
 
-final class Document(val tasks: Seq[Task]) {
+final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
@@ -14,26 +21,17 @@ final class Document(val tasks: Seq[Task]) {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
         // Optimization
         val taskIndex = indexOf(replace)
-        new Document(tasks.updated(taskIndex, add))
+        new Document(id, name, tasks.updated(taskIndex, add))
 
       case (toReplaceSeq, toAddSeq) =>
         val toReplaceSet = toReplaceSeq.toSet
-        new Document(tasks.flatMap {
+        new Document(id, name, tasks.flatMap {
           case task if task == toReplaceSeq.head  => toAddSeq
           case task if toReplaceSet contains task => Seq()
           case task                               => Seq(task)
         })
     }
 
-  // **************** Object methods **************** //
-  override def equals(o: scala.Any): Boolean = o match {
-    case that: Document => this.tasks == that.tasks
-    case _              => false
-  }
-  override def hashCode(): Int = tasks.hashCode()
-  override def toString: String = s"Document($tasks)"
-
-  // **************** Private methods **************** //
   def indexOf(task: Task): Int = {
     def inner(lowerIndex: Int, upperIndex: Int): Int = {
       require(lowerIndex <= upperIndex, s"$task is not in $tasks")
@@ -61,8 +59,25 @@ final class Document(val tasks: Seq[Task]) {
 
     inner(0, tasks.length - 1)
   }
+
+  def toDocumentEntity: DocumentEntity = DocumentEntity(name, idOption = Some(id))
+
+  // **************** Object methods **************** //
+  override def equals(o: scala.Any): Boolean = o match {
+    case that: Document => this.tasks == that.tasks
+    case _              => false
+  }
+  override def hashCode(): Int = tasks.hashCode()
+  override def toString: String = s"Document($tasks)"
 }
 object Document {
+
+  def fromDocumentEntity(entity: DocumentEntity)(implicit entityAccess: JsEntityAccess): Future[Document] =
+    async {
+      val tasks = await(
+        entityAccess.newQuery[TaskEntity]().filter(ModelField.TaskEntity.documentId === entity.id).data())
+      new Document(id = entity.id, name = entity.name, tasks = tasks.map(Task.fromTaskEntity).sorted)
+    }
 
   case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
 

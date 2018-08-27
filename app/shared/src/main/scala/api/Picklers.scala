@@ -4,6 +4,7 @@ import java.time.{LocalDate, LocalTime}
 
 import api.PicklableDbQuery.FieldWithValue
 import boopickle.Default._
+import common.OrderToken
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
@@ -64,13 +65,17 @@ object Picklers {
   implicit object EntityTypePickler extends Pickler[EntityType.any] {
     override def pickle(entityType: EntityType.any)(implicit state: PickleState): Unit = logExceptions {
       val intValue: Int = entityType match {
-        case UserType => 1
+        case UserType           => 1
+        case DocumentEntityType => 2
+        case TaskEntityType     => 3
       }
       state.pickle(intValue)
     }
     override def unpickle(implicit state: UnpickleState): EntityType.any = logExceptions {
       state.unpickle[Int] match {
         case 1 => UserType
+        case 2 => DocumentEntityType
+        case 3 => TaskEntityType
       }
     }
   }
@@ -144,11 +149,13 @@ object Picklers {
         def fromType[V: Pickler](fieldType: ModelField.FieldType[V]): Pickler[V] = implicitly
         field.fieldType match {
           case ModelField.FieldType.BooleanType       => fromType(ModelField.FieldType.BooleanType)
+          case ModelField.FieldType.IntType           => fromType(ModelField.FieldType.IntType)
           case ModelField.FieldType.LongType          => fromType(ModelField.FieldType.LongType)
           case ModelField.FieldType.DoubleType        => fromType(ModelField.FieldType.DoubleType)
           case ModelField.FieldType.StringType        => fromType(ModelField.FieldType.StringType)
           case ModelField.FieldType.LocalDateTimeType => fromType(ModelField.FieldType.LocalDateTimeType)
           case ModelField.FieldType.StringSeqType     => fromType(ModelField.FieldType.StringSeqType)
+          case ModelField.FieldType.OrderTokenType    => fromType(ModelField.FieldType.OrderTokenType)
         }
       }
     }

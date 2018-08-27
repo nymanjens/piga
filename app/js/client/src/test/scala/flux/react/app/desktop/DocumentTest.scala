@@ -1,14 +1,8 @@
 package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
-import common.testing.TestModule
-import flux.react.app.desktop.EditHistory.Edit
-import flux.react.app.desktop.Document.{
-  DetachedCursor,
-  DetachedSelection,
-  IndexedCursor,
-  IndexedSelection
-}
+import common.testing.TestObjects._
+import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
 import scala2js.Converters._
 import utest._
 
@@ -20,15 +14,15 @@ object DocumentTest extends TestSuite {
 
   override def tests = TestSuite {
     "replaced" - {
-      val document = createDocument(taskA, taskB, taskC)
+      val document = newDocument(taskA, taskB, taskC)
 
       document.replaced(toReplace = Seq(taskB), toAdd = Seq(taskBB)) ==>
-        createDocument(taskA, taskBB, taskC)
+        newDocument(taskA, taskBB, taskC)
       document.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
-        createDocument(taskA, taskD, taskE)
+        newDocument(taskA, taskD, taskE)
     }
     "indexOf" - {
-      val document = createDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
+      val document = newDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
 
       document.indexOf(taskA) ==> 0
       document.indexOf(taskB) ==> 1
@@ -40,7 +34,7 @@ object DocumentTest extends TestSuite {
     }
     "IndexedCursor" - {
       "plusWord" - {
-        implicit val document = createDocument(newTask("the red apple"))
+        implicit val document = newDocument(newTask("the red apple"))
         IndexedCursor(0, 0).plusWord ==> IndexedCursor(0, 3)
         IndexedCursor(0, 3).plusWord ==> IndexedCursor(0, 7)
         IndexedCursor(0, 4).plusWord ==> IndexedCursor(0, 7)
@@ -52,7 +46,7 @@ object DocumentTest extends TestSuite {
       "detach" - {
         val task1 = newTask("the red apple")
         val task2 = newTask("the blue apple")
-        implicit val document = createDocument(task1, task2)
+        implicit val document = newDocument(task1, task2)
         val selection = IndexedSelection(IndexedCursor(0, 0), IndexedCursor(1, 5))
 
         selection.detach ==>
@@ -61,6 +55,4 @@ object DocumentTest extends TestSuite {
       }
     }
   }
-
-  private def createDocument(tasks: Task*): Document = new Document(Seq(tasks: _*))
 }

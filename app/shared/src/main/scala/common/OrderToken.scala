@@ -6,8 +6,7 @@ import scala.annotation.tailrec
 import scala.collection.{SeqView, mutable}
 import scala.collection.immutable.Seq
 
-case class OrderToken @visibleForTesting private[common] (private val parts: List[Int])
-    extends Ordered[OrderToken] {
+case class OrderToken(parts: List[Int]) extends Ordered[OrderToken] {
   require(parts.nonEmpty)
   require(
     parts.tail.isEmpty || parts.last != OrderToken.middleValue,

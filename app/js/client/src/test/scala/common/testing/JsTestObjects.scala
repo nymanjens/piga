@@ -1,21 +1,12 @@
 package common.testing
 
+import scala.collection.immutable.Seq
 import common.OrderToken
-import flux.react.app.desktop.Document.{
-  DetachedCursor,
-  DetachedSelection,
-  IndexedCursor,
-  IndexedSelection
-}
+import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
 import flux.react.app.desktop.{Task, Document, TextWithMarkup}
+import common.testing.TestObjects._
 
 object JsTestObjects {
-
-  val orderTokenA = OrderToken.middleBetween(None, Some(OrderToken.middle))
-  val orderTokenB = OrderToken.middleBetween(Some(OrderToken.middle), None)
-  val orderTokenC = OrderToken.middleBetween(Some(orderTokenB), None)
-  val orderTokenD = OrderToken.middleBetween(Some(orderTokenC), None)
-  val orderTokenE = OrderToken.middleBetween(Some(orderTokenD), None)
 
   val taskA = newTask("Task A", orderToken = orderTokenA, indentation = 2)
   val taskB = newTask("Task B", orderToken = orderTokenB, indentation = 3)
@@ -33,4 +24,7 @@ object JsTestObjects {
       content = TextWithMarkup(contentString),
       orderToken = orderToken,
       indentation = indentation)
+
+  def newDocument(tasks: Task*): Document =
+    new Document(id = 12873, name = "test document", tasks = Seq(tasks: _*))
 }

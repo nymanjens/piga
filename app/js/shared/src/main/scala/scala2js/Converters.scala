@@ -3,9 +3,11 @@ package scala2js
 import java.time.{LocalDate, LocalTime}
 
 import common.GuavaReplacement.ImmutableBiMap
+import common.OrderToken
 import common.time.LocalDateTime
 import models._
 import models.access.ModelField
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification._
 import models.user.User
 
@@ -21,6 +23,8 @@ object Converters {
     val entityType: EntityType[E] = implicitly[EntityType[E]]
     val converter: MapConverter[_ <: Entity] = entityType match {
       case EntityType.UserType => UserConverter
+      case EntityType.DocumentEntityType => DocumentEntityConverter
+      case EntityType.TaskEntityType => TaskEntityConverter
     }
     converter.asInstanceOf[MapConverter[E]]
   }
@@ -29,11 +33,13 @@ object Converters {
     def fromType[V2: Converter](fieldType: ModelField.FieldType[V2]): Converter[V2] = implicitly
     val result = modelField.fieldType match {
       case ModelField.FieldType.BooleanType       => fromType(ModelField.FieldType.BooleanType)
+      case ModelField.FieldType.IntType           => fromType(ModelField.FieldType.IntType)
       case ModelField.FieldType.LongType          => fromType(ModelField.FieldType.LongType)
       case ModelField.FieldType.DoubleType        => fromType(ModelField.FieldType.DoubleType)
       case ModelField.FieldType.StringType        => fromType(ModelField.FieldType.StringType)
       case ModelField.FieldType.LocalDateTimeType => fromType(ModelField.FieldType.LocalDateTimeType)
       case ModelField.FieldType.StringSeqType     => fromType(ModelField.FieldType.StringSeqType)
+      case ModelField.FieldType.OrderTokenType    => fromType(ModelField.FieldType.OrderTokenType)
     }
     result.asInstanceOf[Converter[V]]
   }
@@ -120,7 +126,17 @@ object Converters {
     }
   }
 
-  implicit val EntityTypeConverter: Converter[EntityType.any] = enumConverter(EntityType.UserType)
+  implicit object OrderTokenConverter extends Converter[OrderToken] {
+    override def toJs(token: OrderToken) = {
+      token.parts.toJSArray
+    }
+    override def toScala(value: js.Any) = {
+      OrderToken(value.asInstanceOf[js.Array[Int]].toList)
+    }
+  }
+
+  implicit val EntityTypeConverter: Converter[EntityType.any] =
+    enumConverter(EntityType.UserType, EntityType.DocumentEntityType, EntityType.TaskEntityType)
 
   implicit object EntityModificationConverter extends Converter[EntityModification] {
     private val addNumber: Int = 1
@@ -221,6 +237,39 @@ object Converters {
         passwordHash = getRequired(ModelField.User.passwordHash),
         name = getRequired(ModelField.User.name),
         isAdmin = getRequired(ModelField.User.isAdmin)
+      )
+    }
+  }
+
+  implicit object DocumentEntityConverter extends EntityConverter[DocumentEntity] {
+    override def allFieldsWithoutId = Seq(ModelField.DocumentEntity.name)
+
+    override def toScalaWithoutId(dict: js.Dictionary[js.Any]) = {
+      def getRequired[T](field: ModelField[T, DocumentEntity]) =
+        getRequiredValueFromDict(dict)(field)
+
+      DocumentEntity(name = getRequired(ModelField.DocumentEntity.name))
+    }
+  }
+
+  implicit object TaskEntityConverter extends EntityConverter[TaskEntity] {
+    override def allFieldsWithoutId =
+      Seq(
+        ModelField.TaskEntity.documentId,
+        ModelField.TaskEntity.contentHtml,
+        ModelField.TaskEntity.orderToken,
+        ModelField.TaskEntity.indentation
+      )
+
+    override def toScalaWithoutId(dict: js.Dictionary[js.Any]) = {
+      def getRequired[T](field: ModelField[T, TaskEntity]) =
+        getRequiredValueFromDict(dict)(field)
+
+      TaskEntity(
+        documentId = getRequired(ModelField.TaskEntity.documentId),
+        contentHtml = getRequired(ModelField.TaskEntity.contentHtml),
+        orderToken = getRequired(ModelField.TaskEntity.orderToken),
+        indentation = getRequired(ModelField.TaskEntity.indentation)
       )
     }
   }

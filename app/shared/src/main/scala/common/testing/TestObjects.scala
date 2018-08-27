@@ -3,11 +3,19 @@ package common.testing
 import java.time.Month._
 
 import api.ScalaJsApi.{GetInitialDataResponse, UpdateToken, UserPrototype}
+import common.OrderToken
 import common.time.{LocalDateTime, LocalDateTimes}
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification
 import models.user.User
 
 object TestObjects {
+
+  val orderTokenA: OrderToken = OrderToken.middleBetween(None, Some(OrderToken.middle))
+  val orderTokenB: OrderToken = OrderToken.middleBetween(Some(OrderToken.middle), None)
+  val orderTokenC: OrderToken = OrderToken.middleBetween(Some(orderTokenB), None)
+  val orderTokenD: OrderToken = OrderToken.middleBetween(Some(orderTokenC), None)
+  val orderTokenE: OrderToken = OrderToken.middleBetween(Some(orderTokenD), None)
 
   def testUserA: User = User(
     loginName = "testUserA",
@@ -36,6 +44,15 @@ object TestObjects {
     plainTextPassword = "dlkfjasfd",
     name = testUser.name,
     isAdmin = testUser.isAdmin)
+
+  val testDocumentEntity: DocumentEntity =
+    DocumentEntity(name = "Some test document", idOption = Some(129830))
+  val testTaskEntity: TaskEntity = TaskEntity(
+    documentId = testDocumentEntity.id,
+    contentHtml = "abc<b>def</b>",
+    orderToken = orderTokenA,
+    indentation = 12,
+    idOption = Some(821379))
 
   val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
   val testUpdateToken: UpdateToken = s"123782:12378"

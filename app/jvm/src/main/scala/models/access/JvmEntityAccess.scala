@@ -8,7 +8,8 @@ import com.google.inject._
 import common.publisher.TriggerablePublisher
 import common.time.Clock
 import models.Entity
-import models.modification.EntityType.UserType
+import models.document.{DocumentEntity, TaskEntity}
+import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
 import models.modification.{EntityModification, EntityModificationEntity, EntityType}
 import models.slick.SlickUtils.dbApi._
 import models.slick.SlickUtils.dbRun
@@ -124,7 +125,9 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
 
   private def getEntityTableDef(entityType: EntityType.any): SlickEntityTableDef[entityType.get] = {
     val tableDef = entityType match {
-      case UserType => implicitly[SlickEntityTableDef[User]]
+      case UserType           => implicitly[SlickEntityTableDef[User]]
+      case DocumentEntityType => implicitly[SlickEntityTableDef[DocumentEntity]]
+      case TaskEntityType     => implicitly[SlickEntityTableDef[TaskEntity]]
     }
     tableDef.asInstanceOf[SlickEntityTableDef[entityType.get]]
   }

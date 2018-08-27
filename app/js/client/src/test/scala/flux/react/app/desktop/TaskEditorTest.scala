@@ -1,5 +1,6 @@
 package flux.react.app.desktop
 
+import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import flux.react.app.desktop.Document.{IndexedCursor, IndexedSelection}
 import flux.react.app.desktop.TextWithMarkup.Formatting
@@ -16,7 +17,7 @@ object TaskEditorTest extends TestSuite {
     "convertToClipboardData" - {
       "covers multiple lines" - {
         taskEditor.convertToClipboardData(
-          new Document(Seq(newTask("abc"), newTask("defg"), newTask("hij"))),
+          newDocument(newTask("abc"), newTask("defg"), newTask("hij")),
           IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))) ==>
           taskEditor.ClipboardData(
             htmlText = "<ul><li>bc</li><li>defg</li><li>hi</li></ul>",
@@ -24,32 +25,33 @@ object TaskEditorTest extends TestSuite {
       }
       "with formatting" - {
         taskEditor.convertToClipboardData(
-          new Document(
-            Seq(
-              Task.withRandomId(
-                content = TextWithMarkup("a") + italic("b"),
-                orderToken = orderTokenA,
-                indentation = 0))),
+          newDocument(
+            Task.withRandomId(
+              content = TextWithMarkup("a") + italic("b"),
+              orderToken = orderTokenA,
+              indentation = 0)),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
       }
       "escapes html" - {
         taskEditor.convertToClipboardData(
-          new Document(Seq(newTask("a<b>cd"))),
+          newDocument(newTask("a<b>cd")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a&lt;b&gt;c</li></ul>", plainText = "a<b>c")
       }
       "converts newline to <br>" - {
         taskEditor.convertToClipboardData(
-          new Document(Seq(newTask("a\nb"))),
+          newDocument(newTask("a\nb")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a<br />b</li></ul>", plainText = "a\nb")
       }
       "handles indentation" - {
         taskEditor.convertToClipboardData(
-          new Document(
-            Seq(newTask("a", indentation = 2), newTask("b", indentation = 4), newTask("c", indentation = 1))),
+          newDocument(
+            newTask("a", indentation = 2),
+            newTask("b", indentation = 4),
+            newTask("c", indentation = 1)),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
         ) ==>
           taskEditor.ClipboardData(
@@ -139,13 +141,13 @@ object TaskEditorTest extends TestSuite {
       def roundTrip(html: String): Unit = {
         val replacement = taskEditor.clipboardStringToReplacement(html)
         val clipboardData = taskEditor.convertToClipboardData(
-          new Document(
+          newDocument(
             replacement.parts.map(
               p =>
                 Task.withRandomId(
                   content = p.content,
                   orderToken = orderTokenA,
-                  indentation = 10 + p.indentationRelativeToCurrent))),
+                  indentation = 10 + p.indentationRelativeToCurrent)): _*),
           IndexedSelection(
             start = IndexedCursor(0, 0),
             end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.contentString.length))

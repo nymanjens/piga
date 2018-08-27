@@ -41,11 +41,16 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess) e
     }
 
     private def getModificationsSize(modifications: Seq[EntityModification]): Int = {
-      // TODO
       var editCount = 0
 
       for (modification <- modifications) modification.entityType match {
-        case EntityType.UserType => editCount += 1
+        case EntityType.UserType           => editCount += 1
+        case EntityType.DocumentEntityType => editCount += 1
+        case EntityType.TaskEntityType     =>
+          // Heuristic
+          if (modification.isInstanceOf[EntityModification.Add[_]]) {
+            editCount += 1
+          }
       }
 
       editCount

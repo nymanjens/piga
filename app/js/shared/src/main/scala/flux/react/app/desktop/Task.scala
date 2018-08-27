@@ -18,6 +18,14 @@ final class Task private (val id: Long,
     this.content == that.content && this.orderToken == that.orderToken && this.indentation == that.indentation
   }
 
+  def toTaskEntity(implicit document: Document): TaskEntity =
+    TaskEntity(
+      documentId = document.id,
+      contentHtml = content.toHtml,
+      orderToken = orderToken,
+      indentation = indentation,
+      idOption = Some(id))
+
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken

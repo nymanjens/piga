@@ -7,7 +7,8 @@ import models.Entity
 import models.access.LocalDatabaseImpl.{ModificationWithId, Singleton}
 import models.access.webworker.LocalDatabaseWebWorkerApi
 import models.access.webworker.LocalDatabaseWebWorkerApi.{LokiQuery, WriteOperation}
-import models.modification.EntityType.UserType
+import models.document.DocumentEntity
+import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
 import models.modification.{EntityModification, EntityType}
 import org.scalajs.dom.console
 
@@ -193,7 +194,9 @@ private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorker
     EntityType.values.map(collectionNameOf) :+ singletonsCollectionName :+ pendingModificationsCollectionName
 
   private def secondaryIndices(entityType: EntityType.any): Seq[ModelField[_, _]] = entityType match {
-    case UserType => Seq()
+    case UserType           => Seq()
+    case DocumentEntityType => Seq()
+    case TaskEntityType     => Seq(ModelField.TaskEntity.documentId)
   }
 }
 

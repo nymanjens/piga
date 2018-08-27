@@ -1,5 +1,6 @@
 package flux.react.app.desktop
 
+import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
 import models.document.TaskEntity
