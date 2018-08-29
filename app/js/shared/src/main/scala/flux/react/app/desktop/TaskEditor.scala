@@ -6,8 +6,8 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
-import flux.react.app.desktop.TextWithMarkup.Formatting
-import flux.react.app.desktop.Document.{IndexedCursor, IndexedSelection}
+import models.document.TextWithMarkup.Formatting
+import models.document.Document.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -15,6 +15,7 @@ import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml
 import models.access.EntityAccess
+import models.document.{Document, Task, TextWithMarkup}
 import org.scalajs.dom
 import org.scalajs.dom.console
 

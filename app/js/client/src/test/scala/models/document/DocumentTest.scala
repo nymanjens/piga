@@ -2,7 +2,7 @@ package flux.react.app.desktop
 
 import common.testing.JsTestObjects._
 import common.testing.TestObjects._
-import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
+import models.document.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
 import scala2js.Converters._
 import utest._
 

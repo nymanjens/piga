@@ -6,7 +6,8 @@ import common.GuavaReplacement.Iterables.getOnlyElement
 import common.time.Clock
 import common.time.JavaTimeImplicits._
 import flux.react.app.desktop.EditHistory.Edit
-import flux.react.app.desktop.Document.DetachedSelection
+import models.document.Document.DetachedSelection
+import models.document.Task
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

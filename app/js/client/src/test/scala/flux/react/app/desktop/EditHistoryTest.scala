@@ -4,6 +4,7 @@ import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.testing.TestModule
 import flux.react.app.desktop.EditHistory.Edit
+import models.document.Task
 import scala2js.Converters._
 import utest._
 

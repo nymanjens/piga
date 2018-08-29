@@ -2,8 +2,9 @@ package flux.react.app.desktop
 
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
-import flux.react.app.desktop.Document.{IndexedCursor, IndexedSelection}
-import flux.react.app.desktop.TextWithMarkup.Formatting
+import models.document.Document.{IndexedCursor, IndexedSelection}
+import models.document.TextWithMarkup.Formatting
+import models.document.{Task, TextWithMarkup}
 import scala2js.Converters._
 import utest._
 

@@ -1,9 +1,6 @@
-package flux.react.app.desktop
-
-import java.util.Objects
+package models.document
 
 import common.OrderToken
-import models.document.TaskEntity
 import models.modification.EntityModification
 
 final class Task private (val id: Long,

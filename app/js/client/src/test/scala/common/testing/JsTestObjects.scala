@@ -2,9 +2,10 @@ package common.testing
 
 import scala.collection.immutable.Seq
 import common.OrderToken
-import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
-import flux.react.app.desktop.{Task, Document, TextWithMarkup}
+import models.document.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
+import models.document.{Task, TextWithMarkup}
 import common.testing.TestObjects._
+import models.document.{Document, Task}
 
 object JsTestObjects {
 

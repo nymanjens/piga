@@ -1,17 +1,15 @@
-package flux.react.app.desktop
+package models.document
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.async.Async.{async, await}
 import common.DomNodeUtils.nodeIsLi
-import models.access.DbQuery.Sorting
-import models.access.{JsEntityAccess, ModelField}
 import models.access.DbQueryImplicits._
-import models.document.{DocumentEntity, TaskEntity}
+import models.access.{JsEntityAccess, ModelField}
 import org.scalajs.dom
 
 import scala.annotation.tailrec
+import scala.async.Async.{async, await}
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works

@@ -1,15 +1,12 @@
-package flux.react.app.desktop
+package models.document
 
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.DomNodeUtils._
-import common.GuavaReplacement.Splitter
-import org.scalajs.dom
-import common.LoggingUtils
-import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
-import flux.react.app.desktop.TextWithMarkup.{Formatting, FormattingOption, Part}
-import japgolly.scalajs.react.ReactEventFromInput
-import japgolly.scalajs.react.vdom.{VdomArray, VdomNode}
+import common.DomNodeUtils.{children, _}
+import common.LoggingUtils.LogExceptionsCallback
+import japgolly.scalajs.react.vdom.VdomNode
+import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml
+import models.document.TextWithMarkup.{Formatting, FormattingOption, Part}
+import org.scalajs.dom
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

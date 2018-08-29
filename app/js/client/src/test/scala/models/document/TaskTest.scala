@@ -1,13 +1,8 @@
-package flux.react.app.desktop
+package models.document
 
 import common.testing.TestObjects._
-import common.testing.JsTestObjects._
-import flux.react.app.desktop.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
-import models.document.TaskEntity
 import scala2js.Converters._
 import utest._
-
-import scala.collection.immutable.Seq
 
 object TaskTest extends TestSuite {
 

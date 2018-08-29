@@ -1,6 +1,7 @@
 package flux.react.app.desktop
 
-import flux.react.app.desktop.TextWithMarkup.{Formatting, Part}
+import models.document.TextWithMarkup.{Formatting, Part}
+import models.document.TextWithMarkup
 import scala2js.Converters._
 import utest._
 
