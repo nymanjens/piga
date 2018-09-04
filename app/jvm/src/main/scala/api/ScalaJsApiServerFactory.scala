@@ -8,6 +8,7 @@ import common.PlayI18n
 import common.time.Clock
 import models.Entity
 import models.access.{DbQuery, JvmEntityAccess}
+import models.document.DocumentEntity
 import models.modification.{EntityModification, EntityType}
 import models.user.{User, Users}
 
@@ -22,6 +23,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
     override def getInitialData() =
       GetInitialDataResponse(
         user = user,
+        allAccessibleDocuments = entityAccess.newQuerySync[DocumentEntity]().data(),
         i18nMessages = i18n.allI18nMessages,
         nextUpdateToken = toUpdateToken(clock.now)
       )

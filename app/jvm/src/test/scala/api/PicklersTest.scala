@@ -27,12 +27,7 @@ class PicklersTest extends HookedSpecification {
   }
 
   "GetInitialDataResponse" in {
-    testPickleAndUnpickle[GetInitialDataResponse](
-      GetInitialDataResponse(
-        user = testUserRedacted,
-        i18nMessages = Map("abc" -> "def"),
-        nextUpdateToken = testUpdateToken
-      ))
+    testPickleAndUnpickle[GetInitialDataResponse](testGetInitialDataResponse)
   }
 
   "GetAllEntitiesResponse" in {

@@ -3,6 +3,7 @@ package api
 import api.Picklers._
 import api.ScalaJsApi._
 import models.Entity
+import models.document.DocumentEntity
 import models.modification.{EntityModification, EntityType}
 import models.user.User
 
@@ -36,6 +37,7 @@ object ScalaJsApi {
     * @param nextUpdateToken An update token for all changes since this call
     */
   case class GetInitialDataResponse(user: User,
+                                    allAccessibleDocuments: Seq[DocumentEntity],
                                     i18nMessages: Map[String, String],
                                     nextUpdateToken: UpdateToken)
 

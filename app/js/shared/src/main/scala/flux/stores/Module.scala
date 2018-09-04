@@ -1,5 +1,6 @@
 package flux.stores
 
+import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
 import common.I18n
 import common.time.Clock
@@ -13,7 +14,8 @@ final class Module(implicit i18n: I18n,
                    dispatcher: Dispatcher,
                    clock: Clock,
                    scalaJsApiClient: ScalaJsApiClient,
-                   entityModificationPushClientFactory: EntityModificationPushClientFactory) {
+                   entityModificationPushClientFactory: EntityModificationPushClientFactory,
+                   getInitialDataResponse: GetInitialDataResponse) {
 
   implicit val globalMessagesStore = new GlobalMessagesStore
   implicit val pageLoadingStateStore = new PageLoadingStateStore

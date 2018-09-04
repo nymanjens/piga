@@ -1,5 +1,6 @@
 package flux.stores
 
+import api.ScalaJsApi.GetInitialDataResponse
 import flux.stores.AllDocumentsStore.State
 import models.access.JsEntityAccess
 import models.document.DocumentEntity
@@ -10,7 +11,8 @@ import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class AllDocumentsStore(implicit entityAccess: JsEntityAccess)
+final class AllDocumentsStore(implicit entityAccess: JsEntityAccess,
+                              getInitialDataResponse: GetInitialDataResponse)
     extends AsyncEntityDerivedStateStore[State] {
 
   override protected def calculateState(): Future[State] = async {
@@ -21,6 +23,12 @@ final class AllDocumentsStore(implicit entityAccess: JsEntityAccess)
   override protected def modificationImpactsState(entityModification: EntityModification,
                                                   state: State): Boolean =
     entityModification.entityType == EntityType.DocumentEntityType
+
+  // **************** Additional API **************** //
+  def state2: State = state match {
+    case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments)
+    case Some(s) => s
+  }
 }
 
 object AllDocumentsStore {

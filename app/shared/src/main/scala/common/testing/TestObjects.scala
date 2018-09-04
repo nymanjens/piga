@@ -9,6 +9,8 @@ import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification
 import models.user.User
 
+import scala.collection.immutable.Seq
+
 object TestObjects {
 
   val orderTokenA: OrderToken = OrderToken.middleBetween(None, Some(OrderToken.middle))
@@ -64,7 +66,8 @@ object TestObjects {
 
   val testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
     user = testUserA,
-    i18nMessages = Map(),
-    nextUpdateToken = "1234:5678"
+    allAccessibleDocuments = Seq(testDocumentEntity),
+    i18nMessages = Map("abc" -> "def"),
+    nextUpdateToken = testUpdateToken
   )
 }

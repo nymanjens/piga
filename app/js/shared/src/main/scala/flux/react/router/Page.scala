@@ -15,24 +15,6 @@ object Page {
     override def title(implicit i18n: I18n) = i18n(titleKey)
   }
 
-  sealed abstract class HasReturnTo(private val encodedReturnTo: Option[String]) {
-    def returnToPath: Path =
-      Path(RouterFactory.pathPrefix + js.URIUtils.decodeURIComponent(encodedReturnTo getOrElse ""))
-  }
-  private object HasReturnTo {
-    def getCurrentEncodedPath(implicit routerContext: RouterContext): Option[String] = Some {
-      val path = routerContext
-        .toPath(routerContext.currentPage)
-        .removePrefix(RouterFactory.pathPrefix)
-        .get
-        .value
-      js.URIUtils.encodeURIComponent(
-        // Decode path first because routerContext.toPath() seems to produce unnecessarily and
-        // inconsistently escaped strings
-        js.URIUtils.decodeURIComponent(path))
-    }
-  }
-
   case object Root extends Page {
     override def title(implicit i18n: I18n) = "Root"
     override def iconClass = ""
@@ -44,4 +26,8 @@ object Page {
 
   // **************** Task lists **************** //
   case object DesktopTaskList extends PageBase("Piga Task List", iconClass = "icon-list")
+//  case class DesktopTaskList(documentId: Long) extends Page {
+//    override def title(implicit i18n: I18n) = "Piga Task List"
+//    override def iconClass = "icon-list"
+//  }
 }
