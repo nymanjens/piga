@@ -3,9 +3,11 @@ package tools
 import java.nio.file.{Path, Paths}
 
 import com.google.inject.Inject
-import common.ResourceFiles
+import common.{OrderToken, ResourceFiles}
 import common.time.Clock
 import models.access.JvmEntityAccess
+import models.document
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification
 import models.user.Users
 import play.api.{Application, Mode}
@@ -31,6 +33,9 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
     if (app.mode == Mode.Test || app.mode == Mode.Dev) {
       if (AppConfigHelper.loadDummyUsers) {
         loadDummyUsers()
+      }
+      if (AppConfigHelper.loadDummyData) {
+        loadDummyData()
       }
     }
   }
@@ -81,6 +86,34 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
     )
   }
 
+  private def loadDummyData(): Unit = {
+    implicit val user = Users.getOrCreateRobotUser()
+
+    val documentId = 272772L
+    entityAccess.persistEntityModifications(
+      EntityModification.Add(DocumentEntity(name = "Test document A", idOption = Some(documentId))),
+      EntityModification.createAddWithRandomId(DocumentEntity(name = "Test document B")),
+      EntityModification.createAddWithRandomId(
+        TaskEntity(
+          documentId = documentId,
+          contentHtml = "<b>Hello</b><br/>World",
+          orderToken = OrderToken.middleBetween(None, Some(OrderToken.middle)),
+          indentation = 0)),
+      EntityModification.createAddWithRandomId(
+        TaskEntity(
+          documentId = documentId,
+          contentHtml = "<i>&lt;indented&gt;</i>",
+          orderToken = OrderToken.middle,
+          indentation = 2)),
+      EntityModification.createAddWithRandomId(
+        TaskEntity(
+          documentId = documentId,
+          contentHtml = """<a href="www.example.com">link to www.example.com</a>""",
+          orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
+          indentation = 1))
+    )
+  }
+
   private def assertExists(path: Path): Path = {
     require(ResourceFiles.exists(path), s"Couldn't find path: $path")
     path
@@ -101,6 +134,7 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
   private object AppConfigHelper {
     def dropAndCreateNewDb: Boolean = getBoolean("app.development.dropAndCreateNewDb")
     def loadDummyUsers: Boolean = getBoolean("app.development.loadDummyUsers")
+    def loadDummyData: Boolean = getBoolean("app.development.loadDummyData")
     def defaultPassword: Option[String] = getString("app.setup.defaultPassword")
 
     private def getBoolean(cfgPath: String): Boolean =

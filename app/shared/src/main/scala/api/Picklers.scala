@@ -8,6 +8,7 @@ import common.OrderToken
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityType._
 import models.modification.{EntityModification, EntityType}
 import models.user.User
@@ -82,6 +83,8 @@ object Picklers {
 
   implicit val entityPickler = compositePickler[Entity]
     .addConcreteType[User]
+    .addConcreteType[DocumentEntity]
+    .addConcreteType[TaskEntity]
 
   implicit object EntityModificationPickler extends Pickler[EntityModification] {
     val addNumber = 1
