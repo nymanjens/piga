@@ -16,6 +16,7 @@ final class Module(implicit i18n: I18n,
                    pendingModificationsStore: PendingModificationsStore,
                    applicationIsOnlineStore: ApplicationIsOnlineStore,
                    userStore: UserStore,
+                   allDocumentsStore: AllDocumentsStore,
                    dispatcher: Dispatcher,
                    clock: Clock) {
 

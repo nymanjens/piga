@@ -6,6 +6,7 @@ import common.time.Clock
 import flux.react.ReactVdomUtils.^^
 import flux.react.router.{Page, RouterContext}
 import flux.react.uielements
+import flux.stores.AllDocumentsStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.Mousetrap
@@ -14,7 +15,13 @@ import models.user.User
 
 import scala.collection.immutable.Seq
 
-private[app] final class Menu(implicit entityAccess: EntityAccess, user: User, clock: Clock, i18n: I18n) {
+private[app] final class Menu(implicit entityAccess: EntityAccess,
+                              user: User,
+                              clock: Clock,
+                              i18n: I18n,
+                              allDocumentsStore: AllDocumentsStore) {
+
+  private val waitForFuture = new uielements.WaitForFuture[AllDocumentsStore.State]
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -92,7 +99,11 @@ private[app] final class Menu(implicit entityAccess: EntityAccess, user: User, c
             ))
         ),
         <.li(
-          menuItem("Desktop Task List", Page.DesktopTaskList),
+          waitForFuture(allDocumentsStore.stateFuture, waitingElement = <.span("...")) { state =>
+            {
+              for (document <- state.allDocuments) yield menuItem(document.name, Page.DesktopTaskList)
+            }.toVdomArray
+          }
         )
       )
     }

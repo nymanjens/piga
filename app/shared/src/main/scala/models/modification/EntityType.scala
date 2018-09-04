@@ -32,6 +32,5 @@ object EntityType {
   implicit case object TaskEntityType extends EntityType[TaskEntity] { override def entityClass = classOf[TaskEntity]}
   // @formatter:on
 
-  val values: Seq[EntityType.any] =
-    Seq(UserType)
+  val values: Seq[EntityType.any] = Seq(UserType, DocumentEntityType, TaskEntityType)
 }

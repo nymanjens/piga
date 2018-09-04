@@ -25,10 +25,7 @@ sealed trait SlickEntityTableDef[E <: Entity] {
 object SlickEntityTableDef {
 
   val all: Seq[SlickEntityTableDef[_]] =
-    Seq(
-      UserDef,
-      EntityModificationEntityDef
-    )
+    Seq(UserDef, DocumentEntityDef, TaskEntityDef, EntityModificationEntityDef)
 
   /** Table extension to be used with an Entity model. */
   // Based on active-slick (https://github.com/strongtyped/active-slick)

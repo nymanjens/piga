@@ -20,4 +20,5 @@ final class Module(implicit i18n: I18n,
   implicit val pendingModificationsStore = new PendingModificationsStore
   implicit val applicationIsOnlineStore = new ApplicationIsOnlineStore
   implicit val userStore = new UserStore
+  implicit val allDocumentsStore = new AllDocumentsStore
 }
