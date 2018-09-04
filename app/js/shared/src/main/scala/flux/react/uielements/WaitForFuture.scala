@@ -8,6 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.util.{Failure, Success}
 
 final class WaitForFuture[V] {
   private val component = ScalaComponent
@@ -26,20 +27,23 @@ final class WaitForFuture[V] {
 
   // **************** API ****************//
   def apply(futureInput: Future[V], waitingElement: VdomNode = null)(inputToElement: V => VdomNode)(
-      implicit i18n: I18n): VdomElement = {
-    component.apply(
-      Props(
-        futureInput = futureInput,
-        inputToElement = inputToElement,
-        waitingElement = Option(waitingElement) getOrElse defaultWaitingElement))
+      implicit i18n: I18n): VdomNode = {
+    futureInput.value match {
+      case Some(Success(value)) => inputToElement(value)
+      case Some(Failure(_))     => waitingElement
+      case None =>
+        component.apply(
+          Props(
+            futureInput = futureInput,
+            inputToElement = inputToElement,
+            waitingElement = Option(waitingElement) getOrElse defaultWaitingElement))
+    }
   }
 
   private def defaultWaitingElement(implicit i18n: I18n): VdomNode =
     <.div(^.style := js.Dictionary("padding" -> "200px 0  500px 60px"), s"${i18n("app.loading")}...")
 
   // **************** Private inner types ****************//
-  private case class Props(futureInput: Future[V],
-                           inputToElement: V => VdomNode,
-                           waitingElement: VdomNode)
+  private case class Props(futureInput: Future[V], inputToElement: V => VdomNode, waitingElement: VdomNode)
   private case class State(input: Option[V])
 }
