@@ -99,13 +99,12 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
             ))
         ),
         <.li(
-          waitForFuture(allDocumentsStore.stateFuture, waitingElement = <.span("...")) { state =>
-            {
-//              for (document <- state.allDocuments)
+          {
+//              for (document <- allDocumentsStore.state.allDocuments)
 //                yield menuItem(document.name, Page.DesktopTaskList(document.id))
-              for (document <- state.allDocuments) yield menuItem(document.name, Page.DesktopTaskList)
-            }.toVdomArray
-          }
+            for (document <- allDocumentsStore.state.allDocuments)
+              yield menuItem(document.name, Page.DesktopTaskList)
+          }.toVdomArray
         )
       )
     }

@@ -13,21 +13,25 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 final class AllDocumentsStore(implicit entityAccess: JsEntityAccess,
                               getInitialDataResponse: GetInitialDataResponse)
-    extends AsyncEntityDerivedStateStore[State] {
+    extends StateStore[State] {
 
-  override protected def calculateState(): Future[State] = async {
-    val allDocuments = await(entityAccess.newQuery[DocumentEntity]().data())
-    State(allDocuments = allDocuments)
-  }
+  StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
 
-  override protected def modificationImpactsState(entityModification: EntityModification,
-                                                  state: State): Boolean =
-    entityModification.entityType == EntityType.DocumentEntityType
-
-  // **************** Additional API **************** //
-  def state2: State = state match {
+  override def state: State = StateOptionStore.state match {
     case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments)
     case Some(s) => s
+  }
+
+  private object StateOptionStore extends AsyncEntityDerivedStateStore[State] {
+
+    override protected def calculateState(): Future[State] = async {
+      val allDocuments = await(entityAccess.newQuery[DocumentEntity]().data())
+      State(allDocuments = allDocuments)
+    }
+
+    override protected def modificationImpactsState(entityModification: EntityModification,
+                                                    state: State): Boolean =
+      entityModification.entityType == EntityType.DocumentEntityType
   }
 }
 
