@@ -21,7 +21,6 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialState(State())
     .renderBackend[Backend]
     .build
 
@@ -32,9 +31,7 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
 
   // **************** Private inner types ****************//
   private case class Props(documentId: Long, router: RouterContext)
-//  private case class State(content: VdomElement = <.span("Hello ", <.b("world")))
-  private case class State(content: String = "Hello <b>World</b>!",
-                           lines: Seq[String] = Seq("Hello", "World!"))
+  private type State = Unit
 
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
@@ -44,41 +41,9 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
         Panel(
           title = "Piga Task List"
         ) {
-//          <.span(
-//            (for ((line, i) <- state.lines.zipWithIndex)
-//              yield <.div(^.key := s"line-$i", "- ", line)).toVdomArray,
-//            <.br(),
-//            "----------------",
-//            <.br(),
-//            <.br(),
-//            <.br(),
-//            ReactContentEditable(toContent(state.lines), onChange = onChange, onKeyDown = handleKeyDown)
-//          )
-          <.span(taskEditor())
+          taskEditor()
         }
       )
-    }
-
-    private def onChange(content: String): Unit = {
-      def sanitize(s: String): String = s.replaceAll("\\<.*?\\>", "")
-      val lines = for {
-        l1 <- content.split("<br>")
-        l2 <- l1.split("</li><li>")
-        l3 <- Seq(sanitize(l2))
-        if l3.nonEmpty
-      } yield l3
-
-      $.modState(_.copy(lines = lines)).runNow()
-    }
-
-    def handleKeyDown(event: KeyboardEvent): Unit = {
-      console.log(event)
-      console.log(event.asInstanceOf[js.Dynamic].target.selectionStart)
-      event.preventDefault()
-    }
-
-    private def toContent(lines: Seq[String]): String = {
-      s"<ul><li>${lines.mkString("</li><li>")}</li></ul>"
     }
   }
 }
