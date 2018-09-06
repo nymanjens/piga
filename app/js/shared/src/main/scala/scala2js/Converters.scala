@@ -22,9 +22,9 @@ object Converters {
   implicit def fromEntityType[E <: Entity: EntityType]: MapConverter[E] = {
     val entityType: EntityType[E] = implicitly[EntityType[E]]
     val converter: MapConverter[_ <: Entity] = entityType match {
-      case EntityType.UserType => UserConverter
+      case EntityType.UserType           => UserConverter
       case EntityType.DocumentEntityType => DocumentEntityConverter
-      case EntityType.TaskEntityType => TaskEntityConverter
+      case EntityType.TaskEntityType     => TaskEntityConverter
     }
     converter.asInstanceOf[MapConverter[E]]
   }
@@ -209,7 +209,7 @@ object Converters {
       val entityWithoutId = toScalaWithoutId(dict)
       val idOption = dict.get(ModelField.id[E].name).map(Scala2Js.toScala[Long])
       if (idOption.isDefined) {
-        entityWithoutId.withId(idOption.get).asInstanceOf[E]
+        Entity.withId(idOption.get, entityWithoutId)
       } else {
         entityWithoutId
       }
