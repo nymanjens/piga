@@ -25,9 +25,8 @@ object Page {
   case object UserAdministration extends PageBase("app.user-administration", iconClass = "fa fa-cogs fa-fw")
 
   // **************** Task lists **************** //
-  case object DesktopTaskList extends PageBase("Piga Task List", iconClass = "icon-list")
-//  case class DesktopTaskList(documentId: Long) extends Page {
-//    override def title(implicit i18n: I18n) = "Piga Task List"
-//    override def iconClass = "icon-list"
-//  }
+  case class DesktopTaskList(documentId: Long) extends Page {
+    override def title(implicit i18n: I18n) = "Piga Task List"
+    override def iconClass = "icon-list"
+  }
 }

@@ -26,12 +26,12 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
     .build
 
   // **************** API ****************//
-  def apply(router: RouterContext): VdomElement = {
-    component(Props(router))
+  def apply(documentId: Long, router: RouterContext): VdomElement = {
+    component(Props(documentId, router))
   }
 
   // **************** Private inner types ****************//
-  private case class Props(router: RouterContext)
+  private case class Props(documentId: Long, router: RouterContext)
 //  private case class State(content: VdomElement = <.span("Hello ", <.b("world")))
   private case class State(content: String = "Hello <b>World</b>!",
                            lines: Seq[String] = Seq("Hello", "World!"))

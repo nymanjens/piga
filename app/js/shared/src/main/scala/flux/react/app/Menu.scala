@@ -100,10 +100,8 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         ),
         <.li(
           {
-//              for (document <- allDocumentsStore.state.allDocuments)
-//                yield menuItem(document.name, Page.DesktopTaskList(document.id))
             for (document <- allDocumentsStore.state.allDocuments)
-              yield menuItem(document.name, Page.DesktopTaskList)
+              yield menuItem(document.name, Page.DesktopTaskList(document.id))
           }.toVdomArray
         )
       )
