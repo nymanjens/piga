@@ -37,7 +37,7 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
       <.span(
-        uielements.PageHeader(router.currentPage),
+        uielements.PageHeader(router.currentPage, title = s"props.documentId = ${props.documentId}"),
         Panel(
           title = "Piga Task List"
         ) {

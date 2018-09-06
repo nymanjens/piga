@@ -55,8 +55,8 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
       def menuItem(label: String, page: Page, iconClass: String = null): VdomElement =
         router
           .anchorWithHrefTo(page)(
-            ^^.ifThen(page.getClass == props.router.currentPage.getClass) { ^.className := "active" },
-            ^.key := label,
+            ^^.ifThen(page == props.router.currentPage) { ^.className := "active" },
+            ^.key := page.toString,
             <.i(^.className := Option(iconClass) getOrElse page.iconClass),
             " ",
             <.span(^.dangerouslySetInnerHtml := label)

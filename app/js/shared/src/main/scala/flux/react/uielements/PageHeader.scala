@@ -11,23 +11,18 @@ object PageHeader {
     .renderPC { (_, props, children) =>
       <.h1(
         ^.className := "page-header",
-        <.i(^.className := props.page.iconClass),
+        <.i(^.className := props.iconClass),
         " ",
-        props.page.title(props.i18n),
-        " ",
-        children
+        props.title,
       )
     }
     .build
 
   // **************** API ****************//
-  def apply(page: Page)(implicit i18n: I18n): VdomElement = {
-    component(Props(page))()
-  }
-  def withExtension(page: Page)(children: VdomNode*)(implicit i18n: I18n): VdomElement = {
-    component(Props(page))(children: _*)
+  def apply(page: Page, title: String = null)(implicit i18n: I18n): VdomElement = {
+    component(Props(title = Option(title) getOrElse page.title(i18n), iconClass = page.iconClass))()
   }
 
   // **************** Private inner types ****************//
-  private case class Props(page: Page)(implicit val i18n: I18n)
+  private case class Props(title: String, iconClass: String)(implicit val i18n: I18n)
 }
