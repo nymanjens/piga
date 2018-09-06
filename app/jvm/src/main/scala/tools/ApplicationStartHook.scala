@@ -6,7 +6,7 @@ import com.google.inject.Inject
 import common.{OrderToken, ResourceFiles}
 import common.time.Clock
 import models.access.JvmEntityAccess
-import models.document
+import models.{Entity, document}
 import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification
 import models.user.Users
@@ -77,40 +77,54 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
     implicit val user = Users.getOrCreateRobotUser()
 
     entityAccess.persistEntityModifications(
-      EntityModification.createAddWithRandomId(
-        Users.createUser(loginName = "admin", password = "a", name = "Admin")),
-      EntityModification.createAddWithRandomId(
-        Users.createUser(loginName = "alice", password = "a", name = "Alice")),
-      EntityModification.createAddWithRandomId(
-        Users.createUser(loginName = "bob", password = "b", name = "Bob"))
+      EntityModification.Add(
+        Entity.withId(1111, Users.createUser(loginName = "admin", password = "a", name = "Admin"))),
+      EntityModification.Add(
+        Entity.withId(2222, Users.createUser(loginName = "alice", password = "a", name = "Alice"))),
+      EntityModification.Add(
+        Entity.withId(3333, Users.createUser(loginName = "bob", password = "b", name = "Bob")))
     )
   }
 
   private def loadDummyData(): Unit = {
     implicit val user = Users.getOrCreateRobotUser()
 
-    val documentId = 272772L
+    val documentIdA = 12121212L
+    val documentIdB = 34343434L
     entityAccess.persistEntityModifications(
-      EntityModification.Add(DocumentEntity(name = "Test document A", idOption = Some(documentId))),
-      EntityModification.createAddWithRandomId(DocumentEntity(name = "Test document B")),
-      EntityModification.createAddWithRandomId(
+      EntityModification.Add(DocumentEntity(name = "Test document A", idOption = Some(documentIdA))),
+      EntityModification.Add(DocumentEntity(name = "Test document B", idOption = Some(documentIdB))),
+      EntityModification.Add(
         TaskEntity(
-          documentId = documentId,
+          documentId = documentIdA,
           contentHtml = "<b>Hello</b><br/>World",
           orderToken = OrderToken.middleBetween(None, Some(OrderToken.middle)),
-          indentation = 0)),
-      EntityModification.createAddWithRandomId(
+          indentation = 0,
+          idOption = Some(11)
+        )),
+      EntityModification.Add(
         TaskEntity(
-          documentId = documentId,
+          documentId = documentIdA,
           contentHtml = "<i>&lt;indented&gt;</i>",
           orderToken = OrderToken.middle,
-          indentation = 2)),
-      EntityModification.createAddWithRandomId(
+          indentation = 2,
+          idOption = Some(22))),
+      EntityModification.Add(
         TaskEntity(
-          documentId = documentId,
+          documentId = documentIdA,
           contentHtml = """<a href="www.example.com">link to www.example.com</a>""",
           orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
-          indentation = 1))
+          indentation = 1,
+          idOption = Some(33)
+        )),
+      EntityModification.Add(
+        TaskEntity(
+          documentId = documentIdB,
+          contentHtml = "Second document",
+          orderToken = OrderToken.middle,
+          indentation = 0,
+          idOption = Some(44)
+        ))
     )
   }
 
