@@ -77,12 +77,12 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
     implicit val user = Users.getOrCreateRobotUser()
 
     entityAccess.persistEntityModifications(
-      EntityModification.Add(
-        Entity.withId(1111, Users.createUser(loginName = "admin", password = "a", name = "Admin"))),
-      EntityModification.Add(
-        Entity.withId(2222, Users.createUser(loginName = "alice", password = "a", name = "Alice"))),
-      EntityModification.Add(
-        Entity.withId(3333, Users.createUser(loginName = "bob", password = "b", name = "Bob")))
+      EntityModification
+        .createAddWithId(1111, Users.createUser(loginName = "admin", password = "a", name = "Admin")),
+      EntityModification
+        .createAddWithId(2222, Users.createUser(loginName = "alice", password = "a", name = "Alice")),
+      EntityModification
+        .createAddWithId(3333, Users.createUser(loginName = "bob", password = "b", name = "Bob"))
     )
   }
 
