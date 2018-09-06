@@ -6,7 +6,7 @@ import common.time.Clock
 import flux.react.ReactVdomUtils.^^
 import flux.react.router.{Page, RouterContext}
 import flux.react.uielements
-import flux.stores.AllDocumentsStore
+import flux.stores.document.AllDocumentsStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.Mousetrap

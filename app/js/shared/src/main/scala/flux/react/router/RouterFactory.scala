@@ -3,7 +3,7 @@ package flux.react.router
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.action.{Action, Dispatcher}
-import flux.stores.AllDocumentsStore
+import flux.stores.document.AllDocumentsStore
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._

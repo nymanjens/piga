@@ -5,6 +5,7 @@ import api.ScalaJsApiClient
 import common.I18n
 import common.time.Clock
 import flux.action.Dispatcher
+import flux.stores.document.AllDocumentsStore
 import models.access.{EntityModificationPushClientFactory, JsEntityAccess}
 import models.user.User
 

@@ -5,6 +5,7 @@ import common.time.Clock
 import flux.action.Dispatcher
 import flux.react.app.desktop.DesktopTaskList
 import flux.stores._
+import flux.stores.document.AllDocumentsStore
 import models.access.JsEntityAccess
 import models.user.User
 
