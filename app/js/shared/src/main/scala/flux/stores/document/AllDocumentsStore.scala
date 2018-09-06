@@ -1,6 +1,7 @@
 package flux.stores.document
 
 import api.ScalaJsApi.GetInitialDataResponse
+import flux.stores.document.AllDocumentsStore.State
 import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
 import models.access.JsEntityAccess
 import models.document.DocumentEntity

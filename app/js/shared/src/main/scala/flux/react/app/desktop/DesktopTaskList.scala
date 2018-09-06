@@ -4,21 +4,17 @@ import common.I18n
 import common.LoggingUtils.logExceptions
 import flux.react.router.RouterContext
 import flux.react.uielements
-import flux.react.uielements.Panel
+import flux.stores.document.{DocumentStore, DocumentStoreFactory}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import jsfacades.ReactContentEditable
 import models.access.EntityAccess
-import models.user.User
-import org.scalajs.dom.console
-import org.scalajs.dom.raw.KeyboardEvent
-
-import scala.scalajs.js
 
 private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
+                                         documentStoreFactory: DocumentStoreFactory,
                                          i18n: I18n,
                                          taskEditor: TaskEditor) {
 
+  private val waitForFuture = new uielements.WaitForFuture[DocumentStore]
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
     .renderBackend[Backend]
@@ -36,14 +32,13 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
   private class Backend($ : BackendScope[Props, State]) {
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
-      <.span(
-        uielements.PageHeader(router.currentPage, title = s"props.documentId = ${props.documentId}"),
-        Panel(
-          title = "Piga Task List"
-        ) {
+
+      <.span(waitForFuture(documentStoreFactory.create(props.documentId)) { documentStore =>
+        <.span(
+          uielements.PageHeader(router.currentPage, title = documentStore.document.name),
           taskEditor()
-        }
-      )
+        )
+      })
     }
   }
 }
