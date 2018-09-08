@@ -9,6 +9,7 @@ import common.{I18n, OrderToken}
 import models.document.TextWithMarkup.Formatting
 import models.document.Document.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
+import flux.stores.document.DocumentStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
@@ -27,38 +28,18 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialState(State())
+    .initialStateFromProps(props => State(document = props.documentStore.document))
     .renderBackend[Backend]
     .build
 
   // **************** API ****************//
-  def apply()(implicit router: RouterContext): VdomElement = {
-    component(Props(router))
+  def apply(documentStore: DocumentStore)(implicit router: RouterContext): VdomElement = {
+    component(Props(documentStore, router))
   }
 
   // **************** Private inner types ****************//
-  private case class Props(router: RouterContext)
-  private case class State(
-      document: Document = new Document(
-        id = 1234,
-        name = "Test document",
-        tasks = Seq(
-          Task.withRandomId(
-            content = TextWithMarkup("Hello", Formatting(bold = true)) + TextWithMarkup("\nmy"),
-            orderToken = OrderToken.middleBetween(None, None),
-            indentation = 0
-          ),
-          Task.withRandomId(
-            content = TextWithMarkup("<indented>"),
-            orderToken = OrderToken.middleBetween(None, None),
-            indentation = 2),
-          Task.withRandomId(
-            content = TextWithMarkup("world", formatting = Formatting(link = Some("http://example.com"))),
-            orderToken = OrderToken.middleBetween(Some(OrderToken.middleBetween(None, None)), None),
-            indentation = 0
-          )
-        )
-      ))
+  private case class Props(documentStore: DocumentStore, router: RouterContext)
+  private case class State(document: Document)
 
   private class Backend($ : BackendScope[Props, State]) {
 
@@ -249,8 +230,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit]): Callback = maybeEdit match {
       case None => Callback.empty
       case Some(edit) =>
+        val documentStore = $.props.runNow().documentStore
         val oldDocument = $.state.runNow().document
-        val newDocument = oldDocument.replaced(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
+        val newDocument = documentStore.replaceTasks(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
         $.modState(
           _.copy(document = newDocument),
           setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
@@ -471,8 +453,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       if (isNoOp) {
         Callback.empty
       } else {
+        val documentStore = $.props.runNow().documentStore
         val oldDocument = $.state.runNow().document
-        val newDocument = oldDocument.replaced(toReplace = tasksToReplace, toAdd = tasksToAdd)
+        val newDocument = documentStore.replaceTasks(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
         $.modState(
           _.copy(document = newDocument), {
