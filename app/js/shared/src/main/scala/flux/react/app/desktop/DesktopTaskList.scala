@@ -35,7 +35,7 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
 
       <.span(waitForFuture(documentStoreFactory.create(props.documentId)) { documentStore =>
         <.span(
-          uielements.PageHeader(router.currentPage, title = documentStore.document.name),
+          uielements.PageHeader(router.currentPage, title = documentStore.state.document.name),
           taskEditor(documentStore)
         )
       })

@@ -28,7 +28,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialStateFromProps(props => State(document = props.documentStore.document))
+    .initialStateFromProps(props => State(document = props.documentStore.state.document))
     .renderBackend[Backend]
     .build
 
@@ -232,7 +232,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       case Some(edit) =>
         val documentStore = $.props.runNow().documentStore
         val oldDocument = $.state.runNow().document
-        val newDocument = documentStore.replaceTasks(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
+        val newDocument = documentStore.replaceTasksWithoutCallingListeners(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
         $.modState(
           _.copy(document = newDocument),
           setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
@@ -455,7 +455,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       } else {
         val documentStore = $.props.runNow().documentStore
         val oldDocument = $.state.runNow().document
-        val newDocument = documentStore.replaceTasks(toReplace = tasksToReplace, toAdd = tasksToAdd)
+        val newDocument = documentStore.replaceTasksWithoutCallingListeners(toReplace = tasksToReplace, toAdd = tasksToAdd)
 
         $.modState(
           _.copy(document = newDocument), {
