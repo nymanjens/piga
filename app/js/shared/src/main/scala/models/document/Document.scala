@@ -61,12 +61,20 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, idOption = Some(id))
 
   // **************** Object methods **************** //
-  override def equals(o: scala.Any): Boolean = o match {
-    case that: Document => this.tasks == that.tasks
-    case _              => false
+  override def equals(o: scala.Any): Boolean = {
+    o match {
+      case that if this.hashCode != that.hashCode() => false
+      case that: Document                           => this.id == that.id && this.name == that.name && this.tasks == that.tasks
+      case _                                        => false
+    }
   }
-  override def hashCode(): Int = tasks.hashCode()
-  override def toString: String = s"Document($tasks)"
+  override lazy val hashCode: Int = {
+    var code = 11 + id.hashCode()
+    code = code * 7 + name.hashCode()
+    code = code * 7 + tasks.hashCode()
+    code
+  }
+  override def toString: String = s"Document($id, $name, $tasks)"
 }
 object Document {
 

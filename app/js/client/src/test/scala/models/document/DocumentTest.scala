@@ -1,4 +1,4 @@
-package flux.react.app.desktop
+package models.document
 
 import common.testing.JsTestObjects._
 import common.testing.TestObjects._
@@ -13,6 +13,26 @@ object DocumentTest extends TestSuite {
   val taskEE = newTask("Task EE", orderToken = orderTokenE)
 
   override def tests = TestSuite {
+    "equals and hashCode" - {
+      val documentA: AnyRef = new Document(id = 12873, name = "test document", tasks = Seq(taskA))
+      val documentA2: AnyRef = new Document(id = 12873, name = "test document", tasks = Seq(taskA))
+      val documentB: AnyRef = new Document(id = 12873, name = "test document", tasks = Seq(taskB))
+      val documentC: AnyRef = new Document(id = 12873, name = "CCCCCCCCCCCCC", tasks = Seq(taskA))
+      val documentD: AnyRef = new Document(id = 11111, name = "test document", tasks = Seq(taskA))
+
+      documentA.hashCode() == documentA.asInstanceOf[Document].hashCode ==> true
+      documentA == documentA2 ==> true
+      documentA.hashCode() == documentA2.hashCode() ==> true
+
+      documentA == documentB ==> false
+      documentA.hashCode() == documentB.hashCode() ==> false
+
+      documentA == documentC ==> false
+      documentA.hashCode() == documentC.hashCode() ==> false
+
+      documentA == documentD ==> false
+      documentA.hashCode() == documentD.hashCode() ==> false
+    }
     "replaced" - {
       val document = newDocument(taskA, taskB, taskC)
 
