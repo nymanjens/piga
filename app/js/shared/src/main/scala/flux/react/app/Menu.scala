@@ -21,8 +21,6 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
                               i18n: I18n,
                               allDocumentsStore: AllDocumentsStore) {
 
-  private val waitForFuture = new uielements.WaitForFuture[AllDocumentsStore.State]
-
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
     .renderBackend[Backend]

@@ -26,8 +26,8 @@ final class WaitForFuture[V] {
     .build
 
   // **************** API ****************//
-  def apply(futureInput: Future[V], waitingElement: VdomNode = null)(inputToElement: V => VdomNode)(
-      implicit i18n: I18n): VdomNode = {
+  def apply(futureInput: Future[V], waitingElement: VdomElement = null)(inputToElement: V => VdomElement)(
+      implicit i18n: I18n): VdomElement = {
     futureInput.value match {
       case Some(Success(value)) => inputToElement(value)
       case Some(Failure(_))     => waitingElement
@@ -40,10 +40,10 @@ final class WaitForFuture[V] {
     }
   }
 
-  private def defaultWaitingElement(implicit i18n: I18n): VdomNode =
+  private def defaultWaitingElement(implicit i18n: I18n): VdomElement =
     <.div(^.style := js.Dictionary("padding" -> "200px 0  500px 60px"), s"${i18n("app.loading")}...")
 
   // **************** Private inner types ****************//
-  private case class Props(futureInput: Future[V], inputToElement: V => VdomNode, waitingElement: VdomNode)
+  private case class Props(futureInput: Future[V], inputToElement: V => VdomElement, waitingElement: VdomElement)
   private case class State(input: Option[V])
 }
