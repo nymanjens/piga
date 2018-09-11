@@ -1,5 +1,6 @@
 package flux.stores.document
 
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.Listenable
 import common.Listenable.WritableListenable
 
@@ -83,7 +84,11 @@ object DocumentStore {
         js.timers.clearTimeout(timeoutHandle)
       }
       timeoutHandle = js.timers.setTimeout(delay) {
-        sync(newValue)
+        logExceptions {
+          require(currentValue.get == newValue)
+          currentValue.set(emptyValue)
+          sync(newValue)
+        }
       }
     }
 
