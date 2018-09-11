@@ -18,11 +18,11 @@ final class Module(implicit i18n: I18n,
                    entityModificationPushClientFactory: EntityModificationPushClientFactory,
                    getInitialDataResponse: GetInitialDataResponse) {
 
+  implicit val userStore = new UserStore
+  implicit val allDocumentsStore = new AllDocumentsStore
+  implicit val documentStoreFactory = new DocumentStoreFactory
   implicit val globalMessagesStore = new GlobalMessagesStore
   implicit val pageLoadingStateStore = new PageLoadingStateStore
   implicit val pendingModificationsStore = new PendingModificationsStore
   implicit val applicationIsOnlineStore = new ApplicationIsOnlineStore
-  implicit val userStore = new UserStore
-  implicit val allDocumentsStore = new AllDocumentsStore
-  implicit val documentStoreFactory = new DocumentStoreFactory
 }
