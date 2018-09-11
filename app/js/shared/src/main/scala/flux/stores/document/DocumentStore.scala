@@ -1,5 +1,9 @@
 package flux.stores.document
 
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.Listenable
+import common.Listenable.WritableListenable
+
 import scala.concurrent.duration._
 import scala.scalajs.js
 import flux.stores.StateStore
@@ -20,6 +24,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   private var _state: State = State(document = initialDocument)
   private val syncer: SyncerWithReplenishingDelay[Replacement] = new SyncerWithReplenishingDelay(
     delay = 500.milliseconds,
+    emptyValue = Replacement.empty,
     merge = _ merge _,
     sync = syncReplacement
   )
@@ -27,7 +32,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   // **************** Implementation of StateStore methods **************** //
   override def state: State = _state
 
-  // **************** Additional public API **************** //
+  // **************** Additional API **************** //
   /** Replaces tasks in state without calling the store listeners.
     *
     * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
@@ -39,6 +44,10 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     syncer.syncWithDelay(Replacement(removedTasks = toReplace.toSet, addedTasks = toAdd.toSet))
     newDocument
   }
+
+  /** Number of task additions that is not yet synced to `EntityAccess`. */
+  private[document] def unsyncedNumberOfTasks: Listenable[Int] =
+    syncer.listenableValue.map(_.addedTasks.size)
 
   // **************** Private helper methods **************** //
   private def syncReplacement(replacement: Replacement): Future[_] = {
@@ -61,25 +70,29 @@ object DocumentStore {
   case class State(document: Document)
 
   private class SyncerWithReplenishingDelay[T](delay: FiniteDuration,
+                                               emptyValue: T,
                                                merge: (T, T) => T,
                                                sync: T => Future[_]) {
-    var currentValue: T = _
-    var timeoutHandle: SetTimeoutHandle = _
+    private val currentValue: WritableListenable[T] = WritableListenable(emptyValue)
+    private var timeoutHandle: SetTimeoutHandle = _
 
     def syncWithDelay(addedValue: T): Unit = {
-      val newValue = currentValue match {
-        case null => addedValue
-        case _    => merge(currentValue, addedValue)
-      }
-      currentValue = newValue
+      val newValue = merge(currentValue.get, addedValue)
+      currentValue.set(newValue)
 
       if (timeoutHandle != null) {
         js.timers.clearTimeout(timeoutHandle)
       }
       timeoutHandle = js.timers.setTimeout(delay) {
-        sync(newValue)
+        logExceptions {
+          require(currentValue.get == newValue)
+          currentValue.set(emptyValue)
+          sync(newValue)
+        }
       }
     }
+
+    def listenableValue: Listenable[T] = currentValue
   }
 
   private case class Replacement(removedTasks: Set[Task], addedTasks: Set[Task]) {
@@ -91,5 +104,8 @@ object DocumentStore {
         addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
       )
     }
+  }
+  private object Replacement {
+    val empty: Replacement = Replacement(Set(), Set())
   }
 }

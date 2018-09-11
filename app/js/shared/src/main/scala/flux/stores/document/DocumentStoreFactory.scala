@@ -3,6 +3,8 @@ package flux.stores.document
 import common.LoggingUtils.{logExceptions, logFailure}
 import models.access.DbQueryImplicits._
 import api.ScalaJsApi.GetInitialDataResponse
+import common.Listenable
+import common.Listenable.{ListenableMap, WritableListenable}
 import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
 import models.access.JsEntityAccess
 import models.document.{Document, DocumentEntity}
@@ -15,7 +17,7 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess) {
-  private val cache: mutable.Map[DocumentId, Future[DocumentStore]] = mutable.Map()
+  private val cache: ListenableMap[DocumentId, Future[DocumentStore]] = ListenableMap()
 
   // **************** API ****************//
   def create(documentId: Long): Future[DocumentStore] = {
@@ -25,6 +27,20 @@ final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess) {
       val created = createNew(documentId)
       cache.put(documentId, created)
       created
+    }
+  }
+
+  /** Number of task additions that is not yet synced to `EntityAccess`. */
+  def unsyncedNumberOfTasks: Listenable[Int] = {
+    cache.flatMap { cacheMap =>
+      val listenableInts: Iterable[Listenable[Int]] =
+        for (storeFuture <- cacheMap.values)
+          yield
+            Listenable
+              .fromFuture(storeFuture)
+              .flatMap(storeOption =>
+                if (storeOption.isDefined) storeOption.get.unsyncedNumberOfTasks else Listenable.fixed(0))
+      listenableInts.toVector.reduceOption(Listenable.mergeWith[Int](_ + _)) getOrElse Listenable.fixed(0)
     }
   }
 
