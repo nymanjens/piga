@@ -1,7 +1,8 @@
 package common
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import common.Listenable.{Listener, FlatMappedListenable}
+import common.Listenable.{FlatMappedListenable, Listener}
+import common.ScalaUtils.visibleForTesting
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -47,7 +48,7 @@ object Listenable {
 
   final class WritableListenable[T](initialValue: T) extends Listenable[T] {
     private var value: T = initialValue
-    private[Listenable] var listeners: Seq[Listener[T]] = Seq()
+    private var listeners: Seq[Listener[T]] = Seq()
 
     override def get: T = value
     override def registerListener(listener: Listener[T]): Unit = {
@@ -64,6 +65,8 @@ object Listenable {
         listeners.foreach(_.onChange(newValue))
       }
     }
+
+    @visibleForTesting private[common] def hasListeners: Boolean = listeners.nonEmpty
   }
   object WritableListenable {
     def apply[T](value: T): WritableListenable[T] = new WritableListenable[T](value)
@@ -99,7 +102,7 @@ object Listenable {
       extends Listenable[U] {
     private var lastListenable: Option[Listenable[U]] = None
     private var lastValue: Option[U] = None
-    private[Listenable] var listeners: Seq[Listener[U]] = Seq()
+    private var listeners: Seq[Listener[U]] = Seq()
 
     override def get: U = lastValue getOrElse mappingFunction(origin.get).get
     override def registerListener(listener: Listener[U]): Unit = {
@@ -157,19 +160,19 @@ object Listenable {
 
   private final class MergedListenable[T](mergeFunc: (T, T) => T, l1: Listenable[T], l2: Listenable[T])
       extends Listenable[T] {
-    private val delegate: WritableListenable[T] = WritableListenable(mergeFunc(l1.get, l2.get))
+    private var listeners: Seq[Listener[T]] = Seq()
 
-    override def get: T = delegate.get
+    override def get: T = mergeFunc(l1.get, l2.get)
     override def registerListener(listener: Listener[T]): Unit = {
-      if (delegate.listeners.isEmpty) {
+      if (listeners.isEmpty) {
         l1.registerListener(OriginListener)
         l2.registerListener(OriginListener)
       }
-      delegate.registerListener(listener)
+      listeners = listeners :+ listener
     }
     override def deregisterListener(listener: Listener[T]): Unit = {
-      delegate.deregisterListener(listener)
-      if (delegate.listeners.isEmpty) {
+      listeners = listeners.filter(_ != listener)
+      if (listeners.isEmpty) {
         l1.deregisterListener(OriginListener)
         l2.deregisterListener(OriginListener)
       }
@@ -178,7 +181,7 @@ object Listenable {
     private object OriginListener extends Listener[T] {
       override def onChange(newOriginValue: T): Unit = {
         val newValue = mergeFunc(l1.get, l2.get)
-        delegate.set(newValue)
+        listeners.foreach(_.onChange(newValue))
       }
     }
   }
