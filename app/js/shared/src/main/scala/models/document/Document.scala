@@ -211,4 +211,7 @@ object Document {
     def attachToDocument(implicit document: Document): IndexedSelection =
       IndexedSelection(start = start.attachToDocument, end = end.attachToDocument)
   }
+  object DetachedSelection {
+    def collapsed(cursor: DetachedCursor): DetachedSelection = DetachedSelection(cursor, cursor)
+  }
 }

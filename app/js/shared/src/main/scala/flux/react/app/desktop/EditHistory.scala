@@ -6,7 +6,7 @@ import common.GuavaReplacement.Iterables.getOnlyElement
 import common.time.Clock
 import common.time.JavaTimeImplicits._
 import flux.react.app.desktop.EditHistory.Edit
-import models.document.Document.DetachedSelection
+import models.document.Document.{DetachedCursor, DetachedSelection}
 import models.document.Task
 import models.modification.EntityModification
 
@@ -47,10 +47,13 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
       val forwardEdit = edits(nextRedoEditIndex - 1)
+      randomizeIdsInHistory(forwardEdit.reverse.addedTasks.map(_.id))
+      val newForwardEdit = edits(nextRedoEditIndex - 1)
+
       nextRedoEditIndex -= 1
       lastEditCanBeMerged = false
 
-      Some(randomizeAdditionIdsInEditAndHistory(forwardEdit.reverse))
+      Some(newForwardEdit.reverse)
     } else {
       None
     }
@@ -59,39 +62,44 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
   def redo(): Option[Edit] = {
     if (nextRedoEditIndex < edits.length) {
       val edit = edits(nextRedoEditIndex)
+      randomizeIdsInHistory(edit.addedTasks.map(_.id))
+      val newEdit = edits(nextRedoEditIndex)
+
       nextRedoEditIndex += 1
       lastEditCanBeMerged = false
-      Some(randomizeAdditionIdsInEditAndHistory(edit))
+      Some(newEdit)
     } else {
       None
     }
   }
 
-  private def randomizeAdditionIdsInEditAndHistory(edit: Edit): Edit = {
+  private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
-      def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = {
-        for (task <- tasks) yield {
-          if (task.id == oldId) task.copyWithId(newId) else task
-        }
-      }
+      def updateTaskIds(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task
+      def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = tasks.map(updateTaskIds)
+      def updateTaskIdsInCursor(cursor: DetachedCursor): DetachedCursor =
+        cursor.copy(task = updateTaskIds(cursor.task))
+      def updateTaskIdsInSelection(selection: DetachedSelection): DetachedSelection =
+        DetachedSelection(
+          start = updateTaskIdsInCursor(selection.start),
+          end = updateTaskIdsInCursor(selection.end))
+
       for ((edit, i) <- edits.zipWithIndex) {
-        if (edit.addedTasks.exists(_.id == oldId) || edit.removedTasks.exists(_.id == oldId)) {
-          edits.update(
-            i,
-            edit.copy(
-              addedTasks = updateTaskIdsInSeq(edit.addedTasks),
-              removedTasks = updateTaskIdsInSeq(edit.removedTasks)))
-        }
+        edits.update(
+          i,
+          edit.copy(
+            addedTasks = updateTaskIdsInSeq(edit.addedTasks),
+            removedTasks = updateTaskIdsInSeq(edit.removedTasks),
+            selectionBeforeEdit = updateTaskIdsInSelection(edit.selectionBeforeEdit),
+            selectionAfterEdit = updateTaskIdsInSelection(edit.selectionAfterEdit)
+          )
+        )
       }
     }
 
-    edit.copy(addedTasks = {
-      for (task <- edit.addedTasks) yield {
-        val newTask = task.copyWithId(EntityModification.generateRandomId())
-        updateTaskIdsInHistory(oldId = task.id, newId = newTask.id)
-        newTask
-      }
-    })
+    for (id <- oldIds) {
+      updateTaskIdsInHistory(oldId = id, newId = EntityModification.generateRandomId())
+    }
   }
 
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {

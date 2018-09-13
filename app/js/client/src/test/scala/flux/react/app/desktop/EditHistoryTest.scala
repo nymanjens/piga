@@ -6,6 +6,7 @@ import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.testing.TestModule
 import flux.react.app.desktop.EditHistory.Edit
+import models.document.Document.{DetachedCursor, DetachedSelection}
 import models.document.Task
 import scala2js.Converters._
 import utest._
@@ -79,8 +80,8 @@ object EditHistoryTest extends TestSuite {
     editHistory.addEdit(
       removedTasks = Seq(removedTask),
       addedTasks = Seq(addedTask),
-      selectionBeforeEdit = testDetachedSelection,
-      selectionAfterEdit = testDetachedSelection,
+      selectionBeforeEdit = DetachedSelection.collapsed(DetachedCursor(removedTask, 0)),
+      selectionAfterEdit = DetachedSelection.collapsed(DetachedCursor(addedTask, 0)),
       replacementString = replacementString
     )
   }
@@ -90,6 +91,9 @@ object EditHistoryTest extends TestSuite {
     val addedTaskInEdit = getOnlyElement(edit.get.addedTasks)
     assert(addedTaskInEdit.copyWithId(0) == addedTaskWithNewId.copyWithId(0))
     assert(addedTaskInEdit.id != addedTaskWithNewId.id)
+
+    assert(edit.get.selectionBeforeEdit.start.task.id == removedTask.id)
+    assert(edit.get.selectionAfterEdit.start.task.id == addedTaskInEdit.id)
 
     addedTaskInEdit
   }
