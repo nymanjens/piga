@@ -117,12 +117,12 @@ object Listenable {
     override def deregisterListener(listener: Listener[U]): Unit = {
       listeners = listeners.filter(_ != listener)
       if (listeners.isEmpty) {
-        lastListenable = None
-        lastValue = None
         origin.deregisterListener(OriginListener)
         if (lastListenable.isDefined) {
           lastListenable.get.deregisterListener(MappedListenableListener)
         }
+        lastListenable = None
+        lastValue = None
       }
     }
 

@@ -1,15 +1,13 @@
 package common
 
-import common.Listenable.WritableListenable
+import common.Listenable.{ListenableMap, WritableListenable}
 import common.testing.Awaiter
+import scala2js.Converters._
 import utest.{TestSuite, _}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala2js.Converters._
-
-import scala.util.Success
 
 object ListenableTest extends TestSuite {
 
@@ -109,16 +107,145 @@ object ListenableTest extends TestSuite {
     }
 
     "ListenableMap" - {
-      // TODO
-    }
+      val map = ListenableMap[Int, String]()
+      map.put(1, "one")
 
+      "get" - {
+        map.get ==> Map(1 -> "one")
+      }
+      "contains" - {
+        (map contains 1) ==> true
+        (map contains 2) ==> false
+      }
+      "put" - {
+        map.put(2, "two")
+        map.get ==> Map(1 -> "one", 2 -> "two")
+      }
+      "apply" - {
+        map(1) ==> "one"
+      }
+      "calls listener when value changes" - async {
+        val promise = Promise[Map[Int, String]]()
+        map.registerListener(newValue => promise.success(newValue))
+
+        map.put(1, "ONE")
+
+        await(Awaiter.expectEventually.complete(promise.future, Map(1 -> "ONE")))
+      }
+      "doesn't call listener when value stays the same" - async {
+        val promise = Promise[Map[Int, String]]()
+        map.registerListener(newValue => promise.success(newValue))
+
+        map.put(1, "one")
+
+        await(Awaiter.expectConsistently.neverComplete(promise.future))
+      }
+    }
     "map" - {
-      // TODO
+      val delegate = WritableListenable("abc")
+      val mapped = delegate.map(_.length)
+
+      "get" - async {
+        mapped.get ==> 3
+
+        delegate.set("abcde")
+        await(Awaiter.expectEventually.equal(mapped.get, 5))
+      }
+      "calls listener when value changes" - async {
+        val promise = Promise[Int]()
+        mapped.registerListener(newValue => promise.success(newValue))
+
+        delegate.set("abcdef")
+
+        await(Awaiter.expectEventually.complete(promise.future, 6))
+      }
+      "only registers listener if listened to" - {
+        val listener1: Listenable.Listener[Int] = _ => {}
+        val listener2: Listenable.Listener[Int] = _ => {}
+
+        delegate.hasListeners ==> false
+        mapped.registerListener(listener1)
+        delegate.hasListeners ==> true
+        mapped.registerListener(listener2)
+        delegate.hasListeners ==> true
+        mapped.deregisterListener(listener1)
+        delegate.hasListeners ==> true
+        mapped.deregisterListener(listener2)
+        delegate.hasListeners ==> false
+      }
     }
 
     "flatMap" - {
-      // TODO
-      // TODO: Test that listeners are deregistered
+      val delegate = WritableListenable("abc")
+      val mapOffset = WritableListenable(2)
+      val mapped = delegate.flatMap(value => mapOffset.map(_ + value.length))
+
+      "get" - async {
+        mapped.get ==> 5
+
+        delegate.set("abcde")
+        await(Awaiter.expectEventually.equal(mapped.get, 7))
+
+        mapOffset.set(3)
+        await(Awaiter.expectEventually.equal(mapped.get, 8))
+      }
+      "calls listener when delegate changes" - async {
+        val promise = Promise[Int]()
+        mapped.registerListener(newValue => promise.success(newValue))
+
+        delegate.set("abcdef")
+
+        await(Awaiter.expectEventually.complete(promise.future, 8))
+      }
+      "calls listener when mapOffset changes" - async {
+        val promise = Promise[Int]()
+        mapped.registerListener(newValue => promise.success(newValue))
+
+        mapOffset.set(-1)
+
+        await(Awaiter.expectEventually.complete(promise.future, 2))
+      }
+      "doesn't call listener when value stays the same" - async {
+        val promise = Promise[Int]()
+        mapped.registerListener(newValue => promise.success(newValue))
+
+        delegate.set("def")
+
+        await(Awaiter.expectConsistently.neverComplete(promise.future))
+      }
+      "only registers listener if listened to" - {
+        val listener1: Listenable.Listener[Int] = _ => {}
+        val listener2: Listenable.Listener[Int] = _ => {}
+        mapped.get
+
+        delegate.hasListeners ==> false
+        mapOffset.hasListeners ==> false
+        mapped.registerListener(listener1)
+        delegate.hasListeners ==> true
+        mapOffset.hasListeners ==> true
+        mapped.registerListener(listener2)
+        delegate.hasListeners ==> true
+        mapOffset.hasListeners ==> true
+        mapped.deregisterListener(listener1)
+        delegate.hasListeners ==> true
+        mapOffset.hasListeners ==> true
+        mapped.deregisterListener(listener2)
+        delegate.hasListeners ==> false
+        mapOffset.hasListeners ==> false
+      }
+
+      "only unregisters if mapping function gets called again" - {
+        val listener1: Listenable.Listener[Int] = _ => {}
+
+        mapOffset.hasListeners ==> false
+
+        mapped.registerListener(listener1)
+        delegate.set("x")
+
+        mapOffset.hasListeners ==> true
+        mapped.deregisterListener(listener1)
+        mapOffset.hasListeners ==> false
+      }
     }
   }
 }
