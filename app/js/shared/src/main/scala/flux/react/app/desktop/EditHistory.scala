@@ -8,6 +8,7 @@ import common.time.JavaTimeImplicits._
 import flux.react.app.desktop.EditHistory.Edit
 import models.document.Document.DetachedSelection
 import models.document.Task
+import models.modification.EntityModification
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -15,7 +16,7 @@ import scala.collection.mutable
 private[desktop] final class EditHistory(implicit clock: Clock) {
 
   private val edits: mutable.Buffer[Edit] = mutable.Buffer()
-  private var nextRedoEditIndex = 0
+  private var nextRedoEditIndex: Int = 0
   private var lastEditCanBeMerged: Boolean = false
 
   // **************** public API **************** //
@@ -48,7 +49,8 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
       val forwardEdit = edits(nextRedoEditIndex - 1)
       nextRedoEditIndex -= 1
       lastEditCanBeMerged = false
-      Some(forwardEdit.reverse)
+
+      Some(randomizeAdditionIdsInEditAndHistory(forwardEdit.reverse))
     } else {
       None
     }
@@ -59,10 +61,37 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
       val edit = edits(nextRedoEditIndex)
       nextRedoEditIndex += 1
       lastEditCanBeMerged = false
-      Some(edit)
+      Some(randomizeAdditionIdsInEditAndHistory(edit))
     } else {
       None
     }
+  }
+
+  private def randomizeAdditionIdsInEditAndHistory(edit: Edit): Edit = {
+    def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
+      def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = {
+        for (task <- tasks) yield {
+          if (task.id == oldId) task.copyWithId(newId) else task
+        }
+      }
+      for ((edit, i) <- edits.zipWithIndex) {
+        if (edit.addedTasks.exists(_.id == oldId) || edit.removedTasks.exists(_.id == oldId)) {
+          edits.update(
+            i,
+            edit.copy(
+              addedTasks = updateTaskIdsInSeq(edit.addedTasks),
+              removedTasks = updateTaskIdsInSeq(edit.removedTasks)))
+        }
+      }
+    }
+
+    edit.copy(addedTasks = {
+      for (task <- edit.addedTasks) yield {
+        val newTask = task.copyWithId(EntityModification.generateRandomId())
+        updateTaskIdsInHistory(oldId = task.id, newId = newTask.id)
+        newTask
+      }
+    })
   }
 
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {

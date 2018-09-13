@@ -23,6 +23,9 @@ final class Task private (val id: Long,
       indentation = indentation,
       idOption = Some(id))
 
+  def copyWithId(newId: Long): Task =
+    new Task(id = newId, content = content, orderToken = orderToken, indentation = indentation)
+
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken

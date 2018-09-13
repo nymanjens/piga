@@ -1,5 +1,7 @@
 package flux.react.app.desktop
 
+import common.GuavaReplacement.Iterables
+import common.GuavaReplacement.Iterables.getOnlyElement
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.testing.TestModule
@@ -22,50 +24,52 @@ object EditHistoryTest extends TestSuite {
       val xyz = newTask("XYZ")
       val xy = newTask("XY")
       val xyx = newTask("XYX")
+      val xyr = newTask("XYR")
 
       addSimpleEdit(abc, abcd, "D")
       addSimpleEdit(xyz, xy)
       addSimpleEdit(xy, xyx, "X")
 
       editHistory.redo() ==> None
-      assertEdit(editHistory.undo(), xyx, xy)
-      assertEdit(editHistory.undo(), xy, xyz)
-      assertEdit(editHistory.undo(), abcd, abc)
+      val xy_ = assertEdit(editHistory.undo(), xyx, xy)
+      assertEdit(editHistory.undo(), xy_, xyz)
+      val abc_ = assertEdit(editHistory.undo(), abcd, abc)
       editHistory.undo() ==> None
-      assertEdit(editHistory.redo(), abc, abcd)
 
-      addSimpleEdit(abcd, xyx)
+      val abcd_ = assertEdit(editHistory.redo(), abc_, abcd)
+
+      addSimpleEdit(abcd_, xyr)
 
       editHistory.redo() ==> None
-      assertEdit(editHistory.undo(), xyx, abcd)
-      assertEdit(editHistory.undo(), abcd, abc)
+      val abcd__ = assertEdit(editHistory.undo(), xyr, abcd_)
+      assertEdit(editHistory.undo(), abcd__, abc_)
       editHistory.undo() ==> None
     }
     "with mergeable edits" - {
       val abc = newTask("ABC")
       val abcd = newTask("ABCD")
-      val abcd_ = newTask("ABCD ")
-      val abcd_e = newTask("ABCD E")
+      val abcdS = newTask("ABCD ")
+      val abcdSe = newTask("ABCD E")
       val abcdx = newTask("ABCDX")
 
       "merged" - {
         addSimpleEdit(abc, abcd, "D")
-        addSimpleEdit(abcd, abcd_, " ")
-        addSimpleEdit(abcd_, abcd_e, "E")
+        addSimpleEdit(abcd, abcdS, " ")
+        addSimpleEdit(abcdS, abcdSe, "E")
 
-        assertEdit(editHistory.undo(), abcd_e, abcd)
-        assertEdit(editHistory.undo(), abcd, abc)
+        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
+        assertEdit(editHistory.undo(), abcd_, abc)
       }
       "not merged after undo()" - {
         addSimpleEdit(abc, abcd, "D")
-        addSimpleEdit(abcd, abcd_, " ")
-        addSimpleEdit(abcd_, abcd_e, "E")
+        addSimpleEdit(abcd, abcdS, " ")
+        addSimpleEdit(abcdS, abcdSe, "E")
 
-        assertEdit(editHistory.undo(), abcd_e, abcd)
+        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
 
-        addSimpleEdit(abcd, abcdx, "X")
+        addSimpleEdit(abcd_, abcdx, "X")
 
-        assertEdit(editHistory.undo(), abcdx, abcd)
+        assertEdit(editHistory.undo(), abcdx, abcd_)
       }
     }
   }
@@ -80,8 +84,13 @@ object EditHistoryTest extends TestSuite {
       replacementString = replacementString
     )
   }
-  private def assertEdit(edit: Option[Edit], removedTask: Task, addedTask: Task): Unit = {
-    edit.get.removedTasks ==> Seq(removedTask)
-    edit.get.addedTasks ==> Seq(addedTask)
+  private def assertEdit(edit: Option[Edit], removedTask: Task, addedTaskWithNewId: Task): Task = {
+    assert(edit.get.removedTasks == Seq(removedTask))
+
+    val addedTaskInEdit = getOnlyElement(edit.get.addedTasks)
+    assert(addedTaskInEdit.copyWithId(0) == addedTaskWithNewId.copyWithId(0))
+    assert(addedTaskInEdit.id != addedTaskWithNewId.id)
+
+    addedTaskInEdit
   }
 }
