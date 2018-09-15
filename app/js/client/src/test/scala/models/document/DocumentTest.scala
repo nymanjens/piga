@@ -41,6 +41,30 @@ object DocumentTest extends TestSuite {
       document.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
         newDocument(taskA, taskD, taskE)
     }
+    "plus" - {
+      val document = newDocument(taskB, taskD)
+      "first task" - {
+        document + taskA ==> newDocument(taskA, taskB, taskD)
+      }
+      "last task" - {
+        document + taskE ==> newDocument(taskB, taskD, taskE)
+      }
+      "middle task" - {
+        document + taskC ==> newDocument(taskB, taskC, taskD)
+      }
+      "task is already in list" - {
+        document + taskB ==> document
+      }
+    }
+    "minusTaskWithId" - {
+      val document = newDocument(taskB, taskD)
+      "existing task" - {
+        document.minusTaskWithId(taskB.id) ==> newDocument(taskD)
+      }
+      "task not in list" - {
+        document.minusTaskWithId(18230983210L) ==> newDocument(taskB, taskD)
+      }
+    }
     "indexOf" - {
       val document = newDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
 
