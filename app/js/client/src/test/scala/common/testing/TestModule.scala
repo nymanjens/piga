@@ -12,6 +12,7 @@ class TestModule {
   implicit lazy val fakeI18n = new FakeI18n
   implicit lazy val testUser = TestObjects.testUser
   implicit lazy val fakeScalaJsApiClient = new FakeScalaJsApiClient
+  implicit lazy val fakeRouterContext = new FakeRouterContext
 
   // ******************* Non-fake implementations ******************* //
   implicit lazy val entityModificationPushClientFactory: EntityModificationPushClientFactory =

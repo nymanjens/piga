@@ -65,9 +65,9 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
       <.span(
-        ^.className := "task-editor",
         <.div(
           ^.contentEditable := true,
+          ^.className := "task-editor",
           VdomAttr("suppressContentEditableWarning") := true,
           ^.onKeyDown ==> handleKeyDown,
           ^.onPaste ==> handlePaste,

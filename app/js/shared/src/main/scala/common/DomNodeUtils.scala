@@ -14,6 +14,13 @@ object DomNodeUtils {
     }
   }
 
+  def asElement(node: dom.raw.Node): Option[dom.raw.Element] = {
+    if (node.nodeType == dom.raw.Node.ELEMENT_NODE) {
+      Some(node.asInstanceOf[dom.raw.Element])
+    } else {
+      None
+    }
+  }
   def nodeIsList(node: dom.raw.Node): Boolean = parseNode(node) match {
     case ParsedNode.Ul(_) | ParsedNode.Ol(_) => true
     case _                                   => false
