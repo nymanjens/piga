@@ -48,11 +48,12 @@ final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess) {
   private def createNew(documentId: Long): Future[DocumentStore] = logFailure {
     async {
       val modificationsDuringCalculation = mutable.Buffer[EntityModification]()
-      entityAccess.registerListener(new JsEntityAccess.Listener {
+      val entityModificationListener = new JsEntityAccess.Listener {
         override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
           modificationsDuringCalculation ++= modifications
         }
-      })
+      }
+      entityAccess.registerListener(entityModificationListener)
 
       val documentEntity = await(entityAccess.newQuery[DocumentEntity]().findById(documentId))
       val document = await(Document.fromDocumentEntity(documentEntity))
@@ -62,6 +63,7 @@ final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess) {
         store.JsEntityAccessListener.modificationsAddedOrPendingStateChanged(
           modificationsDuringCalculation.toVector)
       }
+      entityAccess.deregisterListener(entityModificationListener)
       store
     }
   }

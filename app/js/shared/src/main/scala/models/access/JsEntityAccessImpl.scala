@@ -90,6 +90,12 @@ private[access] final class JsEntityAccessImpl()(implicit remoteDatabaseProxy: R
     listeners = listeners :+ listener
   }
 
+  override def deregisterListener(listener: Listener): Unit = {
+    require(!isCallingListeners)
+
+    listeners = listeners.filter(_ != listener)
+  }
+
   override private[access] def startCheckingForModifiedEntityUpdates(): Unit = {
     remoteDatabaseProxy.startCheckingForModifiedEntityUpdates(modifications => {
       _pendingModifications --= modifications

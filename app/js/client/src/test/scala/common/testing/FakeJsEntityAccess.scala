@@ -47,6 +47,9 @@ final class FakeJsEntityAccess extends JsEntityAccess {
   override def registerListener(listener: Listener): Unit = {
     listeners += listener
   }
+  override def deregisterListener(listener: Listener): Unit = {
+    listeners -= listener
+  }
   override def startCheckingForModifiedEntityUpdates(): Unit = ???
 
   // **************** Additional methods for tests ****************//
