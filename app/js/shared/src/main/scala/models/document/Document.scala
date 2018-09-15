@@ -8,6 +8,7 @@ import org.scalajs.dom
 import scala.annotation.tailrec
 import scala.async.Async.{async, await}
 import scala.collection.immutable.Seq
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -29,6 +30,28 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
           case task                               => Seq(task)
         })
     }
+
+  def +(task: Task): Document = {
+    val newTasks = mutable.Buffer[Task]()
+    var taskAdded = false
+
+    for (t <- tasks) {
+      if (task.id == t.id) {
+        taskAdded = true
+      }
+      if (!taskAdded && task < t) {
+        newTasks += task
+        taskAdded = true
+      }
+      newTasks += t
+    }
+    if (!taskAdded) {
+      newTasks += task
+    }
+
+    new Document(id, name, newTasks.toVector)
+  }
+  def minusTaskWithId(taskId: Long): Document = new Document(id, name, tasks.filter(_.id != taskId))
 
   def indexOf(task: Task): Int = {
     def inner(lowerIndex: Int, upperIndex: Int): Int = {

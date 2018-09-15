@@ -9,8 +9,8 @@ import scala.scalajs.js
 import flux.stores.StateStore
 import flux.stores.document.DocumentStore.{Replacement, State, SyncerWithReplenishingDelay}
 import models.access.JsEntityAccess
-import models.document.{Document, Task}
-import models.modification.EntityModification
+import models.document.{Document, Task, TaskEntity}
+import models.modification.{EntityModification, EntityType}
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -61,7 +61,20 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   // **************** Private inner types **************** //
   private[document] object JsEntityAccessListener extends JsEntityAccess.Listener {
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
-      // TODO
+      var newDocument = _state.document
+      for (modification <- modifications) modification match {
+        case EntityModification.Add(taskEntity: TaskEntity) =>
+          newDocument = newDocument + Task.fromTaskEntity(taskEntity)
+        case modification @ EntityModification.Remove(entityId)
+            if modification.entityType == EntityType.TaskEntityType =>
+          newDocument = newDocument.minusTaskWithId(entityId)
+        case _ =>
+      }
+
+      if (_state.document != newDocument) {
+        _state = _state.copy(document = newDocument)
+        invokeStateUpdateListeners()
+      }
     }
   }
 }

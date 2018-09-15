@@ -9,6 +9,7 @@ import common.{I18n, OrderToken}
 import models.document.TextWithMarkup.Formatting
 import models.document.Document.{IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
+import flux.stores.StateStore
 import flux.stores.document.DocumentStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
@@ -30,6 +31,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     .builder[Props](getClass.getSimpleName)
     .initialStateFromProps(props => State(document = props.documentStore.state.document))
     .renderBackend[Backend]
+    .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
+    .componentWillUnmount(scope => scope.backend.willUnmount(scope.props))
     .build
 
   // **************** API ****************//
@@ -41,9 +44,23 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   private case class Props(documentStore: DocumentStore, router: RouterContext)
   private case class State(document: Document)
 
-  private class Backend($ : BackendScope[Props, State]) {
+  private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
 
     private val editHistory: EditHistory = new EditHistory()
+
+    def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
+      props.documentStore.register(this)
+      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
+    }
+
+    def willUnmount(props: Props): Callback = LogExceptionsCallback {
+      props.documentStore.deregister(this)
+    }
+
+    override def onStateUpdate() = {
+      val props = $.props.runNow()
+      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
+    }
 
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
