@@ -2,12 +2,14 @@ package flux.stores.document
 
 import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
+import common.OrderToken
 import flux.action.Action._
 import flux.action.Dispatcher
 import flux.stores.document.AllDocumentsStore.State
 import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
 import models.access.JsEntityAccess
-import models.document.DocumentEntity
+import models.document
+import models.document.{DocumentEntity, TaskEntity}
 import models.modification.{EntityModification, EntityType}
 
 import scala.async.Async.{async, await}
@@ -22,8 +24,20 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
     extends StateStore[State] {
 
   dispatcher.registerPartialAsync {
-    case AddDocument(documentWithoutId) =>
-      entityAccess.persistModifications(EntityModification.createAddWithRandomId(documentWithoutId))
+    case AddEmptyDocument(name, orderToken) =>
+      val document = DocumentEntity(
+        name = name,
+        orderToken = orderToken,
+        idOption = Some(EntityModification.generateRandomId()))
+      entityAccess.persistModifications(
+        EntityModification.Add(document),
+        EntityModification.createAddWithRandomId(
+          TaskEntity(
+            documentId = document.id,
+            contentHtml = "",
+            orderToken = OrderToken.middle,
+            indentation = 0))
+      )
     case UpdateDocuments(documents) =>
       scalaJsApiClient.updateDocuments(documents)
     case RemoveDocument(existingDocument) =>

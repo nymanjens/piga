@@ -81,13 +81,16 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
         <.div(
           ^.className := "row",
           uielements.HalfPanel(title = <.span(i18n("app.all-documents"))) {
-            uielements.Table(
-              tableClasses = Seq("table-documents"),
-              tableHeaders = Seq(
-                <.th(i18n("app.name")),
-                <.th()
+            <.span(
+              uielements.Table(
+                tableClasses = Seq("table-documents"),
+                tableHeaders = Seq(
+                  <.th(i18n("app.name")),
+                  <.th()
+                ),
+                tableRowDatas = tableRowDatas(state)
               ),
-              tableRowDatas = tableRowDatas(state)
+              addButton(state)
             )
           }
         )
@@ -128,6 +131,16 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       }
     }
 
+    private def addButton(implicit state: State): VdomNode = {
+      <.a(
+        ^.className := "btn btn-info",
+        <.i(^.className := "fa fa-plus"),
+        " ",
+        i18n("app.create-new-document"),
+        ^.onClick --> doAdd()
+      )
+    }
+
     private def updateNameButton(document: DocumentEntity)(implicit state: State): VdomNode = {
       <.button(
         ^.tpe := "submit",
@@ -165,12 +178,20 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
         )
       )
     }
+
     private def deleteButton(document: DocumentEntity)(implicit state: State): VdomNode = {
       <.a(
         ^.className := "btn btn-info btn-xs",
         <.i(^.className := "fa fa-times"),
         ^.onClick --> doDelete(document)
       )
+    }
+
+    private def doAdd()(implicit state: State): Callback = LogExceptionsCallback {
+      dispatcher.dispatch(
+        Action.AddEmptyDocument(
+          name = i18n("app.untitled-document"),
+          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
     private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {

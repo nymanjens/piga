@@ -1,6 +1,7 @@
 package flux.action
 
 import api.ScalaJsApi.UserPrototype
+import common.OrderToken
 import models.document.DocumentEntity
 
 import scala.collection.immutable.Seq
@@ -13,7 +14,7 @@ object Action {
   case class UpsertUser(userPrototype: UserPrototype) extends Action
 
   // **************** Document-related actions **************** //
-  case class AddDocument(documentWithoutId: DocumentEntity) extends Action
+  case class AddEmptyDocument(name: String, orderToken: OrderToken) extends Action
   case class UpdateDocuments(documents: Seq[DocumentEntity]) extends Action
   case class RemoveDocument(existingDocument: DocumentEntity) extends Action
 
