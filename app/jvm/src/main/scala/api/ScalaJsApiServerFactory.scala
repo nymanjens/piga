@@ -129,5 +129,15 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
           entityAccess.persistEntityModifications(EntityModification.createUpdate(updatedUser))
       }
     }
+
+    override def updateDocuments(documents: Seq[DocumentEntity]): Unit = {
+      // Validation
+      for (document <- documents) {
+        entityAccess.newQuerySync[DocumentEntity]().findById(document.id) // throws if it doesn't exist
+      }
+
+      // Do update
+      entityAccess.persistEntityModifications(documents.map(d => EntityModification.createUpdate(d)))
+    }
   }
 }

@@ -14,6 +14,7 @@ import common.time.Clock
 import controllers.helpers.AuthenticatedAction
 import models.Entity
 import models.access.JvmEntityAccess
+import models.document.DocumentEntity
 import models.modification.{EntityModification, EntityModificationEntity, EntityType}
 import models.slick.SlickUtils.dbApi._
 import models.slick.SlickUtils.{dbRun, localDateTimeToSqlDateMapper}
@@ -118,6 +119,9 @@ final class InternalApi @Inject()(implicit override val messagesApi: MessagesApi
       case "upsertUser" =>
         val userPrototype = Unpickle[UserPrototype].fromBytes(argsMap("userPrototype"))
         Pickle.intoBytes(scalaJsApiServer.upsertUser(userPrototype))
+      case "updateDocuments" =>
+        val documents = Unpickle[Seq[DocumentEntity]].fromBytes(argsMap("documents"))
+        Pickle.intoBytes(scalaJsApiServer.updateDocuments(documents))
     }
 
     val data: Array[Byte] = Array.ofDim[Byte](responseBuffer.remaining())

@@ -25,8 +25,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
     case AddDocument(documentWithoutId) =>
       entityAccess.persistModifications(EntityModification.createAddWithRandomId(documentWithoutId))
     case UpdateDocuments(documents) =>
-//      scalaJsApiClient.updateDocuments(documents)
-      ???
+      scalaJsApiClient.updateDocuments(documents)
     case RemoveDocument(existingDocument) =>
       entityAccess.persistModifications(EntityModification.createDelete(existingDocument))
   }

@@ -14,7 +14,7 @@ object Action {
 
   // **************** Document-related actions **************** //
   case class AddDocument(documentWithoutId: DocumentEntity) extends Action
-  case class UpdateDocuments(newDocuments: Seq[DocumentEntity]) extends Action
+  case class UpdateDocuments(documents: Seq[DocumentEntity]) extends Action
   case class RemoveDocument(existingDocument: DocumentEntity) extends Action
 
   // **************** Other actions **************** //

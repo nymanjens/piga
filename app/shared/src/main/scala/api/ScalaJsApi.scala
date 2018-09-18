@@ -27,6 +27,9 @@ trait ScalaJsApi {
 
   /** Adds or updates a user according to the present fields in the given prototype. */
   def upsertUser(userPrototype: UserPrototype): Unit
+
+  /** For each given document, updates the existing document with the same ID to match the other fields. */
+  def updateDocuments(documents: Seq[DocumentEntity]): Unit
 }
 
 object ScalaJsApi {

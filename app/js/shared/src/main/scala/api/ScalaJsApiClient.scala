@@ -10,6 +10,7 @@ import common.LoggingUtils.logExceptions
 import common.websocket.SerialWebsocketClientParallelizer
 import models.Entity
 import models.access.DbQuery
+import models.document.DocumentEntity
 import models.modification.{EntityModification, EntityType}
 import org.scalajs.dom
 
@@ -26,6 +27,7 @@ trait ScalaJsApiClient {
   def executeDataQuery[E <: Entity](dbQuery: DbQuery[E]): Future[Seq[E]]
   def executeCountQuery(dbQuery: DbQuery[_ <: Entity]): Future[Int]
   def upsertUser(userPrototype: UserPrototype): Future[Unit]
+  def updateDocuments(documents: Seq[DocumentEntity]): Future[Unit]
 }
 
 object ScalaJsApiClient {
@@ -59,6 +61,10 @@ object ScalaJsApiClient {
 
     override def upsertUser(userPrototype: UserPrototype) = {
       WebsocketAutowireClient[ScalaJsApi].upsertUser(userPrototype).call()
+    }
+
+    override def updateDocuments(documents: Seq[DocumentEntity]): Future[Unit] = {
+      WebsocketAutowireClient[ScalaJsApi].updateDocuments(documents).call()
     }
 
     private object HttpPostAutowireClient extends autowire.Client[ByteBuffer, Pickler, Pickler] {
