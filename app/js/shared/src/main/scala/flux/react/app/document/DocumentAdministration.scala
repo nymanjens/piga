@@ -3,6 +3,7 @@ package flux.react.app.document
 import flux.react.ReactVdomUtils.^^
 import common.I18n
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import flux.action.{Action, Dispatcher}
 import flux.react.ReactVdomUtils.{<<, ^^}
 import flux.react.router.RouterContext
 import flux.react.uielements
@@ -19,7 +20,8 @@ import scala.scalajs.js
 
 private[app] final class DocumentAdministration(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
-                                                allDocumentsStore: AllDocumentsStore) {
+                                                allDocumentsStore: AllDocumentsStore,
+                                                dispatcher: Dispatcher) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -163,7 +165,7 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
 
     private def updateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
-      println(s"updateName(${document.name}, $newName)")
+      dispatcher.dispatch(Action.UpdateDocuments(Seq(document.copy(name = newName))))
     }
   }
 }
