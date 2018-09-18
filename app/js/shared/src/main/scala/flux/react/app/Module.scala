@@ -40,4 +40,5 @@ final class Module(implicit i18n: I18n,
   implicit lazy val userAdministration = userManagementModule.userAdministration
 
   implicit lazy val desktopTaskList = desktopModule.desktopTaskList
+  implicit lazy val documentAdministration = desktopModule.documentAdministration
 }

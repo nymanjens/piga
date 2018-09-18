@@ -51,6 +51,8 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
 
           | staticRuleFromPage(Page.UserAdministration, reactAppModule.userAdministration.apply)
 
+          | staticRuleFromPage(Page.DocumentAdministration, reactAppModule.documentAdministration.apply)
+
           | dynamicRuleFromPage(_ / long.caseClass[Page.DesktopTaskList]) { (page, ctl) =>
             reactAppModule.desktopTaskList(page.documentId, ctl)
           }

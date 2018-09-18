@@ -110,3 +110,6 @@ app.add-new=add new
 app.loading=Loading
 app.offline=Offline
 app.is-admin=Is admin?
+app.document-administration=Document Administration
+app.document-administration.html=<u>D</u>ocument Administration
+app.all-documents=All documents

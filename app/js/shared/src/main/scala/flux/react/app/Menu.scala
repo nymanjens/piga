@@ -101,6 +101,9 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
             for (document <- allDocumentsStore.state.allDocuments)
               yield menuItem(document.name, Page.DesktopTaskList(document.id))
           }.toVdomArray
+        ),
+        <.li(
+          menuItem(i18n("app.document-administration.html"), Page.DocumentAdministration)
         )
       )
     }
@@ -118,6 +121,7 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         })
 
       bind("shift+alt+f", () => queryInputRef().focus())
+      bindToPage("shift+alt+d", Page.DocumentAdministration)
     }
   }
 
