@@ -6,11 +6,13 @@ import common.time.Clock
 import flux.react.ReactVdomUtils.^^
 import flux.react.router.{Page, RouterContext}
 import flux.react.uielements
+import flux.stores.StateStore
 import flux.stores.document.AllDocumentsStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.Mousetrap
 import models.access.EntityAccess
+import models.document.DocumentEntity
 import models.user.User
 
 import scala.collection.immutable.Seq
@@ -23,18 +25,11 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
+    .initialState(State(allDocuments = allDocumentsStore.state.allDocuments))
     .renderBackend[Backend]
-    .componentWillMount(scope => scope.backend.configureKeyboardShortcuts(scope.props.router))
-    .componentDidMount(scope =>
-      LogExceptionsCallback {
-        scope.props.router.currentPage match {
-          // TODO: Restore
-          //case page: Page.Search => {
-          //  scope.backend.queryInputRef().setValue(page.query)
-          //}
-          case _ =>
-        }
-    })
+    .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
+    .componentDidMount(scope => scope.backend.didMount(scope.props))
+    .componentWillUnmount(scope => scope.backend.willUnmount())
     .componentWillReceiveProps(scope => scope.backend.configureKeyboardShortcuts(scope.nextProps.router))
     .build
 
@@ -44,9 +39,37 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
   }
 
   // **************** Private inner types ****************//
-  private type State = Unit
-  private class Backend(val $ : BackendScope[Props, State]) {
+  private case class Props(router: RouterContext)
+  private case class State(allDocuments: Seq[DocumentEntity])
+
+  private class Backend(val $ : BackendScope[Props, State]) extends StateStore.Listener {
     val queryInputRef = uielements.input.TextInput.ref()
+
+    def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
+      allDocumentsStore.register(this)
+      $.modState(state => logExceptions(state.copy(allDocuments = allDocumentsStore.state.allDocuments)))
+        .runNow()
+
+      configureKeyboardShortcuts(props.router).runNow()
+    }
+    def didMount(props: Props): Callback = LogExceptionsCallback {
+      props.router.currentPage match {
+        // TODO: Restore
+        //case page: Page.Search => {
+        //  scope.backend.queryInputRef().setValue(page.query)
+        //}
+        case _ =>
+      }
+    }
+
+    def willUnmount(): Callback = LogExceptionsCallback {
+      allDocumentsStore.deregister(this)
+    }
+
+    override def onStateUpdate() = {
+      $.modState(state => logExceptions(state.copy(allDocuments = allDocumentsStore.state.allDocuments)))
+        .runNow()
+    }
 
     def render(props: Props, state: State) = logExceptions {
       implicit val router = props.router
@@ -99,7 +122,7 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         ),
         <.li(
           {
-            for (document <- allDocumentsStore.state.allDocuments)
+            for (document <- state.allDocuments)
               yield menuItem(document.name, Page.DesktopTaskList(document.id))
           }.toVdomArray
         ),
@@ -125,6 +148,4 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
       bindToPage("shift+alt+d", Page.DocumentAdministration)
     }
   }
-
-  private case class Props(router: RouterContext)
 }
