@@ -242,13 +242,16 @@ object Converters {
   }
 
   implicit object DocumentEntityConverter extends EntityConverter[DocumentEntity] {
-    override def allFieldsWithoutId = Seq(ModelField.DocumentEntity.name)
+    override def allFieldsWithoutId =
+      Seq(ModelField.DocumentEntity.name, ModelField.DocumentEntity.orderToken)
 
     override def toScalaWithoutId(dict: js.Dictionary[js.Any]) = {
       def getRequired[T](field: ModelField[T, DocumentEntity]) =
         getRequiredValueFromDict(dict)(field)
 
-      DocumentEntity(name = getRequired(ModelField.DocumentEntity.name))
+      DocumentEntity(
+        name = getRequired(ModelField.DocumentEntity.name),
+        orderToken = getRequired(ModelField.DocumentEntity.orderToken))
     }
   }
 

@@ -1,6 +1,7 @@
 package models.document
 
 import common.DomNodeUtils.nodeIsLi
+import common.OrderToken
 import models.access.DbQueryImplicits._
 import models.access.{JsEntityAccess, ModelField}
 import org.scalajs.dom
@@ -12,7 +13,8 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
+final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task])
+    extends Ordered[Document] {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
@@ -20,11 +22,11 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
         // Optimization
         val taskIndex = indexOf(replace)
-        new Document(id, name, tasks.updated(taskIndex, add))
+        new Document(id, name, orderToken, tasks.updated(taskIndex, add))
 
       case (toReplaceSeq, toAddSeq) =>
         val toReplaceSet = toReplaceSeq.toSet
-        new Document(id, name, tasks.flatMap {
+        new Document(id, name, orderToken, tasks.flatMap {
           case task if task == toReplaceSeq.head  => toAddSeq
           case task if toReplaceSet contains task => Seq()
           case task                               => Seq(task)
@@ -49,9 +51,10 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
       newTasks += task
     }
 
-    new Document(id, name, newTasks.toVector)
+    new Document(id, name, orderToken, newTasks.toVector)
   }
-  def minusTaskWithId(taskId: Long): Document = new Document(id, name, tasks.filter(_.id != taskId))
+  def minusTaskWithId(taskId: Long): Document =
+    new Document(id, name, orderToken, tasks.filter(_.id != taskId))
 
   def indexOf(task: Task): Int = {
     def inner(lowerIndex: Int, upperIndex: Int): Int = {
@@ -81,19 +84,26 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     inner(0, tasks.length - 1)
   }
 
-  def toDocumentEntity: DocumentEntity = DocumentEntity(name, idOption = Some(id))
+  def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
+
+  // **************** Ordered methods **************** //
+  override def compare(that: Document): Int = {
+    this.orderToken compare that.orderToken
+  }
 
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
     o match {
       case that if this.hashCode != that.hashCode() => false
-      case that: Document                           => this.id == that.id && this.name == that.name && this.tasks == that.tasks
-      case _                                        => false
+      case that: Document =>
+        this.id == that.id && this.name == that.name && this.orderToken == that.orderToken && this.tasks == that.tasks
+      case _ => false
     }
   }
   override lazy val hashCode: Int = {
     var code = 11 + id.hashCode()
     code = code * 7 + name.hashCode()
+    code = code * 7 + orderToken.hashCode()
     code = code * 7 + tasks.hashCode()
     code
   }
@@ -105,7 +115,11 @@ object Document {
     async {
       val tasks = await(
         entityAccess.newQuery[TaskEntity]().filter(ModelField.TaskEntity.documentId === entity.id).data())
-      new Document(id = entity.id, name = entity.name, tasks = tasks.map(Task.fromTaskEntity).sorted)
+      new Document(
+        id = entity.id,
+        name = entity.name,
+        orderToken = entity.orderToken,
+        tasks = tasks.map(Task.fromTaskEntity).sorted)
     }
 
   case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {

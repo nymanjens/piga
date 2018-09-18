@@ -65,6 +65,7 @@ object ModelField {
 
     case object id extends IdModelField[E]
     case object name extends ModelField[String, E]("name", _.name)
+    case object orderToken extends ModelField[OrderToken, E]("orderToken", _.orderToken)
   }
 
   object TaskEntity {
@@ -88,6 +89,7 @@ object ModelField {
       .put(User.isAdmin, 6)
       .put(DocumentEntity.id, 7)
       .put(DocumentEntity.name, 8)
+      .put(DocumentEntity.orderToken, 14)
       .put(TaskEntity.id, 9)
       .put(TaskEntity.documentId, 10)
       .put(TaskEntity.contentHtml, 11)

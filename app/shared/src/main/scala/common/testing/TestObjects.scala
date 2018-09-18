@@ -48,7 +48,7 @@ object TestObjects {
     isAdmin = testUser.isAdmin)
 
   val testDocumentEntity: DocumentEntity =
-    DocumentEntity(name = "Some test document", idOption = Some(129830))
+    DocumentEntity(name = "Some test document", orderToken = orderTokenA, idOption = Some(129830))
   val testTaskEntity: TaskEntity = TaskEntity(
     documentId = testDocumentEntity.id,
     contentHtml = "abc<b>def</b>",

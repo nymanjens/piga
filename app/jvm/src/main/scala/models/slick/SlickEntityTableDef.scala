@@ -63,9 +63,10 @@ object SlickEntityTableDef {
     /* override */
     final class Table(tag: SlickTag) extends EntityTable[DocumentEntity](tag, tableName) {
       def name = column[String]("name")
+      def orderToken = column[OrderToken]("orderToken")
 
       override def * =
-        (name, id.?) <> (DocumentEntity.tupled, DocumentEntity.unapply)
+        (name, orderToken, id.?) <> (DocumentEntity.tupled, DocumentEntity.unapply)
     }
   }
 
