@@ -54,7 +54,8 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         router
           .anchorWithHrefTo(page)(
             ^^.ifThen(page == props.router.currentPage) { ^.className := "active" },
-            ^.key := page.toString,
+            // Add underscore to force rerender to fix bug when mouse is on current menu item
+            ^.key := (page.toString + (if (page == props.router.currentPage) "_" else "")),
             <.i(^.className := Option(iconClass) getOrElse page.iconClass),
             " ",
             <.span(^.dangerouslySetInnerHtml := label)
