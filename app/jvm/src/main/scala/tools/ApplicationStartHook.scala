@@ -96,14 +96,14 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
     entityAccess.persistEntityModifications(
       EntityModification.Add(
         DocumentEntity(
-          name = "Test document B",
-          orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
-          idOption = Some(documentIdB))),
-      EntityModification.Add(
-        DocumentEntity(
           name = "Test document A",
           orderToken = OrderToken.middle,
           idOption = Some(documentIdA))),
+      EntityModification.Add(
+        DocumentEntity(
+          name = "Test document B",
+          orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
+          idOption = Some(documentIdB))),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,

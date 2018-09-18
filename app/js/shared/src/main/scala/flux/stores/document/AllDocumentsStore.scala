@@ -33,7 +33,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
 
   override def state: State = StateOptionStore.state match {
-    case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments)
+    case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments.sorted)
     case Some(s) => s
   }
 
@@ -41,7 +41,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
 
     override protected def calculateState(): Future[State] = async {
       val allDocuments = await(entityAccess.newQuery[DocumentEntity]().data())
-      State(allDocuments = allDocuments)
+      State(allDocuments = allDocuments.sorted)
     }
 
     override protected def modificationImpactsState(entityModification: EntityModification,

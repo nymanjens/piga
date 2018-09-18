@@ -13,8 +13,7 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task])
-    extends Ordered[Document] {
+final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
@@ -85,11 +84,6 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
   }
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
-
-  // **************** Ordered methods **************** //
-  override def compare(that: Document): Int = {
-    this.orderToken compare that.orderToken
-  }
 
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
