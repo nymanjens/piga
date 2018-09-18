@@ -78,7 +78,9 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
 
     entityAccess.persistEntityModifications(
       EntityModification
-        .createAddWithId(1111, Users.createUser(loginName = "admin", password = "a", name = "Admin")),
+        .createAddWithId(
+          1111,
+          Users.createUser(loginName = "admin", password = "a", name = "Admin", isAdmin = true)),
       EntityModification
         .createAddWithId(2222, Users.createUser(loginName = "alice", password = "a", name = "Alice")),
       EntityModification
