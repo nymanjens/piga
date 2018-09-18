@@ -59,15 +59,18 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
 
       <.span(
         uielements.PageHeader(router.currentPage),
-        uielements.HalfPanel(title = <.span(i18n("app.all-documents"))) {
-          uielements.Table(
-            tableHeaders = Seq(
-              <.th(i18n("app.name")),
-              <.th()
-            ),
-            tableRowDatas = tableRowDatas(state)
-          )
-        }
+        <.div(
+          ^.className := "row",
+          uielements.HalfPanel(title = <.span(i18n("app.all-documents"))) {
+            uielements.Table(
+              tableHeaders = Seq(
+                <.th(i18n("app.name")),
+                <.th()
+              ),
+              tableRowDatas = tableRowDatas(state)
+            )
+          }
+        )
       )
     }
 
