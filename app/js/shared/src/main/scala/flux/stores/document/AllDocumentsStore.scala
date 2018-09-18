@@ -1,6 +1,9 @@
 package flux.stores.document
 
 import api.ScalaJsApi.GetInitialDataResponse
+import api.ScalaJsApiClient
+import flux.action.Action._
+import flux.action.Dispatcher
 import flux.stores.document.AllDocumentsStore.State
 import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
 import models.access.JsEntityAccess
@@ -12,9 +15,21 @@ import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class AllDocumentsStore(implicit entityAccess: JsEntityAccess,
+final class AllDocumentsStore(implicit dispatcher: Dispatcher,
+                              scalaJsApiClient: ScalaJsApiClient,
+                              entityAccess: JsEntityAccess,
                               getInitialDataResponse: GetInitialDataResponse)
     extends StateStore[State] {
+
+  dispatcher.registerPartialAsync {
+    case AddDocument(documentWithoutId) =>
+      entityAccess.persistModifications(EntityModification.createAddWithRandomId(documentWithoutId))
+    case UpdateDocuments(documents) =>
+//      scalaJsApiClient.updateDocuments(documents)
+      ???
+    case RemoveDocument(existingDocument) =>
+      entityAccess.persistModifications(EntityModification.createDelete(existingDocument))
+  }
 
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
 
