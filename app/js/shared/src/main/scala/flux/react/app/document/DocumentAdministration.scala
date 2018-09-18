@@ -14,6 +14,7 @@ import japgolly.scalajs.react.vdom.html_<^.{^, _}
 import models.access.EntityAccess
 import models.document.{Document, DocumentEntity}
 import models.user.User
+import org.scalajs.dom
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
@@ -182,7 +183,9 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       }
 
     private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
-      ???
+      if (dom.window.confirm(s"Are you sure you want to delete '${document.name}'")) {
+        dispatcher.dispatch(Action.RemoveDocument(document))
+      }
     }
 
     private def orderTokenBetweenIndices(index1: Int, index2: Int)(implicit state: State): OrderToken = {
