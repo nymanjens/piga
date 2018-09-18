@@ -1,4 +1,4 @@
-package flux.react.app.desktop
+package flux.react.app.document
 
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
@@ -25,7 +25,7 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock) {
+private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -493,10 +493,10 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
   }
 
   // **************** Helper classes and methods **************** //
-  @visibleForTesting private[desktop] case class Replacement(parts: Seq[Replacement.Part]) {
+  @visibleForTesting private[document] case class Replacement(parts: Seq[Replacement.Part]) {
     def contentString: String = parts.map(_.contentString).mkString
   }
-  @visibleForTesting private[desktop] object Replacement {
+  @visibleForTesting private[document] object Replacement {
     def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
     def fromString(string: String, formatting: Formatting): Replacement =
@@ -511,8 +511,8 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
       def contentString: String = content.contentString
     }
   }
-  @visibleForTesting private[desktop] case class ClipboardData(htmlText: String, plainText: String)
-  @visibleForTesting private[desktop] def convertToClipboardData(
+  @visibleForTesting private[document] case class ClipboardData(htmlText: String, plainText: String)
+  @visibleForTesting private[document] def convertToClipboardData(
       document: Document,
       selection: IndexedSelection): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
@@ -556,7 +556,7 @@ private[desktop] final class TaskEditor(implicit entityAccess: EntityAccess, i18
     )
   }
 
-  @visibleForTesting private[desktop] def clipboardStringToReplacement(
+  @visibleForTesting private[document] def clipboardStringToReplacement(
       clipboardString: String): Replacement = {
     val html = {
       val resultHolder = dom.document.createElement("span")

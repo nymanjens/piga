@@ -3,7 +3,7 @@ package flux.react.app
 import common.I18n
 import common.time.Clock
 import flux.action.Dispatcher
-import flux.react.app.desktop.DesktopTaskList
+import flux.react.app.document.DesktopTaskList
 import flux.stores._
 import flux.stores.document.{AllDocumentsStore, DocumentStoreFactory}
 import models.access.JsEntityAccess
@@ -24,7 +24,7 @@ final class Module(implicit i18n: I18n,
 
   // Configuration of submodules
   private val userManagementModule = new flux.react.app.usermanagement.Module
-  private val desktopModule = new flux.react.app.desktop.Module
+  private val desktopModule = new flux.react.app.document.Module
 
   implicit private lazy val menu: Menu = new Menu
   implicit private lazy val globalMessages: GlobalMessages = new GlobalMessages

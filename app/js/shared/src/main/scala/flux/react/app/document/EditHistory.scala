@@ -1,11 +1,11 @@
-package flux.react.app.desktop
+package flux.react.app.document
 
 import java.time.{Duration, Instant}
 
 import common.GuavaReplacement.Iterables.getOnlyElement
 import common.time.Clock
 import common.time.JavaTimeImplicits._
-import flux.react.app.desktop.EditHistory.Edit
+import flux.react.app.document.EditHistory.Edit
 import models.document.Document.{DetachedCursor, DetachedSelection}
 import models.document.Task
 import models.modification.EntityModification
@@ -13,7 +13,7 @@ import models.modification.EntityModification
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-private[desktop] final class EditHistory(implicit clock: Clock) {
+private[document] final class EditHistory(implicit clock: Clock) {
 
   private val edits: mutable.Buffer[Edit] = mutable.Buffer()
   private var nextRedoEditIndex: Int = 0
@@ -121,13 +121,13 @@ private[desktop] final class EditHistory(implicit clock: Clock) {
   }
 }
 
-private[desktop] object EditHistory {
-  private[desktop] case class Edit(removedTasks: Seq[Task],
-                                   addedTasks: Seq[Task],
-                                   selectionBeforeEdit: DetachedSelection,
-                                   selectionAfterEdit: DetachedSelection,
-                                   private[EditHistory] val replacementString: String,
-                                   private[EditHistory] val timestamp: Instant) {
+private[document] object EditHistory {
+  private[document] case class Edit(removedTasks: Seq[Task],
+                                    addedTasks: Seq[Task],
+                                    selectionBeforeEdit: DetachedSelection,
+                                    selectionAfterEdit: DetachedSelection,
+                                    private[EditHistory] val replacementString: String,
+                                    private[EditHistory] val timestamp: Instant) {
     def reverse: Edit =
       new Edit(
         removedTasks = addedTasks,

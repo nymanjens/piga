@@ -1,11 +1,11 @@
-package flux.react.app.desktop
+package flux.react.app.document
 
 import common.GuavaReplacement.Iterables
 import common.GuavaReplacement.Iterables.getOnlyElement
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.testing.TestModule
-import flux.react.app.desktop.EditHistory.Edit
+import flux.react.app.document.EditHistory.Edit
 import models.document.Document.{DetachedCursor, DetachedSelection}
 import models.document.Task
 import scala2js.Converters._

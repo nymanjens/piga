@@ -1,4 +1,4 @@
-package flux.react.app.desktop
+package flux.react.app.document
 
 import common.I18n
 import common.time.Clock
