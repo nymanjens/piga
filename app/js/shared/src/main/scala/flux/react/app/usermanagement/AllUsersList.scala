@@ -52,9 +52,7 @@ private[app] final class AllUsersList(implicit i18n: I18n, userStore: UserStore)
           tableHeaders = Seq(
             <.th(i18n("app.login-name")),
             <.th(i18n("app.full-name")),
-            <.th(i18n("app.is-admin")),
-            <.th(i18n("app.expand-cash-flow")),
-            <.th(i18n("app.expand-liquidation"))
+            <.th(i18n("app.is-admin"))
           ),
           tableRowDatas = tableRowDatas(state)
         )
