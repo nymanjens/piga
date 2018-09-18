@@ -1,7 +1,7 @@
 package flux.react.app.document
 
 import flux.react.ReactVdomUtils.^^
-import common.I18n
+import common.{I18n, OrderToken}
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import flux.action.{Action, Dispatcher}
 import flux.react.ReactVdomUtils.{<<, ^^}
@@ -135,7 +135,7 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
         <.i(^.className := "fa fa-pencil"),
         ^.onClick ==> { (e: ReactEventFromInput) =>
           e.preventDefault()
-          updateName(document, state.nameInput(document))
+          doUpdateName(document, state.nameInput(document))
         }
       )
     }
@@ -145,14 +145,22 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
           ^.className := "btn btn-info btn-xs",
           ^.disabled := state.isFirst(document),
           <.i(^.className := "fa fa-arrow-up"),
-          ^.onClick --> updateName(document, state.nameInput(document))
+          ^.onClick --> doUpdateOrderToken(
+            document,
+            orderTokenBetweenIndices(
+              state.allDocuments.indexOf(document) - 2,
+              state.allDocuments.indexOf(document) - 1))
         ),
         " ",
         <.a(
           ^.className := "btn btn-info btn-xs",
           ^.disabled := state.isLast(document),
           <.i(^.className := "fa fa-arrow-down"),
-          ^.onClick --> updateName(document, state.nameInput(document))
+          ^.onClick --> doUpdateOrderToken(
+            document,
+            orderTokenBetweenIndices(
+              state.allDocuments.indexOf(document) + 1,
+              state.allDocuments.indexOf(document) + 2))
         )
       )
     }
@@ -160,12 +168,32 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       <.a(
         ^.className := "btn btn-info btn-xs",
         <.i(^.className := "fa fa-times"),
-        ^.onClick --> updateName(document, state.nameInput(document))
+        ^.onClick --> doDelete(document)
       )
     }
 
-    private def updateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
+    private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
       dispatcher.dispatch(Action.UpdateDocuments(Seq(document.copy(name = newName))))
+    }
+
+    private def doUpdateOrderToken(document: DocumentEntity, newOrderToken: OrderToken): Callback =
+      LogExceptionsCallback {
+        dispatcher.dispatch(Action.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
+      }
+
+    private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
+      ???
+    }
+
+    private def orderTokenBetweenIndices(index1: Int, index2: Int)(implicit state: State): OrderToken = {
+      def getOption(index: Int): Option[OrderToken] = {
+        if (index < 0 || index >= state.allDocuments.size) {
+          None
+        } else {
+          Some(state.allDocuments(index).orderToken)
+        }
+      }
+      OrderToken.middleBetween(getOption(index1), getOption(index2))
     }
   }
 }
