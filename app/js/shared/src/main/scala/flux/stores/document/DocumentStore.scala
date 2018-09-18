@@ -63,7 +63,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
       var newDocument = _state.document
       for (modification <- modifications) modification match {
-        case EntityModification.Add(taskEntity: TaskEntity) =>
+        case EntityModification.Add(taskEntity: TaskEntity) if taskEntity.documentId == _state.document.id =>
           newDocument = newDocument + Task.fromTaskEntity(taskEntity)
         case modification @ EntityModification.Remove(entityId)
             if modification.entityType == EntityType.TaskEntityType =>
