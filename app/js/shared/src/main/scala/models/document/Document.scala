@@ -16,6 +16,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
+  def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
+    require(id == documentEntity.id)
+    new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
+  }
+
   def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
     (toReplace.toVector, toAdd.toVector) match {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>

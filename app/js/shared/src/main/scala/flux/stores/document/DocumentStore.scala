@@ -9,7 +9,7 @@ import scala.scalajs.js
 import flux.stores.StateStore
 import flux.stores.document.DocumentStore.{Replacement, State, SyncerWithReplenishingDelay}
 import models.access.JsEntityAccess
-import models.document.{Document, Task, TaskEntity}
+import models.document.{Document, DocumentEntity, Task, TaskEntity}
 import models.modification.{EntityModification, EntityType}
 
 import scala.collection.immutable.Seq
@@ -65,6 +65,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
       var newDocument = _state.document
       for (modification <- modifications) modification match {
+        // Task updates
         case EntityModification.Add(taskEntity: TaskEntity)
             if taskEntity.documentId == _state.document.id && !alreadyAddedTaskIds.contains(taskEntity.id) =>
           alreadyAddedTaskIds += taskEntity.id
@@ -72,6 +73,10 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
         case modification @ EntityModification.Remove(entityId)
             if modification.entityType == EntityType.TaskEntityType =>
           newDocument = newDocument.minusTaskWithId(entityId)
+        // Document updates
+        case EntityModification.Update(documentEntity: DocumentEntity) =>
+          newDocument = newDocument.updateFromDocumentEntity(documentEntity)
+
         case _ =>
       }
 
