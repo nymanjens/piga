@@ -28,6 +28,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     merge = _ merge _,
     sync = syncReplacement
   )
+  private val alreadyAddedTaskIds: mutable.Set[Long] = mutable.Set()
 
   // **************** Implementation of StateStore methods **************** //
   override def state: State = _state
@@ -42,6 +43,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     val newDocument = _state.document.replaced(toReplace, toAdd)
     _state = _state.copy(document = newDocument)
     syncer.syncWithDelay(Replacement(removedTasks = toReplace.toSet, addedTasks = toAdd.toSet))
+    alreadyAddedTaskIds ++= toAdd.map(_.id)
     newDocument
   }
 
@@ -63,7 +65,9 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
       var newDocument = _state.document
       for (modification <- modifications) modification match {
-        case EntityModification.Add(taskEntity: TaskEntity) if taskEntity.documentId == _state.document.id =>
+        case EntityModification.Add(taskEntity: TaskEntity)
+            if taskEntity.documentId == _state.document.id && !alreadyAddedTaskIds.contains(taskEntity.id) =>
+          alreadyAddedTaskIds += taskEntity.id
           newDocument = newDocument + Task.fromTaskEntity(taskEntity)
         case modification @ EntityModification.Remove(entityId)
             if modification.entityType == EntityType.TaskEntityType =>
