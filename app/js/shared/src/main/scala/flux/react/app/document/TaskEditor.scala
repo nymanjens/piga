@@ -68,6 +68,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         <.div(
           ^.contentEditable := true,
           ^.className := "task-editor",
+          ^.spellCheck := false,
           VdomAttr("suppressContentEditableWarning") := true,
           ^.onKeyDown ==> handleKeyDown,
           ^.onPaste ==> handlePaste,
