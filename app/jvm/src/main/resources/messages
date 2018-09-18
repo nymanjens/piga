@@ -113,3 +113,7 @@ app.is-admin=Is admin?
 app.document-administration=Document Administration
 app.document-administration.html=<u>D</u>ocument Administration
 app.all-documents=All documents
+app.successfully-added-document=Successfully added document
+app.successfully-updated-document=Successfully updated document
+app.successfully-updated-documents=Successfully updated documents
+app.successfully-removed-document=Successfully removed document
