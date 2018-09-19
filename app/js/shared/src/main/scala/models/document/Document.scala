@@ -30,33 +30,33 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 
       case (toReplaceSeq, toAddSeq) =>
         val toReplaceSet = toReplaceSeq.toSet
-        new Document(id, name, orderToken, tasks.flatMap {
-          case task if task == toReplaceSeq.head  => toAddSeq
-          case task if toReplaceSet contains task => Seq()
-          case task                               => Seq(task)
-        })
+        val newTasks = mutable.Buffer[Task]()
+        var toAddSeqIndex = 0
+        def nextTaskToAdd: Option[Task] =
+          if (toAddSeqIndex < toAddSeq.size) Some(toAddSeq(toAddSeqIndex)) else None
+
+        for {
+          t <- tasks
+          if !toReplaceSet.contains(t)
+        } {
+          while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
+            newTasks += nextTaskToAdd.get
+            toAddSeqIndex += 1
+          }
+          if (nextTaskToAdd == Some(t)) {
+            toAddSeqIndex += 1
+          }
+          newTasks += t
+        }
+        while (nextTaskToAdd.isDefined) {
+          newTasks += nextTaskToAdd.get
+          toAddSeqIndex += 1
+        }
+
+        new Document(id, name, orderToken, newTasks.toVector)
     }
 
-  def +(task: Task): Document = {
-    val newTasks = mutable.Buffer[Task]()
-    var taskAdded = false
-
-    for (t <- tasks) {
-      if (task.id == t.id) {
-        taskAdded = true
-      }
-      if (!taskAdded && task < t) {
-        newTasks += task
-        taskAdded = true
-      }
-      newTasks += t
-    }
-    if (!taskAdded) {
-      newTasks += task
-    }
-
-    new Document(id, name, orderToken, newTasks.toVector)
-  }
+  def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
   def minusTaskWithId(taskId: Long): Document =
     new Document(id, name, orderToken, tasks.filter(_.id != taskId))
 
@@ -86,6 +86,12 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     }
 
     inner(0, tasks.length - 1)
+  }
+
+  def tasksOption(index: Int): Option[Task] = index match {
+    case i if i < 0             => None
+    case i if i >= tasks.length => None
+    case _                      => Some(tasks(index))
   }
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))

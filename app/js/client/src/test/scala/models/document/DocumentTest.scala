@@ -44,6 +44,12 @@ object DocumentTest extends TestSuite {
         newDocument(taskA, taskBB, taskC)
       document.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
         newDocument(taskA, taskD, taskE)
+      document.replaced(toReplace = Seq(taskA), toAdd = Seq(taskD)) ==>
+        newDocument(taskB, taskC, taskD)
+      document.replaced(toReplace = Seq(taskA), toAdd = Seq(taskC, taskD, taskE)) ==>
+        newDocument(taskB, taskC, taskD, taskE)
+      newDocument(taskB, taskD, taskE).replaced(toReplace = Seq(taskB), toAdd = Seq(taskC, taskE)) ==>
+        newDocument(taskC, taskD, taskE)
     }
     "plus" - {
       val document = newDocument(taskB, taskD)
