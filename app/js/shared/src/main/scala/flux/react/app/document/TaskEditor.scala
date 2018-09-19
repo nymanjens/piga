@@ -259,6 +259,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           editLink(selection)
 
+        case "ArrowUp" if altPressed =>
+          event.preventDefault()
+          moveLinesInSeq(selection, seqIndexMovement = -1)
+
+        case "ArrowDown" if altPressed =>
+          event.preventDefault()
+          moveLinesInSeq(selection, seqIndexMovement = +1)
+
         case _ =>
           Callback.empty
       }
@@ -282,15 +290,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val IndexedSelection(start, end) = selectionBeforeEdit
       val oldDocument = $.state.runNow().document
 
-      def tasksOption(document: Document, index: Int): Option[Task] = index match {
-        case i if i < 0                      => None
-        case i if i >= document.tasks.length => None
-        case _                               => Some(document.tasks(index))
-      }
-
       val newOrderTokens = {
-        val previousTask = tasksOption(oldDocument, start.seqIndex - 1)
-        val nextTask = tasksOption(oldDocument, end.seqIndex + 1)
+        val previousTask = oldDocument.tasksOption(start.seqIndex - 1)
+        val nextTask = oldDocument.tasksOption(end.seqIndex + 1)
         OrderToken.evenlyDistributedValuesBetween(
           numValues = replacement.parts.length,
           lower = previousTask.map(_.orderToken),
@@ -472,6 +474,52 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           } catch {
             case _: CancelException => Callback.empty
           }
+      }
+    }
+
+    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, seqIndexMovement: Int): Callback = {
+      val IndexedSelection(start, end) = selectionBeforeEdit
+      val oldDocument = $.state.runNow().document
+
+      val (task1, task2) =
+        if (seqIndexMovement < 0)
+          (
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement - 1),
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement))
+        else
+          (
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement),
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1))
+
+      if (task1.isEmpty && task2.isEmpty) {
+        Callback.empty
+      } else {
+
+        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+
+        val newOrderTokens = {
+          OrderToken.evenlyDistributedValuesBetween(
+            numValues = tasksToReplace.length,
+            lower = task1.map(_.orderToken),
+            higher = task2.map(_.orderToken)
+          )
+        }
+        val tasksToAdd =
+          for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
+            yield
+              Task.withRandomId(
+                content = task.content,
+                orderToken = newOrderToken,
+                indentation = task.indentation)
+
+        replaceInStateWithHistory(
+          tasksToReplace = tasksToReplace,
+          tasksToAdd = tasksToAdd,
+          selectionBeforeEdit = selectionBeforeEdit,
+          selectionAfterEdit = IndexedSelection(
+            start.copy(seqIndex = start.seqIndex + seqIndexMovement),
+            end.copy(seqIndex = end.seqIndex + seqIndexMovement))
+        )
       }
     }
 
