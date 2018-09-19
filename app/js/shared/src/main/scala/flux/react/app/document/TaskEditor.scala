@@ -7,7 +7,7 @@ import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
 import models.document.TextWithMarkup.Formatting
-import models.document.Document.{IndexedCursor, IndexedSelection}
+import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
 import flux.stores.StateStore
 import flux.stores.document.DocumentStore
@@ -47,6 +47,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
   private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
 
     private val editHistory: EditHistory = new EditHistory()
+    private var lastSingletonFormating: SingletonFormating = SingletonFormating(
+      cursor = DetachedCursor(
+        task = Task.withRandomId(TextWithMarkup.empty, OrderToken.middle, indentation = 0),
+        offsetInTask = 0),
+      formatting = Formatting.none)
 
     def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
       props.documentStore.register(this)
@@ -146,7 +151,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val shiftPressed = event.shiftKey
       val altPressed = event.altKey
       val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
-      val formatting = document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+      val formatting =
+        if (lastSingletonFormating.cursor == start.detach) {
+          lastSingletonFormating.formatting
+        } else {
+          document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+        }
 
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
@@ -207,16 +217,25 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "i" if ctrlPressed =>
           event.preventDefault()
-          toggleFormatting((form, value) => form.copy(italic = value), selection)
+          toggleFormatting(
+            (form, value) => form.copy(italic = value),
+            selection,
+            formattingAtStart = formatting)
         case "b" if ctrlPressed =>
           event.preventDefault()
-          toggleFormatting((form, value) => form.copy(bold = value), selection)
+          toggleFormatting(
+            (form, value) => form.copy(bold = value),
+            selection,
+            formattingAtStart = formatting)
         case "C" if shiftPressed && altPressed =>
           event.preventDefault()
-          toggleFormatting((form, value) => form.copy(code = value), selection)
+          toggleFormatting(
+            (form, value) => form.copy(code = value),
+            selection,
+            formattingAtStart = formatting)
         case "\\" if ctrlPressed =>
           event.preventDefault()
-          toggleFormatting((form, value) => Formatting.none, selection)
+          toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
         case "u" if ctrlPressed =>
           // Disable underline modifier
@@ -327,7 +346,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     }
 
     private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
-                                 selection: IndexedSelection)(implicit document: Document): Callback = {
+                                 selection: IndexedSelection,
+                                 formattingAtStart: Formatting)(implicit document: Document): Callback = {
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
@@ -365,8 +385,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
 
       if (start == end) {
-        // update whole line
-        toggleFormattingInternal(start.toStartOfTask, end.toEndOfTask)
+        lastSingletonFormating = SingletonFormating(
+          start.detach,
+          formatting =
+            if (updateFunc(formattingAtStart, true) == formattingAtStart) updateFunc(formattingAtStart, false)
+            else updateFunc(formattingAtStart, true)
+        )
+        Callback.empty
       } else {
         toggleFormattingInternal(start, end)
       }
@@ -694,4 +719,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
   }
 
   private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
+
+  private case class SingletonFormating(cursor: DetachedCursor, formatting: Formatting)
 }
