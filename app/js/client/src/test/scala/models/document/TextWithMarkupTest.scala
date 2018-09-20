@@ -71,6 +71,9 @@ object TextWithMarkupTest extends TestSuite {
       "code" - {
         TextWithMarkup("ABC", Formatting(code = true)).toHtml ==> "<code>ABC</code>"
       }
+      "strikethrough" - {
+        TextWithMarkup("ABC", Formatting(strikethrough = true)).toHtml ==> "<s>ABC</s>"
+      }
       "link" - {
         TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
           """<a href="example.com">ABC</a>"""
@@ -109,6 +112,9 @@ object TextWithMarkupTest extends TestSuite {
       }
       "code" - {
         TextWithMarkup.fromHtml("<code>ABC</code>") ==> TextWithMarkup("ABC", Formatting(code = true))
+      }
+      "strikethrough" - {
+        TextWithMarkup.fromHtml("<s>ABC</s>") ==> TextWithMarkup("ABC", Formatting(strikethrough = true))
       }
       "link" - {
         TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""") ==>

@@ -234,6 +234,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             (form, value) => form.copy(code = value),
             selection,
             formattingAtStart = formatting)
+        case _ if event.keyCode == 53 && shiftPressed && altPressed => // Alt + Shift + 5
+          event.preventDefault()
+          toggleFormatting(
+            (form, value) => form.copy(strikethrough = value),
+            selection,
+            formattingAtStart = formatting)
         case "\\" if ctrlPressed =>
           event.preventDefault()
           toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)

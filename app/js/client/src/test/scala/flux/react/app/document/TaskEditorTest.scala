@@ -162,6 +162,7 @@ object TaskEditorTest extends TestSuite {
         roundTrip("<ul><li><b>this is bold</b></li></ul>")
         roundTrip("<ul><li><i>this is italic</i></li></ul>")
         roundTrip("<ul><li><code>this is code</code></li></ul>")
+        roundTrip("<ul><li><s>striked through</s></li></ul>")
         roundTrip("""<ul><li><a href="http://example.com">this is a link</a></li></ul>""")
       }
       "escapes html" - {

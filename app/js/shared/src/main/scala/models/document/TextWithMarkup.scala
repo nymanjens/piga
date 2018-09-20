@@ -43,6 +43,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
           case FormattingOption.Bold   => if (asBoolean(value)) <.b(^.key := key, children) else children
           case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := key, children) else children
           case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := key, children) else children
+          case FormattingOption.Strikethrough =>
+            if (asBoolean(value)) <.s(^.key := key, children) else children
           case FormattingOption.Link =>
             asOption(value) match {
               case Some(link) =>
@@ -83,9 +85,10 @@ final class TextWithMarkup private (private val parts: List[Part]) {
         def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
 
         option match {
-          case FormattingOption.Bold   => if (asBoolean(value)) s"<b>$children</b>" else children
-          case FormattingOption.Italic => if (asBoolean(value)) s"<i>$children</i>" else children
-          case FormattingOption.Code   => if (asBoolean(value)) s"<code>$children</code>" else children
+          case FormattingOption.Bold          => if (asBoolean(value)) s"<b>$children</b>" else children
+          case FormattingOption.Italic        => if (asBoolean(value)) s"<i>$children</i>" else children
+          case FormattingOption.Code          => if (asBoolean(value)) s"<code>$children</code>" else children
+          case FormattingOption.Strikethrough => if (asBoolean(value)) s"<s>$children</s>" else children
           case FormattingOption.Link =>
             if (asOption(value).isDefined) s"""<a href="${asOption(value).get}">$children</a>""" else children
         }
@@ -200,6 +203,7 @@ object TextWithMarkup {
             case ParsedNode.B(e)    => fromHtmlNodesInner(children(e), formatting.copy(bold = true))
             case ParsedNode.I(e)    => fromHtmlNodesInner(children(e), formatting.copy(italic = true))
             case ParsedNode.Code(e) => fromHtmlNodesInner(children(e), formatting.copy(code = true))
+            case ParsedNode.S(e)    => fromHtmlNodesInner(children(e), formatting.copy(strikethrough = true))
             case ParsedNode.A(e) =>
               fromHtmlNodesInner(children(e), formatting.copy(link = Some(e.getAttribute("href"))))
             case _ => fromHtmlNodesInner(children(node), formatting)
@@ -225,6 +229,7 @@ object TextWithMarkup {
   case class Formatting(bold: Boolean = false,
                         italic: Boolean = false,
                         code: Boolean = false,
+                        strikethrough: Boolean = false,
                         link: Option[String] = None)
   object Formatting {
     val none = Formatting()
@@ -248,6 +253,9 @@ object TextWithMarkup {
     }
     object Code extends FormattingOption[Boolean] {
       override def getValue(part: Part): Boolean = part.formatting.code
+    }
+    object Strikethrough extends FormattingOption[Boolean] {
+      override def getValue(part: Part): Boolean = part.formatting.strikethrough
     }
     object Link extends FormattingOption[Option[String]] {
       override def getValue(part: Part): Option[String] = part.formatting.link
@@ -309,6 +317,6 @@ object TextWithMarkup {
     }
 
     import FormattingOption._
-    serializeToDomInner(parts, formattingLeft = List(Link, Code, Italic, Bold))
+    serializeToDomInner(parts, formattingLeft = List(Link, Code, Strikethrough, Italic, Bold))
   }
 }
