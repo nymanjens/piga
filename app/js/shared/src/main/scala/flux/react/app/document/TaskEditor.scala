@@ -216,61 +216,63 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
 
-        case "i" if ctrlPressed =>
+        case "i" if ctrlPressed => // Italic
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(italic = value),
             selection,
             formattingAtStart = formatting)
-        case "b" if ctrlPressed =>
+        case "b" if ctrlPressed => // Bold
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(bold = value),
             selection,
             formattingAtStart = formatting)
-        case "C" if shiftPressed && altPressed =>
+        case "C" if shiftPressed && altPressed => // Code font (Alt + Shift + C)
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(code = value),
             selection,
             formattingAtStart = formatting)
-        case _ if event.keyCode == 53 && shiftPressed && altPressed => // Alt + Shift + 5
+        case _ if event.keyCode == 53 && shiftPressed && altPressed => // Strikethrough (Alt + Shift + 5)
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(strikethrough = value),
             selection,
             formattingAtStart = formatting)
-        case "\\" if ctrlPressed =>
+        case "\\" if ctrlPressed => // Clear formatting
           event.preventDefault()
           toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
-        case "u" if ctrlPressed =>
-          // Disable underline modifier
+        case "u" if ctrlPressed => // Disable underline modifier
           event.preventDefault()
           Callback.empty
 
-        case "z" if ctrlPressed && !shiftPressed =>
+        case "z" if ctrlPressed && !shiftPressed => // Undo
           event.preventDefault()
           applyHistoryEdit(editHistory.undo())
 
-        case "Z" if ctrlPressed && shiftPressed =>
+        case "Z" if ctrlPressed && shiftPressed => // Redo
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
-        case "y" if ctrlPressed =>
+        case "y" if ctrlPressed => // Redo
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
-        case "k" if ctrlPressed =>
-          // Edit link
+        case "k" if ctrlPressed => // Edit link
           event.preventDefault()
           editLink(selection)
 
-        case "ArrowUp" if altPressed =>
+        case "m" if ctrlPressed => // Select word
+          event.preventDefault()
+          selectExtendedWordAround(start)
+
+        case "ArrowUp" if altPressed => // Move lines up
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = -1)
 
-        case "ArrowDown" if altPressed =>
+        case "ArrowDown" if altPressed => // Move lines down
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = +1)
 
@@ -528,6 +530,31 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             end.copy(seqIndex = end.seqIndex + seqIndexMovement))
         )
       }
+    }
+
+    private def selectExtendedWordAround(cursor: IndexedCursor): Callback = {
+      val document = $.state.runNow().document
+      val line = document.tasks(cursor.seqIndex).contentString
+
+      def moveOffset(offsetInTask: Int, step: Int): Int = {
+        val nextOffset = offsetInTask + step
+        if (nextOffset < 0 || nextOffset > line.length) {
+          offsetInTask
+        } else {
+          val currentChar = if (step > 0) line.charAt(offsetInTask) else line.charAt(nextOffset)
+          currentChar match {
+            case ' ' | '\f' | '\n' | '\r' | '\t' | '\u00A0' | '\u2028' | '\u2029' | '$' => offsetInTask
+            case _                                                                      => moveOffset(nextOffset, step)
+          }
+        }
+      }
+
+      val newStartOffset = moveOffset(cursor.offsetInTask, step = -1)
+      val newEndOffset = moveOffset(cursor.offsetInTask, step = +1)
+      setSelection(
+        IndexedSelection(
+          cursor.copy(offsetInTask = newStartOffset),
+          cursor.copy(offsetInTask = newEndOffset)))
     }
 
     private def replaceInStateWithHistory(tasksToReplace: Seq[Task],
