@@ -93,5 +93,11 @@ table.table-bordered {
 .task-editor {
   li {
     white-space: pre-wrap;
+    &:empty {
+      list-style-type: none;
+      &:before { // Avoid <li> becoming size 0
+        content: " ";
+      }
+    }
   }
 }
