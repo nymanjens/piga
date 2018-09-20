@@ -88,6 +88,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
+                  ^.className := s"indentation-${task.indentation}",
                   VdomAttr("num") := i,
                   task.content.toVdomNode
                 )).toVdomArray

@@ -91,12 +91,18 @@ table.table-bordered {
 
 /****** TaskEditor ******/
 .task-editor {
-  li {
-    white-space: pre-wrap;
-    &:empty {
-      list-style-type: none;
-      &:before { // Avoid <li> becoming size 0
-        content: " ";
+  ul {
+    padding-left: 3px;
+    li {
+      white-space: pre-wrap;
+      &:empty {
+        list-style-type: none;
+        &:before { // Avoid <li> becoming size 0
+          content: " ";
+        }
+      }
+      &.indentation-0 {
+        list-style-type: none;
       }
     }
   }
