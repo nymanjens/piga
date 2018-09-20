@@ -268,6 +268,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           selectExtendedWordAround(start)
 
+        case "j" if ctrlPressed => // Select line
+          event.preventDefault()
+          setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
+
         case "ArrowUp" if altPressed => // Move lines up
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = -1)
