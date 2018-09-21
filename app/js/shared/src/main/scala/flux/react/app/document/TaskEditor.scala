@@ -272,11 +272,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
-        case "ArrowUp" if altPressed => // Move lines up
+        case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = -1)
 
-        case "ArrowDown" if altPressed => // Move lines down
+        case "ArrowDown" if altPressed && !shiftPressed => // Move lines down
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = +1)
 

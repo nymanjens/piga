@@ -143,9 +143,22 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         bind(shortcut, () => {
           router.setPage(page)
         })
+      def goToAdjacentMenuItem(step: Int): Unit = {
+        val allLeftMenuPages =
+          allDocumentsStore.state.allDocuments.map(document => Page.DesktopTaskList(document.id)) :+
+            Page.DocumentAdministration
+        allLeftMenuPages.indexOf(router.currentPage) match {
+          case -1 =>
+          case i if 0 <= i + step && i + step < allLeftMenuPages.size =>
+            router.setPage(allLeftMenuPages(i + step))
+          case _ =>
+        }
+      }
 
       bind("shift+alt+f", () => queryInputRef().focus())
       bindToPage("shift+alt+d", Page.DocumentAdministration)
+      bind("shift+alt+up", () => goToAdjacentMenuItem(step = -1))
+      bind("shift+alt+down", () => goToAdjacentMenuItem(step = +1))
     }
   }
 }
