@@ -26,6 +26,16 @@ final class Task private (val id: Long,
   def copyWithId(newId: Long): Task =
     new Task(id = newId, content = content, orderToken = orderToken, indentation = indentation)
 
+  def copyWithRandomId(content: TextWithMarkup = null,
+                       orderToken: OrderToken = null,
+                       indentation: Int = -1): Task = {
+    Task.withRandomId(
+      content = Option(content) getOrElse this.content,
+      orderToken = Option(orderToken) getOrElse this.orderToken,
+      indentation = if (indentation == -1) this.indentation else indentation
+    )
+  }
+
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken

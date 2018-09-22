@@ -32,5 +32,31 @@ object TaskTest extends TestSuite {
       (taskA1 equalsIgnoringId taskA2) ==> true
       (taskA1 equalsIgnoringId taskB) ==> false
     }
+    "copyWithRandomId" - {
+      val task = Task.withRandomId(content = TextWithMarkup("a"), orderToken = orderTokenA, indentation = 1)
+
+      "without any other changes" - {
+        val newTask = task.copyWithRandomId()
+        assert(newTask.id != task.id)
+        newTask.content ==> task.content
+        newTask.orderToken ==> task.orderToken
+        newTask.indentation ==> task.indentation
+      }
+      "with indentation changes" - {
+        val newTask = task.copyWithRandomId(indentation = 7)
+        assert(newTask.id != task.id)
+        newTask.content ==> task.content
+        newTask.orderToken ==> task.orderToken
+        newTask.indentation ==> 7
+      }
+      "with all changes" - {
+        val newTask =
+          task.copyWithRandomId(content = TextWithMarkup("x"), orderToken = orderTokenB, indentation = 7)
+        assert(newTask.id != task.id)
+        newTask.content ==> TextWithMarkup("x")
+        newTask.orderToken ==> orderTokenB
+        newTask.indentation ==> 7
+      }
+    }
   }
 }

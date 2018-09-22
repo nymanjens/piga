@@ -345,12 +345,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
       val IndexedSelection(start, end) = selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-      val tasksToAdd = tasksToReplace.map(
-        task =>
-          Task.withRandomId(
-            content = task.content,
-            orderToken = task.orderToken,
-            indentation = zeroIfNegative(task.indentation + indentIncrease)))
+      val tasksToAdd = tasksToReplace.map(task =>
+        task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease)))
 
       replaceInStateWithHistory(
         tasksToReplace = tasksToReplace,
@@ -369,16 +365,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
           for (task <- tasks)
             yield
-              Task.withRandomId(
+              task.copyWithRandomId(
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                     endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
                     formatting => updateFunc(formatting, value)
-                  ),
-                orderToken = task.orderToken,
-                indentation = task.indentation
-              )
+                  ))
 
         val oldDocument = $.state.runNow().document
         val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
@@ -457,17 +450,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         val tasksToAdd = {
           for (task <- tasksToReplace)
             yield
-              Task.withRandomId(
+              task.copyWithRandomId(
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
                     endOffset =
                       if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
                     updateFunc = _.copy(link = newLink)
-                  ),
-                orderToken = task.orderToken,
-                indentation = task.indentation
-              )
+                  ))
         }
 
         replaceInStateWithHistory(
@@ -519,11 +509,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         }
         val tasksToAdd =
           for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
-            yield
-              Task.withRandomId(
-                content = task.content,
-                orderToken = newOrderToken,
-                indentation = task.indentation)
+            yield task.copyWithRandomId(orderToken = newOrderToken)
 
         replaceInStateWithHistory(
           tasksToReplace = tasksToReplace,
