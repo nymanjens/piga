@@ -60,7 +60,8 @@ object TestObjects {
     collapsed = true,
     delayedUntil = Some(testDate),
     tags = Seq("tag"),
-    idOption = Some(821379))
+    idOption = Some(821379)
+  )
 
   val testModificationA: EntityModification = EntityModification.Add(testUserRedacted)
   val testModificationB: EntityModification =

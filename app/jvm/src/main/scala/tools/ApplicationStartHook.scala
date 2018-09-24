@@ -124,7 +124,8 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
           collapsed = false,
           delayedUntil = None,
           tags = Seq("indented"),
-          idOption = Some(22))),
+          idOption = Some(22)
+        )),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,

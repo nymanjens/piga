@@ -14,12 +14,18 @@ object DocumentTest extends TestSuite {
 
   override def tests = TestSuite {
     "equals and hashCode" - {
-      val documentA: AnyRef = new Document(id = 12873, name = "test document",  orderTokenA, tasks = Seq(taskA))
-      val documentA2: AnyRef = new Document(id = 12873, name = "test document",  orderTokenA, tasks = Seq(taskA))
-      val documentB: AnyRef = new Document(id = 12873, name = "test document",  orderTokenA, tasks = Seq(taskB))
-      val documentC: AnyRef = new Document(id = 12873, name = "CCCCCCCCCCCCC",  orderTokenA, tasks = Seq(taskA))
-      val documentD: AnyRef = new Document(id = 11111, name = "test document",  orderTokenA, tasks = Seq(taskA))
-      val documentE: AnyRef = new Document(id = 12873, name = "test document",  orderTokenB, tasks = Seq(taskA))
+      val documentA: AnyRef =
+        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskA))
+      val documentA2: AnyRef =
+        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskA))
+      val documentB: AnyRef =
+        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskB))
+      val documentC: AnyRef =
+        new Document(id = 12873, name = "CCCCCCCCCCCCC", orderTokenA, tasks = Seq(taskA))
+      val documentD: AnyRef =
+        new Document(id = 11111, name = "test document", orderTokenA, tasks = Seq(taskA))
+      val documentE: AnyRef =
+        new Document(id = 12873, name = "test document", orderTokenB, tasks = Seq(taskA))
 
       documentA.hashCode() == documentA.asInstanceOf[Document].hashCode ==> true
       documentA == documentA2 ==> true
