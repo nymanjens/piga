@@ -6,6 +6,7 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.visibleForTesting
 import common.time.Clock
 import common.{I18n, OrderToken}
+import flux.react.ReactVdomUtils.^^
 import models.document.TextWithMarkup.Formatting
 import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
@@ -89,16 +90,23 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           ^.onInput ==> handleEvent("onChange"),
           ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
-            (for ((task, i) <- state.document.tasks.zipWithIndex)
+            (for (((task, maybeAmountCollapsed), i) <- applyCollapsedProperty(state.document.tasks).zipWithIndex)
               yield
-                <.li(
+                (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
                   ^.className := s"indentation-${task.indentation}",
                   VdomAttr("num") := i,
                   task.content.toVdomNode
-                )).toVdomArray
+                ) +: (maybeAmountCollapsed match {
+                  case Some(amountCollapsed) =>
+                    Seq(
+                      <.styleTag(
+                        ^.key := s"listyle-$i",
+                        s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}"""))
+                  case None => Seq()
+                })).toVdomArray).toVdomArray
           )
         ),
         <.br(),
@@ -714,6 +722,21 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
     addPastedText(Seq(html), nextRelativeIndentation = -1)
     Replacement(partsBuilder.toVector)
+  }
+
+  private type AmountCollapsed = Int
+  private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Option[AmountCollapsed])] = {
+    def getAmountCollapsed(tasks: Stream[Task], collapsedIndentation: Int): Int = {
+      tasks.takeWhile(_.indentation > collapsedIndentation).size
+    }
+    def inner(tasks: Stream[Task]): Stream[(Task, Option[AmountCollapsed])] = tasks match {
+      case task #:: rest if task.collapsed =>
+        val amountCollapsed = getAmountCollapsed(rest, task.indentation)
+        (task, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
+      case task #:: rest => (task, /* maybeAmountCollapsed = */ None) #:: inner(rest)
+      case Stream.Empty  => Stream.Empty
+    }
+    inner(tasks.toStream)
   }
 
   private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
