@@ -19,6 +19,9 @@ object TestObjects {
   val orderTokenD: OrderToken = OrderToken.middleBetween(Some(orderTokenC), None)
   val orderTokenE: OrderToken = OrderToken.middleBetween(Some(orderTokenD), None)
 
+  val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
+  val testUpdateToken: UpdateToken = s"123782:12378"
+
   def testUserA: User = User(
     loginName = "testUserA",
     passwordHash =
@@ -54,10 +57,10 @@ object TestObjects {
     contentHtml = "abc<b>def</b>",
     orderToken = orderTokenA,
     indentation = 12,
+    collapsed = true,
+    delayedUntil = Some(testDate),
+    tags = Seq("tag"),
     idOption = Some(821379))
-
-  val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
-  val testUpdateToken: UpdateToken = s"123782:12378"
 
   val testModificationA: EntityModification = EntityModification.Add(testUserRedacted)
   val testModificationB: EntityModification =

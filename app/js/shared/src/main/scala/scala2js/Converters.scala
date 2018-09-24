@@ -38,8 +38,10 @@ object Converters {
       case ModelField.FieldType.DoubleType        => fromType(ModelField.FieldType.DoubleType)
       case ModelField.FieldType.StringType        => fromType(ModelField.FieldType.StringType)
       case ModelField.FieldType.LocalDateTimeType => fromType(ModelField.FieldType.LocalDateTimeType)
-      case ModelField.FieldType.StringSeqType     => fromType(ModelField.FieldType.StringSeqType)
-      case ModelField.FieldType.OrderTokenType    => fromType(ModelField.FieldType.OrderTokenType)
+      case ModelField.FieldType.MaybeLocalDateTimeType =>
+        fromType(ModelField.FieldType.MaybeLocalDateTimeType)
+      case ModelField.FieldType.StringSeqType  => fromType(ModelField.FieldType.StringSeqType)
+      case ModelField.FieldType.OrderTokenType => fromType(ModelField.FieldType.OrderTokenType)
     }
     result.asInstanceOf[Converter[V]]
   }
@@ -65,6 +67,19 @@ object Converters {
         seq.toStream.map(Scala2Js.toJs[A]).toJSArray
       override def toScala(value: js.Any) =
         value.asInstanceOf[js.Array[js.Any]].toStream.map(Scala2Js.toScala[A]).toVector
+    }
+
+  implicit def optionConverter[V: Converter]: Converter[Option[V]] =
+    new Converter[Option[V]] {
+      override def toJs(option: Option[V]) = option match {
+        case Some(v) => js.Array(Scala2Js.toJs(v))
+        case None    => js.Array()
+      }
+      override def toScala(value: js.Any) =
+        value.asInstanceOf[js.Array[js.Any]].toVector match {
+          case Seq(value) => Some(Scala2Js.toScala[V](value))
+          case Seq()      => None
+        }
     }
 
   // **************** General converters **************** //
@@ -261,7 +276,10 @@ object Converters {
         ModelField.TaskEntity.documentId,
         ModelField.TaskEntity.contentHtml,
         ModelField.TaskEntity.orderToken,
-        ModelField.TaskEntity.indentation
+        ModelField.TaskEntity.indentation,
+        ModelField.TaskEntity.collapsed,
+        ModelField.TaskEntity.delayedUntil,
+        ModelField.TaskEntity.tags
       )
 
     override def toScalaWithoutId(dict: js.Dictionary[js.Any]) = {
@@ -272,7 +290,10 @@ object Converters {
         documentId = getRequired(ModelField.TaskEntity.documentId),
         contentHtml = getRequired(ModelField.TaskEntity.contentHtml),
         orderToken = getRequired(ModelField.TaskEntity.orderToken),
-        indentation = getRequired(ModelField.TaskEntity.indentation)
+        indentation = getRequired(ModelField.TaskEntity.indentation),
+        collapsed = getRequired(ModelField.TaskEntity.collapsed),
+        delayedUntil = getRequired(ModelField.TaskEntity.delayedUntil),
+        tags = getRequired(ModelField.TaskEntity.tags)
       )
     }
   }

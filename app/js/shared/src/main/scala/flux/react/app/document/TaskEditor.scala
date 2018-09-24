@@ -49,9 +49,16 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(
-        task = Task.withRandomId(TextWithMarkup.empty, OrderToken.middle, indentation = 0),
+        task = Task.withRandomId(
+          TextWithMarkup.empty,
+          OrderToken.middle,
+          indentation = 0,
+          collapsed = false,
+          delayedUntil = None,
+          tags = Seq()),
         offsetInTask = 0),
-      formatting = Formatting.none)
+      formatting = Formatting.none
+    )
 
     def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
       props.documentStore.register(this)
@@ -312,21 +319,20 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           higher = nextTask.map(_.orderToken)
         )
       }
-      val baseIndentation = oldDocument.tasks(start.seqIndex).indentation
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
             def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
               if (i == index) tags else TextWithMarkup.empty
-            Task.withRandomId(
+            tasksToReplace.head.copyWithRandomId(
               content = ifIndexOrEmpty(0)(
                 oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
                   oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)),
               orderToken = newOrderToken,
-              indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
+              indentation = tasksToReplace.head.indentation + replacementPart.indentationRelativeToCurrent
             )
           }
 

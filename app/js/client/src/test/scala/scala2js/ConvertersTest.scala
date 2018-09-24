@@ -55,6 +55,11 @@ object ConvertersTest extends TestSuite {
       testToJsAndBack[Seq[String]](Seq())
     }
 
+    "optionConverter: testToJsAndBack" - {
+      testToJsAndBack[Option[String]](Some("x"))
+      testToJsAndBack[Option[String]](None)
+    }
+
     "LocalDateTimeConverter: testToJsAndBack" - {
       testToJsAndBack[LocalDateTime](LocalDateTime.of(2022, MARCH, 13, 12, 13))
     }

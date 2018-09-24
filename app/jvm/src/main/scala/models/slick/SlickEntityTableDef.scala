@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import api.Picklers._
 import boopickle.Default.{Pickle, Unpickle}
-import common.OrderToken
+import common.{OrderToken, Tags}
 import common.time.LocalDateTime
 import models.Entity
 import models.document.{DocumentEntity, TaskEntity}
@@ -75,15 +75,22 @@ object SlickEntityTableDef {
     override val tableName: String = "TASK_ENTITIES"
     override def table(tag: SlickTag): Table = new Table(tag)
 
+    private implicit val tagsSeqToStringMapper: ColumnType[Seq[String]] = {
+      MappedColumnType.base[Seq[String], String](Tags.serializeToString, Tags.parseTagsString)
+    }
+
     /* override */
     final class Table(tag: SlickTag) extends EntityTable[TaskEntity](tag, tableName) {
       def documentId = column[Long]("documentId")
       def contentHtml = column[String]("contentHtml")
       def orderToken = column[OrderToken]("orderToken")
       def indentation = column[Int]("indentation")
+      def collapsed = column[Boolean]("collapsed")
+      def delayedUntil = column[Option[LocalDateTime]]("delayedUntil")
+      def tags = column[Seq[String]]("tagsString")(tagsSeqToStringMapper)
 
       override def * =
-        (documentId, contentHtml, orderToken, indentation, id.?) <> (TaskEntity.tupled, TaskEntity.unapply)
+        (documentId, contentHtml, orderToken, indentation, collapsed, delayedUntil, tags, id.?) <> (TaskEntity.tupled, TaskEntity.unapply)
     }
   }
 

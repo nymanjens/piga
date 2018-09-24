@@ -43,6 +43,7 @@ object ModelField {
     implicit case object DoubleType extends FieldType[Double]
     implicit case object StringType extends FieldType[String]
     implicit case object LocalDateTimeType extends FieldType[LocalDateTime]
+    implicit case object MaybeLocalDateTimeType extends FieldType[Option[LocalDateTime]]
     implicit case object StringSeqType extends FieldType[Seq[String]]
     implicit case object OrderTokenType extends FieldType[OrderToken]
   }
@@ -76,6 +77,9 @@ object ModelField {
     case object contentHtml extends ModelField[String, E]("contentHtml", _.contentHtml)
     case object orderToken extends ModelField[OrderToken, E]("orderToken", _.orderToken)
     case object indentation extends ModelField[Int, E]("indentation", _.indentation)
+    case object collapsed extends ModelField[Boolean, E]("collapsed", _.collapsed)
+    case object delayedUntil extends ModelField[Option[LocalDateTime], E]("delayedUntil", _.delayedUntil)
+    case object tags extends ModelField[Seq[String], E]("tags", _.tags)
   }
 
   // **************** Field numbers **************** //
@@ -95,6 +99,9 @@ object ModelField {
       .put(TaskEntity.contentHtml, 11)
       .put(TaskEntity.orderToken, 12)
       .put(TaskEntity.indentation, 13)
+      .put(TaskEntity.collapsed, 15)
+      .put(TaskEntity.delayedUntil, 16)
+      .put(TaskEntity.tags, 17)
       .build()
   def toNumber(field: ModelField[_, _]): Int = fieldToNumberMap.get(field)
   def fromNumber(number: Int): ModelField[_, _] = fieldToNumberMap.inverse().get(number)
