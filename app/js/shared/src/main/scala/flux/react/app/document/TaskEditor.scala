@@ -90,8 +90,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           ^.onInput ==> handleEvent("onChange"),
           ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
-            (for (((task, maybeAmountCollapsed), i) <- applyCollapsedProperty(state.document.tasks).zipWithIndex)
-              yield
+            (for ((task, maybeAmountCollapsed) <- applyCollapsedProperty(state.document.tasks))
+              yield {
+                val i = state.document.indexOf(task)
                 (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
@@ -106,7 +107,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                         ^.key := s"listyle-$i",
                         s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}"""))
                   case None => Seq()
-                })).toVdomArray).toVdomArray
+                })).toVdomArray
+              }).toVdomArray
           )
         ),
         <.br(),
@@ -742,7 +744,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
   private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
     def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
       val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
-      require(!js.isUndefined(task), s"Could not find task with index teli-${cursor.seqIndex}")
+      require(task != null, s"Could not find task with ID teli-${cursor.seqIndex}")
       task
     }
     def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
