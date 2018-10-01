@@ -604,6 +604,62 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         )
       }
     }
+
+    private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
+      val document = $.state.runNow().document
+      def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
+        Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
+      def getTaskElement(cursor: IndexedCursor): dom.raw.Element = maybeGetTaskElement(cursor) match {
+        case Some(e) => e
+        case None =>
+          throw new IllegalStateException(s"Could not find <li> task with seqIndex=${cursor.seqIndex}")
+      }
+      def mapToNonCollapsedCursor(cursor: IndexedCursor): IndexedCursor = {
+        if (maybeGetTaskElement(cursor).isDefined) {
+          cursor
+        } else {
+          ((cursor.seqIndex + 1) until document.tasks.size)
+            .map(IndexedCursor(_, 0))
+            .find(maybeGetTaskElement(_).isDefined) match {
+            case Some(c) => c
+            case None =>
+              (0 until cursor.seqIndex).reverse
+                .map(IndexedCursor(_, 0))
+                .find(maybeGetTaskElement(_).isDefined)
+                .get
+          }
+        }
+      }
+
+      def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
+        walkDepthFirstPreOrder(getTaskElement(cursor)).find {
+          case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+            if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
+              func(node, cursor.offsetInTask - offsetSoFar)
+
+              true
+            } else {
+              false
+            }
+        }
+      }
+
+      val start = mapToNonCollapsedCursor(selection.start)
+      val end = mapToNonCollapsedCursor(selection.end)
+      val resultRange = dom.document.createRange()
+      findCursorInDom(start)(resultRange.setStart)
+      findCursorInDom(end)(resultRange.setEnd)
+
+      val windowSelection = dom.window.getSelection()
+      windowSelection.removeAllRanges()
+      windowSelection.addRange(resultRange)
+
+      if (!elementIsFullyInView(getTaskElement(end))) {
+        getTaskElement(end)
+          .asInstanceOf[js.Dynamic]
+          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
+      }
+    }
   }
 
   // **************** Helper classes and methods **************** //
@@ -739,41 +795,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       case Stream.Empty  => Stream.Empty
     }
     inner(tasks.toStream)
-  }
-
-  private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
-    def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
-      val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
-      require(task != null, s"Could not find task with ID teli-${cursor.seqIndex}")
-      task
-    }
-    def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
-      walkDepthFirstPreOrder(getTaskElement(cursor)).find {
-        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-          if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
-            func(node, cursor.offsetInTask - offsetSoFar)
-
-            true
-          } else {
-            false
-          }
-      }
-    }
-
-    val IndexedSelection(start, end) = selection
-    val resultRange = dom.document.createRange()
-    findCursorInDom(start)(resultRange.setStart)
-    findCursorInDom(end)(resultRange.setEnd)
-
-    val windowSelection = dom.window.getSelection()
-    windowSelection.removeAllRanges()
-    windowSelection.addRange(resultRange)
-
-    if (!elementIsFullyInView(getTaskElement(end))) {
-      getTaskElement(end)
-        .asInstanceOf[js.Dynamic]
-        .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
-    }
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
