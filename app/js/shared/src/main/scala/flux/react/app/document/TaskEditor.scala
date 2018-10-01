@@ -181,7 +181,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
 
-      console.log(s"event.key = ${event.key}")
+      // console.log(s"event.key = ${event.key}")
 
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
