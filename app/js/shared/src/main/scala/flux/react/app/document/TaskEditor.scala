@@ -232,7 +232,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         case "Tab" =>
           event.preventDefault()
           val indentIncrease = if (shiftPressed) -1 else 1
-          updateTasksInSelection(selection) { task =>
+          updateTasksInSelection(selection, updateCollapsedChildren = true) { task =>
             task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
           }
 
@@ -302,13 +302,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "=" if ctrlPressed && !shiftPressed => // Expand lines
           event.preventDefault()
-          updateTasksInSelection(selection) { task =>
+          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = false)
           }
 
         case "-" if ctrlPressed && !shiftPressed => // Collapse lines
           event.preventDefault()
-          updateTasksInSelection(selection) { task =>
+          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = true)
           }
 
@@ -371,10 +371,30 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       )
     }
 
-    private def updateTasksInSelection(selection: IndexedSelection)(taskUpdate: Task => Task): Callback = {
+    private def updateTasksInSelection(selection: IndexedSelection, updateCollapsedChildren: Boolean)(
+        taskUpdate: Task => Task): Callback = {
+      def includeCollapsedChildren(selection: IndexedSelection): IndexedSelection = {
+        val end = selection.end
+        val document = $.state.runNow().document
+        val task = document.tasks(end.seqIndex)
+
+        var index = end.seqIndex
+        if (task.collapsed) {
+          while (document.tasksOption(index + 1).isDefined &&
+                 document.tasksOption(index + 1).get.indentation > task.indentation) {
+            index += 1
+          }
+        }
+        IndexedSelection(
+          start = selection.start,
+          end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
+        )
+      }
+
       val oldDocument = $.state.runNow().document
 
-      val IndexedSelection(start, end) = selection
+      val IndexedSelection(start, end) =
+        if (updateCollapsedChildren) includeCollapsedChildren(selection) else selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd = tasksToReplace.map(taskUpdate)
 
