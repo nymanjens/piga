@@ -181,6 +181,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
 
+      console.log(s"event.key = ${event.key}")
+
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
           event.preventDefault()
@@ -236,7 +238,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "Tab" =>
           event.preventDefault()
-          indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
+          val indentIncrease = if (shiftPressed) -1 else 1
+          updateTasksInSelection(selection) { task =>
+            task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
+          }
 
         case "i" if ctrlPressed => // Italic
           event.preventDefault()
@@ -302,6 +307,18 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           moveLinesInSeq(selection, seqIndexMovement = +1)
 
+        case "=" if ctrlPressed && !shiftPressed => // Expand lines
+          event.preventDefault()
+          updateTasksInSelection(selection) { task =>
+            task.copyWithRandomId(collapsed = false)
+          }
+
+        case "-" if ctrlPressed && !shiftPressed => // Collapse lines
+          event.preventDefault()
+          updateTasksInSelection(selection) { task =>
+            task.copyWithRandomId(collapsed = true)
+          }
+
         case _ =>
           Callback.empty
       }
@@ -361,13 +378,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       )
     }
 
-    private def indentSelectionInState(indentIncrease: Int, selection: IndexedSelection): Callback = {
+    private def updateTasksInSelection(selection: IndexedSelection)(taskUpdate: Task => Task): Callback = {
       val oldDocument = $.state.runNow().document
 
       val IndexedSelection(start, end) = selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-      val tasksToAdd = tasksToReplace.map(task =>
-        task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease)))
+      val tasksToAdd = tasksToReplace.map(taskUpdate)
 
       replaceInStateWithHistory(
         tasksToReplace = tasksToReplace,
