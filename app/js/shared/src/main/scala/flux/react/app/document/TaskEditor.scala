@@ -3,9 +3,9 @@ package flux.react.app.document
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.ScalaUtils.visibleForTesting
+import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
-import common.{I18n, OrderToken}
+import common.{I18n, OrderToken, ScalaUtils}
 import flux.react.ReactVdomUtils.^^
 import models.document.TextWithMarkup.Formatting
 import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
@@ -93,11 +93,16 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             (for ((task, maybeAmountCollapsed) <- applyCollapsedProperty(state.document.tasks))
               yield {
                 val i = state.document.indexOf(task)
+                val nodeType = state.document.tasksOption(i + 1) match {
+                  case _ if task.indentation == 0                                => "root"
+                  case Some(nextTask) if nextTask.indentation > task.indentation => "node"
+                  case _                                                         => "leaf"
+                }
                 (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
-                  ^.className := s"indentation-${task.indentation}",
+                  ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
                   VdomAttr("num") := i,
                   task.content.toVdomNode
                 ) +: (maybeAmountCollapsed match {

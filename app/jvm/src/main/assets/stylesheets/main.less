@@ -93,6 +93,8 @@ table.table-bordered {
 .task-editor {
   ul {
     padding-left: 3px;
+    list-style-type: none;
+
     li {
       white-space: pre-wrap;
       &:empty {
@@ -105,8 +107,23 @@ table.table-bordered {
         color: #CCC;
         font-style: italic;
       }
-      &.indentation-0 {
-        list-style-type: none;
+      &:not(.root) {
+        &:before {
+          font-family: 'Glyphicons Halflings';
+          display: inline-block;
+          margin-left: -1.3em;
+          width: 1.3em;
+          font-size: 13px;
+        }
+        &.collapsed:before {
+          content: "\e158"; // glyphicon-expand
+        }
+        &:not(.collapsed):before {
+          content: "\e159"; // glyphicon-collapse-down
+        }
+        &:not(.collapsed).leaf:before {
+          content: "\e157"; // glyphicon-unchecked
+        }
       }
     }
   }
