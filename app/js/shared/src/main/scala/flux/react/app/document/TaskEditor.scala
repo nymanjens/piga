@@ -373,24 +373,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
     private def updateTasksInSelection(selection: IndexedSelection, updateCollapsedChildren: Boolean)(
         taskUpdate: Task => Task): Callback = {
-      def includeCollapsedChildren(selection: IndexedSelection): IndexedSelection = {
-        val end = selection.end
-        val document = $.state.runNow().document
-        val task = document.tasks(end.seqIndex)
-
-        var index = end.seqIndex
-        if (task.collapsed) {
-          while (document.tasksOption(index + 1).isDefined &&
-                 document.tasksOption(index + 1).get.indentation > task.indentation) {
-            index += 1
-          }
-        }
-        IndexedSelection(
-          start = selection.start,
-          end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
-        )
-      }
-
       val oldDocument = $.state.runNow().document
 
       val IndexedSelection(start, end) =
@@ -531,7 +513,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     }
 
     private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, seqIndexMovement: Int): Callback = {
-      val IndexedSelection(start, end) = selectionBeforeEdit
+      val IndexedSelection(start, end) = includeCollapsedChildren(selectionBeforeEdit)
       val oldDocument = $.state.runNow().document
 
       val (task1, task2) =
@@ -566,8 +548,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           tasksToAdd = tasksToAdd,
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
-            start.copy(seqIndex = start.seqIndex + seqIndexMovement),
-            end.copy(seqIndex = end.seqIndex + seqIndexMovement))
+            selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement)
+          )
         )
       }
     }
@@ -693,6 +676,24 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           .asInstanceOf[js.Dynamic]
           .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
       }
+    }
+
+    private def includeCollapsedChildren(selection: IndexedSelection): IndexedSelection = {
+      val document = $.state.runNow().document
+      val end = selection.end
+      val task = document.tasks(end.seqIndex)
+
+      var index = end.seqIndex
+      if (task.collapsed) {
+        while (document.tasksOption(index + 1).isDefined &&
+               document.tasksOption(index + 1).get.indentation > task.indentation) {
+          index += 1
+        }
+      }
+      IndexedSelection(
+        start = selection.start,
+        end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
+      )
     }
   }
 
