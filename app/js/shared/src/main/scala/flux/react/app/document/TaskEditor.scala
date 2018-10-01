@@ -115,14 +115,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                 })).toVdomArray
               }).toVdomArray
           )
-        ),
-        <.br(),
-        "----------------",
-        <.br(),
-        <.br(),
-        <.br(),
-        (for ((task, i) <- state.document.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- [", task.indentation, "]", task.content.toVdomNode)).toVdomArray
+        )
       )
     }
 
