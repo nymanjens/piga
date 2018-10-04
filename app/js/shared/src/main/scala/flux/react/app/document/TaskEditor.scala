@@ -294,11 +294,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
           event.preventDefault()
-          moveLinesInSeq(selection, seqIndexMovement = -1)
+          moveLinesInSeq(selection, direction = -1)
 
         case "ArrowDown" if altPressed && !shiftPressed => // Move lines down
           event.preventDefault()
-          moveLinesInSeq(selection, seqIndexMovement = +1)
+          moveLinesInSeq(selection, direction = +1)
 
         case "=" if ctrlPressed && !shiftPressed => // Expand lines
           event.preventDefault()
@@ -373,10 +373,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
     private def updateTasksInSelection(selection: IndexedSelection, updateCollapsedChildren: Boolean)(
         taskUpdate: Task => Task): Callback = {
-      val oldDocument = $.state.runNow().document
+      implicit val oldDocument = $.state.runNow().document
 
       val IndexedSelection(start, end) =
-        if (updateCollapsedChildren) includeCollapsedChildren(selection) else selection
+        if (updateCollapsedChildren) selection.includeCollapsedChildren else selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd = tasksToReplace.map(taskUpdate)
 
@@ -512,9 +512,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
     }
 
-    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, seqIndexMovement: Int): Callback = {
-      val IndexedSelection(start, end) = includeCollapsedChildren(selectionBeforeEdit)
-      val oldDocument = $.state.runNow().document
+    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
+      implicit val oldDocument = $.state.runNow().document
+      val IndexedSelection(start, end) = selectionBeforeEdit.includeCollapsedChildren
+
+      val seqIndexMovement = {
+        val indexThatIsHoppedOver = if (direction < 0) start.seqIndex - 1 else end.seqIndex + 1
+        oldDocument.collapsedTasksRange(indexThatIsHoppedOver) match {
+          case None                    => direction * 1
+          case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
+        }
+      }
 
       val (task1, task2) =
         if (seqIndexMovement < 0)
@@ -676,24 +684,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           .asInstanceOf[js.Dynamic]
           .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
       }
-    }
-
-    private def includeCollapsedChildren(selection: IndexedSelection): IndexedSelection = {
-      val document = $.state.runNow().document
-      val end = selection.end
-      val task = document.tasks(end.seqIndex)
-
-      var index = end.seqIndex
-      if (task.collapsed) {
-        while (document.tasksOption(index + 1).isDefined &&
-               document.tasksOption(index + 1).get.indentation > task.indentation) {
-          index += 1
-        }
-      }
-      IndexedSelection(
-        start = selection.start,
-        end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
-      )
     }
   }
 
