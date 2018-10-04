@@ -90,9 +90,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           ^.onInput ==> handleEvent("onChange"),
           ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
-            (for ((task, maybeAmountCollapsed) <- applyCollapsedProperty(state.document.tasks))
-              yield {
-                val i = state.document.indexOf(task)
+            applyCollapsedProperty(state.document.tasks).map {
+              case (task, i, maybeAmountCollapsed) =>
                 val nodeType = state.document.tasksOption(i + 1) match {
                   case _ if task.indentation == 0                                => "root"
                   case Some(nextTask) if nextTask.indentation > task.indentation => "node"
@@ -113,7 +112,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                         s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}"""))
                   case None => Seq()
                 })).toVdomArray
-              }).toVdomArray
+            }.toVdomArray
           )
         )
       )
@@ -807,19 +806,20 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     Replacement(partsBuilder.toVector)
   }
 
+  private type Index = Int
   private type AmountCollapsed = Int
-  private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Option[AmountCollapsed])] = {
-    def getAmountCollapsed(tasks: Stream[Task], collapsedIndentation: Int): Int = {
-      tasks.takeWhile(_.indentation > collapsedIndentation).size
+  private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Index, Option[AmountCollapsed])] = {
+    def getAmountCollapsed(tasks: Stream[(Task, Index)], collapsedIndentation: Int): Int = {
+      tasks.takeWhile(_._1.indentation > collapsedIndentation).size
     }
-    def inner(tasks: Stream[Task]): Stream[(Task, Option[AmountCollapsed])] = tasks match {
-      case task #:: rest if task.collapsed =>
+    def inner(tasks: Stream[(Task, Index)]): Stream[(Task, Index, Option[AmountCollapsed])] = tasks match {
+      case (task, i) #:: rest if task.collapsed =>
         val amountCollapsed = getAmountCollapsed(rest, task.indentation)
-        (task, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
-      case task #:: rest => (task, /* maybeAmountCollapsed = */ None) #:: inner(rest)
-      case Stream.Empty  => Stream.Empty
+        (task, i, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
+      case (task, i) #:: rest => (task, i, /* maybeAmountCollapsed = */ None) #:: inner(rest)
+      case Stream.Empty       => Stream.Empty
     }
-    inner(tasks.toStream)
+    inner(tasks.zipWithIndex.toStream)
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
