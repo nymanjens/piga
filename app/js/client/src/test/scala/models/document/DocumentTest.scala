@@ -92,6 +92,60 @@ object DocumentTest extends TestSuite {
       document.indexOf(taskE) ==> 5
       document.indexOf(taskEE) ==> 6
     }
+    "collapsedTasksRange" - {
+      "none collapsed" - {
+        val document = newDocument(taskA, taskB, taskC, taskD, taskE)
+
+        document.collapsedTasksRange(0) ==> None
+        document.collapsedTasksRange(1) ==> None
+        document.collapsedTasksRange(2) ==> None
+        document.collapsedTasksRange(3) ==> None
+        document.collapsedTasksRange(4) ==> None
+      }
+      "collapsed without children" - {
+        val document = newDocument(
+          indentation(0, taskA),
+          indentation(1, taskB),
+          indentation(2, collapsed(taskC)),
+          indentation(1, taskD),
+          indentation(0, taskE))
+
+        document.collapsedTasksRange(0) ==> None
+        document.collapsedTasksRange(1) ==> None
+        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(2, 2))
+        document.collapsedTasksRange(3) ==> None
+        document.collapsedTasksRange(4) ==> None
+      }
+      "collapsed with children" - {
+        val document = newDocument(
+          indentation(1, taskA),
+          indentation(1, collapsed(taskB)),
+          indentation(2, taskC),
+          indentation(2, taskD),
+          indentation(1, taskE))
+
+        document.collapsedTasksRange(0) ==> None
+        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(1, 3))
+        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(1, 3))
+        document.collapsedTasksRange(3) ==> Some(document.CollapsedTasksRange(1, 3))
+        document.collapsedTasksRange(4) ==> None
+      }
+      "all collapsed" - {
+        val document = newDocument(
+          indentation(1, collapsed(taskA)),
+          indentation(1, collapsed(taskB)),
+          indentation(2, collapsed(taskC)),
+          indentation(3, collapsed(taskD)),
+          indentation(1, collapsed(taskE))
+        )
+
+        document.collapsedTasksRange(0) ==> Some(document.CollapsedTasksRange(0, 0))
+        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(1, 3))
+        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(2, 3))
+        document.collapsedTasksRange(3) ==> Some(document.CollapsedTasksRange(3, 3))
+        document.collapsedTasksRange(4) ==> Some(document.CollapsedTasksRange(4, 4))
+      }
+    }
     "IndexedCursor" - {
       "plusWord" - {
         implicit val document = newDocument(newTask("the red apple"))
@@ -113,6 +167,46 @@ object DocumentTest extends TestSuite {
           DetachedSelection(DetachedCursor(task1, 0), DetachedCursor(task2, 5))
         selection.detach.attachToDocument ==> selection
       }
+      "includeCollapsedChildren" - {
+        def assertNoChange(selection: IndexedSelection)(implicit document: Document): Unit = {
+          selection.includeCollapsedChildren ==> selection
+        }
+
+        "none collapsed" - {
+          implicit val document = newDocument(taskA, taskB, taskC, taskD, taskE)
+
+          assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
+          assertNoChange(IndexedSelection.collapsed(IndexedCursor(2, 5)))
+        }
+        "collapsed without children" - {
+          implicit val document = newDocument(
+            indentation(0, taskA),
+            indentation(1, taskB),
+            indentation(2, collapsed(taskC)),
+            indentation(1, taskD),
+            indentation(0, taskE))
+
+          assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
+          assertNoChange(IndexedSelection.collapsed(IndexedCursor(2, 5)))
+        }
+        "collapsed with children" - {
+          implicit val document = newDocument(
+            indentation(1, taskA),
+            indentation(1, collapsed(taskB)),
+            indentation(2, taskC),
+            indentation(2, taskD),
+            indentation(1, taskE))
+
+          IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5)).includeCollapsedChildren ==>
+            IndexedSelection(IndexedCursor(0, 1), IndexedCursor(3, 0))
+          IndexedSelection.collapsed(IndexedCursor(1, 5)).includeCollapsedChildren ==>
+            IndexedSelection(IndexedCursor(1, 5), IndexedCursor(3, 0))
+        }
+      }
     }
   }
+
+  private def collapsed(task: Task): Task = task.copyWithRandomId(collapsed = true)
+  private def indentation(newIndentation: Int, task: Task): Task =
+    task.copyWithRandomId(indentation = newIndentation)
 }

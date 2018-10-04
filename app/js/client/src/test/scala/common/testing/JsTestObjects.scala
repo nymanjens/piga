@@ -25,7 +25,7 @@ object JsTestObjects {
               content: TextWithMarkup = null,
               orderToken: OrderToken = orderTokenB,
               indentation: Int = 1,
-              collapsed: Boolean = true,
+              collapsed: Boolean = false,
               delayedUntil: Option[LocalDateTime] = Some(testDate),
               tags: Seq[String] = Seq("test-tag")): Task = {
     require(content != null || contentString != null)
