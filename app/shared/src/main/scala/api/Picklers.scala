@@ -157,8 +157,10 @@ object Picklers {
           case ModelField.FieldType.DoubleType        => fromType(ModelField.FieldType.DoubleType)
           case ModelField.FieldType.StringType        => fromType(ModelField.FieldType.StringType)
           case ModelField.FieldType.LocalDateTimeType => fromType(ModelField.FieldType.LocalDateTimeType)
-          case ModelField.FieldType.StringSeqType     => fromType(ModelField.FieldType.StringSeqType)
-          case ModelField.FieldType.OrderTokenType    => fromType(ModelField.FieldType.OrderTokenType)
+          case ModelField.FieldType.MaybeLocalDateTimeType =>
+            fromType(ModelField.FieldType.MaybeLocalDateTimeType)
+          case ModelField.FieldType.StringSeqType  => fromType(ModelField.FieldType.StringSeqType)
+          case ModelField.FieldType.OrderTokenType => fromType(ModelField.FieldType.OrderTokenType)
         }
       }
     }

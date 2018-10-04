@@ -4,6 +4,7 @@ import common.DomNodeUtils.nodeIsLi
 import common.OrderToken
 import models.access.DbQueryImplicits._
 import models.access.{JsEntityAccess, ModelField}
+import models.document.Document.{IndexedCursor, IndexedSelection}
 import org.scalajs.dom
 
 import scala.annotation.tailrec
@@ -95,6 +96,44 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
   }
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
+
+  case class CollapsedTasksRange(parentSeqIndex: Int, lastChildSeqIndex: Int) {
+    def numberOfTasks: Int = lastChildSeqIndex - parentSeqIndex + 1
+  }
+  def collapsedTasksRange(seqIndex: Int): Option[CollapsedTasksRange] = {
+    def findCollapsedParentIndex(seqIndex: Int, currentIndentation: Int): Option[Int] = {
+      if (tasks(seqIndex).collapsed) {
+        Some(seqIndex)
+      } else {
+        var parentIndex = seqIndex
+        while (parentIndex >= 0 && !(tasks(parentIndex).collapsed &&
+                 tasks(parentIndex).indentation < currentIndentation)) {
+          parentIndex -= 1
+        }
+        if (parentIndex == -1) {
+          None
+        } else {
+          Some(parentIndex)
+        }
+      }
+    }
+    def findLastChildIndex(seqIndex: Int, parentIndentation: Int): Int = {
+      var lastChildIndex = seqIndex
+      while (tasksOption(lastChildIndex + 1).isDefined &&
+             tasks(lastChildIndex + 1).indentation > parentIndentation) {
+        lastChildIndex += 1
+      }
+      lastChildIndex
+    }
+
+    for {
+      task <- tasksOption(seqIndex)
+      parentIndex <- findCollapsedParentIndex(seqIndex, task.indentation)
+    } yield
+      CollapsedTasksRange(
+        parentIndex,
+        findLastChildIndex(seqIndex, parentIndentation = tasks(parentIndex).indentation))
+  }
 
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
@@ -238,6 +277,22 @@ object Document {
 
     def detach(implicit document: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
     def isCollapsed: Boolean = start == end
+
+    def includeCollapsedChildren(implicit document: Document): IndexedSelection = {
+      val task = document.tasks(end.seqIndex)
+
+      var index = end.seqIndex
+      if (task.collapsed) {
+        while (document.tasksOption(index + 1).isDefined &&
+               document.tasks(index + 1).indentation > task.indentation) {
+          index += 1
+        }
+      }
+      IndexedSelection(
+        start = start,
+        end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
+      )
+    }
   }
   object IndexedSelection {
     def collapsed(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)

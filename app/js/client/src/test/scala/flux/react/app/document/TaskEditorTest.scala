@@ -2,6 +2,7 @@ package flux.react.app.document
 
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
+import common.time.LocalDateTime
 import models.document.Document.{IndexedCursor, IndexedSelection}
 import models.document.TextWithMarkup.Formatting
 import models.document.{Task, TextWithMarkup}
@@ -26,11 +27,7 @@ object TaskEditorTest extends TestSuite {
       }
       "with formatting" - {
         taskEditor.convertToClipboardData(
-          newDocument(
-            Task.withRandomId(
-              content = TextWithMarkup("a") + italic("b"),
-              orderToken = orderTokenA,
-              indentation = 0)),
+          newDocument(newTask(content = TextWithMarkup("a") + italic("b"))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
           taskEditor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
@@ -145,7 +142,7 @@ object TaskEditorTest extends TestSuite {
           newDocument(
             replacement.parts.map(
               p =>
-                Task.withRandomId(
+                newTask(
                   content = p.content,
                   orderToken = orderTokenA,
                   indentation = 10 + p.indentationRelativeToCurrent)): _*),
@@ -192,9 +189,6 @@ object TaskEditorTest extends TestSuite {
   private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
 
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
-
-  private def newTask(content: String, indentation: Int = 0): Task =
-    Task.withRandomId(content = TextWithMarkup(content), orderToken = orderTokenA, indentation = indentation)
 
   private class Module extends common.testing.TestModule {
     val taskEditor = new TaskEditor

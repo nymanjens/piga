@@ -36,7 +36,10 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
             documentId = document.id,
             contentHtml = "",
             orderToken = OrderToken.middle,
-            indentation = 0))
+            indentation = 0,
+            collapsed = false,
+            delayedUntil = None,
+            tags = Seq()))
       )
     case UpdateDocuments(documents) =>
       scalaJsApiClient.updateDocuments(documents)

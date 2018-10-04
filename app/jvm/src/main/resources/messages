@@ -120,3 +120,5 @@ app.successfully-removed-document=Successfully removed document
 app.no-entries=No entries
 app.create-new-document=Create new document
 app.untitled-document=Untitled document
+app.tasks=tasks
+app.task=task

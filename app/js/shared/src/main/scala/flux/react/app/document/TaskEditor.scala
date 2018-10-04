@@ -3,9 +3,10 @@ package flux.react.app.document
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.ScalaUtils.visibleForTesting
+import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
-import common.{I18n, OrderToken}
+import common.{I18n, OrderToken, ScalaUtils}
+import flux.react.ReactVdomUtils.^^
 import models.document.TextWithMarkup.Formatting
 import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
 import flux.react.router.RouterContext
@@ -49,9 +50,16 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(
-        task = Task.withRandomId(TextWithMarkup.empty, OrderToken.middle, indentation = 0),
+        task = Task.withRandomId(
+          TextWithMarkup.empty,
+          OrderToken.middle,
+          indentation = 0,
+          collapsed = false,
+          delayedUntil = None,
+          tags = Seq()),
         offsetInTask = 0),
-      formatting = Formatting.none)
+      formatting = Formatting.none
+    )
 
     def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
       props.documentStore.register(this)
@@ -82,25 +90,32 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           ^.onInput ==> handleEvent("onChange"),
           ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
-            (for ((task, i) <- state.document.tasks.zipWithIndex)
-              yield
-                <.li(
+            (for ((task, maybeAmountCollapsed) <- applyCollapsedProperty(state.document.tasks))
+              yield {
+                val i = state.document.indexOf(task)
+                val nodeType = state.document.tasksOption(i + 1) match {
+                  case _ if task.indentation == 0                                => "root"
+                  case Some(nextTask) if nextTask.indentation > task.indentation => "node"
+                  case _                                                         => "leaf"
+                }
+                (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
-                  ^.className := s"indentation-${task.indentation}",
+                  ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
                   VdomAttr("num") := i,
                   task.content.toVdomNode
-                )).toVdomArray
+                ) +: (maybeAmountCollapsed match {
+                  case Some(amountCollapsed) =>
+                    Seq(
+                      <.styleTag(
+                        ^.key := s"listyle-$i",
+                        s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}"""))
+                  case None => Seq()
+                })).toVdomArray
+              }).toVdomArray
           )
-        ),
-        <.br(),
-        "----------------",
-        <.br(),
-        <.br(),
-        <.br(),
-        (for ((task, i) <- state.document.tasks.zipWithIndex)
-          yield <.div(^.key := s"task-$i", "- [", task.indentation, "]", task.content.toVdomNode)).toVdomArray
+        )
       )
     }
 
@@ -159,6 +174,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
 
+      // console.log(s"event.key = ${event.key}")
+
       event.key match {
         case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
           event.preventDefault()
@@ -214,7 +231,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "Tab" =>
           event.preventDefault()
-          indentSelectionInState(indentIncrease = if (shiftPressed) -1 else 1, selection)
+          val indentIncrease = if (shiftPressed) -1 else 1
+          updateTasksInSelection(selection, updateCollapsedChildren = true) { task =>
+            task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
+          }
 
         case "i" if ctrlPressed => // Italic
           event.preventDefault()
@@ -274,11 +294,23 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
           event.preventDefault()
-          moveLinesInSeq(selection, seqIndexMovement = -1)
+          moveLinesInSeq(selection, direction = -1)
 
         case "ArrowDown" if altPressed && !shiftPressed => // Move lines down
           event.preventDefault()
-          moveLinesInSeq(selection, seqIndexMovement = +1)
+          moveLinesInSeq(selection, direction = +1)
+
+        case "=" if ctrlPressed && !shiftPressed => // Expand lines
+          event.preventDefault()
+          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
+            task.copyWithRandomId(collapsed = false)
+          }
+
+        case "-" if ctrlPressed && !shiftPressed => // Collapse lines
+          event.preventDefault()
+          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
+            task.copyWithRandomId(collapsed = true)
+          }
 
         case _ =>
           Callback.empty
@@ -312,21 +344,20 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           higher = nextTask.map(_.orderToken)
         )
       }
-      val baseIndentation = oldDocument.tasks(start.seqIndex).indentation
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
             def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
               if (i == index) tags else TextWithMarkup.empty
-            Task.withRandomId(
+            tasksToReplace.head.copyWithRandomId(
               content = ifIndexOrEmpty(0)(
                 oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
                 replacementPart.content +
                 ifIndexOrEmpty(replacement.parts.length - 1)(
                   oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)),
               orderToken = newOrderToken,
-              indentation = baseIndentation + replacementPart.indentationRelativeToCurrent
+              indentation = tasksToReplace.head.indentation + replacementPart.indentationRelativeToCurrent
             )
           }
 
@@ -340,17 +371,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       )
     }
 
-    private def indentSelectionInState(indentIncrease: Int, selection: IndexedSelection): Callback = {
-      val oldDocument = $.state.runNow().document
+    private def updateTasksInSelection(selection: IndexedSelection, updateCollapsedChildren: Boolean)(
+        taskUpdate: Task => Task): Callback = {
+      implicit val oldDocument = $.state.runNow().document
 
-      val IndexedSelection(start, end) = selection
+      val IndexedSelection(start, end) =
+        if (updateCollapsedChildren) selection.includeCollapsedChildren else selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-      val tasksToAdd = tasksToReplace.map(
-        task =>
-          Task.withRandomId(
-            content = task.content,
-            orderToken = task.orderToken,
-            indentation = zeroIfNegative(task.indentation + indentIncrease)))
+      val tasksToAdd = tasksToReplace.map(taskUpdate)
 
       replaceInStateWithHistory(
         tasksToReplace = tasksToReplace,
@@ -369,16 +397,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
           for (task <- tasks)
             yield
-              Task.withRandomId(
+              task.copyWithRandomId(
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                     endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
                     formatting => updateFunc(formatting, value)
-                  ),
-                orderToken = task.orderToken,
-                indentation = task.indentation
-              )
+                  ))
 
         val oldDocument = $.state.runNow().document
         val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
@@ -457,17 +482,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         val tasksToAdd = {
           for (task <- tasksToReplace)
             yield
-              Task.withRandomId(
+              task.copyWithRandomId(
                 content = task.content
                   .withFormatting(
                     beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
                     endOffset =
                       if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
                     updateFunc = _.copy(link = newLink)
-                  ),
-                orderToken = task.orderToken,
-                indentation = task.indentation
-              )
+                  ))
         }
 
         replaceInStateWithHistory(
@@ -490,9 +512,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
     }
 
-    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, seqIndexMovement: Int): Callback = {
-      val IndexedSelection(start, end) = selectionBeforeEdit
-      val oldDocument = $.state.runNow().document
+    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
+      implicit val oldDocument = $.state.runNow().document
+      val IndexedSelection(start, end) = selectionBeforeEdit.includeCollapsedChildren
+
+      val seqIndexMovement = {
+        val indexThatIsHoppedOver = if (direction < 0) start.seqIndex - 1 else end.seqIndex + 1
+        oldDocument.collapsedTasksRange(indexThatIsHoppedOver) match {
+          case None                    => direction * 1
+          case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
+        }
+      }
 
       val (task1, task2) =
         if (seqIndexMovement < 0)
@@ -519,19 +549,16 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         }
         val tasksToAdd =
           for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
-            yield
-              Task.withRandomId(
-                content = task.content,
-                orderToken = newOrderToken,
-                indentation = task.indentation)
+            yield task.copyWithRandomId(orderToken = newOrderToken)
 
         replaceInStateWithHistory(
           tasksToReplace = tasksToReplace,
           tasksToAdd = tasksToAdd,
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
-            start.copy(seqIndex = start.seqIndex + seqIndexMovement),
-            end.copy(seqIndex = end.seqIndex + seqIndexMovement))
+            selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement)
+          )
         )
       }
     }
@@ -600,6 +627,62 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             setSelection(selectionAfterEdit)
           }
         )
+      }
+    }
+
+    private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
+      val document = $.state.runNow().document
+      def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
+        Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
+      def getTaskElement(cursor: IndexedCursor): dom.raw.Element = maybeGetTaskElement(cursor) match {
+        case Some(e) => e
+        case None =>
+          throw new IllegalStateException(s"Could not find <li> task with seqIndex=${cursor.seqIndex}")
+      }
+      def mapToNonCollapsedCursor(cursor: IndexedCursor): IndexedCursor = {
+        if (maybeGetTaskElement(cursor).isDefined) {
+          cursor
+        } else {
+          ((cursor.seqIndex + 1) until document.tasks.size)
+            .map(IndexedCursor(_, 0))
+            .find(maybeGetTaskElement(_).isDefined) match {
+            case Some(c) => c
+            case None =>
+              (0 until cursor.seqIndex).reverse
+                .map(IndexedCursor(_, 0))
+                .find(maybeGetTaskElement(_).isDefined)
+                .get
+          }
+        }
+      }
+
+      def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
+        walkDepthFirstPreOrder(getTaskElement(cursor)).find {
+          case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+            if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
+              func(node, cursor.offsetInTask - offsetSoFar)
+
+              true
+            } else {
+              false
+            }
+        }
+      }
+
+      val start = mapToNonCollapsedCursor(selection.start)
+      val end = mapToNonCollapsedCursor(selection.end)
+      val resultRange = dom.document.createRange()
+      findCursorInDom(start)(resultRange.setStart)
+      findCursorInDom(end)(resultRange.setEnd)
+
+      val windowSelection = dom.window.getSelection()
+      windowSelection.removeAllRanges()
+      windowSelection.addRange(resultRange)
+
+      if (!elementIsFullyInView(getTaskElement(end))) {
+        getTaskElement(end)
+          .asInstanceOf[js.Dynamic]
+          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
       }
     }
   }
@@ -724,39 +807,19 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     Replacement(partsBuilder.toVector)
   }
 
-  private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
-    def getTaskElement(cursor: IndexedCursor): dom.raw.Element = {
-      val task = dom.document.getElementById(s"teli-${cursor.seqIndex}")
-      require(!js.isUndefined(task), s"Could not find task with index teli-${cursor.seqIndex}")
-      task
+  private type AmountCollapsed = Int
+  private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Option[AmountCollapsed])] = {
+    def getAmountCollapsed(tasks: Stream[Task], collapsedIndentation: Int): Int = {
+      tasks.takeWhile(_.indentation > collapsedIndentation).size
     }
-    def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
-      walkDepthFirstPreOrder(getTaskElement(cursor)).find {
-        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-          if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
-            func(node, cursor.offsetInTask - offsetSoFar)
-
-            true
-          } else {
-            false
-          }
-      }
+    def inner(tasks: Stream[Task]): Stream[(Task, Option[AmountCollapsed])] = tasks match {
+      case task #:: rest if task.collapsed =>
+        val amountCollapsed = getAmountCollapsed(rest, task.indentation)
+        (task, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
+      case task #:: rest => (task, /* maybeAmountCollapsed = */ None) #:: inner(rest)
+      case Stream.Empty  => Stream.Empty
     }
-
-    val IndexedSelection(start, end) = selection
-    val resultRange = dom.document.createRange()
-    findCursorInDom(start)(resultRange.setStart)
-    findCursorInDom(end)(resultRange.setEnd)
-
-    val windowSelection = dom.window.getSelection()
-    windowSelection.removeAllRanges()
-    windowSelection.addRange(resultRange)
-
-    if (!elementIsFullyInView(getTaskElement(end))) {
-      getTaskElement(end)
-        .asInstanceOf[js.Dynamic]
-        .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
-    }
+    inner(tasks.toStream)
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {

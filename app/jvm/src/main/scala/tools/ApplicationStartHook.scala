@@ -3,16 +3,16 @@ package tools
 import java.nio.file.{Path, Paths}
 
 import com.google.inject.Inject
-import common.{OrderToken, ResourceFiles}
 import common.time.Clock
+import common.{OrderToken, ResourceFiles}
 import models.access.JvmEntityAccess
-import models.{Entity, document}
 import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification
 import models.user.Users
 import play.api.{Application, Mode}
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.Seq
 
 final class ApplicationStartHook @Inject()(implicit app: Application,
                                            entityAccess: JvmEntityAccess,
@@ -110,6 +110,9 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
           contentHtml = "<b>Hello</b><br/>World",
           orderToken = OrderToken.middleBetween(None, Some(OrderToken.middle)),
           indentation = 0,
+          collapsed = true,
+          delayedUntil = None,
+          tags = Seq(),
           idOption = Some(11)
         )),
       EntityModification.Add(
@@ -118,13 +121,20 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
           contentHtml = "<i>&lt;indented&gt;</i>",
           orderToken = OrderToken.middle,
           indentation = 2,
-          idOption = Some(22))),
+          collapsed = false,
+          delayedUntil = None,
+          tags = Seq("indented"),
+          idOption = Some(22)
+        )),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,
           contentHtml = """<a href="www.example.com">link to www.example.com</a>""",
           orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
           indentation = 1,
+          collapsed = false,
+          delayedUntil = None,
+          tags = Seq(),
           idOption = Some(33)
         )),
       EntityModification.Add(
@@ -133,6 +143,9 @@ final class ApplicationStartHook @Inject()(implicit app: Application,
           contentHtml = "Second document",
           orderToken = OrderToken.middle,
           indentation = 0,
+          collapsed = false,
+          delayedUntil = None,
+          tags = Seq(),
           idOption = Some(44)
         ))
     )
