@@ -176,7 +176,7 @@ object DocumentTest extends TestSuite {
           implicit val document = newDocument(taskA, taskB, taskC, taskD, taskE)
 
           assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
-          assertNoChange(IndexedSelection.collapsed(IndexedCursor(2, 5)))
+          assertNoChange(IndexedSelection.singleton(IndexedCursor(2, 5)))
         }
         "collapsed without children" - {
           implicit val document = newDocument(
@@ -187,7 +187,7 @@ object DocumentTest extends TestSuite {
             indentation(0, taskE))
 
           assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
-          assertNoChange(IndexedSelection.collapsed(IndexedCursor(2, 5)))
+          assertNoChange(IndexedSelection.singleton(IndexedCursor(2, 5)))
         }
         "collapsed with children" - {
           implicit val document = newDocument(
@@ -199,7 +199,7 @@ object DocumentTest extends TestSuite {
 
           IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5)).includeCollapsedChildren ==>
             IndexedSelection(IndexedCursor(0, 1), IndexedCursor(3, 0))
-          IndexedSelection.collapsed(IndexedCursor(1, 5)).includeCollapsedChildren ==>
+          IndexedSelection.singleton(IndexedCursor(1, 5)).includeCollapsedChildren ==>
             IndexedSelection(IndexedCursor(1, 5), IndexedCursor(3, 0))
         }
       }

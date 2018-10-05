@@ -104,7 +104,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {
     def hasCollapsedMiddleSelection: Boolean =
-      edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isCollapsed
+      edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isSingleton
     def sameLineIsEdited: Boolean = edit1.addedTasks == edit2.removedTasks
     def tooMuchTimeBetween: Boolean =
       Duration.between(edit1.timestamp, edit2.timestamp) > Duration.ofSeconds(3)

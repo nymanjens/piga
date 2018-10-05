@@ -17,7 +17,7 @@ object JsTestObjects {
   val taskE = newTask("Task E", orderToken = orderTokenE)
   val testTask = taskA
 
-  val testSelection = IndexedSelection.collapsed(IndexedCursor(2, 123))
+  val testSelection = IndexedSelection.singleton(IndexedCursor(2, 123))
   val testDetachedCursor = DetachedCursor(taskA, 12938)
   val testDetachedSelection = DetachedSelection(testDetachedCursor, testDetachedCursor)
 

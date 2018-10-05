@@ -364,7 +364,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selectionBeforeEdit,
-        selectionAfterEdit = IndexedSelection.collapsed(
+        selectionAfterEdit = IndexedSelection.singleton(
           (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
         replacementString = replacement.contentString
       )
@@ -458,7 +458,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
         val IndexedSelection(start, end) = selection
         getAnyLinkInSelection(selection) match {
-          case Some(link) if selection.isCollapsed =>
+          case Some(link) if selection.isSingleton =>
             IndexedSelection(expand(link, start, -1), expand(link, end, 1))
           case _ => selection
         }
@@ -500,7 +500,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
 
       expandSelection(originalSelection) match {
-        case s if s.isCollapsed => Callback.empty
+        case s if s.isSingleton => Callback.empty
         case expandedSelection =>
           try {
             val newLink = newLinkFromDialog(getAnyLinkInSelection(originalSelection))
@@ -843,12 +843,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
   private def getAnyLinkInSelection(selection: IndexedSelection)(
       implicit document: Document): Option[String] = {
-    if (selection.isCollapsed) {
+    if (selection.isSingleton) {
       val cursor = selection.start
       val expandedSelection = IndexedSelection(
         if (cursor.offsetInTask == 0) cursor else cursor minusOffset 1,
         if (cursor == cursor.toEndOfTask) cursor else cursor plusOffset 1)
-      if (expandedSelection.isCollapsed) {
+      if (expandedSelection.isSingleton) {
         None
       } else {
         getAnyLinkInSelection(expandedSelection)

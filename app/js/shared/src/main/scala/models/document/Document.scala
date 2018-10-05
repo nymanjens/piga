@@ -276,7 +276,7 @@ object Document {
     require(start <= end)
 
     def detach(implicit document: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
-    def isCollapsed: Boolean = start == end
+    def isSingleton: Boolean = start == end
 
     def includeCollapsedChildren(implicit document: Document): IndexedSelection = {
       val task = document.tasks(end.seqIndex)
@@ -295,7 +295,7 @@ object Document {
     }
   }
   object IndexedSelection {
-    def collapsed(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
+    def singleton(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
   }
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {
@@ -303,12 +303,12 @@ object Document {
       IndexedCursor(seqIndex = document.indexOf(task), offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
-    def isCollapsed: Boolean = start == end
+    def isSingleton: Boolean = start == end
 
     def attachToDocument(implicit document: Document): IndexedSelection =
       IndexedSelection(start = start.attachToDocument, end = end.attachToDocument)
   }
   object DetachedSelection {
-    def collapsed(cursor: DetachedCursor): DetachedSelection = DetachedSelection(cursor, cursor)
+    def singleton(cursor: DetachedCursor): DetachedSelection = DetachedSelection(cursor, cursor)
   }
 }

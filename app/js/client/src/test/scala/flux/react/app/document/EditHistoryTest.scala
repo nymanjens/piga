@@ -80,8 +80,8 @@ object EditHistoryTest extends TestSuite {
     editHistory.addEdit(
       removedTasks = Seq(removedTask),
       addedTasks = Seq(addedTask),
-      selectionBeforeEdit = DetachedSelection.collapsed(DetachedCursor(removedTask, 0)),
-      selectionAfterEdit = DetachedSelection.collapsed(DetachedCursor(addedTask, 0)),
+      selectionBeforeEdit = DetachedSelection.singleton(DetachedCursor(removedTask, 0)),
+      selectionAfterEdit = DetachedSelection.singleton(DetachedCursor(addedTask, 0)),
       replacementString = replacementString
     )
   }
