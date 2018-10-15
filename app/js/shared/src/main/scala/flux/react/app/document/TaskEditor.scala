@@ -5,10 +5,9 @@ import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
-import common.{I18n, OrderToken, ScalaUtils}
+import common.{I18n, OrderToken}
 import flux.react.ReactVdomUtils.^^
-import models.document.TextWithMarkup.Formatting
-import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
+import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
 import flux.stores.StateStore
 import flux.stores.document.DocumentStore
@@ -16,8 +15,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
-import jsfacades.escapeHtml
 import models.access.EntityAccess
+import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
+import models.document.TextWithMarkup.Formatting
 import models.document.{Document, Task, TextWithMarkup}
 import org.scalajs.dom
 import org.scalajs.dom.console
@@ -172,9 +172,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
       implicit val document = $.state.runNow().document
-      val shiftPressed = event.shiftKey
-      val altPressed = event.altKey
-      val ctrlPressed = event.ctrlKey // TODO: Set to metaKey when Mac OS X
       val formatting =
         if (lastSingletonFormating.cursor == start.detach) {
           lastSingletonFormating.formatting
@@ -184,16 +181,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
       // console.log(s"event.key = ${event.key}")
 
-      event.key match {
-        case eventKey if eventKey.length == 1 && !ctrlPressed && !(altPressed && shiftPressed) =>
+      val keyCombination = KeyCombination.fromEvent(event)
+      keyCombination match {
+        case CharacterKey(character, /* ctrlOrMeta */ false, shift, alt) if !(shift && alt) =>
           event.preventDefault()
           replaceSelectionInState(
-            replacement = Replacement.fromString(eventKey, formatting),
+            replacement = Replacement.fromString(character.toString, formatting),
             IndexedSelection(start, end))
 
-        case "Enter" if !ctrlPressed =>
+        case SpecialKey(Enter, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
-          if (shiftPressed) {
+          if (keyCombination.shift) {
             replaceSelectionInState(
               replacement = Replacement.fromString("\n", formatting),
               IndexedSelection(start, end))
@@ -201,18 +199,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
 
-        case "Enter" if ctrlPressed && !shiftPressed =>
-          // Open link
-          getAnyLinkInSelection(selection) match {
-            case Some(link) => dom.window.open(link, "_blank")
-            case None       =>
-          }
-          Callback.empty
-
-        case "Backspace" =>
+        case SpecialKey(Backspace, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           if (start == end) {
-            if (ctrlPressed) {
+            if (keyCombination.ctrlOrMeta) {
               replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
             } else {
               replaceSelectionInState(
@@ -223,10 +213,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
-        case "Delete" =>
+        case SpecialKey(Delete, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           if (start == end) {
-            if (ctrlPressed) {
+            if (keyCombination.ctrlOrMeta) {
               replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
             } else {
               replaceSelectionInState(
@@ -237,100 +227,132 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
-        case "Tab" =>
+        case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
-          val indentIncrease = if (shiftPressed) -1 else 1
+          val indentIncrease = if (keyCombination.shift) -1 else 1
           updateTasksInSelection(selection, updateCollapsedChildren = true) { task =>
             task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
           }
 
-        case "i" if ctrlPressed && !shiftPressed => // Italic
+        // Italic
+        case CharacterKey('i', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(italic = value),
             selection,
             formattingAtStart = formatting)
-        case "b" if ctrlPressed && !shiftPressed => // Bold
+
+        // Bold
+        case CharacterKey('b', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(bold = value),
             selection,
             formattingAtStart = formatting)
-        case "C" if shiftPressed && altPressed => // Code font (Alt + Shift + C)
+
+        // Code font
+        case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(code = value),
             selection,
             formattingAtStart = formatting)
-        case _ if event.keyCode == 53 && shiftPressed && altPressed => // Strikethrough (Alt + Shift + 5)
+
+        // Strikethrough (Alt + Shift + 5)
+        case CharacterKey(_, /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true)
+            if event.keyCode == 53 =>
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(strikethrough = value),
             selection,
             formattingAtStart = formatting)
-        case "\\" if ctrlPressed && !shiftPressed => // Clear formatting
+
+        // Clear formatting
+        case CharacterKey('\\', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
-        case "u" if ctrlPressed && !shiftPressed => // Disable underline modifier
+        // Disable underline modifier
+        case CharacterKey('u', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           Callback.empty
 
-        case "s" if ctrlPressed && !shiftPressed => // Disable save shortcut
+        // Disable save shortcut
+        case CharacterKey('s', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           Callback.empty
 
-        case "z" if ctrlPressed && !shiftPressed => // Undo
+        // Undo
+        case CharacterKey('z', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           applyHistoryEdit(editHistory.undo())
 
-        case "Z" if ctrlPressed && shiftPressed => // Redo
+        // Redo
+        case CharacterKey('Z', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
-        case "y" if ctrlPressed => // Redo
+        // Redo
+        case CharacterKey('y', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
-        case "k" if ctrlPressed && !shiftPressed => // Edit link
+        // Edit link
+        case CharacterKey('k', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           editLink(selection)
 
-        case "m" if ctrlPressed && !shiftPressed => // Select word
+        // Select word
+        case CharacterKey('m', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           selectExtendedWordAround(start)
 
-        case "j" if ctrlPressed && !shiftPressed => // Select line
+        // Select line
+        case CharacterKey('j', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
-        case "d" if ctrlPressed && !shiftPressed => // Delete line
+        // Delete line
+        case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           removeTasks(start.seqIndex to end.seqIndex)
 
-        case "B" if ctrlPressed && shiftPressed => // Duplicate line
+        // Duplicate line
+        case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
           duplicateTasks(start.seqIndex to end.seqIndex, selectionBeforeEdit = selection)
 
-        case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
+        // Move lines up
+        case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
           event.preventDefault()
           moveLinesInSeq(selection, direction = -1)
 
-        case "ArrowDown" if altPressed && !shiftPressed => // Move lines down
+        // Move lines down
+        case SpecialKey(ArrowDown, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
           event.preventDefault()
           moveLinesInSeq(selection, direction = +1)
 
-        case "=" if ctrlPressed && !shiftPressed => // Expand lines
+        // Expand lines
+        case CharacterKey('=', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = false)
           }
 
-        case "-" if ctrlPressed && !shiftPressed => // Collapse lines
+        // Collapse lines
+        case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = true)
           }
+
+        // Open link
+        case SpecialKey(Enter, /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+          getAnyLinkInSelection(selection) match {
+            case Some(link) => dom.window.open(link, "_blank")
+            case None       =>
+          }
+          Callback.empty
 
         case _ =>
           Callback.empty
