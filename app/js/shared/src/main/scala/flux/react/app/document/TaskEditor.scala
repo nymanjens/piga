@@ -302,6 +302,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           editLink(selection)
 
+        // Open link
+        case SpecialKey(Enter, /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+          getAnyLinkInSelection(selection) match {
+            case Some(link) => dom.window.open(link, "_blank")
+            case None       =>
+          }
+          Callback.empty
+
         // Select word
         case CharacterKey('m', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
@@ -345,14 +353,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = true)
           }
-
-        // Open link
-        case SpecialKey(Enter, /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
-          getAnyLinkInSelection(selection) match {
-            case Some(link) => dom.window.open(link, "_blank")
-            case None       =>
-          }
-          Callback.empty
 
         case _ =>
           Callback.empty
