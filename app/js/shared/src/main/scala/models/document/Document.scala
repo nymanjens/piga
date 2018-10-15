@@ -183,6 +183,8 @@ object Document {
     def plusOffset(diff: Int): IndexedCursor = IndexedCursor(seqIndex, offsetInTask + diff)
     def minusOffset(diff: Int): IndexedCursor = plusOffset(-diff)
 
+    def plusLines(seqIndexDiff: Int): IndexedCursor = IndexedCursor(seqIndex + seqIndexDiff, offsetInTask)
+
     def plusOffsetInSeq(diff: Int)(implicit document: Document): IndexedCursor = {
       val tasks = document.tasks
       @tailrec

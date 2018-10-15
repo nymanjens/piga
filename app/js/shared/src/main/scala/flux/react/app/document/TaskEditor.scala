@@ -308,6 +308,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           removeTasks(start.seqIndex to end.seqIndex)
 
+        case "B" if ctrlPressed && shiftPressed => // Duplicate line
+          event.preventDefault()
+          duplicateTasks(start.seqIndex to end.seqIndex, selectionBeforeEdit = selection)
+
         case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
           event.preventDefault()
           moveLinesInSeq(selection, direction = -1)
@@ -414,8 +418,32 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           IndexedCursor.atStartOfLine(
             if (oldDocument.tasks.size > taskIndices.head + taskIndices.size) taskIndices.head
             else if (taskIndices.head == 0) 0
-            else taskIndices.head - 1)),
-        replacementString = ""
+            else taskIndices.head - 1))
+      )
+    }
+
+    private def duplicateTasks(taskIndices: Range, selectionBeforeEdit: IndexedSelection): Callback = {
+      implicit val oldDocument = $.state.runNow().document
+
+      val newOrderTokens = {
+        val taskBefore = oldDocument.tasksOption(taskIndices.last)
+        val taskAfter = oldDocument.tasksOption(taskIndices.last + 1)
+        OrderToken.evenlyDistributedValuesBetween(
+          numValues = taskIndices.size,
+          lower = taskBefore.map(_.orderToken),
+          higher = taskAfter.map(_.orderToken)
+        )
+      }
+      val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
+        yield oldDocument.tasks(i).copyWithRandomId(orderToken = orderToken)
+
+      replaceInStateWithHistory(
+        tasksToReplace = Seq(),
+        tasksToAdd = tasksToAdd,
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEdit = IndexedSelection(
+          selectionBeforeEdit.start.plusLines(taskIndices.size),
+          selectionBeforeEdit.end.plusLines(taskIndices.size))
       )
     }
 
