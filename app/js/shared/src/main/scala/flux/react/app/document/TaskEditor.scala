@@ -154,8 +154,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
       event.preventDefault()
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val IndexedSelection(start, end) = selection
+      implicit val document = $.state.runNow().document
+      val formatting =
+        if (lastSingletonFormating.cursor == start.detach) {
+          lastSingletonFormating.formatting
+        } else {
+          document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+        }
+
       replaceSelectionInState(
-        replacement = clipboardStringToReplacement(getAnyClipboardString(event)),
+        replacement = clipboardStringToReplacement(getAnyClipboardString(event), baseFormatting = formatting),
         selection)
     }
 
@@ -751,7 +760,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
   }
 
   @visibleForTesting private[document] def clipboardStringToReplacement(
-      clipboardString: String): Replacement = {
+      clipboardString: String,
+      baseFormatting: Formatting): Replacement = {
     val html = {
       val resultHolder = dom.document.createElement("span")
       resultHolder.innerHTML = clipboardString
@@ -772,10 +782,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
       def pushChildNodesWithoutLi(): Unit = {
         if (childNodesWithoutLi.nonEmpty) {
-          val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi: _*)
+          val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi)
           for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
             partsBuilder.append(
-              Replacement.Part(TextWithMarkup(line), zeroIfNegative(nextRelativeIndentation)))
+              Replacement.Part(TextWithMarkup(line, baseFormatting), zeroIfNegative(nextRelativeIndentation)))
           }
           childNodesWithoutLi.clear()
         }
@@ -786,7 +796,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           pushChildNodesWithoutLi()
           if (nodeIsLi(node)) {
             partsBuilder.append(
-              Replacement.Part(TextWithMarkup.fromHtmlNodes(node), zeroIfNegative(nextRelativeIndentation)))
+              Replacement.Part(
+                TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
+                zeroIfNegative(nextRelativeIndentation)))
           } else {
             addPastedText(
               children(node),

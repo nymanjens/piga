@@ -179,10 +179,11 @@ object TextWithMarkup {
       resultHolder.innerHTML = string
       resultHolder
     }
-    fromHtmlNodes(html)
+    fromHtmlNodes(Seq(html))
   }
 
-  def fromHtmlNodes(nodes: dom.raw.Node*): TextWithMarkup = {
+  def fromHtmlNodes(nodes: Iterable[dom.raw.Node],
+                    baseFormatting: Formatting = Formatting.none): TextWithMarkup = {
     def ensureTrailingNewline(parts: Seq[Part]): Seq[Part] = parts match {
       case Seq()                                => Seq()
       case _ if !parts.last.text.endsWith("\n") => parts.updated(parts.size - 1, parts.last + "\n")
@@ -212,7 +213,7 @@ object TextWithMarkup {
       } yield part
     }
 
-    val parts = fromHtmlNodesInner(nodes.toVector, formatting = Formatting.none)
+    val parts = fromHtmlNodesInner(nodes.toVector, formatting = baseFormatting)
     TextWithMarkup.createCanonical(parts.toList)
   }
 
