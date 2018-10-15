@@ -276,6 +276,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           Callback.empty
 
+        case "s" if ctrlPressed && !shiftPressed => // Disable save shortcut
+          event.preventDefault()
+          Callback.empty
+
         case "z" if ctrlPressed && !shiftPressed => // Undo
           event.preventDefault()
           applyHistoryEdit(editHistory.undo())
