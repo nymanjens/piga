@@ -250,6 +250,10 @@ object Document {
       if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
     }
 
+    def atStartOfLine(seqIndex: Int): IndexedCursor = IndexedCursor(seqIndex, 0)
+    def atEndOfLine(seqIndex: Int)(implicit document: Document) =
+      IndexedCursor(seqIndex, document.tasks(seqIndex).contentString.length)
+
     private def fromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
       val parentLi = parentLiElement(node)
 

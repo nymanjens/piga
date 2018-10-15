@@ -201,7 +201,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
 
-        case "Enter" if ctrlPressed =>
+        case "Enter" if ctrlPressed && !shiftPressed =>
           // Open link
           getAnyLinkInSelection(selection) match {
             case Some(link) => dom.window.open(link, "_blank")
@@ -244,13 +244,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
           }
 
-        case "i" if ctrlPressed => // Italic
+        case "i" if ctrlPressed && !shiftPressed => // Italic
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(italic = value),
             selection,
             formattingAtStart = formatting)
-        case "b" if ctrlPressed => // Bold
+        case "b" if ctrlPressed && !shiftPressed => // Bold
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(bold = value),
@@ -268,11 +268,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             (form, value) => form.copy(strikethrough = value),
             selection,
             formattingAtStart = formatting)
-        case "\\" if ctrlPressed => // Clear formatting
+        case "\\" if ctrlPressed && !shiftPressed => // Clear formatting
           event.preventDefault()
           toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
-        case "u" if ctrlPressed => // Disable underline modifier
+        case "u" if ctrlPressed && !shiftPressed => // Disable underline modifier
           event.preventDefault()
           Callback.empty
 
@@ -288,17 +288,21 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           event.preventDefault()
           applyHistoryEdit(editHistory.redo())
 
-        case "k" if ctrlPressed => // Edit link
+        case "k" if ctrlPressed && !shiftPressed => // Edit link
           event.preventDefault()
           editLink(selection)
 
-        case "m" if ctrlPressed => // Select word
+        case "m" if ctrlPressed && !shiftPressed => // Select word
           event.preventDefault()
           selectExtendedWordAround(start)
 
-        case "j" if ctrlPressed => // Select line
+        case "j" if ctrlPressed && !shiftPressed => // Select line
           event.preventDefault()
           setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
+
+        case "d" if ctrlPressed && !shiftPressed => // Delete line
+          event.preventDefault()
+          removeTasks(start.seqIndex to end.seqIndex)
 
         case "ArrowUp" if altPressed && !shiftPressed => // Move lines up
           event.preventDefault()
@@ -376,6 +380,38 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         selectionAfterEdit = IndexedSelection.singleton(
           (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
         replacementString = replacement.contentString
+      )
+    }
+
+    private def removeTasks(taskIndices: Range): Callback = {
+      implicit val oldDocument = $.state.runNow().document
+
+      val tasksToReplace = for (i <- taskIndices) yield oldDocument.tasks(i)
+      val tasksToAdd =
+        if (oldDocument.tasks.size > taskIndices.size) Seq()
+        else // Removing all tasks in this document --> Replace the last task with an empty task
+          Seq(
+            Task.withRandomId(
+              content = TextWithMarkup.empty,
+              orderToken = OrderToken.middle,
+              indentation = 0,
+              collapsed = false,
+              delayedUntil = None,
+              tags = Seq()
+            ))
+
+      replaceInStateWithHistory(
+        tasksToReplace = tasksToReplace,
+        tasksToAdd = tasksToAdd,
+        selectionBeforeEdit = IndexedSelection(
+          IndexedCursor.atStartOfLine(taskIndices.head),
+          IndexedCursor.atEndOfLine(taskIndices.last)),
+        selectionAfterEdit = IndexedSelection.singleton(
+          IndexedCursor.atStartOfLine(
+            if (oldDocument.tasks.size > taskIndices.head + taskIndices.size) taskIndices.head
+            else if (taskIndices.head == 0) 0
+            else taskIndices.head - 1)),
+        replacementString = ""
       )
     }
 
