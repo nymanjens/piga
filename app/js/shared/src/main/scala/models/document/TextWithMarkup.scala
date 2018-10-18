@@ -1,7 +1,10 @@
 package models.document
 
+import java.util.concurrent.atomic.AtomicLong
+
 import common.DomNodeUtils.{children, _}
 import common.LoggingUtils.LogExceptionsCallback
+import common.ScalaUtils.visibleForTesting
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml
@@ -10,8 +13,11 @@ import org.scalajs.dom
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
+import scala.util.matching.Regex
 
 final class TextWithMarkup private (private val parts: List[Part]) {
+
+  private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s]*".r
 
   lazy val contentString: String = parts.map(_.text).mkString
 
@@ -68,10 +74,27 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       }
     }
 
+    def convertLinksToAnchors(string: String): VdomNode = {
+      var counter = new AtomicLong(0)
+      def inner(string: String): VdomNode = {
+        urlRegex.findFirstMatchIn(string) match {
+          case None => string
+          case Some(m) =>
+            <.span(
+              ^.key := "anchor-span-" + counter.incrementAndGet(),
+              string.substring(0, m.start),
+              <.a(^.key := "anchor-a-" + counter.incrementAndGet(), ^.href := m.group(0), m.group(0)),
+              inner(string.substring(m.end))
+            )
+        }
+      }
+      inner(string)
+    }
+
     TextWithMarkup.serializeToDom[VdomNode](
       addSpaceAfterTrailingNewline(parts),
       applyFormattingOption = applyFormattingOption,
-      liftString = s => s,
+      liftString = convertLinksToAnchors,
       mergeResults = _.toVdomArray)
   }
 
