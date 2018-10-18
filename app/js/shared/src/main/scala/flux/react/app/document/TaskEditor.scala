@@ -136,7 +136,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       modifyEventClipboardData(event)
 
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      replaceSelectionInState(replacement = Replacement.empty, selection)
+      replaceSelection(replacement = Replacement.empty, selection)
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
@@ -163,7 +163,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
 
-      replaceSelectionInState(
+      replaceSelection(
         replacement = clipboardStringToReplacement(getAnyClipboardString(event), baseFormatting = formatting),
         selection)
     }
@@ -185,46 +185,46 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       keyCombination match {
         case CharacterKey(character, /* ctrlOrMeta */ false, shift, alt) if !(shift && alt) =>
           event.preventDefault()
-          replaceSelectionInState(
+          replaceSelection(
             replacement = Replacement.fromString(character.toString, formatting),
             IndexedSelection(start, end))
 
         case SpecialKey(Enter, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
           if (keyCombination.shift) {
-            replaceSelectionInState(
+            replaceSelection(
               replacement = Replacement.fromString("\n", formatting),
               IndexedSelection(start, end))
           } else {
-            replaceSelectionInState(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
+            replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
           }
 
         case SpecialKey(Backspace, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           if (start == end) {
             if (keyCombination.ctrlOrMeta) {
-              replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
+              replaceSelection(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
             } else {
-              replaceSelectionInState(
+              replaceSelection(
                 replacement = Replacement.empty,
                 IndexedSelection(start minusOffsetInSeq 1, end))
             }
           } else {
-            replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
+            replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
         case SpecialKey(Delete, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           if (start == end) {
             if (keyCombination.ctrlOrMeta) {
-              replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
+              replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
             } else {
-              replaceSelectionInState(
+              replaceSelection(
                 replacement = Replacement.empty,
                 IndexedSelection(start, end plusOffsetInSeq 1))
             }
           } else {
-            replaceSelectionInState(replacement = Replacement.empty, IndexedSelection(start, end))
+            replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
         case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
@@ -382,7 +382,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         )
     }
 
-    private def replaceSelectionInState(replacement: Replacement,
+    private def replaceSelection(replacement: Replacement,
                                         selectionBeforeEdit: IndexedSelection): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
       val oldDocument = $.state.runNow().document
@@ -413,7 +413,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             )
           }
 
-      replaceInStateWithHistory(
+      replaceWithHistory(
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selectionBeforeEdit,
@@ -440,7 +440,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
               tags = Seq()
             ))
 
-      replaceInStateWithHistory(
+      replaceWithHistory(
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = IndexedSelection(
@@ -469,7 +469,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
         yield oldDocument.tasks(i).copyWithRandomId(orderToken = orderToken)
 
-      replaceInStateWithHistory(
+      replaceWithHistory(
         tasksToReplace = Seq(),
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selectionBeforeEdit,
@@ -488,7 +488,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd = tasksToReplace.map(taskUpdate)
 
-      replaceInStateWithHistory(
+      replaceWithHistory(
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selection,
@@ -513,7 +513,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
               )
             )
 
-      replaceInStateWithHistory(
+      replaceWithHistory(
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selection,
@@ -548,7 +548,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           }
         }
 
-        replaceInStateWithHistory(
+        replaceWithHistory(
           tasksToReplace = tasksToReplace,
           tasksToAdd = tasksToAdd,
           selectionBeforeEdit = selection,
@@ -624,7 +624,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                   ))
         }
 
-        replaceInStateWithHistory(
+        replaceWithHistory(
           tasksToReplace = tasksToReplace,
           tasksToAdd = tasksToAdd,
           selectionBeforeEdit = originalSelection,
@@ -683,7 +683,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
             yield task.copyWithRandomId(orderToken = newOrderToken)
 
-        replaceInStateWithHistory(
+        replaceWithHistory(
           tasksToReplace = tasksToReplace,
           tasksToAdd = tasksToAdd,
           selectionBeforeEdit = selectionBeforeEdit,
@@ -720,7 +720,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           cursor.copy(offsetInTask = newEndOffset)))
     }
 
-    private def replaceInStateWithHistory(tasksToReplace: Seq[Task],
+    private def replaceWithHistory(tasksToReplace: Seq[Task],
                                           tasksToAdd: Seq[Task],
                                           selectionBeforeEdit: IndexedSelection,
                                           selectionAfterEdit: IndexedSelection,
