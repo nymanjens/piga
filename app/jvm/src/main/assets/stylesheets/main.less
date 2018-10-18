@@ -97,17 +97,16 @@ table.table-bordered {
 
     li {
       white-space: pre-wrap;
-      &:empty {
-        list-style-type: none;
-        &:before { // Avoid <li> becoming size 0
-          content: " ";
-        }
-      }
       &:after { // For collapsed tasks
         color: #CCC;
         font-style: italic;
       }
-      &:not(.root) {
+      &:empty {
+        &:before { // Avoid <li> becoming size 0
+          content: " ";
+        }
+      }
+      &:not(:empty):not(.root) {
         &:before {
           font-family: 'Glyphicons Halflings';
           display: inline-block;
