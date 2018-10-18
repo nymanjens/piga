@@ -22,6 +22,12 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   lazy val contentString: String = parts.map(_.text).mkString
 
   lazy val toVdomNode: VdomNode = {
+    var keyCounter = 0
+    def nextKey: String = {
+      keyCounter += 1
+      "toVdomNode-cnt-" + keyCounter
+    }
+
     def addSpaceAfterTrailingNewline(parts: List[Part]): List[Part] = {
       if (parts.nonEmpty && parts.last.text.endsWith("\n")) {
         // Fix for tailing newline issue. The last \n is seemingly ignored unless a non-empty element is trailing
@@ -31,8 +37,24 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       }
     }
 
+    def linkVdomNode(href: String, children: VdomNode): VdomNode = {
+      <.a(
+        ^.href := href,
+        ^.target := "blank",
+        ^.key := nextKey,
+        ^.onClick ==> { e =>
+          LogExceptionsCallback {
+            if (e.ctrlKey) {
+              e.preventDefault()
+              dom.window.open(href, "_blank")
+            }
+          }.void
+        },
+        children
+      )
+    }
+
     val applyFormattingOption = new FormattingOption.Applier[VdomNode] {
-      private var keyCounter = 0
 
       override def apply[T](option: FormattingOption[T],
                             value: T,
@@ -40,50 +62,31 @@ final class TextWithMarkup private (private val parts: List[Part]) {
                             childrenParts: Iterable[Part]): VdomNode = {
         def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
         def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
-        def key: String = {
-          keyCounter += 1
-          keyCounter + "_" + childrenParts.map(_.text).mkString
-        }
 
         option match {
-          case FormattingOption.Bold   => if (asBoolean(value)) <.b(^.key := key, children) else children
-          case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := key, children) else children
-          case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := key, children) else children
+          case FormattingOption.Bold   => if (asBoolean(value)) <.b(^.key := nextKey, children) else children
+          case FormattingOption.Italic => if (asBoolean(value)) <.i(^.key := nextKey, children) else children
+          case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := nextKey, children) else children
           case FormattingOption.Strikethrough =>
-            if (asBoolean(value)) <.s(^.key := key, children) else children
+            if (asBoolean(value)) <.s(^.key := nextKey, children) else children
           case FormattingOption.Link =>
             asOption(value) match {
-              case Some(link) =>
-                <.a(
-                  ^.href := asOption(value).get,
-                  ^.target := "blank",
-                  ^.key := key,
-                  ^.onClick ==> { e =>
-                    LogExceptionsCallback {
-                      if (e.ctrlKey) {
-                        e.preventDefault()
-                        dom.window.open(link, "_blank")
-                      }
-                    }.void
-                  },
-                  children
-                )
-              case None => children
+              case Some(href) => linkVdomNode(href = href, children = children)
+              case None       => children
             }
         }
       }
     }
 
     def convertLinksToAnchors(string: String): VdomNode = {
-      var counter = new AtomicLong(0)
       def inner(string: String): VdomNode = {
         urlRegex.findFirstMatchIn(string) match {
           case None => string
           case Some(m) =>
             <.span(
-              ^.key := "anchor-span-" + counter.incrementAndGet(),
+              ^.key := nextKey,
               string.substring(0, m.start),
-              <.a(^.key := "anchor-a-" + counter.incrementAndGet(), ^.href := m.group(0), m.group(0)),
+              linkVdomNode(href = m.group(0), children = m.group(0)),
               inner(string.substring(m.end))
             )
         }
