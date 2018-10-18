@@ -354,6 +354,16 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
             task.copyWithRandomId(collapsed = true)
           }
 
+        // Convert to upper case
+        case CharacterKey('U', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+          event.preventDefault()
+          updateCharactersInSelection(selection, _.toUpperCase)
+
+        // Convert to lower case
+        case CharacterKey('L', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+          event.preventDefault()
+          updateCharactersInSelection(selection, _.toLowerCase)
+
         case _ =>
           Callback.empty
       }
@@ -486,6 +496,31 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       )
     }
 
+    private def updateCharactersInSelection(selection: Document.IndexedSelection,
+                                            characterTransform: String => String): Callback = {
+      val IndexedSelection(start, end) = selection
+
+      val oldDocument = $.state.runNow().document
+      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+      val tasksToAdd =
+        for (task <- tasksToReplace)
+          yield
+            task.copyWithRandomId(
+              content = task.content.withTransformedCharacters(
+                beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
+                endOffset = if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
+                characterTransform = characterTransform
+              )
+            )
+
+      replaceInStateWithHistory(
+        tasksToReplace = tasksToReplace,
+        tasksToAdd = tasksToAdd,
+        selectionBeforeEdit = selection,
+        selectionAfterEdit = selection
+      )
+    }
+
     private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
                                  selection: IndexedSelection,
                                  formattingAtStart: Formatting)(implicit document: Document): Callback = {
@@ -496,12 +531,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           for (task <- tasks)
             yield
               task.copyWithRandomId(
-                content = task.content
-                  .withFormatting(
-                    beginOffset = if (task == tasks.head) start.offsetInTask else 0,
-                    endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
-                    formatting => updateFunc(formatting, value)
-                  ))
+                content = task.content.withFormatting(
+                  beginOffset = if (task == tasks.head) start.offsetInTask else 0,
+                  endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
+                  formatting => updateFunc(formatting, value)
+                ))
 
         val oldDocument = $.state.runNow().document
         val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)

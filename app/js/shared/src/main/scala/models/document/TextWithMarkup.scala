@@ -155,6 +155,16 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
 
+  def withTransformedCharacters(beginOffset: Int,
+                                endOffset: Int,
+                                characterTransform: String => String): TextWithMarkup = {
+    def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
+      TextWithMarkup.createCanonical(
+        textWithMarkup.parts.map(part => part.copy(text = characterTransform(part.text))))
+    }
+    sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
+  }
+
   def anyLink: Option[String] = parts.toStream.flatMap(_.formatting.link).headOption
 
   // **************** Object methods **************** //
