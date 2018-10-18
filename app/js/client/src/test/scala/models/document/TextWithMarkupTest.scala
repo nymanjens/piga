@@ -33,6 +33,12 @@ object TextWithMarkupTest extends TestSuite {
           TextWithMarkup("d", Formatting(italic = true, link = Some("example.com"))) +
           italic("ef")
     }
+    "withTransformedCharacters" - {
+      val textWithMarkup = TextWithMarkup("abc") + italic("def")
+
+      textWithMarkup.withTransformedCharacters(beginOffset = 1, endOffset = 4, _.toUpperCase) ==>
+        TextWithMarkup("aBC") + italic("Def")
+    }
     "formattingAtCursor" - {
       val textWithMarkup = TextWithMarkup("a") +
         TextWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))) +
