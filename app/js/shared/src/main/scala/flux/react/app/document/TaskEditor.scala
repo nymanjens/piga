@@ -323,12 +323,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         // Delete line
         case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
-          removeTasks(start.seqIndex to end.seqIndex)
+          removeTasks(selection.seqIndices)
 
         // Duplicate line
         case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
-          duplicateTasks(start.seqIndex to end.seqIndex, selectionBeforeEdit = selection)
+          duplicateTasks(selection.seqIndices, selectionBeforeEdit = selection)
 
         // Move lines up
         case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
@@ -383,7 +383,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     }
 
     private def replaceSelection(replacement: Replacement,
-                                        selectionBeforeEdit: IndexedSelection): Callback = {
+                                 selectionBeforeEdit: IndexedSelection): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
       val oldDocument = $.state.runNow().document
 
@@ -396,7 +396,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           higher = nextTask.map(_.orderToken)
         )
       }
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+      val tasksToReplace = for (i <- selectionBeforeEdit.seqIndices) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
           yield {
@@ -498,17 +498,15 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
     private def updateCharactersInSelection(selection: Document.IndexedSelection,
                                             characterTransform: String => String): Callback = {
-      val IndexedSelection(start, end) = selection
-
-      val oldDocument = $.state.runNow().document
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+      implicit val oldDocument = $.state.runNow().document
+      val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (task <- tasksToReplace)
           yield
             task.copyWithRandomId(
               content = task.content.withTransformedCharacters(
-                beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
-                endOffset = if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
+                beginOffset = selection.startOffsetInTask(task),
+                endOffset = selection.endOffsetInTask(task),
                 characterTransform = characterTransform
               )
             )
@@ -538,7 +536,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
                 ))
 
         val oldDocument = $.state.runNow().document
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
         val tasksToAdd = {
           val candidate = setFormatting(tasksToReplace, value = true)
           if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
@@ -608,18 +606,15 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
-        val IndexedSelection(start, end) = selection
-
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
+        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
         val tasksToAdd = {
           for (task <- tasksToReplace)
             yield
               task.copyWithRandomId(
                 content = task.content
                   .withFormatting(
-                    beginOffset = if (task == tasksToReplace.head) start.offsetInTask else 0,
-                    endOffset =
-                      if (task == tasksToReplace.last) end.offsetInTask else task.contentString.length,
+                    beginOffset = selection.startOffsetInTask(task),
+                    endOffset = selection.endOffsetInTask(task),
                     updateFunc = _.copy(link = newLink)
                   ))
         }
@@ -721,10 +716,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     }
 
     private def replaceWithHistory(tasksToReplace: Seq[Task],
-                                          tasksToAdd: Seq[Task],
-                                          selectionBeforeEdit: IndexedSelection,
-                                          selectionAfterEdit: IndexedSelection,
-                                          replacementString: String = ""): Callback = {
+                                   tasksToAdd: Seq[Task],
+                                   selectionBeforeEdit: IndexedSelection,
+                                   selectionAfterEdit: IndexedSelection,
+                                   replacementString: String = ""): Callback = {
       def isNoOp: Boolean = {
         if (tasksToReplace.size == tasksToAdd.size && selectionBeforeEdit == selectionAfterEdit) {
           if (tasksToReplace.isEmpty) {
@@ -764,13 +759,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
     private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
       val document = $.state.runNow().document
-      def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
-        Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
-      def getTaskElement(cursor: IndexedCursor): dom.raw.Element = maybeGetTaskElement(cursor) match {
-        case Some(e) => e
-        case None =>
-          throw new IllegalStateException(s"Could not find <li> task with seqIndex=${cursor.seqIndex}")
-      }
       def mapToNonCollapsedCursor(cursor: IndexedCursor): IndexedCursor = {
         if (maybeGetTaskElement(cursor).isDefined) {
           cursor
@@ -977,6 +965,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
     }
   }
 
+  private def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
+    Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
+
+  private def getTaskElement(cursor: IndexedCursor): dom.raw.Element = maybeGetTaskElement(cursor) match {
+    case Some(e) => e
+    case None    => throw new IllegalStateException(s"Could not find <li> task with seqIndex=${cursor.seqIndex}")
+  }
+
   private def getAnyLinkInSelection(selection: IndexedSelection)(
       implicit document: Document): Option[String] = {
     if (selection.isSingleton) {
@@ -991,7 +987,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       }
     } else {
       val IndexedSelection(start, end) = selection
-      val texts = for (i <- start.seqIndex to end.seqIndex) yield {
+      val texts = for (i <- selection.seqIndices) yield {
         document
           .tasks(i)
           .content

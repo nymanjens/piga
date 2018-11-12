@@ -284,6 +284,12 @@ object Document {
     def detach(implicit document: Document): DetachedSelection = DetachedSelection(start.detach, end.detach)
     def isSingleton: Boolean = start == end
 
+    def seqIndices: Range = start.seqIndex to end.seqIndex
+    def startOffsetInTask(task: Task)(implicit document: Document): Int =
+      if (task == document.tasks(start.seqIndex)) start.offsetInTask else 0
+    def endOffsetInTask(task: Task)(implicit document: Document): Int =
+      if (task == document.tasks(end.seqIndex)) end.offsetInTask else task.contentString.length
+
     def includeCollapsedChildren(implicit document: Document): IndexedSelection = {
       val task = document.tasks(end.seqIndex)
 
