@@ -5,7 +5,7 @@ import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
-import common.{I18n, OrderToken}
+import common.{DomNodeUtils, I18n, OrderToken}
 import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
@@ -975,28 +975,24 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
 
   private def getAnyLinkInSelection(selection: IndexedSelection)(
       implicit document: Document): Option[String] = {
-    if (selection.isSingleton) {
-      val cursor = selection.start
-      val expandedSelection = IndexedSelection(
-        if (cursor.offsetInTask == 0) cursor else cursor minusOffset 1,
-        if (cursor == cursor.toEndOfTask) cursor else cursor plusOffset 1)
-      if (expandedSelection.isSingleton) {
-        None
-      } else {
-        getAnyLinkInSelection(expandedSelection)
+    val cursor = selection.end
+    val taskElement = getTaskElement(selection.end)
+    val nodeAtCursor: dom.raw.Node = walkDepthFirstPreOrder(taskElement)
+      .find {
+        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+          offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd
       }
-    } else {
-      val IndexedSelection(start, end) = selection
-      val texts = for (i <- selection.seqIndices) yield {
-        document
-          .tasks(i)
-          .content
-          .sub(
-            beginOffset = if (i == start.seqIndex) start.offsetInTask else 0,
-            endOffset = if (i == end.seqIndex) end.offsetInTask else -1)
-      }
-      texts.flatMap(_.anyLink).headOption
+      .get
+      .node
+
+    def nodeAndParents(node: dom.raw.Node): Stream[dom.raw.Node] = node match {
+      case `taskElement` => Stream.empty
+      case _             => node #:: nodeAndParents(node.parentNode)
     }
+    nodeAndParents(nodeAtCursor).collectFirst(node =>
+      DomNodeUtils.parseNode(node) match {
+        case ParsedNode.A(element) => element.getAttribute("href")
+    })
   }
 
   private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
