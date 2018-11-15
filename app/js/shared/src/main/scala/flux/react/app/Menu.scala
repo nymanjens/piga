@@ -54,7 +54,7 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
     }
     def didMount(props: Props): Callback = LogExceptionsCallback {
       props.router.currentPage match {
-        // TODO: Restore
+        // TODO: Restore global search
         //case page: Page.Search => {
         //  scope.backend.queryInputRef().setValue(page.query)
         //}
@@ -87,39 +87,40 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
       <.ul(
         ^.className := "nav",
         ^.id := "side-menu",
-        <.li(
-          ^.className := "sidebar-search",
-          <.form(
-            <.div(
-              ^.className := "input-group custom-search-form",
-              uielements.input
-                .TextInput(
-                  ref = queryInputRef,
-                  name = "query",
-                  placeholder = i18n("app.search"),
-                  classes = Seq("form-control")),
-              <.span(
-                ^.className := "input-group-btn",
-                <.button(
-                  ^.className := "btn btn-default",
-                  ^.tpe := "submit",
-                  ^.onClick ==> { (e: ReactEventFromInput) =>
-                    LogExceptionsCallback {
-                      e.preventDefault()
-
-                      queryInputRef().value match {
-                        case Some(query) =>
-                        // TODO: Fix
-                        //props.router.setPage(Page.Search(query))
-                        case None =>
-                      }
-                    }
-                  },
-                  <.i(^.className := "fa fa-search")
-                )
-              )
-            ))
-        ),
+        // TODO: Restore global search
+        //<.li(
+        //  ^.className := "sidebar-search",
+        //  <.form(
+        //    <.div(
+        //      ^.className := "input-group custom-search-form",
+        //      uielements.input
+        //        .TextInput(
+        //          ref = queryInputRef,
+        //          name = "query",
+        //          placeholder = i18n("app.search"),
+        //          classes = Seq("form-control")),
+        //      <.span(
+        //        ^.className := "input-group-btn",
+        //        <.button(
+        //          ^.className := "btn btn-default",
+        //          ^.tpe := "submit",
+        //          ^.onClick ==> { (e: ReactEventFromInput) =>
+        //            LogExceptionsCallback {
+        //              e.preventDefault()
+        //
+        //              queryInputRef().value match {
+        //                case Some(query) =>
+        //                // TODO: Fix
+        //                //props.router.setPage(Page.Search(query))
+        //                case None =>
+        //              }
+        //            }
+        //          },
+        //          <.i(^.className := "fa fa-search")
+        //        )
+        //      )
+        //    ))
+        //),
         <.li(
           {
             for (document <- state.allDocuments)
