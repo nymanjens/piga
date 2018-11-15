@@ -289,21 +289,26 @@ object Document {
     }
 
     private def cursorFromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
-      val parentLi = parentLiElement(node)
+      parentLiElement(node) match {
+        case None => IndexedCursor(0, 0) // Fallback
+        case Some(parentLi) =>
+          val offsetInTask = {
+            val preCursorRange = dom.document.createRange()
+            preCursorRange.selectNodeContents(parentLi)
+            preCursorRange.setEnd(node, offset)
+            preCursorRange.toString.length
+          }
 
-      val offsetInTask = {
-        val preCursorRange = dom.document.createRange()
-        preCursorRange.selectNodeContents(parentLi)
-        preCursorRange.setEnd(node, offset)
-        preCursorRange.toString.length
+          IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
       }
-
-      IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
     }
 
-    private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
-      if (nodeIsLi(node)) {
-        node.asInstanceOf[dom.raw.Element]
+    private def parentLiElement(node: dom.raw.Node): Option[dom.raw.Element] = {
+      if (node == null) {
+        println("  Warning: Could not find parent li element")
+        None
+      } else if (nodeIsLi(node)) {
+        Some(node.asInstanceOf[dom.raw.Element])
       } else {
         parentLiElement(node.parentNode)
       }
