@@ -14,10 +14,13 @@ import org.scalajs.dom
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.util.matching.Regex
+import scala.util.matching.Regex.Match
 
 final class TextWithMarkup private (private val parts: List[Part]) {
 
   private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s]*".r
+  private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,})|" +
+    raw"((go|bit\.ly)\/[a-zA-Z0-9-_:]{4,})").r
 
   lazy val contentString: String = parts.map(_.text).mkString
 
@@ -80,15 +83,27 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
     def convertLinksToAnchors(string: String): VdomNode = {
       def inner(string: String): VdomNode = {
+        def recurseWithMatch(m: Match,
+                             prependHttp: Boolean = false,
+                             recurseFirstPart: Boolean = false): VdomNode = {
+          val before = string.substring(0, m.start)
+          val linkText = m.group(0)
+          val after = string.substring(m.end)
+          <.span(
+            ^.key := nextKey,
+            if (recurseFirstPart) inner(before) else before,
+            linkVdomNode(href = (if (prependHttp) "http://" else "") + linkText, children = linkText),
+            inner(after)
+          )
+        }
+
         urlRegex.findFirstMatchIn(string) match {
-          case None => string
-          case Some(m) =>
-            <.span(
-              ^.key := nextKey,
-              string.substring(0, m.start),
-              linkVdomNode(href = m.group(0), children = m.group(0)),
-              inner(string.substring(m.end))
-            )
+          case Some(m) => recurseWithMatch(m, recurseFirstPart = true)
+          case None =>
+            shortLinkRegex.findFirstMatchIn(string) match {
+              case Some(m) => recurseWithMatch(m, prependHttp = true)
+              case None    => string
+            }
         }
       }
       inner(string)
