@@ -61,7 +61,7 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
         ).notFound(redirectToPage(Page.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
             LogExceptionsCallback(dispatcher.dispatch(Action.SetPageLoadingState(isLoading = false))))
-          .setTitle(page => s"${page.title} | Facto")
+          .setTitle(page => s"${page.title} | Task Keeper")
       }
       .renderWith(layout)
   }
