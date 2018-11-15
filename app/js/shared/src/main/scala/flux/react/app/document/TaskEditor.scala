@@ -1,5 +1,7 @@
 package flux.react.app.document
 
+import scala.concurrent.duration._
+import scala.scalajs.js
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
@@ -69,8 +71,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
     }
 
-    def didMount(props: Props, state: State): Callback = {
-      setSelection(documentSelectionStore.getSelection(state.document))
+    def didMount(props: Props, state: State): Callback = LogExceptionsCallback {
+      val selection = documentSelectionStore.getSelection(state.document)
+      // Add timeout because scroll to view doesn't seem to work immediately after mount
+      js.timers.setTimeout(20.milliseconds) {
+        setSelection(selection).runNow()
+      }
     }
 
     def willUnmount(props: Props, state: State): Callback = LogExceptionsCallback {
