@@ -28,7 +28,7 @@ object Page {
   case object DocumentAdministration
       extends PageBase("app.document-administration", iconClass = "fa fa-pencil fa-fw")
   case class DesktopTaskList(documentId: Long) extends Page {
-    override def title(implicit i18n: I18n) = "Piga Task List"
+    override def title(implicit i18n: I18n) = "Task Keeper"
     override def iconClass = "icon-list"
   }
 }

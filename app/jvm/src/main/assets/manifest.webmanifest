@@ -1,11 +1,11 @@
 {
-  "name": "Piga",
-  "short_name": "Piga",
+  "name": "Task Keeper",
+  "short_name": "Task Keeper",
   "start_url": "/app/",
   "display": "standalone",
   "background_color": "#fff",
   "theme_color": "#f8f8f8",
-  "description": "Piga Task Keeper",
+  "description": "Task Keeper",
   "icons": [{
     "src": "images/favicon48x48.png",
     "sizes": "48x48",
