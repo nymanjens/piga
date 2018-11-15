@@ -10,7 +10,7 @@ import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
 import flux.stores.StateStore
-import flux.stores.document.DocumentStore
+import flux.stores.document.{DocumentSelectionStore, DocumentStore}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
@@ -20,20 +20,23 @@ import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection
 import models.document.TextWithMarkup.Formatting
 import models.document.{Document, Task, TextWithMarkup}
 import org.scalajs.dom
-import org.scalajs.dom.console
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock) {
+private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
+                                         i18n: I18n,
+                                         clock: Clock,
+                                         documentSelectionStore: DocumentSelectionStore) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
     .initialStateFromProps(props => State(document = props.documentStore.state.document))
     .renderBackend[Backend]
     .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
-    .componentWillUnmount(scope => scope.backend.willUnmount(scope.props))
+    .componentDidMount(scope => scope.backend.didMount(scope.props, scope.state))
+    .componentWillUnmount(scope => scope.backend.willUnmount(scope.props, scope.state))
     .build
 
   // **************** API ****************//
@@ -66,7 +69,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
     }
 
-    def willUnmount(props: Props): Callback = LogExceptionsCallback {
+    def didMount(props: Props, state: State): Callback = {
+      setSelection(documentSelectionStore.getSelection(state.document))
+    }
+
+    def willUnmount(props: Props, state: State): Callback = LogExceptionsCallback {
+      documentSelectionStore
+        .setSelection(state.document, IndexedCursor.tupleFromSelection(dom.window.getSelection()))
+
       props.documentStore.deregister(this)
     }
 
@@ -129,6 +139,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
       modifyEventClipboardData(event)
 
       val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+
+      documentSelectionStore.setSelection($.state.runNow().document, selection)
+
       replaceSelection(replacement = Replacement.empty, selection)
     }
 
@@ -156,6 +169,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
 
+      documentSelectionStore.setSelection(document, selection)
+
       replaceSelection(
         replacement = clipboardStringToReplacement(getAnyClipboardString(event), baseFormatting = formatting),
         selection)
@@ -171,6 +186,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
         } else {
           document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
         }
+
+      documentSelectionStore.setSelection(document, selection)
 
       // console.log(s"event.key = ${event.key}")
 

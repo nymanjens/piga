@@ -5,7 +5,7 @@ import common.time.Clock
 import flux.action.Dispatcher
 import flux.react.app.document.DesktopTaskList
 import flux.stores._
-import flux.stores.document.{AllDocumentsStore, DocumentStoreFactory}
+import flux.stores.document.{AllDocumentsStore, DocumentSelectionStore, DocumentStoreFactory}
 import models.access.JsEntityAccess
 import models.user.User
 
@@ -19,6 +19,7 @@ final class Module(implicit i18n: I18n,
                    userStore: UserStore,
                    allDocumentsStore: AllDocumentsStore,
                    documentStoreFactory: DocumentStoreFactory,
+                   documentSelectionStore: DocumentSelectionStore,
                    dispatcher: Dispatcher,
                    clock: Clock) {
 

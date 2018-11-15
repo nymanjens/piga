@@ -5,7 +5,7 @@ import api.ScalaJsApiClient
 import common.I18n
 import common.time.Clock
 import flux.action.Dispatcher
-import flux.stores.document.{AllDocumentsStore, DocumentStoreFactory}
+import flux.stores.document.{AllDocumentsStore, DocumentSelectionStore, DocumentStoreFactory}
 import models.access.{EntityModificationPushClientFactory, JsEntityAccess}
 import models.user.User
 
@@ -21,6 +21,7 @@ final class Module(implicit i18n: I18n,
   implicit val userStore = new UserStore
   implicit val allDocumentsStore = new AllDocumentsStore
   implicit val documentStoreFactory = new DocumentStoreFactory
+  implicit val documentSelectionStore = new DocumentSelectionStore
   implicit val globalMessagesStore = new GlobalMessagesStore
   implicit val pageLoadingStateStore = new PageLoadingStateStore
   implicit val pendingModificationsStore = new PendingModificationsStore
