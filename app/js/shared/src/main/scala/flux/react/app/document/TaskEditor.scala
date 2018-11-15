@@ -87,8 +87,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           ^.onPaste ==> handlePaste,
           ^.onCut ==> handleCut,
           ^.onCopy ==> handleCopy,
-          ^.onInput ==> handleEvent("onChange"),
-          ^.onBeforeInput ==> handleEvent("onBeforeInput"),
           <.ul(
             applyCollapsedProperty(state.document.tasks).map {
               case (task, i, maybeAmountCollapsed) =>
@@ -116,11 +114,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess, i1
           )
         )
       )
-    }
-
-    private def handleEvent(name: String)(event: ReactEventFromInput): Callback = LogExceptionsCallback {
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
-      console.log(s"$name EVENT", event.nativeEvent, event.eventType, selection.toString)
     }
 
     private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
