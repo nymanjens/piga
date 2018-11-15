@@ -246,36 +246,9 @@ object Document {
       IndexedCursor(seqIndex, offsetInTask = document.tasks(seqIndex).contentString.length)
   }
   object IndexedCursor {
-    def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
-      val anchor = IndexedCursor.fromNode(selection.anchorNode, selection.anchorOffset)
-      val focus = IndexedCursor.fromNode(selection.focusNode, selection.focusOffset)
-      if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
-    }
-
     def atStartOfLine(seqIndex: Int): IndexedCursor = IndexedCursor(seqIndex, 0)
     def atEndOfLine(seqIndex: Int)(implicit document: Document) =
       IndexedCursor(seqIndex, document.tasks(seqIndex).contentString.length)
-
-    private def fromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
-      val parentLi = parentLiElement(node)
-
-      val offsetInTask = {
-        val preCursorRange = dom.document.createRange()
-        preCursorRange.selectNodeContents(parentLi)
-        preCursorRange.setEnd(node, offset)
-        preCursorRange.toString.length
-      }
-
-      IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
-    }
-
-    private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
-      if (nodeIsLi(node)) {
-        node.asInstanceOf[dom.raw.Element]
-      } else {
-        parentLiElement(node.parentNode)
-      }
-    }
   }
 
   case class IndexedSelection(start: IndexedCursor, end: IndexedCursor) {
@@ -308,6 +281,33 @@ object Document {
   }
   object IndexedSelection {
     def singleton(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
+
+    def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
+      val anchor = cursorFromNode(selection.anchorNode, selection.anchorOffset)
+      val focus = cursorFromNode(selection.focusNode, selection.focusOffset)
+      if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
+    }
+
+    private def cursorFromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
+      val parentLi = parentLiElement(node)
+
+      val offsetInTask = {
+        val preCursorRange = dom.document.createRange()
+        preCursorRange.selectNodeContents(parentLi)
+        preCursorRange.setEnd(node, offset)
+        preCursorRange.toString.length
+      }
+
+      IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
+    }
+
+    private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
+      if (nodeIsLi(node)) {
+        node.asInstanceOf[dom.raw.Element]
+      } else {
+        parentLiElement(node.parentNode)
+      }
+    }
   }
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {

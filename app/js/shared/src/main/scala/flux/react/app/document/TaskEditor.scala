@@ -81,7 +81,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     def willUnmount(props: Props, state: State): Callback = LogExceptionsCallback {
       documentSelectionStore
-        .setSelection(state.document, IndexedCursor.tupleFromSelection(dom.window.getSelection()))
+        .setSelection(state.document, IndexedSelection.tupleFromSelection(dom.window.getSelection()))
 
       props.documentStore.deregister(this)
     }
@@ -144,7 +144,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       modifyEventClipboardData(event)
 
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
 
       documentSelectionStore.setSelection($.state.runNow().document, selection)
 
@@ -152,7 +152,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       val document = $.state.runNow().document
 
       if (selection.start != selection.end) {
@@ -165,7 +165,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
       event.preventDefault()
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
       implicit val document = $.state.runNow().document
       val formatting =
@@ -183,7 +183,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
-      val selection = IndexedCursor.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
       implicit val document = $.state.runNow().document
       val formatting =
