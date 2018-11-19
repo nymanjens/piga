@@ -114,7 +114,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                 (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
-                  ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 30}px"),
+                  ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                   ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
                   VdomAttr("num") := i,
                   task.content.toVdomNode
