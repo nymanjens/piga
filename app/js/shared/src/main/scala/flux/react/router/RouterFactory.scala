@@ -44,8 +44,12 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
         (emptyRule
 
           | staticRoute(RouterFactory.pathPrefix, Page.Root)
-            ~> redirectToPage(Page.DesktopTaskList(
-              documentId = allDocumentsStore.state.allDocuments.head.id))(Redirect.Replace)
+            ~> redirectToPage(
+              allDocumentsStore.state.allDocuments.headOption match {
+                case Some(firstDocument) => Page.DesktopTaskList(documentId = firstDocument.id)
+                case None                => Page.DocumentAdministration
+              }
+            )(Redirect.Replace)
 
           | staticRuleFromPage(Page.UserProfile, reactAppModule.userProfile.apply)
 
