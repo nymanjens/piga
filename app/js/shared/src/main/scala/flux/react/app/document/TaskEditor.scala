@@ -423,14 +423,19 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           yield {
             def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
               if (i == index) tags else TextWithMarkup.empty
-            tasksToReplace.head.copyWithRandomId(
-              content = ifIndexOrEmpty(0)(
-                oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
-                replacementPart.content +
-                ifIndexOrEmpty(replacement.parts.length - 1)(
-                  oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)),
+            val newContent = ifIndexOrEmpty(0)(
+              oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
+              replacementPart.content +
+              ifIndexOrEmpty(replacement.parts.length - 1)(
+                oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
+            val baseTask = tasksToReplace.head
+            baseTask.copyWithRandomId(
+              content = newContent,
               orderToken = newOrderToken,
-              indentation = tasksToReplace.head.indentation + replacementPart.indentationRelativeToCurrent
+              indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
+              collapsed = if (newContent.nonEmpty) baseTask.collapsed else false,
+              delayedUntil = if (newContent.nonEmpty) baseTask.delayedUntil else None,
+              tags = if (newContent.nonEmpty) baseTask.tags else Seq()
             )
           }
 
