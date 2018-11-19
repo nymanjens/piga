@@ -195,7 +195,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       documentSelectionStore.setSelection(document, selection)
 
-      // console.log(s"event.key = ${event.key}")
+      // dom.console.log(s"event.key = ${event.key}")
 
       val keyCombination = KeyCombination.fromEvent(event)
       keyCombination match {
@@ -380,6 +380,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           event.preventDefault()
           updateCharactersInSelection(selection, _.toLowerCase)
 
+        // Edit tags
+        case CharacterKey('T', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+          event.preventDefault()
+          editTagsInTasks(selection)
+
         case _ =>
           Callback.empty
       }
@@ -512,7 +517,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       )
     }
 
-    private def updateCharactersInSelection(selection: Document.IndexedSelection,
+    private def updateCharactersInSelection(selection: IndexedSelection,
                                             characterTransform: String => String): Callback = {
       implicit val oldDocument = $.state.runNow().document
       val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
@@ -533,6 +538,43 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
+    }
+
+    private def editTagsInTasks(selection: IndexedSelection)(implicit document: Document): Callback = {
+      class CancelException extends Exception
+      def tagsDialog(defaultTags: Seq[String]): Seq[String] = {
+        val title = if (defaultTags.isEmpty) "Add tags" else "Edit tags"
+        val result = dom.window.prompt(title, defaultTags.mkString(", "))
+        result match {
+          case null => throw new CancelException
+          case s    => Seq(s) // TODO: split
+        }
+      }
+
+      def replaceTags(indexedSelection: IndexedSelection,
+                      tagsToRemove: Seq[String],
+                      tagsToAdd: Seq[String]): Callback = {
+        def updated(task: Task): Task =
+          task.copyWithRandomId(tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+        replaceWithHistory(
+          tasksToReplace = for (i <- selection.seqIndices) yield document.tasks(i),
+          tasksToAdd = for (i <- selection.seqIndices) yield updated(document.tasks(i)),
+          selectionBeforeEdit = selection,
+          selectionAfterEdit = selection
+        )
+      }
+
+      val currentTags: Seq[String] = {
+        val tasks = for (i <- selection.seqIndices) yield document.tasks(i)
+        tasks.map(_.tags).reduce(_ intersect _)
+      }
+
+      try {
+        val newTags = tagsDialog(currentTags)
+        replaceTags(selection, currentTags, newTags)
+      } catch {
+        case _: CancelException => Callback.empty
+      }
     }
 
     private def toggleFormatting(updateFunc: (Formatting, Boolean) => Formatting,
