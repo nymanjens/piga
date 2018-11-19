@@ -51,15 +51,15 @@ Example use cases:
     rm -d piga-1.0-SNAPSHOT/
 
     # Create database tables
-    bin/piga -DdropAndCreateNewDb
+    bin/server -DdropAndCreateNewDb
     rm RUNNING_PID
 
     # Create admin user
-    bin/piga -DcreateAdminUser
+    bin/server -DcreateAdminUser
     rm RUNNING_PID
 
     # Run application
-    bin/piga
+    bin/server
     ```
 
 ## Configuration
