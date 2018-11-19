@@ -62,7 +62,7 @@ case "$1" in
 
     echo "Starting piga..." && echo
 
-    su pi -c "cd $SERVICE_ROOT && bin/server" > /tmp/piga-logs 2>&1 &
+    su pi -c "cd $SERVICE_ROOT && bin/server -Dhttp.port=8782" > /tmp/piga-logs 2>&1 &
 
     echo "Waiting for $RUNNING_PID to appear"
     for i in `seq 1 20`; do
