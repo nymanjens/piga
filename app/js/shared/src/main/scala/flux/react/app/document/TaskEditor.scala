@@ -199,7 +199,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       val keyCombination = KeyCombination.fromEvent(event)
       keyCombination match {
-        case CharacterKey(character, /* ctrlOrMeta */ false, shift, alt) if !(shift && alt) =>
+        case CharacterKey(character, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
           replaceSelection(
             replacement = Replacement.fromString(character.toString, formatting),
