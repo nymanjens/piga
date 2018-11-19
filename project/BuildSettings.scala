@@ -11,7 +11,7 @@ object BuildSettings {
   val name = "piga"
 
   /** The version of your application */
-  val version = "3.0"
+  val version = "1.0"
 
   /** Options for the scala compiler */
   val scalacOptions = Seq(
