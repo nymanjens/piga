@@ -1,10 +1,7 @@
 package models.document
 
-import java.util.concurrent.atomic.AtomicLong
-
 import common.DomNodeUtils.{children, _}
 import common.LoggingUtils.LogExceptionsCallback
-import common.ScalaUtils.visibleForTesting
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml
@@ -84,7 +81,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       }
     }
 
-    def convertLinksToAnchors(string: String): VdomNode = {
+    def convertLinksToAnchors(string: String, insideLink: Boolean): VdomNode = {
       def inner(string: String): VdomNode = {
         def recurseWithMatch(m: Match,
                              prependHttp: Boolean = false,
@@ -109,7 +106,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
             }
         }
       }
-      inner(string)
+      if (insideLink) string else inner(string)
     }
 
     TextWithMarkup.serializeToDom[VdomNode](
@@ -142,7 +139,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     TextWithMarkup.serializeToDom[String](
       parts,
       applyFormattingOption = applyFormattingOption,
-      liftString = s => escapeHtml(s).replace("\n", "<br />"),
+      liftString = (s, insideLink) => escapeHtml(s).replace("\n", "<br />"),
       mergeResults = _.mkString)
   }
 
@@ -328,26 +325,36 @@ object TextWithMarkup {
     new TextWithMarkup(createCanonicalInner(parts.toList))
   }
 
+  private type InsideLink = Boolean
+
   private def serializeToDom[R](parts: List[Part],
                                 applyFormattingOption: FormattingOption.Applier[R],
-                                liftString: String => R,
+                                liftString: (String, InsideLink) => R,
                                 mergeResults: Iterable[R] => R): R = {
-    def serializeToDomInner(parts: Seq[Part], formattingLeft: List[FormattingOption[_]]): R = {
+    def serializeToDomInner(parts: Seq[Part],
+                            formattingLeft: List[FormattingOption[_]],
+                            insideLink: InsideLink): R = {
       formattingLeft match {
-        case Nil => liftString(parts.map(_.text).mkString)
+        case Nil => liftString(parts.map(_.text).mkString, insideLink)
         case formattingOption :: otherFormattingOptions =>
           def inner[T](formattingOption: FormattingOption[T]): R = {
             var currentFormattingValue: T = null.asInstanceOf[T]
             val partBuffer = mutable.Buffer[Part]()
             val resultBuffer = mutable.Buffer[R]()
 
+            def currentFormattingIsLink: Boolean =
+              formattingOption == FormattingOption.Link &&
+                currentFormattingValue.asInstanceOf[Option[String]].isDefined
             def pushToBuffer(): Unit = {
               if (partBuffer.nonEmpty) {
                 resultBuffer.append(
                   applyFormattingOption(
                     option = formattingOption,
                     value = currentFormattingValue,
-                    children = serializeToDomInner(partBuffer.toList, otherFormattingOptions),
+                    children = serializeToDomInner(
+                      partBuffer.toList,
+                      otherFormattingOptions,
+                      insideLink = insideLink || currentFormattingIsLink),
                     childrenParts = partBuffer
                   ))
                 partBuffer.clear()
@@ -372,6 +379,9 @@ object TextWithMarkup {
     }
 
     import FormattingOption._
-    serializeToDomInner(parts, formattingLeft = List(Link, Code, Strikethrough, Italic, Bold))
+    serializeToDomInner(
+      parts,
+      formattingLeft = List(Link, Code, Strikethrough, Italic, Bold),
+      insideLink = false)
   }
 }
