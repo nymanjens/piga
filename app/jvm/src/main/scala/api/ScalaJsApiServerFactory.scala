@@ -25,12 +25,12 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
         user = user,
         allAccessibleDocuments = entityAccess.newQuerySync[DocumentEntity]().data(),
         i18nMessages = i18n.allI18nMessages,
-        nextUpdateToken = toUpdateToken(clock.now)
+        nextUpdateToken = toUpdateToken(clock.nowInstant)
       )
 
     override def getAllEntities(types: Seq[EntityType.any]) = {
       // All modifications are idempotent so we can use the time when we started getting the entities as next update token.
-      val nextUpdateToken: UpdateToken = toUpdateToken(clock.now)
+      val nextUpdateToken: UpdateToken = toUpdateToken(clock.nowInstant)
       val entitiesMap: Map[EntityType.any, Seq[Entity]] = {
         types
           .map(entityType => {
