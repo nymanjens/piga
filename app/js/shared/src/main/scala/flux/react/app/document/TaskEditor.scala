@@ -331,39 +331,39 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           event.preventDefault()
           selectExtendedWordAround(start)
 
-        // Select line
+        // Select task
         case CharacterKey('j', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
-        // Delete line
+        // Delete task
         case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           removeTasks(selection.seqIndices)
 
-        // Duplicate line
+        // Duplicate task
         case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
           duplicateTasks(selection.seqIndices, selectionBeforeEdit = selection)
 
-        // Move lines up
+        // Move tasks up
         case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
           event.preventDefault()
-          moveLinesInSeq(selection, direction = -1)
+          moveTasksInSeq(selection, direction = -1)
 
-        // Move lines down
+        // Move tasks down
         case SpecialKey(ArrowDown, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
           event.preventDefault()
-          moveLinesInSeq(selection, direction = +1)
+          moveTasksInSeq(selection, direction = +1)
 
-        // Expand lines
+        // Expand tasks
         case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = false)
           }
 
-        // Collapse lines
+        // Collapse tasks
         case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
@@ -470,10 +470,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         tasksToReplace = tasksToReplace,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = IndexedSelection(
-          IndexedCursor.atStartOfLine(taskIndices.head),
-          IndexedCursor.atEndOfLine(taskIndices.last)),
+          IndexedCursor.atStartOfTask(taskIndices.head),
+          IndexedCursor.atEndOfTask(taskIndices.last)),
         selectionAfterEdit = IndexedSelection.singleton(
-          IndexedCursor.atStartOfLine(
+          IndexedCursor.atStartOfTask(
             if (oldDocument.tasks.size > taskIndices.head + taskIndices.size) taskIndices.head
             else if (taskIndices.head == 0) 0
             else taskIndices.head - 1))
@@ -500,8 +500,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         tasksToAdd = tasksToAdd,
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
-          selectionBeforeEdit.start.plusLines(taskIndices.size),
-          selectionBeforeEdit.end.plusLines(taskIndices.size))
+          selectionBeforeEdit.start.plusTasks(taskIndices.size),
+          selectionBeforeEdit.end.plusTasks(taskIndices.size))
       )
     }
 
@@ -702,7 +702,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
     }
 
-    private def moveLinesInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
+    private def moveTasksInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
       implicit val oldDocument = $.state.runNow().document
       val IndexedSelection(start, end) = selectionBeforeEdit.includeCollapsedChildren
 
@@ -755,14 +755,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def selectExtendedWordAround(cursor: IndexedCursor): Callback = {
       val document = $.state.runNow().document
-      val line = document.tasks(cursor.seqIndex).contentString
+      val taskContent = document.tasks(cursor.seqIndex).contentString
 
       def moveOffset(offsetInTask: Int, step: Int): Int = {
         val nextOffset = offsetInTask + step
-        if (nextOffset < 0 || nextOffset > line.length) {
+        if (nextOffset < 0 || nextOffset > taskContent.length) {
           offsetInTask
         } else {
-          val currentChar = if (step > 0) line.charAt(offsetInTask) else line.charAt(nextOffset)
+          val currentChar = if (step > 0) taskContent.charAt(offsetInTask) else taskContent.charAt(nextOffset)
           currentChar match {
             case ' ' | '\f' | '\n' | '\r' | '\t' | '\u00A0' | '\u2028' | '\u2029' | '$' => offsetInTask
             case _                                                                      => moveOffset(nextOffset, step)

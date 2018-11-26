@@ -183,7 +183,7 @@ object Document {
     def plusOffset(diff: Int): IndexedCursor = IndexedCursor(seqIndex, offsetInTask + diff)
     def minusOffset(diff: Int): IndexedCursor = plusOffset(-diff)
 
-    def plusLines(seqIndexDiff: Int): IndexedCursor = IndexedCursor(seqIndex + seqIndexDiff, offsetInTask)
+    def plusTasks(seqIndexDiff: Int): IndexedCursor = IndexedCursor(seqIndex + seqIndexDiff, offsetInTask)
 
     def plusOffsetInSeq(diff: Int)(implicit document: Document): IndexedCursor = {
       val tasks = document.tasks
@@ -234,7 +234,7 @@ object Document {
         move(offsetInTask)
       })
       if (this == result) {
-        // No movement happened --> move to the next/previous line
+        // No movement happened --> move to the next/previous task
         plusOffsetInSeq(step)
       } else {
         result
@@ -246,8 +246,8 @@ object Document {
       IndexedCursor(seqIndex, offsetInTask = document.tasks(seqIndex).contentString.length)
   }
   object IndexedCursor {
-    def atStartOfLine(seqIndex: Int): IndexedCursor = IndexedCursor(seqIndex, 0)
-    def atEndOfLine(seqIndex: Int)(implicit document: Document) =
+    def atStartOfTask(seqIndex: Int): IndexedCursor = IndexedCursor(seqIndex, 0)
+    def atEndOfTask(seqIndex: Int)(implicit document: Document) =
       IndexedCursor(seqIndex, document.tasks(seqIndex).contentString.length)
   }
 
