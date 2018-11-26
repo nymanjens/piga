@@ -74,7 +74,8 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
             if modification.entityType == EntityType.TaskEntityType =>
           newDocument = newDocument.minusTaskWithId(entityId)
         // Document updates
-        case EntityModification.Update(documentEntity: DocumentEntity) =>
+        case EntityModification.Update(documentEntity: DocumentEntity)
+            if documentEntity.id == state.document.id =>
           newDocument = newDocument.updateFromDocumentEntity(documentEntity)
 
         case _ =>
