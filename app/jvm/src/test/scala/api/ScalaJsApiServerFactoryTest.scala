@@ -1,5 +1,7 @@
 package api
 
+import java.time.Instant
+
 import models.access.DbQueryImplicits._
 import api.ScalaJsApi.UserPrototype
 import api.UpdateTokens.toUpdateToken
@@ -22,11 +24,6 @@ import scala.collection.immutable.Seq
 @RunWith(classOf[JUnitRunner])
 class ScalaJsApiServerFactoryTest extends HookedSpecification {
 
-  private val date1 = localDateTimeOfEpochSecond(999000111)
-  private val date2 = localDateTimeOfEpochSecond(999000222)
-  private val date3 = localDateTimeOfEpochSecond(999000333)
-  private val date4 = localDateTimeOfEpochSecond(999000444)
-
   implicit private val user = testUserA
 
   @Inject implicit private val fakeClock: FakeClock = null
@@ -39,24 +36,24 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
   }
 
   "getInitialData()" in new WithApplication {
-    fakeClock.setTime(testDate)
+    fakeClock.setNowInstant(testInstant)
     TestUtils.persist(testUserA)
     TestUtils.persist(testUserB)
 
     val response = serverFactory.create().getInitialData()
 
     response.user mustEqual user
-    response.nextUpdateToken mustEqual toUpdateToken(testDate)
+    response.nextUpdateToken mustEqual toUpdateToken(testInstant)
   }
 
   "getAllEntities()" in new WithApplication {
-    fakeClock.setTime(testDate)
+    fakeClock.setNowInstant(testInstant)
     TestUtils.persist(testUser)
 
     val response = serverFactory.create().getAllEntities(Seq(EntityType.UserType))
 
     response.entities(EntityType.UserType) mustEqual Seq(testUser)
-    response.nextUpdateToken mustEqual toUpdateToken(testDate)
+    response.nextUpdateToken mustEqual toUpdateToken(testInstant)
   }
 
   "executeDataQuery()" in new WithApplication {

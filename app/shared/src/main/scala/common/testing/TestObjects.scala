@@ -1,5 +1,6 @@
 package common.testing
 
+import java.time.Instant
 import java.time.Month._
 
 import api.ScalaJsApi.{GetInitialDataResponse, UpdateToken, UserPrototype}
@@ -20,6 +21,7 @@ object TestObjects {
   val orderTokenE: OrderToken = OrderToken.middleBetween(Some(orderTokenD), None)
 
   val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
+  val testInstant = Instant.ofEpochMilli(999000111)
   val testUpdateToken: UpdateToken = s"123782:12378"
 
   def testUserA: User = User(

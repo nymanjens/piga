@@ -6,7 +6,10 @@ import com.google.inject._
 
 final class JvmClock extends Clock {
   // TODO: Make this configurable
-  val zone = ZoneId.of("Europe/Paris")
+  private val zone = ZoneId.of("Europe/Paris")
+
+  private val initialInstant: Instant = Instant.now
+  private val initialNanos: Long = System.nanoTime
 
   override def now = {
     val date = LocalDate.now(zone)
@@ -14,5 +17,5 @@ final class JvmClock extends Clock {
     LocalDateTime.of(date, time)
   }
 
-  override def nowInstant = Instant.now()
+  override def nowInstant = initialInstant plusNanos (System.nanoTime - initialNanos)
 }

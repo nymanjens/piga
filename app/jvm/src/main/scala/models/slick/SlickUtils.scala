@@ -1,7 +1,7 @@
 package models.slick
 
 import java.nio.ByteBuffer
-import java.time.{ZoneId, LocalDateTime => JavaLocalDateTime}
+import java.time.{Instant, ZoneId, LocalDateTime => JavaLocalDateTime}
 
 import common.OrderToken
 import common.time.{LocalDateTime, LocalDateTimes}
@@ -43,6 +43,9 @@ object SlickUtils {
     }
     MappedColumnType.base[LocalDateTime, java.sql.Timestamp](toSql, toLocalDateTime)
   }
+
+  implicit val instantToSqlTimestampMapper: ColumnType[Instant] =
+    MappedColumnType.base[Instant, java.sql.Timestamp](java.sql.Timestamp.from, _.toInstant)
 
   implicit val orderTokenToBytesMapper: ColumnType[OrderToken] = {
     val zone = ZoneId.of("Europe/Paris") // This is arbitrary. It just has to be the same in both directions
