@@ -73,10 +73,9 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
     // B all happened after it.
     val nextUpdateToken = toUpdateToken(clock.nowInstant minus Duration.ofSeconds(20))
 
-    for {
-      modification <- modifications
-      if !isDuplicate(modification)
-    } {
+    val uniqueModifications = modifications.filter(m => !isDuplicate(m))
+
+    for (modification <- uniqueModifications) {
       // Apply modification
       val entityType = modification.entityType
       modification match {
@@ -102,7 +101,7 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
       inMemoryEntityDatabase.update(modification)
     }
 
-    entityModificationPublisher_.trigger(ModificationsWithToken(modifications, nextUpdateToken))
+    entityModificationPublisher_.trigger(ModificationsWithToken(uniqueModifications, nextUpdateToken))
   }
 
   // ********** Management methods ********** //
