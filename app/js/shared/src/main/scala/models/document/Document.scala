@@ -101,19 +101,21 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     def numberOfTasks: Int = lastChildSeqIndex - parentSeqIndex + 1
   }
   def collapsedTasksRange(seqIndex: Int): Option[CollapsedTasksRange] = {
-    def findCollapsedParentIndex(seqIndex: Int, currentIndentation: Int): Option[Int] = {
+    def findCollapsedParentIndex(seqIndex: Int): Option[Int] = {
+      val currentIndentation = tasks(seqIndex).indentation
       if (tasks(seqIndex).collapsed) {
         Some(seqIndex)
       } else {
-        var parentIndex = seqIndex
-        while (parentIndex >= 0 && !(tasks(parentIndex).collapsed &&
-                 tasks(parentIndex).indentation < currentIndentation)) {
-          parentIndex -= 1
+        val maybeParentIndex = {
+          var result = seqIndex
+          while (result >= 0 && tasks(result).indentation >= currentIndentation) {
+            result -= 1
+          }
+          if (result == -1) None else Some(result)
         }
-        if (parentIndex == -1) {
-          None
-        } else {
-          Some(parentIndex)
+        maybeParentIndex match {
+          case Some(parentIndex) => findCollapsedParentIndex(seqIndex = parentIndex)
+          case None              => None
         }
       }
     }
@@ -128,7 +130,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 
     for {
       task <- tasksOption(seqIndex)
-      parentIndex <- findCollapsedParentIndex(seqIndex, task.indentation)
+      parentIndex <- findCollapsedParentIndex(seqIndex)
     } yield
       CollapsedTasksRange(
         parentIndex,

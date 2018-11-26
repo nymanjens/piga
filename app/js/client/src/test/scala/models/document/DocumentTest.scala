@@ -1,5 +1,6 @@
 package models.document
 
+import common.OrderToken
 import common.testing.JsTestObjects._
 import common.testing.TestObjects._
 import models.document.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
@@ -11,6 +12,7 @@ import scala.collection.immutable.Seq
 object DocumentTest extends TestSuite {
   val taskBB = newTask("Task BB", orderToken = orderTokenB)
   val taskEE = newTask("Task EE", orderToken = orderTokenE)
+  val taskF = newTask("Task F", orderToken = OrderToken.middleBetween(Some(orderTokenE), None))
 
   override def tests = TestSuite {
     "equals and hashCode" - {
@@ -122,12 +124,28 @@ object DocumentTest extends TestSuite {
           indentation(1, collapsed(taskB)),
           indentation(2, taskC),
           indentation(2, taskD),
-          indentation(1, taskE))
+          indentation(1, taskE),
+          indentation(2, taskF))
 
         document.collapsedTasksRange(0) ==> None
         document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(1, 3))
         document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(1, 3))
         document.collapsedTasksRange(3) ==> Some(document.CollapsedTasksRange(1, 3))
+        document.collapsedTasksRange(4) ==> None
+        document.collapsedTasksRange(5) ==> None
+      }
+      "collapsed with bump" - {
+        val document = newDocument(
+          indentation(0, collapsed(taskA)),
+          indentation(2, taskB),
+          indentation(1, taskC),
+          indentation(0, taskD),
+          indentation(1, taskE))
+
+        document.collapsedTasksRange(0) ==> Some(document.CollapsedTasksRange(0, 2))
+        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(0, 2))
+        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(0, 2))
+        document.collapsedTasksRange(3) ==> None
         document.collapsedTasksRange(4) ==> None
       }
       "all collapsed" - {
