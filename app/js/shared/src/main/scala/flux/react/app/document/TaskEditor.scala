@@ -357,7 +357,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           moveLinesInSeq(selection, direction = +1)
 
         // Expand lines
-        case CharacterKey('=', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+        case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
           updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
             task.copyWithRandomId(collapsed = false)
