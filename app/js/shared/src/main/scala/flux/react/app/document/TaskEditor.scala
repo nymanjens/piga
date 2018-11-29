@@ -7,7 +7,7 @@ import common.GuavaReplacement.Splitter
 import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
-import common.{DomNodeUtils, I18n, OrderToken}
+import common.{DomNodeUtils, I18n, OrderToken, Tags}
 import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
@@ -566,7 +566,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val result = dom.window.prompt(title, defaultTags.mkString(", "))
         result match {
           case null => throw new CancelException
-          case s    => Seq(s) // TODO: split
+          case s    => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag)
         }
       }
 
