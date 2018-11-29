@@ -212,7 +212,21 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               replacement = Replacement.fromString("\n", formatting),
               IndexedSelection(start, end))
           } else {
-            replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
+            if (selection.isSingleton &&
+                document.tasks(start.seqIndex).collapsed &&
+                start == start.toEndOfTask) {
+              // Pressing enter at the end of a collapsed task --> skip the children
+              val lastCollapsedIndex = selection.includeCollapsedChildren.end.seqIndex
+              replaceSelection(
+                replacement = Replacement.newEmptyTask(
+                  indentationRelativeToCurrent =
+                    document.tasks(start.seqIndex).indentation
+                      - document.tasks(lastCollapsedIndex).indentation),
+                IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex))
+              )
+            } else {
+              replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
+            }
           }
 
         case SpecialKey(Backspace, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
