@@ -8,7 +8,7 @@ import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.ScalaUtils.{ifThenOption, visibleForTesting}
 import common.time.Clock
 import common.{DomNodeUtils, I18n, OrderToken, Tags}
-import flux.react.ReactVdomUtils.^^
+import flux.react.ReactVdomUtils.{<<, ^^}
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
 import flux.stores.StateStore
@@ -92,6 +92,19 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     def render(props: Props, state: State): VdomElement = logExceptions {
+      case class RenderedTag(span: VdomElement, style: String)
+      def renderTags(tags: Seq[String], seqIndex: Int): Seq[RenderedTag] = tags.zipWithIndex.map {
+        case (tag, tagIndex) =>
+          val tagId = s"tag-$seqIndex-$tagIndex"
+          RenderedTag(
+            span = <.span(
+              ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
+              ^.key := tagId,
+              ^.id := tagId),
+            style = s"""#$tagId:after {content: "$tag";}"""
+          )
+      }
+
       implicit val router = props.router
       <.span(
         <.div(
@@ -111,21 +124,26 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                   case Some(nextTask) if nextTask.indentation > task.indentation => "node"
                   case _                                                         => "leaf"
                 }
+                val renderedTags = renderTags(task.tags, seqIndex = i)
+                val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
+                  s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}""")
+                val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
+
                 (<.li(
                   ^.key := s"li-$i",
                   ^.id := s"teli-$i",
                   ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                   ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
                   VdomAttr("num") := i,
+                  renderedTags.map(_.span).toVdomArray,
                   task.content.toVdomNode
-                ) +: (maybeAmountCollapsed match {
-                  case Some(amountCollapsed) =>
-                    Seq(
-                      <.styleTag(
-                        ^.key := s"listyle-$i",
-                        s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}"""))
-                  case None => Seq()
-                })).toVdomArray
+                ) +: {
+                  if (styleStrings.nonEmpty) {
+                    Seq(<.styleTag(^.key := s"listyle-$i", styleStrings.mkString("\n")))
+                  } else {
+                    Seq()
+                  }
+                }).toVdomArray
             }.toVdomArray
           )
         )
