@@ -71,7 +71,7 @@ object TestObjects {
   def testModification: EntityModification = testModificationA
 
   val testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
-    user = testUserA,
+    user = testUserRedacted,
     allAccessibleDocuments = Seq(testDocumentEntity),
     i18nMessages = Map("abc" -> "def"),
     nextUpdateToken = testUpdateToken
