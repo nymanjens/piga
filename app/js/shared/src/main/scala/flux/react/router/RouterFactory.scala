@@ -65,7 +65,12 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
         ).notFound(redirectToPage(Page.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
             LogExceptionsCallback(dispatcher.dispatch(Action.SetPageLoadingState(isLoading = false))))
-          .setTitle(page => s"${page.title} | Task Keeper")
+          .setTitle {
+            case Page.DesktopTaskList(documentId) =>
+              val documentName = allDocumentsStore.state.allDocuments.find(_.id == documentId).head.name
+              s"$documentName | Task Keeper"
+            case page => s"${page.title} | Task Keeper"
+          }
       }
       .renderWith(layout)
   }
