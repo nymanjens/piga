@@ -52,6 +52,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
 
+    private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(
@@ -77,9 +78,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       js.timers.setTimeout(20.milliseconds) {
         setSelection(selection).runNow()
       }
+
+      dom.window.addEventListener("resize", resizeListener)
     }
 
     def willUnmount(props: Props, state: State): Callback = LogExceptionsCallback {
+      dom.window.removeEventListener("resize", resizeListener)
+
       documentSelectionStore
         .setSelection(state.document, IndexedSelection.tupleFromSelection(dom.window.getSelection()))
 
@@ -115,6 +120,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.onPaste ==> handlePaste,
         ^.onCut ==> handleCut,
         ^.onCopy ==> handleCopy,
+        ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
             case (task, i, maybeAmountCollapsed) =>
@@ -146,6 +152,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           }.toVdomArray
         )
       )
+    }
+
+    private def editorHeightPx: Int = {
+      val windowHeight = if (dom.window.innerHeight > 0) dom.window.innerHeight else dom.window.screen.height
+      Integer.max(windowHeight.toInt - 230, 400)
     }
 
     private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
