@@ -106,46 +106,44 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       implicit val router = props.router
-      <.span(
-        <.div(
-          ^.contentEditable := true,
-          ^.className := "task-editor",
-          ^.spellCheck := false,
-          VdomAttr("suppressContentEditableWarning") := true,
-          ^.onKeyDown ==> handleKeyDown,
-          ^.onPaste ==> handlePaste,
-          ^.onCut ==> handleCut,
-          ^.onCopy ==> handleCopy,
-          <.ul(
-            applyCollapsedProperty(state.document.tasks).map {
-              case (task, i, maybeAmountCollapsed) =>
-                val nodeType = state.document.tasksOption(i + 1) match {
-                  case _ if task.indentation == 0                                => "root"
-                  case Some(nextTask) if nextTask.indentation > task.indentation => "node"
-                  case _                                                         => "leaf"
-                }
-                val renderedTags = renderTags(task.tags, seqIndex = i)
-                val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
-                  s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}""")
-                val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
+      <.div(
+        ^.contentEditable := true,
+        ^.className := "task-editor",
+        ^.spellCheck := false,
+        VdomAttr("suppressContentEditableWarning") := true,
+        ^.onKeyDown ==> handleKeyDown,
+        ^.onPaste ==> handlePaste,
+        ^.onCut ==> handleCut,
+        ^.onCopy ==> handleCopy,
+        <.ul(
+          applyCollapsedProperty(state.document.tasks).map {
+            case (task, i, maybeAmountCollapsed) =>
+              val nodeType = state.document.tasksOption(i + 1) match {
+                case _ if task.indentation == 0                                => "root"
+                case Some(nextTask) if nextTask.indentation > task.indentation => "node"
+                case _                                                         => "leaf"
+              }
+              val renderedTags = renderTags(task.tags, seqIndex = i)
+              val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
+                s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}""")
+              val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
-                (<.li(
-                  ^.key := s"li-$i",
-                  ^.id := s"teli-$i",
-                  ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
-                  ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
-                  VdomAttr("num") := i,
-                  renderedTags.map(_.span).toVdomArray,
-                  task.content.toVdomNode
-                ) +: {
-                  if (styleStrings.nonEmpty) {
-                    Seq(<.styleTag(^.key := s"listyle-$i", styleStrings.mkString("\n")))
-                  } else {
-                    Seq()
-                  }
-                }).toVdomArray
-            }.toVdomArray
-          )
+              (<.li(
+                ^.key := s"li-$i",
+                ^.id := s"teli-$i",
+                ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
+                ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
+                VdomAttr("num") := i,
+                renderedTags.map(_.span).toVdomArray,
+                task.content.toVdomNode
+              ) +: {
+                if (styleStrings.nonEmpty) {
+                  Seq(<.styleTag(^.key := s"listyle-$i", styleStrings.mkString("\n")))
+                } else {
+                  Seq()
+                }
+              }).toVdomArray
+          }.toVdomArray
         )
       )
     }
