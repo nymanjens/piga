@@ -222,9 +222,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       documentSelectionStore.setSelection(document, selection)
 
-      // dom.console.log(s"event.key = ${event.key}")
-
       val keyCombination = KeyCombination.fromEvent(event)
+
+      //dom.console.log(s"keyCombination = $keyCombination")
+
       keyCombination match {
         case CharacterKey(character, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
@@ -308,7 +309,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             formattingAtStart = formatting)
 
         // Code font
-        case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+        case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) |
+            CharacterKey('C', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
           toggleFormatting(
             (form, value) => form.copy(code = value),
