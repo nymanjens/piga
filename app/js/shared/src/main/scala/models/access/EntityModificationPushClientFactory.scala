@@ -1,5 +1,7 @@
 package models.access
 
+import java.nio.ByteBuffer
+
 import api.Picklers._
 import api.ScalaJsApi.{ModificationsWithToken, UpdateToken}
 import boopickle.Default.{Unpickle, _}
@@ -40,10 +42,14 @@ final class EntityModificationPushClientFactory {
     private var websocketClient: Option[Future[BinaryWebsocketClient]] = Some(
       openWebsocketClient(updateToken))
 
-    private val onlineListener: js.Function1[Event, Unit] = _ => {
-      if (websocketClient.isEmpty) {
-        websocketClient = Some(openWebsocketClient(lastUpdateToken))
-      }
+    private val onlineListener: js.Function1[Event, Unit] = _ =>
+      websocketClient match {
+        case Some(clientFuture) =>
+          async {
+            val client = await(clientFuture)
+            client.send(ByteBuffer.wrap(Array(0, 0))) // Will be ignored, but forces to test connection
+          }
+        case None => websocketClient = Some(openWebsocketClient(lastUpdateToken))
     }
 
     dom.window.addEventListener("online", onlineListener)
