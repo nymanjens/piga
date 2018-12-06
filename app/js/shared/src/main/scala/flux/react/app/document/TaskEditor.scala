@@ -382,12 +382,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         // Delete task
         case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
-          removeTasks(selection.seqIndices)
+          removeTasks(selection.includeCollapsedChildren.seqIndices)
 
         // Duplicate task
         case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
-          duplicateTasks(selection.seqIndices, selectionBeforeEdit = selection)
+          duplicateTasks(selection.includeCollapsedChildren.seqIndices, selectionBeforeEdit = selection)
 
         // Move tasks up
         case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
