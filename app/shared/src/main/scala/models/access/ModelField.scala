@@ -84,25 +84,32 @@ object ModelField {
 
   // **************** Field numbers **************** //
   private val fieldToNumberMap: ImmutableBiMap[ModelField[_, _], Int] =
-    ImmutableBiMap
-      .builder[ModelField[_, _], Int]()
-      .put(User.id, 2)
-      .put(User.loginName, 3)
-      .put(User.passwordHash, 4)
-      .put(User.name, 5)
-      .put(User.isAdmin, 6)
-      .put(DocumentEntity.id, 7)
-      .put(DocumentEntity.name, 8)
-      .put(DocumentEntity.orderToken, 14)
-      .put(TaskEntity.id, 9)
-      .put(TaskEntity.documentId, 10)
-      .put(TaskEntity.contentHtml, 11)
-      .put(TaskEntity.orderToken, 12)
-      .put(TaskEntity.indentation, 13)
-      .put(TaskEntity.collapsed, 15)
-      .put(TaskEntity.delayedUntil, 16)
-      .put(TaskEntity.tags, 17)
-      .build()
+    toBiMapWithUniqueValues(
+      User.id,
+      User.loginName,
+      User.passwordHash,
+      User.name,
+      User.isAdmin,
+      DocumentEntity.id,
+      DocumentEntity.name,
+      DocumentEntity.orderToken,
+      TaskEntity.id,
+      TaskEntity.documentId,
+      TaskEntity.contentHtml,
+      TaskEntity.orderToken,
+      TaskEntity.indentation,
+      TaskEntity.collapsed,
+      TaskEntity.delayedUntil,
+      TaskEntity.tags,
+    )
   def toNumber(field: ModelField[_, _]): Int = fieldToNumberMap.get(field)
   def fromNumber(number: Int): ModelField[_, _] = fieldToNumberMap.inverse().get(number)
+
+  private def toBiMapWithUniqueValues(fields: ModelField[_, _]*): ImmutableBiMap[ModelField[_, _], Int] = {
+    val resultBuilder = ImmutableBiMap.builder[ModelField[_, _], Int]()
+    for ((field, index) <- fields.zipWithIndex) {
+      resultBuilder.put(field, index + 1)
+    }
+    resultBuilder.build()
+  }
 }
