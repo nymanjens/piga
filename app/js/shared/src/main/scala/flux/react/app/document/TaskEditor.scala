@@ -456,8 +456,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val nextTask = oldDocument.tasksOption(end.seqIndex + 1)
         OrderToken.evenlyDistributedValuesBetween(
           numValues = replacement.parts.length,
-          lower = previousTask.map(_.orderToken),
-          higher = nextTask.map(_.orderToken)
+          lowerExclusive = previousTask.map(_.orderToken),
+          higherExclusive = nextTask.map(_.orderToken)
         )
       }
       val tasksToReplace = for (i <- selectionBeforeEdit.seqIndices) yield oldDocument.tasks(i)
@@ -531,8 +531,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val taskAfter = oldDocument.tasksOption(taskIndices.last + 1)
         OrderToken.evenlyDistributedValuesBetween(
           numValues = taskIndices.size,
-          lower = taskBefore.map(_.orderToken),
-          higher = taskAfter.map(_.orderToken)
+          lowerExclusive = taskBefore.map(_.orderToken),
+          higherExclusive = taskAfter.map(_.orderToken)
         )
       }
       val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
@@ -776,8 +776,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val newOrderTokens = {
           OrderToken.evenlyDistributedValuesBetween(
             numValues = tasksToReplace.length,
-            lower = task1.map(_.orderToken),
-            higher = task2.map(_.orderToken)
+            lowerExclusive = task1.map(_.orderToken),
+            higherExclusive = task2.map(_.orderToken)
           )
         }
         val tasksToAdd =

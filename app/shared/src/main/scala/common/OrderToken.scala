@@ -99,8 +99,8 @@ object OrderToken {
   }
 
   def evenlyDistributedValuesBetween(numValues: Int,
-                                     lower: Option[OrderToken],
-                                     higher: Option[OrderToken]): Seq[OrderToken] = {
+                                     lowerExclusive: Option[OrderToken],
+                                     higherExclusive: Option[OrderToken]): Seq[OrderToken] = {
     val resultBuffer = (for (i <- 0 until numValues) yield null.asInstanceOf[OrderToken]).toBuffer
 
     def resultFiller(resultIndexBaseline: Int = 0,
@@ -125,7 +125,7 @@ object OrderToken {
           higher = higher)
       }
     }
-    resultFiller(numValues = numValues, lower = lower, higher = higher)
+    resultFiller(numValues = numValues, lower = lowerExclusive, higher = higherExclusive)
     resultBuffer.toVector
   }
 
