@@ -94,17 +94,34 @@ object DocumentTest extends TestSuite {
       document.indexOf(taskE) ==> 5
       document.indexOf(taskEE) ==> 6
     }
-    "collapsedTasksRange" - {
-      "none collapsed" - {
-        val document = newDocument(taskA, taskB, taskC, taskD, taskE)
+    "familyTreeRange" - {
+      "Flat list" - {
+        val document = newDocument(
+          indentation(1, taskA),
+          indentation(1, taskB),
+          indentation(1, taskC),
+          indentation(1, taskD),
+          indentation(1, taskE))
 
-        document.collapsedTasksRange(0) ==> None
-        document.collapsedTasksRange(1) ==> None
-        document.collapsedTasksRange(2) ==> None
-        document.collapsedTasksRange(3) ==> None
-        document.collapsedTasksRange(4) ==> None
+        document.familyTreeRange(0, rootParentIndentation = 0) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 0) ==> None
+        document.familyTreeRange(2, rootParentIndentation = 0) ==> None
+        document.familyTreeRange(3, rootParentIndentation = 0) ==> None
+        document.familyTreeRange(4, rootParentIndentation = 0) ==> None
+
+        document.familyTreeRange(0, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(0, 0))
+        document.familyTreeRange(1, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(1, 1))
+        document.familyTreeRange(2, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(2, 2))
+        document.familyTreeRange(3, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(3, 3))
+        document.familyTreeRange(4, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(4, 4))
+
+        document.familyTreeRange(0, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(2, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(3, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(4, rootParentIndentation = 2) ==> None
       }
-      "collapsed without children" - {
+      "Tree without bumps" - {
         val document = newDocument(
           indentation(0, taskA),
           indentation(1, taskB),
@@ -112,29 +129,25 @@ object DocumentTest extends TestSuite {
           indentation(1, taskD),
           indentation(0, taskE))
 
-        document.collapsedTasksRange(0) ==> None
-        document.collapsedTasksRange(1) ==> None
-        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(2, 2))
-        document.collapsedTasksRange(3) ==> None
-        document.collapsedTasksRange(4) ==> None
-      }
-      "collapsed with children" - {
-        val document = newDocument(
-          indentation(1, taskA),
-          indentation(1, collapsed(taskB)),
-          indentation(2, taskC),
-          indentation(2, taskD),
-          indentation(1, taskE),
-          indentation(2, taskF))
+        document.familyTreeRange(0, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
+        document.familyTreeRange(1, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
+        document.familyTreeRange(2, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
+        document.familyTreeRange(3, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
+        document.familyTreeRange(4, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(4, 4))
 
-        document.collapsedTasksRange(0) ==> None
-        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(1, 3))
-        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(1, 3))
-        document.collapsedTasksRange(3) ==> Some(document.CollapsedTasksRange(1, 3))
-        document.collapsedTasksRange(4) ==> None
-        document.collapsedTasksRange(5) ==> None
+        document.familyTreeRange(0, rootParentIndentation = 1) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(1, 2))
+        document.familyTreeRange(2, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(1, 2))
+        document.familyTreeRange(3, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(3, 3))
+        document.familyTreeRange(4, rootParentIndentation = 1) ==> None
+
+        document.familyTreeRange(0, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(2, rootParentIndentation = 2) ==> Some(document.FamilyTreeRange(2, 2))
+        document.familyTreeRange(3, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(4, rootParentIndentation = 2) ==> None
       }
-      "collapsed with bump" - {
+      "Tree with bump" - {
         val document = newDocument(
           indentation(0, collapsed(taskA)),
           indentation(2, taskB),
@@ -142,26 +155,23 @@ object DocumentTest extends TestSuite {
           indentation(0, taskD),
           indentation(1, taskE))
 
-        document.collapsedTasksRange(0) ==> Some(document.CollapsedTasksRange(0, 2))
-        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(0, 2))
-        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(0, 2))
-        document.collapsedTasksRange(3) ==> None
-        document.collapsedTasksRange(4) ==> None
-      }
-      "all collapsed" - {
-        val document = newDocument(
-          indentation(1, collapsed(taskA)),
-          indentation(1, collapsed(taskB)),
-          indentation(2, collapsed(taskC)),
-          indentation(3, collapsed(taskD)),
-          indentation(1, collapsed(taskE))
-        )
+        document.familyTreeRange(0, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 2))
+        document.familyTreeRange(1, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 2))
+        document.familyTreeRange(2, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 2))
+        document.familyTreeRange(3, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(3, 4))
+        document.familyTreeRange(4, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(3, 4))
 
-        document.collapsedTasksRange(0) ==> Some(document.CollapsedTasksRange(0, 0))
-        document.collapsedTasksRange(1) ==> Some(document.CollapsedTasksRange(1, 3))
-        document.collapsedTasksRange(2) ==> Some(document.CollapsedTasksRange(2, 3))
-        document.collapsedTasksRange(3) ==> Some(document.CollapsedTasksRange(3, 3))
-        document.collapsedTasksRange(4) ==> Some(document.CollapsedTasksRange(4, 4))
+        document.familyTreeRange(0, rootParentIndentation = 1) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 1) ==> None
+        document.familyTreeRange(2, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(2, 2))
+        document.familyTreeRange(3, rootParentIndentation = 1) ==> None
+        document.familyTreeRange(4, rootParentIndentation = 1) ==> Some(document.FamilyTreeRange(4, 4))
+
+        document.familyTreeRange(0, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(1, rootParentIndentation = 2) ==> Some(document.FamilyTreeRange(1, 1))
+        document.familyTreeRange(2, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(3, rootParentIndentation = 2) ==> None
+        document.familyTreeRange(4, rootParentIndentation = 2) ==> None
       }
     }
     "IndexedCursor" - {

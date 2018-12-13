@@ -97,26 +97,19 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
 
-  case class CollapsedTasksRange(parentSeqIndex: Int, lastChildSeqIndex: Int) {
+  case class FamilyTreeRange(parentSeqIndex: Int, lastChildSeqIndex: Int) {
     def numberOfTasks: Int = lastChildSeqIndex - parentSeqIndex + 1
   }
-  def collapsedTasksRange(seqIndex: Int): Option[CollapsedTasksRange] = {
-    def findCollapsedParentIndex(seqIndex: Int): Option[Int] = {
-      val currentIndentation = tasks(seqIndex).indentation
-      if (tasks(seqIndex).collapsed) {
-        Some(seqIndex)
-      } else {
-        val maybeParentIndex = {
-          var result = seqIndex
-          while (result >= 0 && tasks(result).indentation >= currentIndentation) {
-            result -= 1
-          }
-          if (result == -1) None else Some(result)
-        }
-        maybeParentIndex match {
-          case Some(parentIndex) => findCollapsedParentIndex(seqIndex = parentIndex)
-          case None              => None
-        }
+  def familyTreeRange(anyMemberSeqIndex: Int, rootParentIndentation: Int): Option[FamilyTreeRange] = {
+    def findRootParentIndex(seqIndex: Int): Option[Int] = {
+      var result = seqIndex
+      while (result >= 0 && tasks(result).indentation > rootParentIndentation) {
+        result -= 1
+      }
+      result match {
+        case -1                                                         => None
+        case index if tasks(index).indentation == rootParentIndentation => Some(index)
+        case _                                                          => None
       }
     }
     def findLastChildIndex(seqIndex: Int, parentIndentation: Int): Int = {
@@ -129,12 +122,12 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     }
 
     for {
-      task <- tasksOption(seqIndex)
-      parentIndex <- findCollapsedParentIndex(seqIndex)
+      task <- tasksOption(anyMemberSeqIndex)
+      parentIndex <- findRootParentIndex(anyMemberSeqIndex)
     } yield
-      CollapsedTasksRange(
+      FamilyTreeRange(
         parentIndex,
-        findLastChildIndex(seqIndex, parentIndentation = tasks(parentIndex).indentation))
+        findLastChildIndex(anyMemberSeqIndex, parentIndentation = tasks(parentIndex).indentation))
   }
 
   // **************** Object methods **************** //

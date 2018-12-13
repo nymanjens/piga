@@ -748,11 +748,15 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def moveTasksInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
       implicit val oldDocument = $.state.runNow().document
-      val IndexedSelection(start, end) = selectionBeforeEdit.includeChildren()
+      val selectionWithChildren = selectionBeforeEdit.includeChildren()
+      val IndexedSelection(start, end) = selectionWithChildren
 
       val seqIndexMovement = {
         val indexThatIsHoppedOver = if (direction < 0) start.seqIndex - 1 else end.seqIndex + 1
-        oldDocument.collapsedTasksRange(indexThatIsHoppedOver) match {
+        oldDocument.familyTreeRange(
+          anyMemberSeqIndex = indexThatIsHoppedOver,
+          rootParentIndentation =
+            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min) match {
           case None                    => direction * 1
           case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
         }
