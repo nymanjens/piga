@@ -55,7 +55,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
           "Please modify users by calling upsertUser() instead")
       }
 
-      entityAccess.persistEntityModifications(modifications)
+      entityAccess.persistEntityModificationsAsync(modifications) // Don't wait for it to finish
     }
 
     override def executeDataQuery(dbQuery: PicklableDbQuery) = {
