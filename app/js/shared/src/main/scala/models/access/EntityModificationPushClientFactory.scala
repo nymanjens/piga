@@ -9,6 +9,7 @@ import common.Listenable
 import common.Listenable.WritableListenable
 import common.websocket.BinaryWebsocketClient
 import org.scalajs.dom
+import org.scalajs.dom.console
 import org.scalajs.dom.raw.Event
 
 import scala.async.Async.{async, await}
@@ -48,6 +49,7 @@ final class EntityModificationPushClientFactory {
           async {
             val client = await(clientFuture)
             client.send(ByteBuffer.wrap(Array(0, 0))) // Will be ignored, but forces to test connection
+            console.log("  Sent unilateral heartbeat to force-restore connection")
           }
         case None => websocketClient = Some(openWebsocketClient(lastUpdateToken))
     }
