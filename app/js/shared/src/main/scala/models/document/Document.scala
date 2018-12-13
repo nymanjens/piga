@@ -265,11 +265,11 @@ object Document {
     def endOffsetInTask(task: Task)(implicit document: Document): Int =
       if (task == document.tasks(end.seqIndex)) end.offsetInTask else task.contentString.length
 
-    def includeCollapsedChildren(implicit document: Document): IndexedSelection = {
+    def includeChildren(collapsedOnly: Boolean = false)(implicit document: Document): IndexedSelection = {
       val task = document.tasks(end.seqIndex)
 
       var index = end.seqIndex
-      if (task.collapsed) {
+      if (!collapsedOnly || task.collapsed) {
         while (document.tasksOption(index + 1).isDefined &&
                document.tasks(index + 1).indentation > task.indentation) {
           index += 1

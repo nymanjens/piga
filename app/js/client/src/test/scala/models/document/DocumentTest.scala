@@ -185,18 +185,21 @@ object DocumentTest extends TestSuite {
           DetachedSelection(DetachedCursor(task1, 0), DetachedCursor(task2, 5))
         selection.detach.attachToDocument ==> selection
       }
-      "includeCollapsedChildren" - {
-        def assertNoChange(selection: IndexedSelection)(implicit document: Document): Unit = {
-          selection.includeCollapsedChildren ==> selection
+      "includeChildren" - {
+        def assertNoChange(collapsedOnly: Boolean,
+                           selection: IndexedSelection)(implicit document: Document): Unit = {
+          selection.includeChildren(collapsedOnly = collapsedOnly) ==> selection
         }
 
         "none collapsed" - {
           implicit val document = newDocument(taskA, taskB, taskC, taskD, taskE)
 
-          assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
-          assertNoChange(IndexedSelection.singleton(IndexedCursor(2, 5)))
+          for (collapsedOnly <- Seq(false, true)) {
+            assertNoChange(collapsedOnly, IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
+            assertNoChange(collapsedOnly, IndexedSelection.singleton(IndexedCursor(2, 5)))
+          }
         }
-        "collapsed without children" - {
+        "(collapsedOnly = false) non-collapsed tree" - {
           implicit val document = newDocument(
             indentation(0, taskA),
             indentation(1, taskB),
@@ -204,8 +207,26 @@ object DocumentTest extends TestSuite {
             indentation(1, taskD),
             indentation(0, taskE))
 
-          assertNoChange(IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
-          assertNoChange(IndexedSelection.singleton(IndexedCursor(2, 5)))
+          assertNoChange(collapsedOnly = false, IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
+          assertNoChange(collapsedOnly = false, IndexedSelection.singleton(IndexedCursor(2, 5)))
+          IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5))
+            .includeChildren(collapsedOnly = false) ==>
+            IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 0))
+          IndexedSelection.singleton(IndexedCursor(1, 5)).includeChildren(collapsedOnly = false) ==>
+            IndexedSelection(IndexedCursor(1, 5), IndexedCursor(2, 0))
+        }
+        "(collapsedOnly = true) collapsed without children" - {
+          implicit val document = newDocument(
+            indentation(0, taskA),
+            indentation(1, taskB),
+            indentation(2, collapsed(taskC)),
+            indentation(1, taskD),
+            indentation(0, taskE))
+
+          assertNoChange(collapsedOnly = true, IndexedSelection.singleton(IndexedCursor(0, 0)))
+          assertNoChange(collapsedOnly = true, IndexedSelection.singleton(IndexedCursor(1, 0)))
+          assertNoChange(collapsedOnly = true, IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
+          assertNoChange(collapsedOnly = true, IndexedSelection.singleton(IndexedCursor(2, 5)))
         }
         "collapsed with children" - {
           implicit val document = newDocument(
@@ -215,10 +236,13 @@ object DocumentTest extends TestSuite {
             indentation(2, taskD),
             indentation(1, taskE))
 
-          IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5)).includeCollapsedChildren ==>
-            IndexedSelection(IndexedCursor(0, 1), IndexedCursor(3, 0))
-          IndexedSelection.singleton(IndexedCursor(1, 5)).includeCollapsedChildren ==>
-            IndexedSelection(IndexedCursor(1, 5), IndexedCursor(3, 0))
+          for (collapsedOnly <- Seq(false, true)) {
+            IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5))
+              .includeChildren(collapsedOnly = collapsedOnly) ==>
+              IndexedSelection(IndexedCursor(0, 1), IndexedCursor(3, 0))
+            IndexedSelection.singleton(IndexedCursor(1, 5)).includeChildren(collapsedOnly = collapsedOnly) ==>
+              IndexedSelection(IndexedCursor(1, 5), IndexedCursor(3, 0))
+          }
         }
       }
     }

@@ -244,7 +244,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                 document.tasks(start.seqIndex).collapsed &&
                 start == start.toEndOfTask) {
               // Pressing enter at the end of a collapsed task --> skip the children
-              val lastCollapsedIndex = selection.includeCollapsedChildren.end.seqIndex
+              val lastCollapsedIndex = selection.includeChildren(collapsedOnly = true).end.seqIndex
               replaceSelection(
                 replacement = Replacement.newEmptyTask(
                   indentationRelativeToCurrent =
@@ -288,7 +288,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
           val indentIncrease = if (keyCombination.shift) -1 else 1
-          updateTasksInSelection(selection, updateCollapsedChildren = true) { task =>
+          updateTasksInSelection(selection, updateChildren = true) { task =>
             task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
           }
 
@@ -382,12 +382,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         // Delete task
         case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
-          removeTasks(selection.includeCollapsedChildren.seqIndices)
+          removeTasks(selection.includeChildren().seqIndices)
 
         // Duplicate task
         case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
           event.preventDefault()
-          duplicateTasks(selection.includeCollapsedChildren.seqIndices, selectionBeforeEdit = selection)
+          duplicateTasks(
+            selection.includeChildren(collapsedOnly = true).seqIndices,
+            selectionBeforeEdit = selection)
 
         // Move tasks up
         case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
@@ -402,14 +404,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         // Expand tasks
         case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
-          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
+          updateTasksInSelection(selection, updateChildren = false) { task =>
             task.copyWithRandomId(collapsed = false)
           }
 
         // Collapse tasks
         case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
           event.preventDefault()
-          updateTasksInSelection(selection, updateCollapsedChildren = false) { task =>
+          updateTasksInSelection(selection, updateChildren = false) { task =>
             task.copyWithRandomId(collapsed = true)
           }
 
@@ -548,12 +550,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       )
     }
 
-    private def updateTasksInSelection(selection: IndexedSelection, updateCollapsedChildren: Boolean)(
+    private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
         taskUpdate: Task => Task): Callback = {
       implicit val oldDocument = $.state.runNow().document
 
-      val IndexedSelection(start, end) =
-        if (updateCollapsedChildren) selection.includeCollapsedChildren else selection
+      val IndexedSelection(start, end) = if (updateChildren) selection.includeChildren() else selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
       val tasksToAdd = tasksToReplace.map(taskUpdate)
 
@@ -747,7 +748,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def moveTasksInSeq(selectionBeforeEdit: IndexedSelection, direction: Int): Callback = {
       implicit val oldDocument = $.state.runNow().document
-      val IndexedSelection(start, end) = selectionBeforeEdit.includeCollapsedChildren
+      val IndexedSelection(start, end) = selectionBeforeEdit.includeChildren()
 
       val seqIndexMovement = {
         val indexThatIsHoppedOver = if (direction < 0) start.seqIndex - 1 else end.seqIndex + 1
