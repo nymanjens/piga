@@ -65,7 +65,7 @@ object TestObjects {
     idOption = Some(821379)
   )
 
-  val testModificationA: EntityModification = EntityModification.Add(testUserRedacted)
+  val testModificationA: EntityModification = EntityModification.Add(testTaskEntity)
   val testModificationB: EntityModification =
     EntityModification.Add(testUserB.copy(passwordHash = "<redacted>"))
   def testModification: EntityModification = testModificationA
