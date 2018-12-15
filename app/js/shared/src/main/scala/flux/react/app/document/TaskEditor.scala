@@ -48,7 +48,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   // **************** Private inner types ****************//
   private case class Props(documentStore: DocumentStore, router: RouterContext)
-  private case class State(document: Document)
+  private case class State(document: Document, highlightedTaskIndex: Int = 0)
 
   private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
 
@@ -117,6 +117,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.spellCheck := false,
         VdomAttr("suppressContentEditableWarning") := true,
         ^.onKeyDown ==> handleKeyDown,
+        ^.onSelect ==> (_ => updateCursor),
         ^.onPaste ==> handlePaste,
         ^.onCut ==> handleCut,
         ^.onCopy ==> handleCopy,
@@ -138,7 +139,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                 ^.key := s"li-$i",
                 ^.id := s"teli-$i",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
-                ^^.classes(Seq(nodeType) ++ ifThenOption(task.collapsed)("collapsed")),
+                ^^.classes(
+                  Seq(nodeType) ++
+                    ifThenOption(task.collapsed)("collapsed") ++
+                    ifThenOption(state.highlightedTaskIndex == i)("highlighted")),
                 VdomAttr("num") := i,
                 renderedTags.map(_.span).toVdomArray,
                 task.content.toVdomNode
@@ -207,6 +211,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       replaceSelection(
         replacement = clipboardStringToReplacement(getAnyClipboardString(event), baseFormatting = formatting),
         selection)
+    }
+
+    private def updateCursor: Callback = logExceptions {
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+      $.modState(_.copy(highlightedTaskIndex = selection.end.seqIndex))
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
