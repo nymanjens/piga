@@ -72,14 +72,16 @@ object Converters {
   implicit def optionConverter[V: Converter]: Converter[Option[V]] =
     new Converter[Option[V]] {
       override def toJs(option: Option[V]) = option match {
-        case Some(v) => js.Array(Scala2Js.toJs(v))
-        case None    => js.Array()
+        case Some(v) => Scala2Js.toJs(v)
+        case None    => null
       }
-      override def toScala(value: js.Any) =
-        value.asInstanceOf[js.Array[js.Any]].toVector match {
-          case Seq(value) => Some(Scala2Js.toScala[V](value))
-          case Seq()      => None
+      override def toScala(value: js.Any) = {
+        if (value == null) {
+          None
+        } else {
+          Some(Scala2Js.toScala[V](value))
         }
+      }
     }
 
   // **************** General converters **************** //
