@@ -1,5 +1,6 @@
 package models.user
 
+import models.access.DbQueryImplicits._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import common.time.Clock
@@ -24,7 +25,7 @@ object Users {
     val loginName = "robot"
     def hash(s: String) = Hashing.sha512().hashString(s, Charsets.UTF_8).toString
 
-    entityAccess.newQuerySync[User]().findOne(ModelField.User.loginName, loginName) match {
+    entityAccess.newQuerySync[User]().findOne(ModelField.User.loginName === loginName) match {
       case Some(user) => user
       case None =>
         val userAddition = EntityModification.createAddWithRandomId(
@@ -40,7 +41,7 @@ object Users {
   }
 
   def authenticate(loginName: String, password: String)(implicit entityAccess: JvmEntityAccess): Boolean = {
-    entityAccess.newQuerySync[User]().findOne(ModelField.User.loginName, loginName) match {
+    entityAccess.newQuerySync[User]().findOne(ModelField.User.loginName === loginName) match {
       case Some(user) if user.passwordHash == hash(password) => true
       case _                                                 => false
     }
