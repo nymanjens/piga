@@ -4,13 +4,12 @@ import java.time.{LocalDate, LocalTime}
 
 import api.PicklableDbQuery.FieldWithValue
 import boopickle.Default._
-import common.OrderToken
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
 import models.document.{DocumentEntity, TaskEntity}
-import models.modification.EntityType._
 import models.modification.{EntityModification, EntityType}
+import models.modification.EntityType._
 import models.user.User
 
 object Picklers {

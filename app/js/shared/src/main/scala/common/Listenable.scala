@@ -1,7 +1,8 @@
 package common
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import common.Listenable.{FlatMappedListenable, Listener}
+import common.Listenable.FlatMappedListenable
+import common.Listenable.Listener
 import common.ScalaUtils.visibleForTesting
 
 import scala.collection.immutable.Seq

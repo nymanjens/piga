@@ -11,9 +11,7 @@ import models.Entity
 import models.document.{DocumentEntity, TaskEntity}
 import models.modification.{EntityModification, EntityModificationEntity}
 import models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
-import models.slick.SlickUtils.localDateTimeToSqlDateMapper
-import models.slick.SlickUtils.instantToSqlTimestampMapper
-import models.slick.SlickUtils.orderTokenToBytesMapper
+import models.slick.SlickUtils.{instantToSqlTimestampMapper, localDateTimeToSqlDateMapper, orderTokenToBytesMapper}
 import models.user.User
 
 import scala.collection.immutable.Seq

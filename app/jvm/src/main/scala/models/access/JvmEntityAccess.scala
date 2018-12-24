@@ -10,11 +10,11 @@ import common.publisher.TriggerablePublisher
 import common.time.Clock
 import models.Entity
 import models.document.{DocumentEntity, TaskEntity}
-import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
 import models.modification.{EntityModification, EntityModificationEntity, EntityType}
+import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
+import models.slick.{SlickEntityManager, SlickEntityTableDef}
 import models.slick.SlickUtils.dbApi._
 import models.slick.SlickUtils.dbRun
-import models.slick.{SlickEntityManager, SlickEntityTableDef}
 import models.user.User
 import net.jcip.annotations.GuardedBy
 import org.reactivestreams.Publisher

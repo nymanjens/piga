@@ -7,10 +7,11 @@ import models.Entity
 import models.access.LocalDatabaseImpl.{ModificationWithId, Singleton}
 import models.access.webworker.LocalDatabaseWebWorkerApi
 import models.access.webworker.LocalDatabaseWebWorkerApi.{LokiQuery, WriteOperation}
-import models.document.DocumentEntity
-import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
 import models.modification.{EntityModification, EntityType}
+import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
 import org.scalajs.dom.console
+import scala2js.Converters._
+import scala2js.Scala2Js
 
 import scala.async.Async.{async, await}
 import scala.collection.immutable.Seq
@@ -19,8 +20,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.matching.Regex
-import scala2js.Converters._
-import scala2js.Scala2Js
 
 private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorkerApi) extends LocalDatabase {
 

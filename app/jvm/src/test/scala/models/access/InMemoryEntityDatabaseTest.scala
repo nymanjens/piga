@@ -6,7 +6,8 @@ import models.Entity
 import models.access.DbQuery.Sorting
 import models.access.DbQueryImplicits._
 import models.access.InMemoryEntityDatabase.EntitiesFetcher
-import models.modification.{EntityModification, EntityType}
+import models.modification.EntityModification
+import models.modification.EntityType
 import models.user.User
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

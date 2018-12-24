@@ -1,6 +1,7 @@
 package common.time
 
-import java.time.{Duration, Instant}
+import java.time.Duration
+import java.time.Instant
 import java.time.Month._
 import common.time.JavaTimeImplicits._
 import org.specs2.matcher.MatchResult

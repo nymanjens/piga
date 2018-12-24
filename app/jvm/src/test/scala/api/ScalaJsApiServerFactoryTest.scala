@@ -10,8 +10,12 @@ import common.GuavaReplacement.Iterables.getOnlyElement
 import common.testing.TestObjects._
 import common.testing.TestUtils._
 import common.testing._
-import models.access.{DbQuery, JvmEntityAccess, ModelField}
-import models.modification.{EntityModification, EntityModificationEntity, EntityType}
+import models.access.DbQuery
+import models.access.JvmEntityAccess
+import models.access.ModelField
+import models.modification.EntityModification
+import models.modification.EntityModificationEntity
+import models.modification.EntityType
 import models.slick.SlickUtils.dbRun
 import models.user.User
 import org.junit.runner._

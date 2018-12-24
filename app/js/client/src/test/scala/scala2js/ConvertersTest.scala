@@ -8,11 +8,11 @@ import models.access.ModelField
 import models.document.{DocumentEntity, TaskEntity}
 import models.modification.{EntityModification, EntityType}
 import models.user.User
+import scala2js.Converters._
 import utest._
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
-import scala2js.Converters._
 
 object ConvertersTest extends TestSuite {
   val dateTime = LocalDateTime.of(2022, MARCH, 13, 12, 13)

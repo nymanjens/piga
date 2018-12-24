@@ -1,11 +1,13 @@
 package common.testing
 
-import java.time.{Instant, ZoneId}
+import java.time.Instant
+import java.time.ZoneId
 
 import common.time.LocalDateTime
 import models.Entity
 import models.access.JvmEntityAccess
-import models.modification.{EntityModification, EntityType}
+import models.modification.EntityModification
+import models.modification.EntityType
 import models.user.User
 
 object TestUtils {

@@ -4,7 +4,8 @@ import models.access.DbQueryImplicits._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import common.time.Clock
-import models.access.{JvmEntityAccess, ModelField}
+import models.access.JvmEntityAccess
+import models.access.ModelField
 import models.modification.EntityModification
 
 object Users {

@@ -3,7 +3,8 @@ package common
 import common.ScalaUtils.visibleForTesting
 
 import scala.annotation.tailrec
-import scala.collection.{SeqView, mutable}
+import scala.collection.SeqView
+import scala.collection.mutable
 import scala.collection.immutable.Seq
 
 case class OrderToken(parts: List[Int]) extends Ordered[OrderToken] {

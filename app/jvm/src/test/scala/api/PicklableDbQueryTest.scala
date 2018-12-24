@@ -3,7 +3,8 @@ package api
 import api.Picklers._
 import common.testing._
 import models.access.DbQueryImplicits._
-import models.access.{DbQuery, ModelField}
+import models.access.DbQuery
+import models.access.ModelField
 import models.user.User
 import org.junit.runner._
 import org.specs2.runner._

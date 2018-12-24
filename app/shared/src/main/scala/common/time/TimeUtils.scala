@@ -1,6 +1,8 @@
 package common.time
 
-import java.time.{DateTimeException, LocalDate, LocalTime}
+import java.time.DateTimeException
+import java.time.LocalDate
+import java.time.LocalTime
 
 object TimeUtils {
 

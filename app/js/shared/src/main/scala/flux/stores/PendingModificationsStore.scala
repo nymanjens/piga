@@ -3,6 +3,7 @@ package flux.stores
 import common.Listenable
 import flux.stores.PendingModificationsStore.State
 import flux.stores.document.DocumentStoreFactory
+import hydro.flux.stores.StateStore
 import models.access.JsEntityAccess
 import models.modification.{EntityModification, EntityType}
 

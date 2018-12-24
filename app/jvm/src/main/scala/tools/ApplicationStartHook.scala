@@ -3,8 +3,8 @@ package tools
 import java.nio.file.{Path, Paths}
 
 import com.google.inject.Inject
-import common.time.Clock
 import common.{OrderToken, ResourceFiles}
+import common.time.Clock
 import models.access.JvmEntityAccess
 import models.document.{DocumentEntity, TaskEntity}
 import models.modification.EntityModification

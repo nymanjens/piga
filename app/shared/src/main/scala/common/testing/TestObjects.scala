@@ -1,5 +1,4 @@
 package common.testing
-
 import java.time.Instant
 import java.time.Month._
 

@@ -1,17 +1,22 @@
 package models.access
 
 import common.testing.TestObjects._
-import common.testing.{FakeScalaJsApiClient, ModificationsBuffer, TestModule}
+import common.testing.FakeScalaJsApiClient
+import common.testing.ModificationsBuffer
+import common.testing.TestModule
 import common.time.Clock
 import models.Entity
-import models.modification.{EntityModification, EntityType}
+import models.modification.EntityModification
+import models.modification.EntityType
 import models.user.User
 import utest._
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
+import scala.concurrent.Promise
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala2js.Converters._

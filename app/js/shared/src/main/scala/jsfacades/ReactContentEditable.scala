@@ -2,7 +2,8 @@ package jsfacades
 
 import common.LoggingUtils
 import common.LoggingUtils.logExceptions
-import japgolly.scalajs.react.{Children, JsComponent}
+import japgolly.scalajs.react.Children
+import japgolly.scalajs.react.JsComponent
 import org.scalajs.dom
 import org.scalajs.dom.raw.KeyboardEvent
 
