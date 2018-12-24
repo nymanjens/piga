@@ -4,10 +4,10 @@ import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
 import common.OrderToken
 import flux.action.Action._
-import flux.action.Dispatcher
+import hydro.flux.action.Dispatcher
 import flux.stores.document.AllDocumentsStore.State
-import flux.stores.AsyncEntityDerivedStateStore
-import flux.stores.StateStore
+import hydro.flux.stores.AsyncEntityDerivedStateStore
+import hydro.flux.stores.StateStore
 import models.access.JsEntityAccess
 import models.document
 import models.document.DocumentEntity

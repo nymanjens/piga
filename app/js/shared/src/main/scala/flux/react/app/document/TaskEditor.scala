@@ -17,7 +17,7 @@ import flux.react.ReactVdomUtils.<<
 import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
-import flux.stores.StateStore
+import hydro.flux.stores.StateStore
 import flux.stores.document.DocumentSelectionStore
 import flux.stores.document.DocumentStore
 import japgolly.scalajs.react._

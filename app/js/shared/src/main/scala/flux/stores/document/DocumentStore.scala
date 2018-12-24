@@ -7,7 +7,7 @@ import common.Listenable.WritableListenable
 
 import scala.concurrent.duration._
 import scala.scalajs.js
-import flux.stores.StateStore
+import hydro.flux.stores.StateStore
 import flux.stores.document.DocumentStore.Replacement
 import flux.stores.document.DocumentStore.State
 import flux.stores.document.DocumentStore.SyncerWithReplenishingDelay

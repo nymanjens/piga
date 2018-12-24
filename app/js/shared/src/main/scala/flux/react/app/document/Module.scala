@@ -2,8 +2,8 @@ package flux.react.app.document
 
 import common.I18n
 import common.time.Clock
-import flux.action.Dispatcher
-import flux.stores.UserStore
+import hydro.flux.action.Dispatcher
+import hydro.flux.stores.UserStore
 import flux.stores.document.AllDocumentsStore
 import flux.stores.document.DocumentStoreFactory
 import flux.stores.document.DocumentSelectionStore

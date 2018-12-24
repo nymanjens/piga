@@ -8,7 +8,7 @@ import flux.react.ReactVdomUtils.^^
 import flux.react.router.Page
 import flux.react.router.RouterContext
 import flux.react.uielements
-import flux.stores.StateStore
+import hydro.flux.stores.StateStore
 import flux.stores.document.AllDocumentsStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

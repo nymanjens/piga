@@ -7,8 +7,8 @@ import api.ScalaJsApi.GetInitialDataResponse
 import common.Listenable
 import common.Listenable.ListenableMap
 import common.Listenable.WritableListenable
-import flux.stores.AsyncEntityDerivedStateStore
-import flux.stores.StateStore
+import hydro.flux.stores.AsyncEntityDerivedStateStore
+import hydro.flux.stores.StateStore
 import models.access.JsEntityAccess
 import models.document.Document
 import models.document.DocumentEntity
