@@ -1,16 +1,20 @@
 package flux.react.app.document
 
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.{I18n, OrderToken}
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
+import common.I18n
+import common.OrderToken
 import flux.action.Actions
 import flux.react.ReactVdomUtils.^^
 import flux.react.uielements
 import flux.router.RouterContext
 import flux.stores.document.AllDocumentsStore
 import hydro.flux.action.Dispatcher
+import hydro.flux.react.uielements.{HalfPanel, PageHeader, Table}
 import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^.{^, _}
+import japgolly.scalajs.react.vdom.html_<^.^
+import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
 import models.document.DocumentEntity
 import org.scalajs.dom
@@ -75,12 +79,12 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       implicit val router = props.router
 
       <.span(
-        uielements.PageHeader(router.currentPage),
+        PageHeader(router.currentPage),
         <.div(
           ^.className := "row",
-          uielements.HalfPanel(title = <.span(i18n("app.all-documents"))) {
+          HalfPanel(title = <.span(i18n("app.all-documents"))) {
             <.span(
-              uielements.Table(
+              Table(
                 tableClasses = Seq("table-documents"),
                 tableHeaders = Seq(
                   <.th(i18n("app.name")),
@@ -95,9 +99,9 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       )
     }
 
-    private def tableRowDatas(implicit state: State): Seq[uielements.Table.TableRowData] = {
+    private def tableRowDatas(implicit state: State): Seq[Table.TableRowData] = {
       for (document <- state.allDocuments) yield {
-        uielements.Table.TableRowData(
+        Table.TableRowData(
           Seq[VdomElement](
             <.td(
               <.form(

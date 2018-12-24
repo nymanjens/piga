@@ -28,16 +28,16 @@ final class Module(implicit i18n: I18n,
                    clock: Clock) {
 
   // Configuration of submodules
-  private val hydroSbadminUielementsModule = new hydro.flux.react.uielements.sbadmin.Module
-  private val userManagementModule = new hydro.flux.react.uielements.sbadmin.usermanagement.Module
+  private val hydroUielementsModule = new hydro.flux.react.uielements.Module
+  private val userManagementModule = new hydro.flux.react.uielements.usermanagement.Module
   private val desktopModule = new flux.react.app.document.Module
 
-  implicit private lazy val globalMessages = hydroSbadminUielementsModule.globalMessages
-  implicit private lazy val pageLoadingSpinner = hydroSbadminUielementsModule.pageLoadingSpinner
+  implicit private lazy val globalMessages = hydroUielementsModule.globalMessages
+  implicit private lazy val pageLoadingSpinner = hydroUielementsModule.pageLoadingSpinner
   implicit private lazy val applicationDisconnectedIcon =
-    hydroSbadminUielementsModule.applicationDisconnectedIcon
+    hydroUielementsModule.applicationDisconnectedIcon
   implicit private lazy val pendingModificationsCounter =
-    hydroSbadminUielementsModule.pendingModificationsCounter
+    hydroUielementsModule.pendingModificationsCounter
 
   implicit private lazy val menu: Menu = new Menu
 

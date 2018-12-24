@@ -1,15 +1,13 @@
 package flux.react.app
 
 import common.I18n
-import common.LoggingUtils.LogExceptionsCallback
-import common.LoggingUtils.logExceptions
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import common.time.Clock
 import flux.react.ReactVdomUtils.^^
-import flux.router.Page
-import flux.router.RouterContext
-import flux.react.uielements
-import hydro.flux.stores.StateStore
+import flux.router.{Page, RouterContext}
 import flux.stores.document.AllDocumentsStore
+import hydro.flux.react.uielements.input.TextInput
+import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.Mousetrap
@@ -45,7 +43,7 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
   private case class State(allDocuments: Seq[DocumentEntity])
 
   private class Backend(val $ : BackendScope[Props, State]) extends StateStore.Listener {
-    val queryInputRef = uielements.input.TextInput.ref()
+    val queryInputRef = TextInput.ref()
 
     def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
       allDocumentsStore.register(this)
