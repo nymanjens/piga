@@ -1,20 +1,15 @@
 package flux.action
 
-import flux.action.Actions.AddSongsToPlaylist.Placement
+import common.OrderToken
 import hydro.flux.action.Action
+import models.document.DocumentEntity
 
 import scala.collection.immutable.Seq
 
 object Actions {
 
-  // **************** Media-related actions **************** //
-  case class AddSongsToPlaylist(songIds: Seq[Long], placement: Placement) extends Action
-  object AddSongsToPlaylist {
-    sealed trait Placement
-    object Placement {
-      object AfterCurrentSong extends Placement
-      object AtEnd extends Placement
-    }
-  }
-  case class RemoveEntriesFromPlaylist(playlistEntryIds: Seq[Long]) extends Action
+  // **************** Document-related actions **************** //
+  case class AddEmptyDocument(name: String, orderToken: OrderToken) extends Action
+  case class UpdateDocuments(documents: Seq[DocumentEntity]) extends Action
+  case class RemoveDocument(existingDocument: DocumentEntity) extends Action
 }
