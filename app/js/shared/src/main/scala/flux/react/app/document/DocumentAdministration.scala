@@ -1,31 +1,21 @@
 package flux.react.app.document
 
+import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.{I18n, OrderToken}
+import flux.action.Actions
 import flux.react.ReactVdomUtils.^^
-import common.I18n
-import common.OrderToken
-import common.LoggingUtils.LogExceptionsCallback
-import common.LoggingUtils.logExceptions
-import flux.action.Action
-import hydro.flux.action.Dispatcher
-import flux.react.ReactVdomUtils.<<
-import flux.react.ReactVdomUtils.^^
-import flux.react.router.RouterContext
 import flux.react.uielements
-import hydro.flux.stores.StateStore
+import flux.router.RouterContext
 import flux.stores.document.AllDocumentsStore
-import flux.stores.document.DocumentStore
-import flux.stores.document.DocumentStoreFactory
+import hydro.flux.action.Dispatcher
+import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^.^
-import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.vdom.html_<^.{^, _}
 import models.access.EntityAccess
-import models.document.Document
 import models.document.DocumentEntity
-import models.user.User
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq
-import scala.scalajs.js
 
 private[app] final class DocumentAdministration(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
@@ -197,23 +187,23 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
 
     private def doAdd()(implicit state: State): Callback = LogExceptionsCallback {
       dispatcher.dispatch(
-        Action.AddEmptyDocument(
+        Actions.AddEmptyDocument(
           name = i18n("app.untitled-document"),
           orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
     private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
-      dispatcher.dispatch(Action.UpdateDocuments(Seq(document.copy(name = newName))))
+      dispatcher.dispatch(Actions.UpdateDocuments(Seq(document.copy(name = newName))))
     }
 
     private def doUpdateOrderToken(document: DocumentEntity, newOrderToken: OrderToken): Callback =
       LogExceptionsCallback {
-        dispatcher.dispatch(Action.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
+        dispatcher.dispatch(Actions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
       }
 
     private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
       if (dom.window.confirm(s"Are you sure you want to delete '${document.name}'")) {
-        dispatcher.dispatch(Action.RemoveDocument(document))
+        dispatcher.dispatch(Actions.RemoveDocument(document))
       }
     }
 

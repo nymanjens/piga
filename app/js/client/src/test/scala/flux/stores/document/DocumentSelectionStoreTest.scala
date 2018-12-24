@@ -3,7 +3,8 @@ package flux.stores.document
 import api.ScalaJsApi.UserPrototype
 import common.testing.Awaiter
 import common.testing.TestObjects._
-import flux.action.Action
+import flux.action.Actions
+import hydro.flux.action.StandardActions
 import models.document.Document.IndexedCursor
 import models.document.Document.IndexedSelection
 import models.modification.EntityModification

@@ -16,7 +16,7 @@ import common.Tags
 import flux.react.ReactVdomUtils.<<
 import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
-import flux.react.router.RouterContext
+import flux.router.RouterContext
 import hydro.flux.stores.StateStore
 import flux.stores.document.DocumentSelectionStore
 import flux.stores.document.DocumentStore

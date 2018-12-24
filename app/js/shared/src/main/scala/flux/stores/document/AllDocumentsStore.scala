@@ -3,7 +3,8 @@ package flux.stores.document
 import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
 import common.OrderToken
-import flux.action.Action._
+import flux.action.Actions._
+import hydro.flux.action.StandardActions._
 import hydro.flux.action.Dispatcher
 import flux.stores.document.AllDocumentsStore.State
 import hydro.flux.stores.AsyncEntityDerivedStateStore

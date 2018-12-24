@@ -5,8 +5,8 @@ import common.LoggingUtils.LogExceptionsCallback
 import common.LoggingUtils.logExceptions
 import common.time.Clock
 import flux.react.ReactVdomUtils.^^
-import flux.react.router.Page
-import flux.react.router.RouterContext
+import flux.router.Page
+import flux.router.RouterContext
 import flux.react.uielements
 import hydro.flux.stores.StateStore
 import flux.stores.document.AllDocumentsStore
