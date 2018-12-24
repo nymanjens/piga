@@ -6,7 +6,8 @@ import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.testing.TestModule
 import flux.react.app.document.EditHistory.Edit
-import models.document.Document.{DetachedCursor, DetachedSelection}
+import models.document.Document.DetachedCursor
+import models.document.Document.DetachedSelection
 import models.document.Task
 import scala2js.Converters._
 import utest._

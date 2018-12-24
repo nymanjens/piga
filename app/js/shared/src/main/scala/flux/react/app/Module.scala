@@ -3,9 +3,13 @@ package flux.react.app
 import common.I18n
 import common.time.Clock
 import flux.stores._
-import flux.stores.document.{AllDocumentsStore, DocumentSelectionStore, DocumentStoreFactory}
+import flux.stores.document.AllDocumentsStore
+import flux.stores.document.DocumentSelectionStore
+import flux.stores.document.DocumentStoreFactory
 import hydro.flux.action.Dispatcher
-import hydro.flux.stores.{ApplicationIsOnlineStore, PageLoadingStateStore, UserStore}
+import hydro.flux.stores.ApplicationIsOnlineStore
+import hydro.flux.stores.PageLoadingStateStore
+import hydro.flux.stores.UserStore
 import models.access.JsEntityAccess
 import models.user.User
 

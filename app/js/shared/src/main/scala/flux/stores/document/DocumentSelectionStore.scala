@@ -2,7 +2,8 @@ package flux.stores.document
 
 import common.ScalaUtils.visibleForTesting
 import models.document.Document
-import models.document.Document.{IndexedCursor, IndexedSelection}
+import models.document.Document.IndexedCursor
+import models.document.Document.IndexedSelection
 import org.scalajs.dom
 
 import scala.util.matching.Regex

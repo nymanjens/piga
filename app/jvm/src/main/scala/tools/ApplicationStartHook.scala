@@ -1,15 +1,19 @@
 package tools
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import com.google.inject.Inject
-import common.{OrderToken, ResourceFiles}
+import common.OrderToken
+import common.ResourceFiles
 import common.time.Clock
 import models.access.JvmEntityAccess
-import models.document.{DocumentEntity, TaskEntity}
+import models.document.DocumentEntity
+import models.document.TaskEntity
 import models.modification.EntityModification
 import models.user.Users
-import play.api.{Application, Mode}
+import play.api.Application
+import play.api.Mode
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq

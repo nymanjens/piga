@@ -4,10 +4,15 @@ import api.ScalaJsApi.GetInitialDataResponse
 import api.ScalaJsApiClient
 import common.I18n
 import common.time.Clock
-import flux.stores.document.{AllDocumentsStore, DocumentSelectionStore, DocumentStoreFactory}
+import flux.stores.document.AllDocumentsStore
+import flux.stores.document.DocumentSelectionStore
+import flux.stores.document.DocumentStoreFactory
 import hydro.flux.action.Dispatcher
-import hydro.flux.stores.{ApplicationIsOnlineStore, PageLoadingStateStore, UserStore}
-import models.access.{EntityModificationPushClientFactory, JsEntityAccess}
+import hydro.flux.stores.ApplicationIsOnlineStore
+import hydro.flux.stores.PageLoadingStateStore
+import hydro.flux.stores.UserStore
+import models.access.EntityModificationPushClientFactory
+import models.access.JsEntityAccess
 import models.user.User
 
 final class Module(implicit i18n: I18n,

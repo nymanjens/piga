@@ -1,12 +1,14 @@
 package flux.react.app.document
 
-import java.time.{Duration, Instant}
+import java.time.Duration
+import java.time.Instant
 
 import common.GuavaReplacement.Iterables.getOnlyElement
 import common.time.Clock
 import common.time.JavaTimeImplicits._
 import flux.react.app.document.EditHistory.Edit
-import models.document.Document.{DetachedCursor, DetachedSelection}
+import models.document.Document.DetachedCursor
+import models.document.Document.DetachedSelection
 import models.document.Task
 import models.modification.EntityModification
 

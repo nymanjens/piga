@@ -6,13 +6,17 @@ import common.OrderToken
 import flux.action.Action._
 import flux.action.Dispatcher
 import flux.stores.document.AllDocumentsStore.State
-import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
+import flux.stores.AsyncEntityDerivedStateStore
+import flux.stores.StateStore
 import models.access.JsEntityAccess
 import models.document
-import models.document.{DocumentEntity, TaskEntity}
-import models.modification.{EntityModification, EntityType}
+import models.document.DocumentEntity
+import models.document.TaskEntity
+import models.modification.EntityModification
+import models.modification.EntityType
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

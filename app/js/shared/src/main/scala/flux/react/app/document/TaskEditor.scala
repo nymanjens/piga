@@ -4,23 +4,34 @@ import scala.concurrent.duration._
 import scala.scalajs.js
 import common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.ScalaUtils.{ifThenOption, visibleForTesting}
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
+import common.ScalaUtils.ifThenOption
+import common.ScalaUtils.visibleForTesting
 import common.time.Clock
-import common.{DomNodeUtils, I18n, OrderToken, Tags}
-import flux.react.ReactVdomUtils.{<<, ^^}
+import common.DomNodeUtils
+import common.I18n
+import common.OrderToken
+import common.Tags
+import flux.react.ReactVdomUtils.<<
+import flux.react.ReactVdomUtils.^^
 import flux.react.app.document.KeyCombination._
 import flux.react.router.RouterContext
 import flux.stores.StateStore
-import flux.stores.document.{DocumentSelectionStore, DocumentStore}
+import flux.stores.document.DocumentSelectionStore
+import flux.stores.document.DocumentStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
-import models.document.Document.{DetachedCursor, IndexedCursor, IndexedSelection}
+import models.document.Document.DetachedCursor
+import models.document.Document.IndexedCursor
+import models.document.Document.IndexedSelection
 import models.document.TextWithMarkup.Formatting
-import models.document.{Document, Task, TextWithMarkup}
+import models.document.Document
+import models.document.Task
+import models.document.TextWithMarkup
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq

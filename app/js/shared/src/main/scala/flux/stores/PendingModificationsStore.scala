@@ -5,7 +5,8 @@ import flux.stores.PendingModificationsStore.State
 import flux.stores.document.DocumentStoreFactory
 import hydro.flux.stores.StateStore
 import models.access.JsEntityAccess
-import models.modification.{EntityModification, EntityType}
+import models.modification.EntityModification
+import models.modification.EntityType
 
 import scala.collection.immutable.Seq
 

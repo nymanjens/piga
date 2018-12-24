@@ -4,16 +4,22 @@ import common.ScalaUtils.visibleForTesting
 import jsfacades.LokiJs
 import jsfacades.LokiJs.FilterFactory.Operation
 import models.Entity
-import models.access.LocalDatabaseImpl.{ModificationWithId, Singleton}
+import models.access.LocalDatabaseImpl.ModificationWithId
+import models.access.LocalDatabaseImpl.Singleton
 import models.access.webworker.LocalDatabaseWebWorkerApi
-import models.access.webworker.LocalDatabaseWebWorkerApi.{LokiQuery, WriteOperation}
-import models.modification.{EntityModification, EntityType}
-import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
+import models.access.webworker.LocalDatabaseWebWorkerApi.LokiQuery
+import models.access.webworker.LocalDatabaseWebWorkerApi.WriteOperation
+import models.modification.EntityModification
+import models.modification.EntityType
+import models.modification.EntityType.DocumentEntityType
+import models.modification.EntityType.TaskEntityType
+import models.modification.EntityType.UserType
 import org.scalajs.dom.console
 import scala2js.Converters._
 import scala2js.Scala2Js
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

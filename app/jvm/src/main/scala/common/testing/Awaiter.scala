@@ -1,7 +1,8 @@
 package common.testing
 
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
+import scala.concurrent.Promise
 import scala.language.reflectiveCalls
 
 object Awaiter {

@@ -3,7 +3,10 @@ package models.document
 import common.OrderToken
 import common.testing.JsTestObjects._
 import common.testing.TestObjects._
-import models.document.Document.{DetachedCursor, DetachedSelection, IndexedCursor, IndexedSelection}
+import models.document.Document.DetachedCursor
+import models.document.Document.DetachedSelection
+import models.document.Document.IndexedCursor
+import models.document.Document.IndexedSelection
 import scala2js.Converters._
 import utest._
 

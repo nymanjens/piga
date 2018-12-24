@@ -9,10 +9,16 @@ import com.google.inject._
 import common.publisher.TriggerablePublisher
 import common.time.Clock
 import models.Entity
-import models.document.{DocumentEntity, TaskEntity}
-import models.modification.{EntityModification, EntityModificationEntity, EntityType}
-import models.modification.EntityType.{DocumentEntityType, TaskEntityType, UserType}
-import models.slick.{SlickEntityManager, SlickEntityTableDef}
+import models.document.DocumentEntity
+import models.document.TaskEntity
+import models.modification.EntityModification
+import models.modification.EntityModificationEntity
+import models.modification.EntityType
+import models.modification.EntityType.DocumentEntityType
+import models.modification.EntityType.TaskEntityType
+import models.modification.EntityType.UserType
+import models.slick.SlickEntityManager
+import models.slick.SlickEntityTableDef
 import models.slick.SlickUtils.dbApi._
 import models.slick.SlickUtils.dbRun
 import models.user.User

@@ -4,12 +4,14 @@ import api.ScalaJsApi.UserPrototype
 import common.testing.Awaiter
 import common.testing.TestObjects._
 import flux.action.Action
-import models.document.Document.{IndexedCursor, IndexedSelection}
+import models.document.Document.IndexedCursor
+import models.document.Document.IndexedSelection
 import models.modification.EntityModification
 import scala2js.Converters._
 import utest._
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

@@ -1,14 +1,17 @@
 package api
 
-import java.time.{LocalDate, LocalTime}
+import java.time.LocalDate
+import java.time.LocalTime
 
 import api.PicklableDbQuery.FieldWithValue
 import boopickle.Default._
 import common.time.LocalDateTime
 import models.Entity
 import models.access.ModelField
-import models.document.{DocumentEntity, TaskEntity}
-import models.modification.{EntityModification, EntityType}
+import models.document.DocumentEntity
+import models.document.TaskEntity
+import models.modification.EntityModification
+import models.modification.EntityType
 import models.modification.EntityType._
 import models.user.User
 

@@ -1,16 +1,19 @@
 package scala2js
 
-import java.time.{LocalDate, LocalTime}
+import java.time.LocalDate
+import java.time.LocalTime
 
 import common.GuavaReplacement.ImmutableBiMap
 import common.OrderToken
 import common.time.LocalDateTime
 import models._
 import models.access.ModelField
-import models.document.{DocumentEntity, TaskEntity}
+import models.document.DocumentEntity
+import models.document.TaskEntity
 import models.modification._
 import models.user.User
-import scala2js.Scala2Js.{Converter, MapConverter}
+import scala2js.Scala2Js.Converter
+import scala2js.Scala2Js.MapConverter
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js

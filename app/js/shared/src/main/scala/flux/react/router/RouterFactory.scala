@@ -1,10 +1,12 @@
 package flux.router
 
 import common.I18n
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
 import flux.action.Action
 import flux.stores.document.AllDocumentsStore
-import hydro.flux.action.{Dispatcher, StandardActions}
+import hydro.flux.action.Dispatcher
+import hydro.flux.action.StandardActions
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -65,7 +67,8 @@ private[router] final class RouterFactory(implicit reactAppModule: flux.react.ap
         // Fallback
         ).notFound(redirectToPage(Page.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
-            LogExceptionsCallback(dispatcher.dispatch(StandardActions.SetPageLoadingState(isLoading = false))))
+            LogExceptionsCallback(
+              dispatcher.dispatch(StandardActions.SetPageLoadingState(isLoading = false))))
           .setTitle {
             case Page.DesktopTaskList(documentId) =>
               val documentName = allDocumentsStore.state.allDocuments.find(_.id == documentId).head.name

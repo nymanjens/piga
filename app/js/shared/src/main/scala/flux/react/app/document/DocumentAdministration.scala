@@ -1,18 +1,26 @@
 package flux.react.app.document
 
 import flux.react.ReactVdomUtils.^^
-import common.{I18n, OrderToken}
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import flux.action.{Action, Dispatcher}
-import flux.react.ReactVdomUtils.{<<, ^^}
+import common.I18n
+import common.OrderToken
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
+import flux.action.Action
+import flux.action.Dispatcher
+import flux.react.ReactVdomUtils.<<
+import flux.react.ReactVdomUtils.^^
 import flux.react.router.RouterContext
 import flux.react.uielements
 import flux.stores.StateStore
-import flux.stores.document.{AllDocumentsStore, DocumentStore, DocumentStoreFactory}
+import flux.stores.document.AllDocumentsStore
+import flux.stores.document.DocumentStore
+import flux.stores.document.DocumentStoreFactory
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^.{^, _}
+import japgolly.scalajs.react.vdom.html_<^.^
+import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess
-import models.document.{Document, DocumentEntity}
+import models.document.Document
+import models.document.DocumentEntity
 import models.user.User
 import org.scalajs.dom
 

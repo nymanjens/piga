@@ -1,16 +1,23 @@
 package flux.stores.document
 
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
 import common.Listenable
 import common.Listenable.WritableListenable
 
 import scala.concurrent.duration._
 import scala.scalajs.js
 import flux.stores.StateStore
-import flux.stores.document.DocumentStore.{Replacement, State, SyncerWithReplenishingDelay}
+import flux.stores.document.DocumentStore.Replacement
+import flux.stores.document.DocumentStore.State
+import flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
 import models.access.JsEntityAccess
-import models.document.{Document, DocumentEntity, Task, TaskEntity}
-import models.modification.{EntityModification, EntityType}
+import models.document.Document
+import models.document.DocumentEntity
+import models.document.Task
+import models.document.TaskEntity
+import models.modification.EntityModification
+import models.modification.EntityType
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

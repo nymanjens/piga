@@ -3,12 +3,15 @@ package models.document
 import common.DomNodeUtils.nodeIsLi
 import common.OrderToken
 import models.access.DbQueryImplicits._
-import models.access.{JsEntityAccess, ModelField}
-import models.document.Document.{IndexedCursor, IndexedSelection}
+import models.access.JsEntityAccess
+import models.access.ModelField
+import models.document.Document.IndexedCursor
+import models.document.Document.IndexedSelection
 import org.scalajs.dom
 
 import scala.annotation.tailrec
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.Future

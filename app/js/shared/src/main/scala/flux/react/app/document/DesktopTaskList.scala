@@ -1,11 +1,14 @@
 package flux.react.app.document
 
-import common.{I18n, LoggingUtils}
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.I18n
+import common.LoggingUtils
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
 import flux.react.router.RouterContext
 import flux.react.uielements
 import flux.stores.StateStore
-import flux.stores.document.{DocumentStore, DocumentStoreFactory}
+import flux.stores.document.DocumentStore
+import flux.stores.document.DocumentStoreFactory
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import models.access.EntityAccess

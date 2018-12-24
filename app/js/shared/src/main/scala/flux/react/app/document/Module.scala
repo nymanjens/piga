@@ -4,7 +4,9 @@ import common.I18n
 import common.time.Clock
 import flux.action.Dispatcher
 import flux.stores.UserStore
-import flux.stores.document.{AllDocumentsStore, DocumentStoreFactory, DocumentSelectionStore}
+import flux.stores.document.AllDocumentsStore
+import flux.stores.document.DocumentStoreFactory
+import flux.stores.document.DocumentSelectionStore
 import models.access.JsEntityAccess
 import models.user.User
 

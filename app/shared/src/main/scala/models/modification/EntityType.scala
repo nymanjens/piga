@@ -2,7 +2,8 @@ package models.modification
 
 import common.ScalaUtils
 import models.Entity
-import models.document.{DocumentEntity, TaskEntity}
+import models.document.DocumentEntity
+import models.document.TaskEntity
 import models.user.User
 
 import scala.collection.immutable.Seq

@@ -1,11 +1,14 @@
 package models.document
 
-import common.DomNodeUtils.{children, _}
+import common.DomNodeUtils.children
+import common.DomNodeUtils._
 import common.LoggingUtils.LogExceptionsCallback
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml
-import models.document.TextWithMarkup.{Formatting, FormattingOption, Part}
+import models.document.TextWithMarkup.Formatting
+import models.document.TextWithMarkup.FormattingOption
+import models.document.TextWithMarkup.Part
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq

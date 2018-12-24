@@ -1,16 +1,22 @@
 package flux.stores.document
 
-import common.LoggingUtils.{logExceptions, logFailure}
+import common.LoggingUtils.logExceptions
+import common.LoggingUtils.logFailure
 import models.access.DbQueryImplicits._
 import api.ScalaJsApi.GetInitialDataResponse
 import common.Listenable
-import common.Listenable.{ListenableMap, WritableListenable}
-import flux.stores.{AsyncEntityDerivedStateStore, StateStore}
+import common.Listenable.ListenableMap
+import common.Listenable.WritableListenable
+import flux.stores.AsyncEntityDerivedStateStore
+import flux.stores.StateStore
 import models.access.JsEntityAccess
-import models.document.{Document, DocumentEntity}
-import models.modification.{EntityModification, EntityType}
+import models.document.Document
+import models.document.DocumentEntity
+import models.modification.EntityModification
+import models.modification.EntityType
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.Future

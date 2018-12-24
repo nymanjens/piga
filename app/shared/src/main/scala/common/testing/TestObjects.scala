@@ -2,10 +2,14 @@ package common.testing
 import java.time.Instant
 import java.time.Month._
 
-import api.ScalaJsApi.{GetInitialDataResponse, UpdateToken, UserPrototype}
+import api.ScalaJsApi.GetInitialDataResponse
+import api.ScalaJsApi.UpdateToken
+import api.ScalaJsApi.UserPrototype
 import common.OrderToken
-import common.time.{LocalDateTime, LocalDateTimes}
-import models.document.{DocumentEntity, TaskEntity}
+import common.time.LocalDateTime
+import common.time.LocalDateTimes
+import models.document.DocumentEntity
+import models.document.TaskEntity
 import models.modification.EntityModification
 import models.user.User
 
