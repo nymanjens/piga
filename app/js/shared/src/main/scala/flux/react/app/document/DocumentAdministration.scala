@@ -10,7 +10,9 @@ import flux.react.uielements
 import flux.router.RouterContext
 import flux.stores.document.AllDocumentsStore
 import hydro.flux.action.Dispatcher
-import hydro.flux.react.uielements.{HalfPanel, PageHeader, Table}
+import hydro.flux.react.uielements.HalfPanel
+import hydro.flux.react.uielements.PageHeader
+import hydro.flux.react.uielements.Table
 import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^.^
@@ -24,7 +26,9 @@ import scala.collection.immutable.Seq
 private[app] final class DocumentAdministration(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
                                                 allDocumentsStore: AllDocumentsStore,
-                                                dispatcher: Dispatcher) {
+                                                dispatcher: Dispatcher,
+                                                pageHeader: PageHeader,
+) {
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -79,7 +83,7 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
       implicit val router = props.router
 
       <.span(
-        PageHeader(router.currentPage),
+        pageHeader(router.currentPage),
         <.div(
           ^.className := "row",
           HalfPanel(title = <.span(i18n("app.all-documents"))) {

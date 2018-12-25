@@ -1,10 +1,13 @@
 package flux.react.app.document
 
 import common.I18n
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import common.LoggingUtils.LogExceptionsCallback
+import common.LoggingUtils.logExceptions
 import flux.router.RouterContext
-import flux.stores.document.{DocumentStore, DocumentStoreFactory}
-import hydro.flux.react.uielements.{PageHeader, WaitForFuture}
+import flux.stores.document.DocumentStore
+import flux.stores.document.DocumentStoreFactory
+import hydro.flux.react.uielements.PageHeader
+import hydro.flux.react.uielements.WaitForFuture
 import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -14,7 +17,9 @@ import models.document.Document
 private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
                                          documentStoreFactory: DocumentStoreFactory,
                                          i18n: I18n,
-                                         taskEditor: TaskEditor) {
+                                         taskEditor: TaskEditor,
+                                         pageHeader: PageHeader,
+) {
 
   private val waitForFuture = new WaitForFuture[DocumentStore]
   private val component = ScalaComponent
@@ -56,7 +61,7 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
       implicit val router = props.router
 
       <.span(
-        PageHeader(router.currentPage, title = state.document.name),
+        pageHeader(router.currentPage, title = state.document.name),
         taskEditor(props.documentStore)
       )
     }

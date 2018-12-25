@@ -7,6 +7,7 @@ import flux.stores.document.AllDocumentsStore
 import flux.stores.document.DocumentSelectionStore
 import flux.stores.document.DocumentStoreFactory
 import hydro.flux.action.Dispatcher
+import hydro.flux.react.uielements.PageHeader
 import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
@@ -25,7 +26,9 @@ final class Module(implicit i18n: I18n,
                    documentStoreFactory: DocumentStoreFactory,
                    documentSelectionStore: DocumentSelectionStore,
                    dispatcher: Dispatcher,
-                   clock: Clock) {
+                   clock: Clock,
+                   pageHeader: PageHeader,
+) {
 
   // Configuration of submodules
   private val hydroUielementsModule = new hydro.flux.react.uielements.Module
