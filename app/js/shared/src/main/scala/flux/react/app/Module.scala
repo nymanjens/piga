@@ -7,7 +7,6 @@ import flux.stores.document.AllDocumentsStore
 import flux.stores.document.DocumentSelectionStore
 import flux.stores.document.DocumentStoreFactory
 import hydro.flux.action.Dispatcher
-import hydro.flux.react.uielements.PageHeader
 import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
@@ -27,20 +26,18 @@ final class Module(implicit i18n: I18n,
                    documentSelectionStore: DocumentSelectionStore,
                    dispatcher: Dispatcher,
                    clock: Clock,
-                   pageHeader: PageHeader,
 ) {
 
   // Configuration of submodules
   private val hydroUielementsModule = new hydro.flux.react.uielements.Module
-  private val userManagementModule = new hydro.flux.react.uielements.usermanagement.Module
-  private val desktopModule = new flux.react.app.document.Module
-
+  implicit private lazy val pageHeader = hydroUielementsModule.pageHeader
   implicit private lazy val globalMessages = hydroUielementsModule.globalMessages
   implicit private lazy val pageLoadingSpinner = hydroUielementsModule.pageLoadingSpinner
-  implicit private lazy val applicationDisconnectedIcon =
-    hydroUielementsModule.applicationDisconnectedIcon
-  implicit private lazy val pendingModificationsCounter =
-    hydroUielementsModule.pendingModificationsCounter
+  implicit private lazy val applicationDisconnectedIcon = hydroUielementsModule.applicationDisconnectedIcon
+  implicit private lazy val pendingModificationsCounter = hydroUielementsModule.pendingModificationsCounter
+
+  private val userManagementModule = new hydro.flux.react.uielements.usermanagement.Module
+  private val desktopModule = new flux.react.app.document.Module
 
   implicit private lazy val menu: Menu = new Menu
 
