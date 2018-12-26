@@ -8,7 +8,7 @@ import hydro.flux.action.StandardActions
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.modification.EntityModification
-import scala2js.Converters._
+import app.scala2js.Converters._
 import utest._
 
 import scala.async.Async.async

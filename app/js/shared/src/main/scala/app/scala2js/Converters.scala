@@ -1,4 +1,4 @@
-package scala2js
+package app.scala2js
 
 import java.time.LocalDate
 import java.time.LocalTime
@@ -12,8 +12,8 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification._
 import app.models.user.User
-import scala2js.Scala2Js.Converter
-import scala2js.Scala2Js.MapConverter
+import app.scala2js.Scala2Js.Converter
+import app.scala2js.Scala2Js.MapConverter
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js

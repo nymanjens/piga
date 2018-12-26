@@ -1,7 +1,7 @@
 package app.models.document
 
 import app.models.document.TextWithMarkup.Formatting
-import scala2js.Converters._
+import app.scala2js.Converters._
 import utest._
 
 object TextWithMarkupTest extends TestSuite {
