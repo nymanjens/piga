@@ -12,8 +12,9 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification._
 import app.models.user.User
-import app.scala2js.Scala2Js.Converter
-import app.scala2js.Scala2Js.MapConverter
+import hydro.scala2js.Scala2Js
+import hydro.scala2js.Scala2Js.Converter
+import hydro.scala2js.Scala2Js.MapConverter
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
