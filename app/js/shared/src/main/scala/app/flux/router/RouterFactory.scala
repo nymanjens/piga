@@ -1,7 +1,7 @@
 package app.flux.router
 
 import common.I18n
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import hydro.common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.action.{Dispatcher, StandardActions}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB

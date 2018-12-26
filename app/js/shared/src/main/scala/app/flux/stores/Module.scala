@@ -3,7 +3,7 @@ package app.flux.stores
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import common.I18n
-import common.time.Clock
+import hydro.common.time.Clock
 import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStoreFactory

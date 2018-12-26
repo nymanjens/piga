@@ -8,7 +8,7 @@ import boopickle.Default.Pickle
 import boopickle.Default.Unpickle
 import common.OrderToken
 import common.Tags
-import common.time.LocalDateTime
+import hydro.common.time.LocalDateTime
 import app.models.Entity
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity

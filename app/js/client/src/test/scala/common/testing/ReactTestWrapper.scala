@@ -1,6 +1,6 @@
 package common.testing
 
-import common.DomNodeUtils
+import hydro.common.DomNodeUtils
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils.MountedOutput
 import japgolly.scalajs.react.test.ReactTestUtils

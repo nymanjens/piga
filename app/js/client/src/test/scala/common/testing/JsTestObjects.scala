@@ -9,7 +9,7 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import common.testing.TestObjects._
-import common.time.LocalDateTime
+import hydro.common.time.LocalDateTime
 import app.models.document.Document
 import app.models.document.Task
 

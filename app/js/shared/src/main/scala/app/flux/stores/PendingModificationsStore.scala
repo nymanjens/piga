@@ -1,6 +1,6 @@
 package app.flux.stores
 
-import common.Listenable
+import hydro.common.Listenable
 import app.flux.stores.PendingModificationsStore.State
 import app.flux.stores.document.DocumentStoreFactory
 import hydro.flux.stores.StateStore

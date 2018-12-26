@@ -4,8 +4,8 @@ import java.time.Duration
 import java.time.Instant
 
 import common.GuavaReplacement.Iterables.getOnlyElement
-import common.time.Clock
-import common.time.JavaTimeImplicits._
+import hydro.common.time.Clock
+import hydro.common.time.JavaTimeImplicits._
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection

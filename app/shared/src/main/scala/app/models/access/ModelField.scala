@@ -2,7 +2,7 @@ package app.models.access
 
 import common.GuavaReplacement.ImmutableBiMap
 import common.OrderToken
-import common.time.LocalDateTime
+import hydro.common.time.LocalDateTime
 import app.models.Entity
 import app.models.access.ModelField.FieldType
 import app.models.document.DocumentEntity

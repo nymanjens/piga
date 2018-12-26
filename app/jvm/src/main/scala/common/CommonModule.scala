@@ -3,8 +3,8 @@ package common
 import java.time.ZoneId
 
 import com.google.inject._
-import common.time.Clock
-import common.time.JvmClock
+import hydro.common.time.Clock
+import hydro.common.time.JvmClock
 
 final class CommonModule extends AbstractModule {
 

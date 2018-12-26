@@ -1,9 +1,9 @@
 package app.flux.stores.document
 
-import common.LoggingUtils.LogExceptionsCallback
-import common.LoggingUtils.logExceptions
-import common.Listenable
-import common.Listenable.WritableListenable
+import hydro.common.LoggingUtils.LogExceptionsCallback
+import hydro.common.LoggingUtils.logExceptions
+import hydro.common.Listenable
+import hydro.common.Listenable.WritableListenable
 
 import scala.concurrent.duration._
 import scala.scalajs.js

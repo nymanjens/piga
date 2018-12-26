@@ -2,14 +2,14 @@ package app.flux.react.app.document
 
 import scala.concurrent.duration._
 import scala.scalajs.js
-import common.DomNodeUtils._
+import hydro.common.DomNodeUtils._
 import common.GuavaReplacement.Splitter
-import common.LoggingUtils.LogExceptionsCallback
-import common.LoggingUtils.logExceptions
+import hydro.common.LoggingUtils.LogExceptionsCallback
+import hydro.common.LoggingUtils.logExceptions
 import common.ScalaUtils.ifThenOption
 import common.ScalaUtils.visibleForTesting
-import common.time.Clock
-import common.DomNodeUtils
+import hydro.common.time.Clock
+import hydro.common.DomNodeUtils
 import common.I18n
 import common.OrderToken
 import common.Tags

@@ -1,7 +1,7 @@
 package app.flux.react.app
 
 import common.I18n
-import common.time.Clock
+import hydro.common.time.Clock
 import app.flux.stores._
 import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore

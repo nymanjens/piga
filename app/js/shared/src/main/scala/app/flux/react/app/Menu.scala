@@ -1,8 +1,8 @@
 package app.flux.react.app
 
 import common.I18n
-import common.LoggingUtils.{LogExceptionsCallback, logExceptions}
-import common.time.Clock
+import hydro.common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import hydro.common.time.Clock
 import app.flux.react.ReactVdomUtils.^^
 import app.flux.router.{Page, RouterContext}
 import app.flux.stores.document.AllDocumentsStore

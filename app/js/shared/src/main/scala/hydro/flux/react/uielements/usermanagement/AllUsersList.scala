@@ -1,7 +1,7 @@
 package hydro.flux.react.uielements.usermanagement
 
 import common.I18n
-import common.LoggingUtils.logExceptions
+import hydro.common.LoggingUtils.logExceptions
 import app.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.uielements.HalfPanel

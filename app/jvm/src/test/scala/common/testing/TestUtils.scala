@@ -3,7 +3,7 @@ package common.testing
 import java.time.Instant
 import java.time.ZoneId
 
-import common.time.LocalDateTime
+import hydro.common.time.LocalDateTime
 import app.models.Entity
 import app.models.access.JvmEntityAccess
 import app.models.modification.EntityModification

@@ -1,7 +1,7 @@
 package jsfacades
 
-import common.LoggingUtils
-import common.LoggingUtils.logExceptions
+import hydro.common.LoggingUtils
+import hydro.common.LoggingUtils.logExceptions
 import japgolly.scalajs.react.Children
 import japgolly.scalajs.react.JsComponent
 import org.scalajs.dom

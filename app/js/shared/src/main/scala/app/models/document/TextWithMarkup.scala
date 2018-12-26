@@ -1,8 +1,8 @@
 package app.models.document
 
-import common.DomNodeUtils.children
-import common.DomNodeUtils._
-import common.LoggingUtils.LogExceptionsCallback
+import hydro.common.DomNodeUtils.children
+import hydro.common.DomNodeUtils._
+import hydro.common.LoggingUtils.LogExceptionsCallback
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.escapeHtml

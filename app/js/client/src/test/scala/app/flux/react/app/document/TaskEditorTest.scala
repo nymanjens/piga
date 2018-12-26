@@ -2,7 +2,7 @@ package app.flux.react.app.document
 
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
-import common.time.LocalDateTime
+import hydro.common.time.LocalDateTime
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.TextWithMarkup.Formatting

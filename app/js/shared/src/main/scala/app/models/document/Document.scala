@@ -1,6 +1,6 @@
 package app.models.document
 
-import common.DomNodeUtils.nodeIsLi
+import hydro.common.DomNodeUtils.nodeIsLi
 import common.OrderToken
 import app.models.access.DbQueryImplicits._
 import app.models.access.JsEntityAccess

@@ -3,7 +3,7 @@ package app.models.user
 import app.models.access.DbQueryImplicits._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
-import common.time.Clock
+import hydro.common.time.Clock
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelField
 import app.models.modification.EntityModification

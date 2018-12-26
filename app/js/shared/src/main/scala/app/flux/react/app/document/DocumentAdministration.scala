@@ -1,7 +1,7 @@
 package app.flux.react.app.document
 
-import common.LoggingUtils.LogExceptionsCallback
-import common.LoggingUtils.logExceptions
+import hydro.common.LoggingUtils.LogExceptionsCallback
+import hydro.common.LoggingUtils.logExceptions
 import common.I18n
 import common.OrderToken
 import app.flux.action.Actions
