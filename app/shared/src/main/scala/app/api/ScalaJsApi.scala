@@ -1,7 +1,7 @@
-package api
+package app.api
 
-import api.Picklers._
-import api.ScalaJsApi._
+import app.api.Picklers._
+import app.api.ScalaJsApi._
 import models.Entity
 import models.document.DocumentEntity
 import models.modification.EntityModification

@@ -1,7 +1,7 @@
 package app.flux.stores
 
-import api.ScalaJsApi.GetInitialDataResponse
-import api.ScalaJsApiClient
+import app.api.ScalaJsApi.GetInitialDataResponse
+import app.api.ScalaJsApiClient
 import common.I18n
 import common.time.Clock
 import app.flux.stores.document.AllDocumentsStore

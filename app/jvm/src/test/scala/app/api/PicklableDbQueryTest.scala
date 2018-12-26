@@ -1,6 +1,6 @@
-package api
+package app.api
 
-import api.Picklers._
+import app.api.Picklers._
 import common.testing._
 import models.access.DbQueryImplicits._
 import models.access.DbQuery

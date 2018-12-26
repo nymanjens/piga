@@ -3,7 +3,7 @@ package app.flux.stores.document
 import common.LoggingUtils.logExceptions
 import common.LoggingUtils.logFailure
 import models.access.DbQueryImplicits._
-import api.ScalaJsApi.GetInitialDataResponse
+import app.api.ScalaJsApi.GetInitialDataResponse
 import common.Listenable
 import common.Listenable.ListenableMap
 import common.Listenable.WritableListenable

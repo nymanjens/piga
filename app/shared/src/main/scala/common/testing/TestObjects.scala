@@ -2,9 +2,9 @@ package common.testing
 import java.time.Instant
 import java.time.Month._
 
-import api.ScalaJsApi.GetInitialDataResponse
-import api.ScalaJsApi.UpdateToken
-import api.ScalaJsApi.UserPrototype
+import app.api.ScalaJsApi.GetInitialDataResponse
+import app.api.ScalaJsApi.UpdateToken
+import app.api.ScalaJsApi.UserPrototype
 import common.OrderToken
 import common.time.LocalDateTime
 import common.time.LocalDateTimes
