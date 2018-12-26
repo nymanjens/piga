@@ -11,9 +11,9 @@ import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import jsfacades.Mousetrap
-import models.access.EntityAccess
-import models.document.DocumentEntity
-import models.user.User
+import app.models.access.EntityAccess
+import app.models.document.DocumentEntity
+import app.models.user.User
 
 import scala.collection.immutable.Seq
 

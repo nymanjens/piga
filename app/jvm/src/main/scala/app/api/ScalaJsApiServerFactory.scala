@@ -6,14 +6,14 @@ import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
 import common.PlayI18n
 import common.time.Clock
-import models.Entity
-import models.access.DbQuery
-import models.access.JvmEntityAccess
-import models.document.DocumentEntity
-import models.modification.EntityModification
-import models.modification.EntityType
-import models.user.User
-import models.user.Users
+import app.models.Entity
+import app.models.access.DbQuery
+import app.models.access.JvmEntityAccess
+import app.models.document.DocumentEntity
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
+import app.models.user.User
+import app.models.user.Users
 
 import scala.collection.immutable.Seq
 

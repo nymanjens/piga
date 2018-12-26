@@ -24,14 +24,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
-import models.access.EntityAccess
-import models.document.Document.DetachedCursor
-import models.document.Document.IndexedCursor
-import models.document.Document.IndexedSelection
-import models.document.TextWithMarkup.Formatting
-import models.document.Document
-import models.document.Task
-import models.document.TextWithMarkup
+import app.models.access.EntityAccess
+import app.models.document.Document.DetachedCursor
+import app.models.document.Document.IndexedCursor
+import app.models.document.Document.IndexedSelection
+import app.models.document.TextWithMarkup.Formatting
+import app.models.document.Document
+import app.models.document.Task
+import app.models.document.TextWithMarkup
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq

@@ -8,8 +8,8 @@ import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.flux.stores.document.DocumentSelectionStore
 import hydro.flux.react.uielements.PageHeader
-import models.access.JsEntityAccess
-import models.user.User
+import app.models.access.JsEntityAccess
+import app.models.user.User
 
 final class Module(implicit i18n: I18n,
                    dispatcher: Dispatcher,

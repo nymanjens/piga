@@ -2,7 +2,7 @@ package common.testing
 
 import app.flux.stores.document.DocumentSelectionStore
 import hydro.flux.action.Dispatcher
-import models.access.EntityModificationPushClientFactory
+import app.models.access.EntityModificationPushClientFactory
 
 class TestModule {
 

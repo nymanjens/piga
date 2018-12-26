@@ -2,10 +2,10 @@ package app.api
 
 import app.api.Picklers._
 import common.testing._
-import models.access.DbQueryImplicits._
-import models.access.DbQuery
-import models.access.ModelField
-import models.user.User
+import app.models.access.DbQueryImplicits._
+import app.models.access.DbQuery
+import app.models.access.ModelField
+import app.models.user.User
 import org.junit.runner._
 import org.specs2.runner._
 

@@ -3,11 +3,11 @@ package app.flux.react.app.document
 import common.testing.TestObjects._
 import common.testing.JsTestObjects._
 import common.time.LocalDateTime
-import models.document.Document.IndexedCursor
-import models.document.Document.IndexedSelection
-import models.document.TextWithMarkup.Formatting
-import models.document.Task
-import models.document.TextWithMarkup
+import app.models.document.Document.IndexedCursor
+import app.models.document.Document.IndexedSelection
+import app.models.document.TextWithMarkup.Formatting
+import app.models.document.Task
+import app.models.document.TextWithMarkup
 import scala2js.Converters._
 import utest._
 

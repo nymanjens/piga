@@ -6,12 +6,12 @@ import java.time.LocalTime
 import common.GuavaReplacement.ImmutableBiMap
 import common.OrderToken
 import common.time.LocalDateTime
-import models._
-import models.access.ModelField
-import models.document.DocumentEntity
-import models.document.TaskEntity
-import models.modification._
-import models.user.User
+import app.models._
+import app.models.access.ModelField
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification._
+import app.models.user.User
 import scala2js.Scala2Js.Converter
 import scala2js.Scala2Js.MapConverter
 

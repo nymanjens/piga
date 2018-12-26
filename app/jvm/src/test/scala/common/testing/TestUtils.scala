@@ -4,11 +4,11 @@ import java.time.Instant
 import java.time.ZoneId
 
 import common.time.LocalDateTime
-import models.Entity
-import models.access.JvmEntityAccess
-import models.modification.EntityModification
-import models.modification.EntityType
-import models.user.User
+import app.models.Entity
+import app.models.access.JvmEntityAccess
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
+import app.models.user.User
 
 object TestUtils {
 

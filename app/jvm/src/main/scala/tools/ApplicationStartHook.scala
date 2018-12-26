@@ -7,11 +7,11 @@ import com.google.inject.Inject
 import common.OrderToken
 import common.ResourceFiles
 import common.time.Clock
-import models.access.JvmEntityAccess
-import models.document.DocumentEntity
-import models.document.TaskEntity
-import models.modification.EntityModification
-import models.user.Users
+import app.models.access.JvmEntityAccess
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.user.Users
 import play.api.Application
 import play.api.Mode
 

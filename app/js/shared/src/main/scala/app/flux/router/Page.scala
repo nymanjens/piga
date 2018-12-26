@@ -5,8 +5,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.Future
 import common.I18n
 import japgolly.scalajs.react.extra.router.Path
-import models.access.EntityAccess
-import models.document.DocumentEntity
+import app.models.access.EntityAccess
+import app.models.document.DocumentEntity
 
 import scala.scalajs.js
 

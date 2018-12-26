@@ -11,13 +11,13 @@ import hydro.flux.stores.StateStore
 import app.flux.stores.document.DocumentStore.Replacement
 import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
-import models.access.JsEntityAccess
-import models.document.Document
-import models.document.DocumentEntity
-import models.document.Task
-import models.document.TaskEntity
-import models.modification.EntityModification
-import models.modification.EntityType
+import app.models.access.JsEntityAccess
+import app.models.document.Document
+import app.models.document.DocumentEntity
+import app.models.document.Task
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

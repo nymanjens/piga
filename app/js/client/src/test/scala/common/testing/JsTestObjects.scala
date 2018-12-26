@@ -2,16 +2,16 @@ package common.testing
 
 import scala.collection.immutable.Seq
 import common.OrderToken
-import models.document.Document.DetachedCursor
-import models.document.Document.DetachedSelection
-import models.document.Document.IndexedCursor
-import models.document.Document.IndexedSelection
-import models.document.Task
-import models.document.TextWithMarkup
+import app.models.document.Document.DetachedCursor
+import app.models.document.Document.DetachedSelection
+import app.models.document.Document.IndexedCursor
+import app.models.document.Document.IndexedSelection
+import app.models.document.Task
+import app.models.document.TextWithMarkup
 import common.testing.TestObjects._
 import common.time.LocalDateTime
-import models.document.Document
-import models.document.Task
+import app.models.document.Document
+import app.models.document.Task
 
 object JsTestObjects {
 

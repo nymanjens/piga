@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import common.time.Clock
-import models.access.JvmEntityAccess
+import app.models.access.JvmEntityAccess
 import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
 import play.api.mvc._

@@ -6,9 +6,9 @@ import boopickle.Default._
 import boopickle.Pickler
 import common.testing.TestObjects._
 import common.testing._
-import models.modification.EntityModification
-import models.modification.EntityType
-import models.user.User
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
+import app.models.user.User
 import org.junit.runner._
 import org.specs2.runner._
 

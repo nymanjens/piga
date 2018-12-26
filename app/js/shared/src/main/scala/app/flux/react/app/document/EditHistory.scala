@@ -7,10 +7,10 @@ import common.GuavaReplacement.Iterables.getOnlyElement
 import common.time.Clock
 import common.time.JavaTimeImplicits._
 import app.flux.react.app.document.EditHistory.Edit
-import models.document.Document.DetachedCursor
-import models.document.Document.DetachedSelection
-import models.document.Task
-import models.modification.EntityModification
+import app.models.document.Document.DetachedCursor
+import app.models.document.Document.DetachedSelection
+import app.models.document.Task
+import app.models.modification.EntityModification
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

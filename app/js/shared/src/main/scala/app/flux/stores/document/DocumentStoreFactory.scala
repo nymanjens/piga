@@ -2,18 +2,18 @@ package app.flux.stores.document
 
 import common.LoggingUtils.logExceptions
 import common.LoggingUtils.logFailure
-import models.access.DbQueryImplicits._
+import app.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.GetInitialDataResponse
 import common.Listenable
 import common.Listenable.ListenableMap
 import common.Listenable.WritableListenable
 import hydro.flux.stores.AsyncEntityDerivedStateStore
 import hydro.flux.stores.StateStore
-import models.access.JsEntityAccess
-import models.document.Document
-import models.document.DocumentEntity
-import models.modification.EntityModification
-import models.modification.EntityType
+import app.models.access.JsEntityAccess
+import app.models.document.Document
+import app.models.document.DocumentEntity
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
 
 import scala.async.Async.async
 import scala.async.Async.await

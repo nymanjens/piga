@@ -5,7 +5,7 @@ import app.api.ScalaJsApiClient
 import app.flux.router.Page
 import hydro.flux.action.Module
 import japgolly.scalajs.react.extra.router.Router
-import models.user.User
+import app.models.user.User
 
 final class ClientAppModule(implicit getInitialDataResponse: GetInitialDataResponse,
                             scalaJsApiClient: ScalaJsApiClient) {
@@ -20,7 +20,7 @@ final class ClientAppModule(implicit getInitialDataResponse: GetInitialDataRespo
   implicit private val i18n = commonModule.i18n
 
   // Create and unpack Models Access module
-  val modelsAccessModule = new models.access.Module
+  val modelsAccessModule = new app.models.access.Module
   implicit val entityAccess = modelsAccessModule.entityAccess
   implicit val entityModificationPushClientFactory = modelsAccessModule.entityModificationPushClientFactory
 

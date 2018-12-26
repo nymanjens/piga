@@ -5,9 +5,9 @@ import common.testing.Awaiter
 import common.testing.TestObjects._
 import app.flux.action.Actions
 import hydro.flux.action.StandardActions
-import models.document.Document.IndexedCursor
-import models.document.Document.IndexedSelection
-import models.modification.EntityModification
+import app.models.document.Document.IndexedCursor
+import app.models.document.Document.IndexedSelection
+import app.models.modification.EntityModification
 import scala2js.Converters._
 import utest._
 

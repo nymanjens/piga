@@ -8,10 +8,10 @@ import app.api.ScalaJsApi.UserPrototype
 import common.OrderToken
 import common.time.LocalDateTime
 import common.time.LocalDateTimes
-import models.document.DocumentEntity
-import models.document.TaskEntity
-import models.modification.EntityModification
-import models.user.User
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.user.User
 
 import scala.collection.immutable.Seq
 

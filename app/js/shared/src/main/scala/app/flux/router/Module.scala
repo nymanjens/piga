@@ -4,7 +4,7 @@ import common.I18n
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.action.Dispatcher
 import japgolly.scalajs.react.extra.router._
-import models.access.EntityAccess
+import app.models.access.EntityAccess
 
 final class Module(implicit reactAppModule: app.flux.react.app.Module,
                    dispatcher: Dispatcher,

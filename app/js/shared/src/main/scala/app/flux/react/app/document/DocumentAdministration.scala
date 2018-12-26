@@ -16,8 +16,8 @@ import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^.^
 import japgolly.scalajs.react.vdom.html_<^._
-import models.access.EntityAccess
-import models.document.DocumentEntity
+import app.models.access.EntityAccess
+import app.models.document.DocumentEntity
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq

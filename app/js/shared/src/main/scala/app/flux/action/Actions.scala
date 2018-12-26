@@ -2,7 +2,7 @@ package app.flux.action
 
 import common.OrderToken
 import hydro.flux.action.Action
-import models.document.DocumentEntity
+import app.models.document.DocumentEntity
 
 import scala.collection.immutable.Seq
 

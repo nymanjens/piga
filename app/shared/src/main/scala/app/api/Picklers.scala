@@ -6,14 +6,14 @@ import java.time.LocalTime
 import app.api.PicklableDbQuery.FieldWithValue
 import boopickle.Default._
 import common.time.LocalDateTime
-import models.Entity
-import models.access.ModelField
-import models.document.DocumentEntity
-import models.document.TaskEntity
-import models.modification.EntityModification
-import models.modification.EntityType
-import models.modification.EntityType._
-import models.user.User
+import app.models.Entity
+import app.models.access.ModelField
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
+import app.models.modification.EntityType._
+import app.models.user.User
 
 object Picklers {
 

@@ -2,7 +2,7 @@ package app.api
 
 import java.time.Instant
 
-import models.access.DbQueryImplicits._
+import app.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.UserPrototype
 import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
@@ -10,14 +10,14 @@ import common.GuavaReplacement.Iterables.getOnlyElement
 import common.testing.TestObjects._
 import common.testing.TestUtils._
 import common.testing._
-import models.access.DbQuery
-import models.access.JvmEntityAccess
-import models.access.ModelField
-import models.modification.EntityModification
-import models.modification.EntityModificationEntity
-import models.modification.EntityType
-import models.slick.SlickUtils.dbRun
-import models.user.User
+import app.models.access.DbQuery
+import app.models.access.JvmEntityAccess
+import app.models.access.ModelField
+import app.models.modification.EntityModification
+import app.models.modification.EntityModificationEntity
+import app.models.modification.EntityType
+import app.models.slick.SlickUtils.dbRun
+import app.models.user.User
 import org.junit.runner._
 import org.specs2.runner._
 import play.api.test._

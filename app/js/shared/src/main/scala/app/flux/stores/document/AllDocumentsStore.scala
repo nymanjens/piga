@@ -9,12 +9,12 @@ import hydro.flux.action.Dispatcher
 import app.flux.stores.document.AllDocumentsStore.State
 import hydro.flux.stores.AsyncEntityDerivedStateStore
 import hydro.flux.stores.StateStore
-import models.access.JsEntityAccess
-import models.document
-import models.document.DocumentEntity
-import models.document.TaskEntity
-import models.modification.EntityModification
-import models.modification.EntityType
+import app.models.access.JsEntityAccess
+import app.models.document
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.modification.EntityType
 
 import scala.async.Async.async
 import scala.async.Async.await
