@@ -5,11 +5,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
-import com.google.inject._
-
-final class JvmClock extends Clock {
-  // TODO: Make this configurable
-  private val zone = ZoneId.of("Europe/Paris")
+final class JvmClock(zone: ZoneId) extends Clock {
 
   private val initialInstant: Instant = Instant.now
   private val initialNanos: Long = System.nanoTime
