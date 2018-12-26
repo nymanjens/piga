@@ -1,6 +1,6 @@
 package common.testing
 
-import flux.stores.document.DocumentSelectionStore
+import app.flux.stores.document.DocumentSelectionStore
 import hydro.flux.action.Dispatcher
 import models.access.EntityModificationPushClientFactory
 
