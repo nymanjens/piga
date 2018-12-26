@@ -5,7 +5,7 @@ import hydro.common.DomNodeUtils._
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
-import jsfacades.escapeHtml
+import hydro.jsfacades.escapeHtml
 import app.models.document.TextWithMarkup.Formatting
 import app.models.document.TextWithMarkup.FormattingOption
 import app.models.document.TextWithMarkup.Part
