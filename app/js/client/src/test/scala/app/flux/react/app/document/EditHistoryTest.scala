@@ -9,7 +9,7 @@ import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Task
-import app.scala2js.Converters._
+import hydro.scala2js.StandardConverters._
 import utest._
 
 import scala.collection.immutable.Seq

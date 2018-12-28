@@ -1,4 +1,4 @@
-package app.scala2js
+package hydro.scala2js
 
 import java.time.{LocalDate, LocalTime}
 
@@ -10,14 +10,13 @@ import app.models.user.User
 import common.GuavaReplacement.ImmutableBiMap
 import common.OrderToken
 import hydro.common.time.LocalDateTime
-import hydro.scala2js.Scala2Js
 import hydro.scala2js.Scala2Js.{Converter, MapConverter}
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 
-object Converters {
+object StandardConverters {
 
   // **************** Convertor generators **************** //
   implicit def fromEntityType[E <: Entity: EntityType]: MapConverter[E] = {

@@ -13,7 +13,7 @@ import scala.async.Async.await
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import app.scala2js.Converters._
+import hydro.scala2js.StandardConverters._
 
 object DispatcherTest extends TestSuite {
 

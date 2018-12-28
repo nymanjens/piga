@@ -8,7 +8,7 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.TextWithMarkup.Formatting
 import app.models.document.Task
 import app.models.document.TextWithMarkup
-import app.scala2js.Converters._
+import hydro.scala2js.StandardConverters._
 import utest._
 
 import scala.collection.immutable.Seq

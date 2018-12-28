@@ -1,7 +1,7 @@
 package app.models.document
 
 import common.testing.TestObjects._
-import app.scala2js.Converters._
+import hydro.scala2js.StandardConverters._
 import utest._
 import scala.collection.immutable.Seq
 

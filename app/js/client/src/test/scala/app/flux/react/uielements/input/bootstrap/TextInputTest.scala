@@ -8,7 +8,7 @@ import japgolly.scalajs.react.test.ReactTestUtils
 import japgolly.scalajs.react.vdom._
 import utest._
 
-import app.scala2js.Converters._
+import hydro.scala2js.StandardConverters._
 
 object TextInputTest extends TestSuite {
   implicit private val fake18n = new TestModule().fakeI18n
