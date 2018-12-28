@@ -16,6 +16,7 @@ import app.models.modification.EntityType.TaskEntityType
 import app.models.modification.EntityType.UserType
 import org.scalajs.dom.console
 import hydro.scala2js.StandardConverters._
+import app.scala2js.AppConverters._
 import hydro.scala2js.Scala2Js
 
 import scala.async.Async.async

@@ -12,6 +12,7 @@ import app.models.modification.EntityType._
 import app.models.user.User
 
 import scala.collection.immutable.Seq
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Represents a field in an model entity.
@@ -40,11 +41,14 @@ object ModelField {
   object FieldType {
     implicit case object BooleanType extends FieldType[Boolean]
     implicit case object IntType extends FieldType[Int]
+    implicit case object MaybeIntType extends FieldType[Option[Int]]
     implicit case object LongType extends FieldType[Long]
+    implicit case object MaybeLongType extends FieldType[Option[Long]]
     implicit case object DoubleType extends FieldType[Double]
     implicit case object StringType extends FieldType[String]
     implicit case object LocalDateTimeType extends FieldType[LocalDateTime]
     implicit case object MaybeLocalDateTimeType extends FieldType[Option[LocalDateTime]]
+    implicit case object FiniteDurationType extends FieldType[FiniteDuration]
     implicit case object StringSeqType extends FieldType[Seq[String]]
     implicit case object OrderTokenType extends FieldType[OrderToken]
   }

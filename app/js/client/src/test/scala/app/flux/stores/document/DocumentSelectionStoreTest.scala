@@ -9,6 +9,7 @@ import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.modification.EntityModification
 import hydro.scala2js.StandardConverters._
+import app.scala2js.AppConverters._
 import utest._
 
 import scala.async.Async.async

@@ -1,34 +1,29 @@
 package hydro.scala2js
 
-import java.time.{LocalDate, LocalTime}
+import java.time.LocalDate
+import java.time.LocalTime
 
 import app.models._
 import app.models.access.ModelField
-import app.models.document.{DocumentEntity, TaskEntity}
 import app.models.modification._
-import app.models.user.User
+import app.scala2js.AppConverters
+import app.scala2js.AppConverters.EntityTypeConverter
+import app.scala2js.AppConverters.fromEntityType
 import common.GuavaReplacement.ImmutableBiMap
 import common.OrderToken
 import hydro.common.time.LocalDateTime
-import hydro.scala2js.Scala2Js.{Converter, MapConverter}
+import hydro.scala2js.Scala2Js.Converter
+import hydro.scala2js.Scala2Js.MapConverter
 
 import scala.collection.immutable.Seq
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 
 object StandardConverters {
 
   // **************** Convertor generators **************** //
-  implicit def fromEntityType[E <: Entity: EntityType]: MapConverter[E] = {
-    val entityType: EntityType[E] = implicitly[EntityType[E]]
-    val converter: MapConverter[_ <: Entity] = entityType match {
-      case EntityType.UserType           => UserConverter
-      case EntityType.DocumentEntityType => DocumentEntityConverter
-      case EntityType.TaskEntityType     => TaskEntityConverter
-    }
-    converter.asInstanceOf[MapConverter[E]]
-  }
-
   def fromModelField[V](modelField: ModelField[V, _]): Converter[V] = {
     def fromType[V2: Converter](fieldType: ModelField.FieldType[V2]): Converter[V2] = implicitly
     val result = modelField.fieldType match {
@@ -43,8 +38,8 @@ object StandardConverters {
       case ModelField.FieldType.MaybeLocalDateTimeType =>
         fromType(ModelField.FieldType.MaybeLocalDateTimeType)
       case ModelField.FieldType.FiniteDurationType => fromType(ModelField.FieldType.FiniteDurationType)
-      case ModelField.FieldType.StringSeqType     => fromType(ModelField.FieldType.StringSeqType)
-      case ModelField.FieldType.OrderTokenType    => fromType(ModelField.FieldType.OrderTokenType)
+      case ModelField.FieldType.StringSeqType      => fromType(ModelField.FieldType.StringSeqType)
+      case ModelField.FieldType.OrderTokenType     => fromType(ModelField.FieldType.OrderTokenType)
     }
     result.asInstanceOf[Converter[V]]
   }
@@ -167,9 +162,6 @@ object StandardConverters {
     }
   }
 
-  implicit val EntityTypeConverter: Converter[EntityType.any] =
-    enumConverter(EntityType.UserType, EntityType.DocumentEntityType, EntityType.TaskEntityType)
-
   implicit object EntityModificationConverter extends Converter[EntityModification] {
     private val addNumber: Int = 1
     private val updateNumber: Int = 2
@@ -185,12 +177,12 @@ object StandardConverters {
             result.push(addNumber)
             result.push(
               Scala2Js.toJs(entity.asInstanceOf[E])(
-                fromEntityType(modification.entityType.asInstanceOf[EntityType[E]])))
+                AppConverters.fromEntityType(modification.entityType.asInstanceOf[EntityType[E]])))
           case EntityModification.Update(entity) =>
             result.push(updateNumber)
             result.push(
               Scala2Js.toJs(entity.asInstanceOf[E])(
-                fromEntityType(modification.entityType.asInstanceOf[EntityType[E]])))
+                AppConverters.fromEntityType(modification.entityType.asInstanceOf[EntityType[E]])))
           case EntityModification.Remove(entityId) =>
             result.push(removeNumber)
             result.push(Scala2Js.toJs(entityId))
@@ -257,53 +249,4 @@ object StandardConverters {
       }
     }
   }
-
-  implicit val UserConverter: EntityConverter[User] = new EntityConverter(
-    allFieldsWithoutId = Seq(
-      ModelField.User.loginName,
-      ModelField.User.passwordHash,
-      ModelField.User.name,
-      ModelField.User.isAdmin,
-    ),
-    toScalaWithoutId = dict =>
-      User(
-        loginName = dict.getRequired(ModelField.User.loginName),
-        passwordHash = dict.getRequired(ModelField.User.passwordHash),
-        name = dict.getRequired(ModelField.User.name),
-        isAdmin = dict.getRequired(ModelField.User.isAdmin)
-    )
-  )
-
-  implicit val DocumentEntityConverter: EntityConverter[DocumentEntity] = new EntityConverter(
-    allFieldsWithoutId = Seq(
-      ModelField.DocumentEntity.name,
-      ModelField.DocumentEntity.orderToken,
-    ),
-    toScalaWithoutId = dict =>
-      DocumentEntity(
-        name = dict.getRequired(ModelField.DocumentEntity.name),
-        orderToken = dict.getRequired(ModelField.DocumentEntity.orderToken))
-  )
-
-  implicit val TaskEntityConverter: EntityConverter[TaskEntity] = new EntityConverter(
-    allFieldsWithoutId = Seq(
-      ModelField.TaskEntity.documentId,
-      ModelField.TaskEntity.contentHtml,
-      ModelField.TaskEntity.orderToken,
-      ModelField.TaskEntity.indentation,
-      ModelField.TaskEntity.collapsed,
-      ModelField.TaskEntity.delayedUntil,
-      ModelField.TaskEntity.tags,
-    ),
-    toScalaWithoutId = dict =>
-      TaskEntity(
-        documentId = dict.getRequired(ModelField.TaskEntity.documentId),
-        contentHtml = dict.getRequired(ModelField.TaskEntity.contentHtml),
-        orderToken = dict.getRequired(ModelField.TaskEntity.orderToken),
-        indentation = dict.getRequired(ModelField.TaskEntity.indentation),
-        collapsed = dict.getRequired(ModelField.TaskEntity.collapsed),
-        delayedUntil = dict.getRequired(ModelField.TaskEntity.delayedUntil),
-        tags = dict.getRequired(ModelField.TaskEntity.tags)
-    )
-  )
 }

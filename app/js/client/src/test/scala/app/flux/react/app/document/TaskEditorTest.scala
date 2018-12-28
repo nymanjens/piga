@@ -9,6 +9,7 @@ import app.models.document.TextWithMarkup.Formatting
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import hydro.scala2js.StandardConverters._
+import app.scala2js.AppConverters._
 import utest._
 
 import scala.collection.immutable.Seq
