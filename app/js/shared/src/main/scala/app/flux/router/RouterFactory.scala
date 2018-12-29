@@ -1,5 +1,6 @@
 package app.flux.router
 
+import hydro.flux.router.StandardPages
 import common.I18n
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
@@ -10,7 +11,7 @@ import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
 import app.models.access.EntityAccess
-import hydro.flux.router.RouterContext
+import hydro.flux.router.{Page, RouterContext}
 import org.scalajs.dom
 
 import scala.async.Async.async
@@ -52,26 +53,26 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
         // wrap/connect components to the circuit
         (emptyRule
 
-          | staticRoute(RouterFactory.pathPrefix, Page.Root)
+          | staticRoute(RouterFactory.pathPrefix, StandardPages.Root)
             ~> redirectToPage(
               allDocumentsStore.state.allDocuments.headOption match {
-                case Some(firstDocument) => Page.DesktopTaskList(documentId = firstDocument.id)
-                case None                => Page.DocumentAdministration
+                case Some(firstDocument) => AppPages.DesktopTaskList(documentId = firstDocument.id)
+                case None                => AppPages.DocumentAdministration
               }
             )(Redirect.Replace)
 
-          | staticRuleFromPage(Page.UserProfile, reactAppModule.userProfile.apply)
+          | staticRuleFromPage(StandardPages.UserProfile, reactAppModule.userProfile.apply)
 
-          | staticRuleFromPage(Page.UserAdministration, reactAppModule.userAdministration.apply)
+          | staticRuleFromPage(StandardPages.UserAdministration, reactAppModule.userAdministration.apply)
 
-          | staticRuleFromPage(Page.DocumentAdministration, reactAppModule.documentAdministration.apply)
+          | staticRuleFromPage(AppPages.DocumentAdministration, reactAppModule.documentAdministration.apply)
 
-          | dynamicRuleFromPage(_ / long.caseClass[Page.DesktopTaskList]) { (page, ctl) =>
+          | dynamicRuleFromPage(_ / long.caseClass[AppPages.DesktopTaskList]) { (page, ctl) =>
             reactAppModule.desktopTaskList(page.documentId, ctl)
           }
 
         // Fallback
-        ).notFound(redirectToPage(Page.Root)(Redirect.Replace))
+        ).notFound(redirectToPage(StandardPages.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
             LogExceptionsCallback(
               dispatcher.dispatch(StandardActions.SetPageLoadingState(isLoading = false))))

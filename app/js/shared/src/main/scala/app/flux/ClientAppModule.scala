@@ -2,7 +2,8 @@ package app.flux
 
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
-import app.flux.router.Page
+import app.flux.router.AppPages
+import hydro.flux.router.Page
 import hydro.flux.action.Module
 import japgolly.scalajs.react.extra.router.Router
 import app.models.user.User

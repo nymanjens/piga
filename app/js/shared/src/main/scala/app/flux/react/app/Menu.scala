@@ -5,7 +5,8 @@ import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.time.Clock
 import hydro.flux.react.ReactVdomUtils.^^
-import app.flux.router.Page
+import app.flux.router.AppPages
+import hydro.flux.router.Page
 import hydro.flux.router.RouterContext
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.react.uielements.input.TextInput
@@ -126,11 +127,11 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         <.li(
           {
             for (document <- state.allDocuments)
-              yield menuItem(document.name, Page.DesktopTaskList(document.id))
+              yield menuItem(document.name, AppPages.DesktopTaskList(document.id))
           }.toVdomArray
         ),
         <.li(
-          menuItem(i18n("app.document-administration.html"), Page.DocumentAdministration)
+          menuItem(i18n("app.document-administration.html"), AppPages.DocumentAdministration)
         )
       )
     }
@@ -148,8 +149,8 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
         })
       def goToAdjacentMenuItem(step: Int): Unit = {
         val allLeftMenuPages =
-          allDocumentsStore.state.allDocuments.map(document => Page.DesktopTaskList(document.id)) :+
-            Page.DocumentAdministration
+          allDocumentsStore.state.allDocuments.map(document => AppPages.DesktopTaskList(document.id)) :+
+            AppPages.DocumentAdministration
         allLeftMenuPages.indexOf(router.currentPage) match {
           case -1 =>
           case i if 0 <= i + step && i + step < allLeftMenuPages.size =>
@@ -159,7 +160,7 @@ private[app] final class Menu(implicit entityAccess: EntityAccess,
       }
 
       bind("shift+alt+f", () => queryInputRef().focus())
-      bindToPage("shift+alt+d", Page.DocumentAdministration)
+      bindToPage("shift+alt+d", AppPages.DocumentAdministration)
       bind("shift+alt+up", () => goToAdjacentMenuItem(step = -1))
       bind("shift+alt+down", () => goToAdjacentMenuItem(step = +1))
     }
