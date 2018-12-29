@@ -5,14 +5,11 @@ import hydro.common.LoggingUtils.logFailure
 import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.console
-import org.scalajs.dom.raw.Event
 
 import scala.async.Async.async
 import scala.async.Async.await
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.annotation.JSExportTopLevel
 
 object ClientApp {
 
