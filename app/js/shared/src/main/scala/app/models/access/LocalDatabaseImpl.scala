@@ -12,9 +12,6 @@ import hydro.models.access.webworker.LocalDatabaseWebWorkerApi.LokiQuery
 import hydro.models.access.webworker.LocalDatabaseWebWorkerApi.WriteOperation
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityType.DocumentEntityType
-import app.models.modification.EntityType.TaskEntityType
-import app.models.modification.EntityType.UserType
 import org.scalajs.dom.console
 import hydro.scala2js.StandardConverters._
 import app.scala2js.AppConverters._
