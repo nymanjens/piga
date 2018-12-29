@@ -1,16 +1,19 @@
 package app.flux.router
 
 import common.I18n
-import hydro.common.LoggingUtils.{LogExceptionsCallback, logExceptions}
+import hydro.common.LoggingUtils.LogExceptionsCallback
+import hydro.common.LoggingUtils.logExceptions
 import app.flux.stores.document.AllDocumentsStore
-import hydro.flux.action.{Dispatcher, StandardActions}
+import hydro.flux.action.Dispatcher
+import hydro.flux.action.StandardActions
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
 import app.models.access.EntityAccess
 import org.scalajs.dom
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.reflect.ClassTag
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 

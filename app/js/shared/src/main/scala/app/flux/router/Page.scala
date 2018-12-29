@@ -1,6 +1,7 @@
 package app.flux.router
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.Future
 import common.I18n
