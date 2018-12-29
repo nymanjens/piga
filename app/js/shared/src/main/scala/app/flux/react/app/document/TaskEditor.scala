@@ -13,8 +13,8 @@ import hydro.common.DomNodeUtils
 import common.I18n
 import common.OrderToken
 import common.Tags
-import app.flux.react.ReactVdomUtils.<<
-import app.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.ReactVdomUtils.<<
+import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.react.app.document.KeyCombination._
 import app.flux.router.RouterContext
 import hydro.flux.stores.StateStore

@@ -3,7 +3,7 @@ package app.flux.react.app
 import common.I18n
 import hydro.common.LoggingUtils.{LogExceptionsCallback, logExceptions}
 import hydro.common.time.Clock
-import app.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.router.{Page, RouterContext}
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.react.uielements.input.TextInput

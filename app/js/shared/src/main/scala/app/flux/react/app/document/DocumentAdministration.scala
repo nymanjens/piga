@@ -5,7 +5,7 @@ import hydro.common.LoggingUtils.logExceptions
 import common.I18n
 import common.OrderToken
 import app.flux.action.Actions
-import app.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.router.RouterContext
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.action.Dispatcher
