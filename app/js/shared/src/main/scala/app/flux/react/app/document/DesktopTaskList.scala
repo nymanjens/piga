@@ -3,7 +3,7 @@ package app.flux.react.app.document
 import common.I18n
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
-import app.flux.router.RouterContext
+import hydro.flux.router.RouterContext
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import hydro.flux.react.uielements.PageHeader

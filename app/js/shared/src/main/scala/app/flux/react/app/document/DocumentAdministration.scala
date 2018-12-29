@@ -6,7 +6,7 @@ import common.I18n
 import common.OrderToken
 import app.flux.action.Actions
 import hydro.flux.react.ReactVdomUtils.^^
-import app.flux.router.RouterContext
+import hydro.flux.router.RouterContext
 import app.flux.stores.document.AllDocumentsStore
 import hydro.flux.action.Dispatcher
 import hydro.flux.react.uielements.HalfPanel
