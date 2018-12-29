@@ -12,6 +12,7 @@ import app.models.document.TaskEntity
 import app.models.modification.EntityType
 import app.models.modification.EntityType._
 import app.models.user.User
+import hydro.models.access.ModelField
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration.FiniteDuration

@@ -11,6 +11,10 @@ import app.models.modification.EntityType
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
+import hydro.models.access.EntityAccess
+import hydro.models.access.DbResultSet
+import hydro.models.access.DbQueryExecutor
+import hydro.models.access.DbQuery
 
 /** In memory storage class that supports DbQuery operations and EntityModifications. */
 private[access] final class InMemoryEntityDatabase(entitiesFetcher: EntitiesFetcher) {

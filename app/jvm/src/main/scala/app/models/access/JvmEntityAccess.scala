@@ -22,6 +22,10 @@ import app.models.slick.SlickEntityTableDef
 import app.models.slick.SlickUtils.dbApi._
 import app.models.slick.SlickUtils.dbRun
 import app.models.user.User
+import hydro.models.access.EntityAccess
+import hydro.models.access.DbResultSet
+import hydro.models.access.DbQueryExecutor
+import hydro.models.access.DbQuery
 import net.jcip.annotations.GuardedBy
 import org.reactivestreams.Publisher
 
