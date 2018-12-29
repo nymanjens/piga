@@ -5,6 +5,7 @@ import hydro.jsfacades.LokiJs
 import hydro.jsfacades.LokiJs.FilterFactory.Operation
 import app.models.Entity
 import app.models.access.LocalDatabaseImpl.ModificationWithId
+import app.models.access.LocalDatabaseImpl.SecondaryIndexFunction
 import app.models.access.LocalDatabaseImpl.Singleton
 import hydro.models.access.webworker.LocalDatabaseWebWorkerApi
 import hydro.models.access.webworker.LocalDatabaseWebWorkerApi.LokiQuery
@@ -28,7 +29,9 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.matching.Regex
 
-private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorkerApi) extends LocalDatabase {
+private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorkerApi,
+                                      secondaryIndexFunction: SecondaryIndexFunction)
+    extends LocalDatabase {
 
   // Scala compiler bug workaround: Declare implicit converters
   implicit private val modificationWithIdConverter = ModificationWithId.Converter
@@ -182,7 +185,7 @@ private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorker
               WriteOperation.AddCollection(
                 collectionNameOf(entityType),
                 uniqueIndices = Seq("id"),
-                indices = secondaryIndices(entityType).map(_.name))) :+
+                indices = secondaryIndexFunction(entityType).map(_.name))) :+
           WriteOperation
             .AddCollection(singletonsCollectionName, uniqueIndices = Seq("id"), indices = Seq()) :+
           WriteOperation
@@ -196,30 +199,32 @@ private final class LocalDatabaseImpl(implicit webWorker: LocalDatabaseWebWorker
   private val pendingModificationsCollectionName = "pendingModifications"
   private def allCollectionNames: Seq[String] =
     EntityType.values.map(collectionNameOf) :+ singletonsCollectionName :+ pendingModificationsCollectionName
-
-  private def secondaryIndices(entityType: EntityType.any): Seq[ModelField[_, _]] = entityType match {
-    case UserType           => Seq()
-    case DocumentEntityType => Seq()
-    case TaskEntityType     => Seq(ModelField.TaskEntity.documentId)
-  }
 }
 
 @visibleForTesting
 object LocalDatabaseImpl {
 
-  def create()(implicit webWorker: LocalDatabaseWebWorkerApi): Future[LocalDatabase] = async {
+  def create()(implicit webWorker: LocalDatabaseWebWorkerApi,
+               secondaryIndexFunction: SecondaryIndexFunction): Future[LocalDatabase] = async {
     await(webWorker.create(dbName = "hydro-db", inMemory = false))
     new LocalDatabaseImpl()
   }
 
-  def createStoredForTests()(implicit webWorker: LocalDatabaseWebWorkerApi): Future[LocalDatabase] = async {
+  def createStoredForTests()(implicit webWorker: LocalDatabaseWebWorkerApi,
+                             secondaryIndexFunction: SecondaryIndexFunction): Future[LocalDatabase] = async {
     await(webWorker.create(dbName = "test-db", inMemory = false))
     new LocalDatabaseImpl()
   }
 
-  def createInMemoryForTests()(implicit webWorker: LocalDatabaseWebWorkerApi): Future[LocalDatabase] = async {
-    await(webWorker.create(dbName = "hydro-db", inMemory = true))
-    new LocalDatabaseImpl()
+  def createInMemoryForTests()(implicit webWorker: LocalDatabaseWebWorkerApi,
+                               secondaryIndexFunction: SecondaryIndexFunction): Future[LocalDatabase] =
+    async {
+      await(webWorker.create(dbName = "hydro-db", inMemory = true))
+      new LocalDatabaseImpl()
+    }
+
+  case class SecondaryIndexFunction(function: EntityType.any => Seq[ModelField[_, _]]) {
+    def apply(entityType: EntityType.any): Seq[ModelField[_, _]] = function(entityType)
   }
 
   private case class Singleton(key: String, value: js.Any)
