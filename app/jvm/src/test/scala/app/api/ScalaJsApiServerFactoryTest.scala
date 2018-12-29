@@ -2,7 +2,7 @@ package app.api
 
 import java.time.Instant
 
-import app.models.access.DbQueryImplicits._
+import hydro.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.UserPrototype
 import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
@@ -10,10 +10,10 @@ import app.common.GuavaReplacement.Iterables.getOnlyElement
 import app.common.testing.TestObjects._
 import app.common.testing.TestUtils._
 import app.common.testing._
-import app.models.access.DbQuery
+import hydro.models.access.DbQuery
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
-import app.models.access.ModelField
+import hydro.models.access.ModelField
 import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.modification.EntityType

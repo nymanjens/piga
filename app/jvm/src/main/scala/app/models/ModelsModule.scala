@@ -1,7 +1,7 @@
 package app.models
 
 import com.google.inject.AbstractModule
-import app.models.access.EntityAccess
+import hydro.models.access.EntityAccess
 import app.models.access.JvmEntityAccess
 
 final class ModelsModule extends AbstractModule {

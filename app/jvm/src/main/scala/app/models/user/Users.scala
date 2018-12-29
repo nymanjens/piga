@@ -1,12 +1,12 @@
 package app.models.user
 
-import app.models.access.DbQueryImplicits._
+import hydro.models.access.DbQueryImplicits._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import hydro.common.time.Clock
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
-import app.models.access.ModelField
+import hydro.models.access.ModelField
 import app.models.modification.EntityModification
 
 object Users {

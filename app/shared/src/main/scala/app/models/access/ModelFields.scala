@@ -4,9 +4,9 @@ import app.common.GuavaReplacement.ImmutableBiMap
 import app.common.OrderToken
 import hydro.common.time.LocalDateTime
 import app.models.Entity
-import app.models.access.ModelField.FieldType
-import app.models.access.ModelField.IdModelField
-import app.models.access.ModelField.toBiMapWithUniqueValues
+import hydro.models.access.ModelField.FieldType
+import hydro.models.access.ModelField.IdModelField
+import hydro.models.access.ModelField.toBiMapWithUniqueValues
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityType

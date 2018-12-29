@@ -2,7 +2,7 @@ package app.flux.stores.document
 
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.LoggingUtils.logFailure
-import app.models.access.DbQueryImplicits._
+import hydro.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.GetInitialDataResponse
 import hydro.common.Listenable
 import hydro.common.Listenable.ListenableMap

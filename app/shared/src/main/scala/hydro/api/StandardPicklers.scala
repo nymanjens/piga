@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 import app.models.access.ModelFields
-import app.models.access.ModelField
+import hydro.models.access.ModelField
 import boopickle.Default._
 import hydro.api.PicklableDbQuery.FieldWithValue
 import hydro.common.time.LocalDateTime

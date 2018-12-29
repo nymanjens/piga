@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import app.api.ScalaJsApi._
 import app.models.Entity
-import app.models.access.DbQuery
+import hydro.models.access.DbQuery
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType

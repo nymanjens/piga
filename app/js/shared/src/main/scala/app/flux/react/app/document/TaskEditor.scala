@@ -24,7 +24,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
-import app.models.access.EntityAccess
+import hydro.models.access.EntityAccess
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection

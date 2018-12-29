@@ -7,7 +7,7 @@ import com.google.inject._
 import app.common.PlayI18n
 import hydro.common.time.Clock
 import app.models.Entity
-import app.models.access.DbQuery
+import hydro.models.access.DbQuery
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification

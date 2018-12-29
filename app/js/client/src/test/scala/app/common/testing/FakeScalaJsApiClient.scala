@@ -4,8 +4,8 @@ import app.api.ScalaJsApi.GetAllEntitiesResponse
 import app.api.ScalaJsApi.UserPrototype
 import app.api.ScalaJsApiClient
 import app.models.Entity
-import app.models.access.DbQuery
-import app.models.access.DbQueryExecutor
+import hydro.models.access.DbQuery
+import hydro.models.access.DbQueryExecutor
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType

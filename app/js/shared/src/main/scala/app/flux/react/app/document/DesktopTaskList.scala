@@ -11,7 +11,7 @@ import hydro.flux.react.uielements.WaitForFuture
 import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import app.models.access.EntityAccess
+import hydro.models.access.EntityAccess
 import app.models.document.Document
 
 private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
