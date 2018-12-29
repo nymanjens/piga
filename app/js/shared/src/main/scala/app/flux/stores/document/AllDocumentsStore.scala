@@ -9,7 +9,7 @@ import hydro.flux.action.Dispatcher
 import app.flux.stores.document.AllDocumentsStore.State
 import hydro.flux.stores.AsyncEntityDerivedStateStore
 import hydro.flux.stores.StateStore
-import app.models.access.JsEntityAccess
+import hydro.models.access.JsEntityAccess
 import app.models.document
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity

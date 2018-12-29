@@ -11,7 +11,7 @@ import hydro.flux.stores.StateStore
 import app.flux.stores.document.DocumentStore.Replacement
 import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
-import app.models.access.JsEntityAccess
+import hydro.models.access.JsEntityAccess
 import app.models.document.Document
 import app.models.document.DocumentEntity
 import app.models.document.Task

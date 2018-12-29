@@ -4,7 +4,7 @@ import hydro.common.Listenable
 import app.flux.stores.PendingModificationsStore.State
 import app.flux.stores.document.DocumentStoreFactory
 import hydro.flux.stores.StateStore
-import app.models.access.JsEntityAccess
+import hydro.models.access.JsEntityAccess
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
 

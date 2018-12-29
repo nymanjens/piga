@@ -9,7 +9,7 @@ import hydro.common.Listenable.ListenableMap
 import hydro.common.Listenable.WritableListenable
 import hydro.flux.stores.AsyncEntityDerivedStateStore
 import hydro.flux.stores.StateStore
-import app.models.access.JsEntityAccess
+import hydro.models.access.JsEntityAccess
 import app.models.document.Document
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
