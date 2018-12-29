@@ -11,7 +11,8 @@ import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
 import app.models.access.EntityAccess
-import hydro.flux.router.{Page, RouterContext}
+import hydro.flux.router.Page
+import hydro.flux.router.RouterContext
 import org.scalajs.dom
 
 import scala.async.Async.async
@@ -33,10 +34,6 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
     RouterConfigDsl[Page]
       .buildConfig { dsl =>
         import dsl._
-        val codeString: RouteB[String] = string("[a-zA-Z0-9_-]+")
-        val returnToPath: RouteB[Option[String]] = ("?returnto=" ~ string(".+")).option
-        val query: RouteB[String] = "?q=" ~ string(".+")
-
         def staticRuleFromPage(page: Page, renderer: RouterContext => VdomElement): dsl.Rule = {
           val path = RouterFactory.pathPrefix + page.getClass.getSimpleName.toLowerCase
           staticRoute(path, page) ~> renderR(ctl => logExceptions(renderer(RouterContext(page, ctl))))
