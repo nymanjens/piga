@@ -3,7 +3,7 @@ package app.flux.stores.document
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import common.OrderToken
-import app.flux.action.Actions._
+import app.flux.action.AppActions._
 import hydro.flux.action.StandardActions._
 import hydro.flux.action.Dispatcher
 import app.flux.stores.document.AllDocumentsStore.State

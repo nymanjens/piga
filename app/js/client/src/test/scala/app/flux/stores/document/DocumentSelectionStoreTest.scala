@@ -3,7 +3,7 @@ package app.flux.stores.document
 import app.api.ScalaJsApi.UserPrototype
 import hydro.common.testing.Awaiter
 import common.testing.TestObjects._
-import app.flux.action.Actions
+import app.flux.action.AppActions
 import hydro.flux.action.StandardActions
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection

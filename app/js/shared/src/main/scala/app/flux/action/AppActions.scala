@@ -6,7 +6,7 @@ import app.models.document.DocumentEntity
 
 import scala.collection.immutable.Seq
 
-object Actions {
+object AppActions {
 
   // **************** Document-related actions **************** //
   case class AddEmptyDocument(name: String, orderToken: OrderToken) extends Action

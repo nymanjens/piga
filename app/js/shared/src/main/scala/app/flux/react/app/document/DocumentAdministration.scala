@@ -4,7 +4,7 @@ import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
 import common.I18n
 import common.OrderToken
-import app.flux.action.Actions
+import app.flux.action.AppActions
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
 import app.flux.stores.document.AllDocumentsStore
@@ -194,23 +194,23 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
 
     private def doAdd()(implicit state: State): Callback = LogExceptionsCallback {
       dispatcher.dispatch(
-        Actions.AddEmptyDocument(
+        AppActions.AddEmptyDocument(
           name = i18n("app.untitled-document"),
           orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
     private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
-      dispatcher.dispatch(Actions.UpdateDocuments(Seq(document.copy(name = newName))))
+      dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(name = newName))))
     }
 
     private def doUpdateOrderToken(document: DocumentEntity, newOrderToken: OrderToken): Callback =
       LogExceptionsCallback {
-        dispatcher.dispatch(Actions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
+        dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
       }
 
     private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
       if (dom.window.confirm(s"Are you sure you want to delete '${document.name}'")) {
-        dispatcher.dispatch(Actions.RemoveDocument(document))
+        dispatcher.dispatch(AppActions.RemoveDocument(document))
       }
     }
 
