@@ -4,6 +4,7 @@ import java.time.Month.MARCH
 
 import app.common.testing.TestObjects._
 import hydro.common.time.LocalDateTime
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
@@ -22,8 +23,8 @@ object ConvertersTest extends TestSuite {
 
   override def tests = TestSuite {
     "fromModelField" - {
-      StandardConverters.fromModelField(ModelField.User.loginName) ==> StandardConverters.StringConverter
-      StandardConverters.fromModelField(ModelField.id[User]) ==> StandardConverters.LongConverter
+      StandardConverters.fromModelField(ModelFields.User.loginName) ==> StandardConverters.StringConverter
+      StandardConverters.fromModelField(ModelFields.id[User]) ==> StandardConverters.LongConverter
     }
     "LongConverter" - {
       "to JS and back" - {

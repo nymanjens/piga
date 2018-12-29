@@ -6,6 +6,8 @@ import hydro.api.PicklableDbQuery.Sorting
 import app.models.Entity
 import app.models.access.DbQuery
 import app.models.access.ModelField
+import app.models.access.ModelFields
+import app.models.access.ModelField
 import app.models.modification.EntityType
 
 import scala.collection.immutable.Seq

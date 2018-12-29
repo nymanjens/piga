@@ -39,6 +39,6 @@ object Module {
   val secondaryIndexFunction: SecondaryIndexFunction = SecondaryIndexFunction({
     case UserType           => Seq()
     case DocumentEntityType => Seq()
-    case TaskEntityType     => Seq(ModelField.TaskEntity.documentId)
+    case TaskEntityType     => Seq(ModelFields.TaskEntity.documentId)
   })
 }

@@ -12,6 +12,7 @@ import app.common.testing.TestUtils._
 import app.common.testing._
 import app.models.access.DbQuery
 import app.models.access.JvmEntityAccess
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
@@ -82,7 +83,7 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
       .executeDataQuery(
         PicklableDbQuery.fromRegular(
           DbQuery[User](
-            filter = ModelField.User.loginName === testUserA.loginName,
+            filter = ModelFields.User.loginName === testUserA.loginName,
             sorting = None,
             limit = None)))
 

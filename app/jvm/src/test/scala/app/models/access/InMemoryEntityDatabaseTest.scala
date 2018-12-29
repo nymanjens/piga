@@ -84,7 +84,7 @@ class InMemoryEntityDatabaseTest extends HookedSpecification {
     "filtered" in {
       DbResultSet
         .fromExecutor(executor)
-        .filter(ModelField.User.name === "name2")
+        .filter(ModelFields.User.name === "name2")
         .data() mustEqual Seq(user2)
     }
   }

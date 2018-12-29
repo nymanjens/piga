@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 import app.models._
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.modification._
 import app.scala2js.AppConverters
@@ -226,14 +227,14 @@ object StandardConverters {
         addField(field)
       }
       for (id <- entity.idOption) {
-        result.update(ModelField.id[E].name, Scala2Js.toJs(id, ModelField.id[E]))
+        result.update(ModelFields.id[E].name, Scala2Js.toJs(id, ModelFields.id[E]))
       }
       result
     }
 
     override def toScala(dict: js.Dictionary[js.Any]) = {
       val entityWithoutId = toScalaWithoutId(new EntityConverter.DictWrapper(dict))
-      val idOption = dict.get(ModelField.id[E].name).map(Scala2Js.toScala[Long])
+      val idOption = dict.get(ModelFields.id[E].name).map(Scala2Js.toScala[Long])
       if (idOption.isDefined) {
         Entity.withId(idOption.get, entityWithoutId)
       } else {

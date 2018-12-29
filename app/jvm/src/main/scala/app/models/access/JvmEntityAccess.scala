@@ -87,7 +87,7 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
         val allEntitiesInMemory: Seq[E] =
           DbResultSet
             .fromExecutor(inMemoryEntityDatabase.queryExecutor(entityType))(entityType)
-            .sort(DbQuery.Sorting.ascBy(ModelField.id(entityType)))
+            .sort(DbQuery.Sorting.ascBy(ModelFields.id(entityType)))
             .data()
         require(
           allEntitiesInMemory.size == allEntitiesInDb.size,

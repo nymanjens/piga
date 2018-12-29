@@ -6,6 +6,7 @@ import java.time.LocalTime
 import boopickle.Default._
 import hydro.common.time.LocalDateTime
 import app.models.Entity
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity

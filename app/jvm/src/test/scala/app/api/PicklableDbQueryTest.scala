@@ -4,6 +4,7 @@ import app.api.Picklers._
 import app.common.testing._
 import app.models.access.DbQueryImplicits._
 import app.models.access.DbQuery
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.user.User
 import org.junit.runner._
@@ -33,8 +34,8 @@ class PicklableDbQueryTest extends HookedSpecification {
     }
     "filters" in {
       val filters: Seq[DbQuery.Filter[User]] = Seq(
-        (ModelField.User.loginName === "a") && (ModelField.User.loginName !== "b"),
-        ModelField.User.name containsIgnoreCase "abc"
+        (ModelFields.User.loginName === "a") && (ModelFields.User.loginName !== "b"),
+        ModelFields.User.name containsIgnoreCase "abc"
       )
       for (filter <- filters) yield {
         testFromRegularToRegular(DbQuery[User](filter = filter, sorting = None, limit = Some(192)))

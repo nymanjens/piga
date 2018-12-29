@@ -1,6 +1,7 @@
 package app.scala2js
 
 import app.models._
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
@@ -36,50 +37,50 @@ object AppConverters {
   // **************** Entity converters **************** //
   implicit val UserConverter: EntityConverter[User] = new EntityConverter(
     allFieldsWithoutId = Seq(
-      ModelField.User.loginName,
-      ModelField.User.passwordHash,
-      ModelField.User.name,
-      ModelField.User.isAdmin,
+      ModelFields.User.loginName,
+      ModelFields.User.passwordHash,
+      ModelFields.User.name,
+      ModelFields.User.isAdmin,
     ),
     toScalaWithoutId = dict =>
       User(
-        loginName = dict.getRequired(ModelField.User.loginName),
-        passwordHash = dict.getRequired(ModelField.User.passwordHash),
-        name = dict.getRequired(ModelField.User.name),
-        isAdmin = dict.getRequired(ModelField.User.isAdmin)
+        loginName = dict.getRequired(ModelFields.User.loginName),
+        passwordHash = dict.getRequired(ModelFields.User.passwordHash),
+        name = dict.getRequired(ModelFields.User.name),
+        isAdmin = dict.getRequired(ModelFields.User.isAdmin)
     )
   )
 
   implicit val DocumentEntityConverter: EntityConverter[DocumentEntity] = new EntityConverter(
     allFieldsWithoutId = Seq(
-      ModelField.DocumentEntity.name,
-      ModelField.DocumentEntity.orderToken,
+      ModelFields.DocumentEntity.name,
+      ModelFields.DocumentEntity.orderToken,
     ),
     toScalaWithoutId = dict =>
       DocumentEntity(
-        name = dict.getRequired(ModelField.DocumentEntity.name),
-        orderToken = dict.getRequired(ModelField.DocumentEntity.orderToken))
+        name = dict.getRequired(ModelFields.DocumentEntity.name),
+        orderToken = dict.getRequired(ModelFields.DocumentEntity.orderToken))
   )
 
   implicit val TaskEntityConverter: EntityConverter[TaskEntity] = new EntityConverter(
     allFieldsWithoutId = Seq(
-      ModelField.TaskEntity.documentId,
-      ModelField.TaskEntity.contentHtml,
-      ModelField.TaskEntity.orderToken,
-      ModelField.TaskEntity.indentation,
-      ModelField.TaskEntity.collapsed,
-      ModelField.TaskEntity.delayedUntil,
-      ModelField.TaskEntity.tags,
+      ModelFields.TaskEntity.documentId,
+      ModelFields.TaskEntity.contentHtml,
+      ModelFields.TaskEntity.orderToken,
+      ModelFields.TaskEntity.indentation,
+      ModelFields.TaskEntity.collapsed,
+      ModelFields.TaskEntity.delayedUntil,
+      ModelFields.TaskEntity.tags,
     ),
     toScalaWithoutId = dict =>
       TaskEntity(
-        documentId = dict.getRequired(ModelField.TaskEntity.documentId),
-        contentHtml = dict.getRequired(ModelField.TaskEntity.contentHtml),
-        orderToken = dict.getRequired(ModelField.TaskEntity.orderToken),
-        indentation = dict.getRequired(ModelField.TaskEntity.indentation),
-        collapsed = dict.getRequired(ModelField.TaskEntity.collapsed),
-        delayedUntil = dict.getRequired(ModelField.TaskEntity.delayedUntil),
-        tags = dict.getRequired(ModelField.TaskEntity.tags)
+        documentId = dict.getRequired(ModelFields.TaskEntity.documentId),
+        contentHtml = dict.getRequired(ModelFields.TaskEntity.contentHtml),
+        orderToken = dict.getRequired(ModelFields.TaskEntity.orderToken),
+        indentation = dict.getRequired(ModelFields.TaskEntity.indentation),
+        collapsed = dict.getRequired(ModelFields.TaskEntity.collapsed),
+        delayedUntil = dict.getRequired(ModelFields.TaskEntity.delayedUntil),
+        tags = dict.getRequired(ModelFields.TaskEntity.tags)
     )
   )
 }

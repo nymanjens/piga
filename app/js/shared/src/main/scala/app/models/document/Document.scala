@@ -4,6 +4,7 @@ import hydro.common.DomNodeUtils.nodeIsLi
 import app.common.OrderToken
 import app.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
+import app.models.access.ModelFields
 import app.models.access.ModelField
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
@@ -156,7 +157,7 @@ object Document {
   def fromDocumentEntity(entity: DocumentEntity)(implicit entityAccess: JsEntityAccess): Future[Document] =
     async {
       val tasks = await(
-        entityAccess.newQuery[TaskEntity]().filter(ModelField.TaskEntity.documentId === entity.id).data())
+        entityAccess.newQuery[TaskEntity]().filter(ModelFields.TaskEntity.documentId === entity.id).data())
       new Document(
         id = entity.id,
         name = entity.name,
