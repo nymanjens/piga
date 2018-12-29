@@ -1,10 +1,10 @@
 package app.flux.react.app.document
 
-import common.GuavaReplacement.Iterables
-import common.GuavaReplacement.Iterables.getOnlyElement
-import common.testing.TestObjects._
-import common.testing.JsTestObjects._
-import common.testing.TestModule
+import app.common.GuavaReplacement.Iterables
+import app.common.GuavaReplacement.Iterables.getOnlyElement
+import app.common.testing.TestObjects._
+import app.common.testing.JsTestObjects._
+import app.common.testing.TestModule
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection

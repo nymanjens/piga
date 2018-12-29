@@ -4,7 +4,7 @@ import app.api.Picklers._
 import app.api.ScalaJsApi._
 import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
-import common.PlayI18n
+import app.common.PlayI18n
 import hydro.common.time.Clock
 import app.models.Entity
 import app.models.access.DbQuery

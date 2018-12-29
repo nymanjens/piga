@@ -6,8 +6,8 @@ import java.time.Instant
 import app.api.Picklers._
 import boopickle.Default.Pickle
 import boopickle.Default.Unpickle
-import common.OrderToken
-import common.Tags
+import app.common.OrderToken
+import app.common.Tags
 import hydro.common.time.LocalDateTime
 import app.models.Entity
 import app.models.document.DocumentEntity

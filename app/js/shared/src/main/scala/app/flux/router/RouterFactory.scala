@@ -1,7 +1,7 @@
 package app.flux.router
 
 import hydro.flux.router.StandardPages
-import common.I18n
+import app.common.I18n
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
 import app.flux.stores.document.AllDocumentsStore

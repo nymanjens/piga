@@ -2,7 +2,7 @@ package app.flux.router
 
 import app.models.access.EntityAccess
 import app.models.document.DocumentEntity
-import common.I18n
+import app.common.I18n
 import hydro.flux.router.Page
 import hydro.flux.router.Page.PageBase
 

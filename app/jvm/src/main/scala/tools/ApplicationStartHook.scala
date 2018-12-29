@@ -4,8 +4,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 import com.google.inject.Inject
-import common.OrderToken
-import common.ResourceFiles
+import app.common.OrderToken
+import app.common.ResourceFiles
 import hydro.common.time.Clock
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity

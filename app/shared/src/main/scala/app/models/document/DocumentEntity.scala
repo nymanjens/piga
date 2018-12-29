@@ -1,6 +1,6 @@
 package app.models.document
 
-import common.OrderToken
+import app.common.OrderToken
 import app.models.Entity
 
 case class DocumentEntity(name: String, orderToken: OrderToken, idOption: Option[Long] = None)

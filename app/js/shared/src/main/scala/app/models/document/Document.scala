@@ -1,7 +1,7 @@
 package app.models.document
 
 import hydro.common.DomNodeUtils.nodeIsLi
-import common.OrderToken
+import app.common.OrderToken
 import app.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
 import app.models.access.ModelField

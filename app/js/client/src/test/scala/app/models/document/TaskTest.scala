@@ -1,6 +1,6 @@
 package app.models.document
 
-import common.testing.TestObjects._
+import app.common.testing.TestObjects._
 import hydro.scala2js.StandardConverters._
 import app.scala2js.AppConverters._
 import utest._

@@ -1,7 +1,7 @@
 package app.flux
 
-import common.testing.TestObjects
-import common.testing.TestObjects.testUserPrototype
+import app.common.testing.TestObjects
+import app.common.testing.TestObjects.testUserPrototype
 import app.flux.action.AppActions
 import hydro.flux.action.StandardActions
 import hydro.flux.action.StandardActions

@@ -1,6 +1,6 @@
 package app.models.document
 
-import common.OrderToken
+import app.common.OrderToken
 import hydro.common.time.LocalDateTime
 import app.models.modification.EntityModification
 

@@ -2,8 +2,8 @@ package app.flux.react.app.document
 
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
-import common.I18n
-import common.OrderToken
+import app.common.I18n
+import app.common.OrderToken
 import app.flux.action.AppActions
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext

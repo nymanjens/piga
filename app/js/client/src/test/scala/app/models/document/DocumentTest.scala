@@ -1,8 +1,8 @@
 package app.models.document
 
-import common.OrderToken
-import common.testing.JsTestObjects._
-import common.testing.TestObjects._
+import app.common.OrderToken
+import app.common.testing.JsTestObjects._
+import app.common.testing.TestObjects._
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Document.IndexedCursor

@@ -3,7 +3,7 @@ package app.flux.react.app.document
 import java.time.Duration
 import java.time.Instant
 
-import common.GuavaReplacement.Iterables.getOnlyElement
+import app.common.GuavaReplacement.Iterables.getOnlyElement
 import hydro.common.time.Clock
 import hydro.common.time.JavaTimeImplicits._
 import app.flux.react.app.document.EditHistory.Edit

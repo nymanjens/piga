@@ -1,7 +1,7 @@
 package app.flux.react.app.document
 
-import common.testing.TestObjects._
-import common.testing.JsTestObjects._
+import app.common.testing.TestObjects._
+import app.common.testing.JsTestObjects._
 import hydro.common.time.LocalDateTime
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
