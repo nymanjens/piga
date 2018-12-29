@@ -5,7 +5,7 @@ import app.common.testing.FakeScalaJsApiClient
 import hydro.common.testing.ModificationsBuffer
 import app.common.testing.TestModule
 import hydro.common.time.Clock
-import app.models.Entity
+import hydro.models.Entity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
 import app.models.user.User

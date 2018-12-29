@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 import boopickle.Default._
 import hydro.common.time.LocalDateTime
-import app.models.Entity
+import hydro.models.Entity
 import app.models.access.ModelFields
 import hydro.models.access.ModelField
 import app.models.document.DocumentEntity
@@ -13,7 +13,7 @@ import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
 import app.models.modification.EntityType._
-import app.models.Entity
+import hydro.models.Entity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
 import app.models.modification.EntityType._

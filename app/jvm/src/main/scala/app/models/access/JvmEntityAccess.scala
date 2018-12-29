@@ -8,7 +8,7 @@ import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
 import app.common.publisher.TriggerablePublisher
 import hydro.common.time.Clock
-import app.models.Entity
+import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification

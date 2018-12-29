@@ -2,7 +2,7 @@ package app.models.document
 
 import app.common.OrderToken
 import hydro.common.time.LocalDateTime
-import app.models.Entity
+import hydro.models.Entity
 
 import scala.collection.immutable.Seq
 

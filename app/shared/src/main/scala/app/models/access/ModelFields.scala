@@ -3,7 +3,7 @@ package app.models.access
 import app.common.GuavaReplacement.ImmutableBiMap
 import app.common.OrderToken
 import hydro.common.time.LocalDateTime
-import app.models.Entity
+import hydro.models.Entity
 import hydro.models.access.ModelField.FieldType
 import hydro.models.access.ModelField.IdModelField
 import hydro.models.access.ModelField.toBiMapWithUniqueValues

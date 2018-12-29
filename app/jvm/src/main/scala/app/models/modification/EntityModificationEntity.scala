@@ -3,7 +3,7 @@ package app.models.modification
 import java.time.Instant
 
 import hydro.common.time.LocalDateTime
-import app.models.Entity
+import hydro.models.Entity
 import app.models.access.JvmEntityAccess
 import app.models.user.User
 

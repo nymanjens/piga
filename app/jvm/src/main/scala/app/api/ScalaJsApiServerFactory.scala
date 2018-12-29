@@ -6,7 +6,7 @@ import app.api.UpdateTokens.toUpdateToken
 import com.google.inject._
 import app.common.PlayI18n
 import hydro.common.time.Clock
-import app.models.Entity
+import hydro.models.Entity
 import hydro.models.access.DbQuery
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity

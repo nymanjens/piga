@@ -2,7 +2,7 @@ package app.api
 
 import app.api.Picklers._
 import app.api.ScalaJsApi._
-import app.models.Entity
+import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType

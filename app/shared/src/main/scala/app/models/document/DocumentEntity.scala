@@ -1,7 +1,7 @@
 package app.models.document
 
 import app.common.OrderToken
-import app.models.Entity
+import hydro.models.Entity
 
 case class DocumentEntity(name: String, orderToken: OrderToken, idOption: Option[Long] = None)
     extends Entity
