@@ -7,6 +7,7 @@ import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
 import app.models.user.User
+import hydro.api.PicklableDbQuery
 
 import scala.collection.immutable.Seq
 
