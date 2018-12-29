@@ -34,6 +34,7 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
     RouterConfigDsl[Page]
       .buildConfig { dsl =>
         import dsl._
+
         def staticRuleFromPage(page: Page, renderer: RouterContext => VdomElement): dsl.Rule = {
           val path = RouterFactory.pathPrefix + page.getClass.getSimpleName.toLowerCase
           staticRoute(path, page) ~> renderR(ctl => logExceptions(renderer(RouterContext(page, ctl))))
