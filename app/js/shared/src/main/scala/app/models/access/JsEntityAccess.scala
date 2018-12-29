@@ -3,12 +3,9 @@ package app.models.access
 import app.models.Entity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.user.User
 
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 
 trait JsEntityAccess extends EntityAccess {
 
