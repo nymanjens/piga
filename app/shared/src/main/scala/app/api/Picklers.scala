@@ -18,6 +18,7 @@ import app.models.modification.EntityModification
 import app.models.modification.EntityType
 import app.models.modification.EntityType._
 import app.models.user.User
+import boopickle.Default
 import boopickle.Default._
 import hydro.api.StandardPicklers
 
@@ -43,24 +44,6 @@ object Picklers extends StandardPicklers {
         isAdmin = state.unpickle[Boolean],
         idOption = state.unpickle[Option[Long]]
       )
-    }
-  }
-
-  implicit object EntityTypePickler extends Pickler[EntityType.any] {
-    override def pickle(entityType: EntityType.any)(implicit state: PickleState): Unit = logExceptions {
-      val intValue: Int = entityType match {
-        case UserType           => 1
-        case DocumentEntityType => 2
-        case TaskEntityType     => 3
-      }
-      state.pickle(intValue)
-    }
-    override def unpickle(implicit state: UnpickleState): EntityType.any = logExceptions {
-      state.unpickle[Int] match {
-        case 1 => UserType
-        case 2 => DocumentEntityType
-        case 3 => TaskEntityType
-      }
     }
   }
 
