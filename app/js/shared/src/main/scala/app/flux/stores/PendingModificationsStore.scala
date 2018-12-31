@@ -7,6 +7,9 @@ import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 
 import scala.collection.immutable.Seq
 
@@ -45,9 +48,9 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess,
     var editCount = 0
 
     for (modification <- modifications) modification.entityType match {
-      case EntityType.UserType           => editCount += 1
-      case EntityType.DocumentEntityType => editCount += 1
-      case EntityType.TaskEntityType     =>
+      case User.Type           => editCount += 1
+      case DocumentEntity.Type => editCount += 1
+      case TaskEntity.Type     =>
         // Heuristic
         if (modification.isInstanceOf[EntityModification.Add[_]]) {
           editCount += 1

@@ -8,6 +8,9 @@ import app.common.testing.TestObjects._
 import app.common.testing._
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import app.models.user.User
 import org.junit.runner._
 import org.specs2.runner._
@@ -18,7 +21,7 @@ import scala.collection.immutable.Seq
 class PicklersTest extends HookedSpecification {
 
   "EntityType" in {
-    testPickleAndUnpickle[EntityType.any](EntityType.UserType)
+    testPickleAndUnpickle[EntityType.any](User.Type)
   }
 
   "EntityModification" in {
@@ -34,7 +37,7 @@ class PicklersTest extends HookedSpecification {
   "GetAllEntitiesResponse" in {
     testPickleAndUnpickle[GetAllEntitiesResponse](
       GetAllEntitiesResponse(
-        entitiesMap = Map(EntityType.UserType -> Seq(testUserRedacted)),
+        entitiesMap = Map(User.Type -> Seq(testUserRedacted)),
         nextUpdateToken = testUpdateToken))
   }
 

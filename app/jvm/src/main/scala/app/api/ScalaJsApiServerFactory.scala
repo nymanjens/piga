@@ -12,6 +12,9 @@ import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import app.models.user.User
 import app.models.user.Users
 import hydro.api.PicklableDbQuery
@@ -55,7 +58,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
             "(see EntityModification.Update documentation)"
         )
         require(
-          modification.entityType != EntityType.UserType,
+          modification.entityType != User.Type,
           "Please modify users by calling upsertUser() instead")
       }
 

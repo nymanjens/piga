@@ -2,6 +2,9 @@ package hydro.models.access
 
 import hydro.models.Entity
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 
 import scala.collection.immutable.Seq
 import scala.concurrent.Future

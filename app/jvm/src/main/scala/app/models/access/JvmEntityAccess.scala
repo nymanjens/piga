@@ -14,9 +14,11 @@ import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.modification.EntityType
-import app.models.modification.EntityType.DocumentEntityType
-import app.models.modification.EntityType.TaskEntityType
-import app.models.modification.EntityType.UserType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
 import app.models.slick.SlickEntityManager
 import app.models.slick.SlickEntityTableDef
 import app.models.slick.SlickUtils.dbApi._
@@ -112,9 +114,9 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
 
   private def getEntityTableDef(entityType: EntityType.any): SlickEntityTableDef[entityType.get] = {
     val tableDef = entityType match {
-      case UserType           => implicitly[SlickEntityTableDef[User]]
-      case DocumentEntityType => implicitly[SlickEntityTableDef[DocumentEntity]]
-      case TaskEntityType     => implicitly[SlickEntityTableDef[TaskEntity]]
+      case User.Type           => implicitly[SlickEntityTableDef[User]]
+      case DocumentEntity.Type => implicitly[SlickEntityTableDef[DocumentEntity]]
+      case TaskEntity.Type     => implicitly[SlickEntityTableDef[TaskEntity]]
     }
     tableDef.asInstanceOf[SlickEntityTableDef[entityType.get]]
   }

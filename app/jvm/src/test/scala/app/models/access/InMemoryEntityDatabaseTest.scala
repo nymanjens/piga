@@ -8,6 +8,9 @@ import hydro.models.access.DbQueryImplicits._
 import app.models.access.InMemoryEntityDatabase.EntitiesFetcher
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import app.models.user.User
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -101,7 +104,7 @@ class InMemoryEntityDatabaseTest extends HookedSpecification {
     val users: mutable.Set[User] = mutable.Set()
 
     override def fetch[E <: Entity](entityType: EntityType[E]) = entityType match {
-      case EntityType.UserType => users.toVector.asInstanceOf[Seq[E]]
+      case User.Type => users.toVector.asInstanceOf[Seq[E]]
       case _                   => Seq()
     }
   }

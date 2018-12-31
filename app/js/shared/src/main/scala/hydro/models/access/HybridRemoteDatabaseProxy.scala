@@ -9,6 +9,9 @@ import hydro.models.access.SingletonKey.NextUpdateTokenKey
 import hydro.models.access.SingletonKey.VersionKey
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import org.scalajs.dom.console
 
 import scala.async.Async.async

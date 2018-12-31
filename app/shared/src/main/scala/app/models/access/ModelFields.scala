@@ -2,27 +2,22 @@ package app.models.access
 
 import app.common.GuavaReplacement.ImmutableBiMap
 import app.common.OrderToken
+import app.models.document.{DocumentEntity, TaskEntity}
+import app.models.modification.EntityType
+import app.models.user.User
 import hydro.common.time.LocalDateTime
 import hydro.models.Entity
-import hydro.models.access.ModelField.FieldType
-import hydro.models.access.ModelField.IdModelField
-import hydro.models.access.ModelField.toBiMapWithUniqueValues
-import app.models.document.DocumentEntity
-import app.models.document.TaskEntity
-import app.models.modification.EntityType
-import app.models.modification.EntityType._
-import app.models.user.User
 import hydro.models.access.ModelField
+import hydro.models.access.ModelField.{IdModelField, toBiMapWithUniqueValues}
 
 import scala.collection.immutable.Seq
-import scala.concurrent.duration.FiniteDuration
 
 object ModelFields {
   // **************** Methods **************** //
   def id[E <: Entity](implicit entityType: EntityType[E]): ModelField[Long, E] = entityType match {
-    case UserType           => User.id.asInstanceOf[ModelField[Long, E]]
-    case DocumentEntityType => DocumentEntity.id.asInstanceOf[ModelField[Long, E]]
-    case TaskEntityType     => TaskEntity.id.asInstanceOf[ModelField[Long, E]]
+    case app.models.user.User.Type           => User.id.asInstanceOf[ModelField[Long, E]]
+    case app.models.document.DocumentEntity.Type => DocumentEntity.id.asInstanceOf[ModelField[Long, E]]
+    case app.models.document.TaskEntity.Type     => TaskEntity.id.asInstanceOf[ModelField[Long, E]]
   }
 
   // **************** Enumeration of all fields **************** //

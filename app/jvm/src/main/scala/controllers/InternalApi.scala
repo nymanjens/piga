@@ -23,6 +23,9 @@ import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import app.models.slick.SlickUtils.dbApi._
 import app.models.slick.SlickUtils.dbRun
 import app.models.slick.SlickUtils.instantToSqlTimestampMapper

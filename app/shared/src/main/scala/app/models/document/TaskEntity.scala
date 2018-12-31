@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.common.OrderToken
+import app.models.modification.EntityType
 import hydro.common.time.LocalDateTime
 import hydro.models.Entity
 
@@ -17,4 +18,9 @@ case class TaskEntity(documentId: Long,
     extends Entity {
 
   override def withId(id: Long) = copy(idOption = Some(id))
+}
+object TaskEntity {
+  implicit val Type: EntityType[TaskEntity] = EntityType()
+
+  def tupled = (this.apply _).tupled
 }

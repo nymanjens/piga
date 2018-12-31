@@ -1,18 +1,16 @@
 package app.models.modification
 
-import app.common.ScalaUtils
-import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.user.User
+import hydro.models.Entity
 
 import scala.collection.immutable.Seq
+import scala.reflect.ClassTag
 
 /** Enumeration of all entity types that are transfered between server and client. */
-sealed trait EntityType[E <: Entity] {
+final class EntityType[E <: Entity](val entityClass: Class[E]) {
   type get = E
-
-  def entityClass: Class[E]
 
   def checkRightType(entity: Entity): get = {
     require(
@@ -21,17 +19,14 @@ sealed trait EntityType[E <: Entity] {
     entity.asInstanceOf[E]
   }
 
-  def name: String = ScalaUtils.objectName(this)
+  lazy val name: String = entityClass.getSimpleName + "Type"
   override def toString = name
 }
 object EntityType {
   type any = EntityType[_ <: Entity]
 
-  // @formatter:off
-  implicit case object UserType extends EntityType[User] { override def entityClass = classOf[User]}
-  implicit case object DocumentEntityType extends EntityType[DocumentEntity] { override def entityClass = classOf[DocumentEntity]}
-  implicit case object TaskEntityType extends EntityType[TaskEntity] { override def entityClass = classOf[TaskEntity]}
-  // @formatter:on
+  def apply[E <: Entity]()(implicit classTag: ClassTag[E]): EntityType[E] =
+    new EntityType[E](classTag.runtimeClass.asInstanceOf[Class[E]])
 
-  val values: Seq[EntityType.any] = Seq(UserType, DocumentEntityType, TaskEntityType)
+  lazy val values: Seq[EntityType.any] = Seq(User.Type, DocumentEntity.Type, TaskEntity.Type)
 }

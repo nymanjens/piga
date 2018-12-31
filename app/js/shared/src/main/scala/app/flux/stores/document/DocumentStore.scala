@@ -18,6 +18,9 @@ import app.models.document.Task
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -78,7 +81,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
           alreadyAddedTaskIds += taskEntity.id
           newDocument = newDocument + Task.fromTaskEntity(taskEntity)
         case modification @ EntityModification.Remove(entityId)
-            if modification.entityType == EntityType.TaskEntityType =>
+            if modification.entityType == TaskEntity.Type =>
           newDocument = newDocument.minusTaskWithId(entityId)
         // Document updates
         case EntityModification.Update(documentEntity: DocumentEntity)

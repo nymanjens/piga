@@ -14,6 +14,9 @@ import hydro.models.access.webworker.LocalDatabaseWebWorkerApi.WriteOperation
 import app.models.modification.EntityModification
 import app.models.access._
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import org.scalajs.dom.console
 import hydro.scala2js.StandardConverters._
 import app.scala2js.AppConverters._

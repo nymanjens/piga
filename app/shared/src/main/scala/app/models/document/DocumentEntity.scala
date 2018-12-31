@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.common.OrderToken
+import app.models.modification.EntityType
 import hydro.models.Entity
 
 case class DocumentEntity(name: String, orderToken: OrderToken, idOption: Option[Long] = None)
@@ -14,3 +15,9 @@ case class DocumentEntity(name: String, orderToken: OrderToken, idOption: Option
     this.orderToken compare that.orderToken
   }
 }
+object DocumentEntity {
+  implicit val Type: EntityType[DocumentEntity] = EntityType()
+
+  def tupled = (this.apply _).tupled
+}
+

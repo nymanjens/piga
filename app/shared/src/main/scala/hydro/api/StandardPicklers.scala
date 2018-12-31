@@ -7,6 +7,9 @@ import app.common.GuavaReplacement
 import app.common.GuavaReplacement.ImmutableBiMap
 import app.models.access.ModelFields
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import hydro.models.access.ModelField
 import boopickle.Default._
 import hydro.api.PicklableDbQuery.FieldWithValue

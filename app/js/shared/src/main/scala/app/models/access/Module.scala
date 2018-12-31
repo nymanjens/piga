@@ -2,9 +2,9 @@ package app.models.access
 
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
-import app.models.modification.EntityType.DocumentEntityType
-import app.models.modification.EntityType.TaskEntityType
-import app.models.modification.EntityType.UserType
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+
 import app.models.user.User
 import hydro.models.access.EntityModificationPushClientFactory
 import hydro.models.access.HybridRemoteDatabaseProxy
@@ -37,8 +37,8 @@ final class Module(implicit user: User,
 }
 object Module {
   val secondaryIndexFunction: SecondaryIndexFunction = SecondaryIndexFunction({
-    case UserType           => Seq()
-    case DocumentEntityType => Seq()
-    case TaskEntityType     => Seq(ModelFields.TaskEntity.documentId)
+    case User.Type           => Seq()
+    case DocumentEntity.Type => Seq()
+    case TaskEntity.Type     => Seq(ModelFields.TaskEntity.documentId)
   })
 }

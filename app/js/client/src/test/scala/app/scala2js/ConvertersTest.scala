@@ -10,6 +10,9 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.document.TaskEntity
+import app.models.document.DocumentEntity
+import app.models.user.User
 import app.models.user.User
 import hydro.scala2js.StandardConverters._
 import app.scala2js.AppConverters._
@@ -44,7 +47,7 @@ object ConvertersTest extends TestSuite {
     }
 
     "fromEntityType" - {
-      fromEntityType(EntityType.UserType) ==> UserConverter
+      fromEntit.Type.User.Type) ==> UserConverter
     }
 
     "seqConverter" - {
@@ -69,7 +72,7 @@ object ConvertersTest extends TestSuite {
     }
 
     "EntityTypeConverter" - {
-      testToJsAndBack[EntityType.any](EntityType.UserType)
+      testToJsAndBack[EntityType.any](User.Type)
     }
 
     "EntityModificationConverter" - {
