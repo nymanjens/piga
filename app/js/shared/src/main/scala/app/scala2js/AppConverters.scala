@@ -30,10 +30,7 @@ object AppConverters {
 
   // **************** General converters **************** //
   implicit val EntityTypeConverter: Converter[EntityType.any] =
-    StandardConverters.enumConverter(
-      User.Type,
-      DocumentEntity.Type,
-      TaskEntity.Type)
+    StandardConverters.enumConverter(User.Type, DocumentEntity.Type, TaskEntity.Type)
 
   // **************** Entity converters **************** //
   implicit val UserConverter: EntityConverter[User] = new EntityConverter(

@@ -6,9 +6,9 @@ import app.common.I18n
 import hydro.flux.router.Page
 import hydro.flux.router.Page.PageBase
 
-import scala.async.Async.{async, await}
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
 
 object AppPages {
 

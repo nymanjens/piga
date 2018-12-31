@@ -105,7 +105,7 @@ class InMemoryEntityDatabaseTest extends HookedSpecification {
 
     override def fetch[E <: Entity](entityType: EntityType[E]) = entityType match {
       case User.Type => users.toVector.asInstanceOf[Seq[E]]
-      case _                   => Seq()
+      case _         => Seq()
     }
   }
 }

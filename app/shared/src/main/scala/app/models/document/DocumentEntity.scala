@@ -20,4 +20,3 @@ object DocumentEntity {
 
   def tupled = (this.apply _).tupled
 }
-
