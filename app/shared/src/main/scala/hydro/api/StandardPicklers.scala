@@ -7,6 +7,7 @@ import app.common.GuavaReplacement
 import app.common.GuavaReplacement.ImmutableBiMap
 import app.models.access.ModelFields
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import app.models.document.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.user.User
@@ -36,7 +37,7 @@ abstract class StandardPicklers {
     }
   }
 
-  implicit val EntityTypePickler: Pickler[EntityType.any] = enumPickler(EntityType.values)
+  implicit val EntityTypePickler: Pickler[EntityType.any] = enumPickler(EntityTypes.all)
 
   implicit object LocalDateTimePickler extends Pickler[LocalDateTime] {
     override def pickle(dateTime: LocalDateTime)(implicit state: PickleState): Unit = logExceptions {

@@ -1,11 +1,7 @@
 package app.models.modification
 
-import app.models.document.DocumentEntity
-import app.models.document.TaskEntity
-import app.models.user.User
 import hydro.models.Entity
 
-import scala.collection.immutable.Seq
 import scala.reflect.ClassTag
 
 /** Enumeration of all entity types that are transfered between server and client. */
@@ -27,6 +23,4 @@ object EntityType {
 
   def apply[E <: Entity]()(implicit classTag: ClassTag[E]): EntityType[E] =
     new EntityType[E](classTag.runtimeClass.asInstanceOf[Class[E]])
-
-  lazy val values: Seq[EntityType.any] = Seq(User.Type, DocumentEntity.Type, TaskEntity.Type)
 }

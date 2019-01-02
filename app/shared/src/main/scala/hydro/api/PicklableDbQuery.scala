@@ -8,6 +8,7 @@ import hydro.models.access.DbQuery
 import app.models.access.ModelFields
 import hydro.models.access.ModelField
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import app.models.document.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.user.User

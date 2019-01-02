@@ -5,6 +5,7 @@ import hydro.models.access.JsEntityAccess.Listener
 import app.models.access._
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import app.models.document.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.user.User

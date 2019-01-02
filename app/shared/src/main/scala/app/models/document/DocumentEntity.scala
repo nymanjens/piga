@@ -2,6 +2,7 @@ package app.models.document
 
 import app.common.OrderToken
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import hydro.models.Entity
 
 case class DocumentEntity(name: String, orderToken: OrderToken, idOption: Option[Long] = None)

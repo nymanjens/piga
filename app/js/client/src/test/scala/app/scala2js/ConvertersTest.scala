@@ -10,6 +10,7 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import app.models.user.User
 import hydro.scala2js.StandardConverters._
 import app.scala2js.AppConverters._

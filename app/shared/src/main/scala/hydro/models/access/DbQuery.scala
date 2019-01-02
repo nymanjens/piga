@@ -6,6 +6,7 @@ import hydro.models.access.DbQuery.Sorting.FieldWithDirection
 import hydro.models.access.DbQuery.Filter
 import hydro.models.access.DbQuery.Sorting
 import app.models.modification.EntityType
+import app.models.modification.EntityTypes
 import app.models.document.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.user.User
