@@ -2,17 +2,13 @@ package app.api
 
 import app.api.Picklers._
 import app.api.ScalaJsApi._
-import boopickle.Default._
-import boopickle.Pickler
 import app.common.testing.TestObjects._
 import app.common.testing._
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
 import app.models.user.User
-import app.models.user.User
+import boopickle.Default._
+import boopickle.Pickler
 import org.junit.runner._
 import org.specs2.runner._
 

@@ -5,30 +5,25 @@ import java.util.concurrent.Executors
 
 import app.api.ScalaJsApi.ModificationsWithToken
 import app.api.UpdateTokens.toUpdateToken
-import com.google.inject._
 import app.common.publisher.TriggerablePublisher
-import hydro.common.time.Clock
-import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.modification.EntityType
 import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
-import app.models.document.DocumentEntity
-import app.models.document.TaskEntity
 import app.models.slick.SlickEntityManager
 import app.models.slick.SlickEntityTableDef
 import app.models.slick.SlickUtils.dbApi._
 import app.models.slick.SlickUtils.dbRun
 import app.models.user.User
-import hydro.models.access.EntityAccess
-import hydro.models.access.DbResultSet
-import hydro.models.access.DbQueryExecutor
+import com.google.inject._
+import hydro.common.time.Clock
+import hydro.models.Entity
 import hydro.models.access.DbQuery
+import hydro.models.access.DbQueryExecutor
+import hydro.models.access.DbResultSet
+import hydro.models.access.EntityAccess
 import net.jcip.annotations.GuardedBy
 import org.reactivestreams.Publisher
 

@@ -3,15 +3,15 @@ package tools
 import java.nio.file.Path
 import java.nio.file.Paths
 
-import com.google.inject.Inject
 import app.common.OrderToken
 import app.common.ResourceFiles
-import hydro.common.time.Clock
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.user.Users
+import com.google.inject.Inject
+import hydro.common.time.Clock
 import play.api.Application
 import play.api.Mode
 

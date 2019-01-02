@@ -4,12 +4,8 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import app.api.Picklers._
-import boopickle.Default.Pickle
-import boopickle.Default.Unpickle
 import app.common.OrderToken
 import app.common.Tags
-import hydro.common.time.LocalDateTime
-import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
@@ -19,6 +15,10 @@ import app.models.slick.SlickUtils.instantToSqlTimestampMapper
 import app.models.slick.SlickUtils.localDateTimeToSqlDateMapper
 import app.models.slick.SlickUtils.orderTokenToBytesMapper
 import app.models.user.User
+import boopickle.Default.Pickle
+import boopickle.Default.Unpickle
+import hydro.common.time.LocalDateTime
+import hydro.models.Entity
 
 import scala.collection.immutable.Seq
 

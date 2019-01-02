@@ -1,22 +1,22 @@
 package app.flux.react.app
 
 import app.common.I18n
+import app.flux.router.AppPages
+import app.flux.stores.document.AllDocumentsStore
+import app.models.document.DocumentEntity
+import app.models.user.User
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.time.Clock
 import hydro.flux.react.ReactVdomUtils.^^
-import app.flux.router.AppPages
+import hydro.flux.react.uielements.input.TextInput
 import hydro.flux.router.Page
 import hydro.flux.router.RouterContext
-import app.flux.stores.document.AllDocumentsStore
-import hydro.flux.react.uielements.input.TextInput
 import hydro.flux.stores.StateStore
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import hydro.jsfacades.Mousetrap
 import hydro.models.access.EntityAccess
-import app.models.document.DocumentEntity
-import app.models.user.User
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
 

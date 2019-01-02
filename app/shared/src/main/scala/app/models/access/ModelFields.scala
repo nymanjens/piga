@@ -5,7 +5,6 @@ import app.common.OrderToken
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
 import app.models.user.User
 import hydro.common.time.LocalDateTime
 import hydro.models.Entity

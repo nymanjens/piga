@@ -1,22 +1,8 @@
 package app.flux.stores.document
 
-import app.api.ScalaJsApi.UserPrototype
-import hydro.common.testing.Awaiter
-import app.common.testing.TestObjects._
-import app.flux.action.AppActions
-import hydro.flux.action.StandardActions
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
-import app.models.modification.EntityModification
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 import utest._
-
-import scala.async.Async.async
-import scala.async.Async.await
-import scala.collection.immutable.Seq
-import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object DocumentSelectionStoreTest extends TestSuite {
 

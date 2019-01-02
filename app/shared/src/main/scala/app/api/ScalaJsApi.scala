@@ -1,17 +1,12 @@
 package app.api
 
-import app.api.Picklers._
 import app.api.ScalaJsApi._
-import hydro.models.Entity
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 import app.models.user.User
 import hydro.api.PicklableDbQuery
+import hydro.models.Entity
 
 import scala.collection.immutable.Seq
 

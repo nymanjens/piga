@@ -1,6 +1,5 @@
 package hydro.common.time
 
-import java.time.LocalDate
 import java.time.Month._
 
 import org.specs2.mutable._

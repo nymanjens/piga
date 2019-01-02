@@ -4,13 +4,13 @@ import java.time.Duration
 import java.time.Instant
 
 import app.common.GuavaReplacement.Iterables.getOnlyElement
-import hydro.common.time.Clock
-import hydro.common.time.JavaTimeImplicits._
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Task
 import app.models.modification.EntityModification
+import hydro.common.time.Clock
+import hydro.common.time.JavaTimeImplicits._
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

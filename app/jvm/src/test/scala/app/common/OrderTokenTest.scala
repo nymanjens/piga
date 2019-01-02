@@ -2,6 +2,7 @@ package app.common
 
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
+
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.util.Random

@@ -1,33 +1,22 @@
 package app.api
 
-import java.time.Instant
-
-import hydro.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.UserPrototype
 import app.api.UpdateTokens.toUpdateToken
-import com.google.inject._
 import app.common.GuavaReplacement.Iterables.getOnlyElement
 import app.common.testing.TestObjects._
-import app.common.testing.TestUtils._
 import app.common.testing._
-import hydro.models.access.DbQuery
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
-import hydro.models.access.ModelField
-import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 import app.models.slick.SlickUtils.dbRun
 import app.models.user.User
+import com.google.inject._
+import hydro.models.access.DbQuery
+import hydro.models.access.DbQueryImplicits._
 import org.junit.runner._
 import org.specs2.runner._
 import play.api.test._
 
-import scala.collection.SortedMap
 import scala.collection.immutable.Seq
 
 @RunWith(classOf[JUnitRunner])

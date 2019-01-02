@@ -1,10 +1,9 @@
 package hydro.common.testing
 
 import hydro.common.LoggingUtils.LogExceptionsCallback
-import hydro.flux.router.StandardPages
-import app.flux.router.AppPages
 import hydro.flux.router.Page
 import hydro.flux.router.RouterContext
+import hydro.flux.router.StandardPages
 import japgolly.scalajs.react.extra.router.Path
 import japgolly.scalajs.react.vdom.html_<^.VdomTagOf
 import japgolly.scalajs.react.vdom.html_<^._

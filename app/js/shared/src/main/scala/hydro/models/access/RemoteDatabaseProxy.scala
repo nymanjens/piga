@@ -1,18 +1,11 @@
 package hydro.models.access
 
-import hydro.models.Entity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
+import hydro.models.Entity
 
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
-import app.models.access._
 
 /** Proxy for the server-side database. */
 trait RemoteDatabaseProxy {

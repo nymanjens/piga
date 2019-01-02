@@ -1,10 +1,10 @@
 package app.common.testing
 
 import app.api.ScalaJsApiModule
-import com.google.inject._
 import app.common._
-import hydro.common.time._
 import app.models.ModelsModule
+import com.google.inject._
+import hydro.common.time._
 
 final class TestModule extends AbstractModule {
 

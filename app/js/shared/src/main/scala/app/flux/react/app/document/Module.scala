@@ -1,15 +1,13 @@
 package app.flux.react.app.document
 
 import app.common.I18n
+import app.flux.stores.document.AllDocumentsStore
+import app.flux.stores.document.DocumentSelectionStore
+import app.flux.stores.document.DocumentStoreFactory
 import hydro.common.time.Clock
 import hydro.flux.action.Dispatcher
-import hydro.flux.stores.UserStore
-import app.flux.stores.document.AllDocumentsStore
-import app.flux.stores.document.DocumentStoreFactory
-import app.flux.stores.document.DocumentSelectionStore
 import hydro.flux.react.uielements.PageHeader
 import hydro.models.access.JsEntityAccess
-import app.models.user.User
 
 final class Module(implicit i18n: I18n,
                    dispatcher: Dispatcher,

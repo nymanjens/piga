@@ -1,10 +1,10 @@
 package app.flux.router
 
-import hydro.models.access.EntityAccess
-import app.models.document.DocumentEntity
 import app.common.I18n
+import app.models.document.DocumentEntity
 import hydro.flux.router.Page
 import hydro.flux.router.Page.PageBase
+import hydro.models.access.EntityAccess
 
 import scala.async.Async.async
 import scala.async.Async.await

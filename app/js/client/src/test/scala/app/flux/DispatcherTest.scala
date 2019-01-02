@@ -1,11 +1,8 @@
 package app.flux
 
-import app.common.testing.TestObjects
 import app.common.testing.TestObjects.testUserPrototype
-import app.flux.action.AppActions
-import hydro.flux.action.StandardActions
-import hydro.flux.action.StandardActions
 import hydro.flux.action.Action
+import hydro.flux.action.StandardActions
 import utest._
 
 import scala.async.Async.async
@@ -13,8 +10,6 @@ import scala.async.Async.await
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 
 object DispatcherTest extends TestSuite {
 

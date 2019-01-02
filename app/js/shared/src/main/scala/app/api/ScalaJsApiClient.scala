@@ -3,15 +3,9 @@ package app.api
 import java.nio.ByteBuffer
 
 import app.api.ScalaJsApi._
-import hydro.models.Entity
-import hydro.models.access.DbQuery
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 import autowire._
 import boopickle.Default._
 import hydro.api.PicklableDbQuery
@@ -19,6 +13,8 @@ import app.api.Picklers._
 import hydro.api.ScalaJsApiRequest
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.websocket.SerialWebsocketClientParallelizer
+import hydro.models.Entity
+import hydro.models.access.DbQuery
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq

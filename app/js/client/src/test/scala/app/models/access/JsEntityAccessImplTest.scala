@@ -1,18 +1,14 @@
 package app.models.access
 
-import app.common.testing.TestObjects._
 import app.common.testing.FakeScalaJsApiClient
-import hydro.common.testing.ModificationsBuffer
 import app.common.testing.TestModule
-import hydro.common.time.Clock
-import hydro.models.Entity
+import app.common.testing.TestObjects._
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
 import app.models.user.User
-import app.models.user.User
+import hydro.common.testing.ModificationsBuffer
+import hydro.common.time.Clock
+import hydro.models.Entity
 import utest._
 
 import scala.async.Async.async
@@ -23,8 +19,6 @@ import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 
 object JsEntityAccessImplTest extends TestSuite {
 

@@ -1,16 +1,14 @@
 package app.flux.stores
 
-import hydro.common.Listenable
 import app.flux.stores.PendingModificationsStore.State
 import app.flux.stores.document.DocumentStoreFactory
+import app.models.document.DocumentEntity
+import app.models.document.TaskEntity
+import app.models.modification.EntityModification
+import app.models.user.User
+import hydro.common.Listenable
 import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 
 import scala.collection.immutable.Seq
 

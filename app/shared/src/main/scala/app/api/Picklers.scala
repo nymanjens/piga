@@ -1,45 +1,13 @@
 package app.api
 
-import java.time.LocalDate
-import java.time.LocalTime
-
-import boopickle.Default._
-import hydro.common.time.LocalDateTime
-import hydro.models.Entity
-import app.models.access.ModelFields
-import hydro.models.access.ModelField
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
 import app.models.user.User
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
-import hydro.models.Entity
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
-import app.models.user.User
-import boopickle.Default
 import boopickle.Default._
 import hydro.api.StandardPicklers
-
-import scala.collection.immutable.Seq
-import scala.collection.immutable.Set
+import hydro.models.Entity
 
 object Picklers extends StandardPicklers {
 

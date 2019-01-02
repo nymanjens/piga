@@ -1,9 +1,8 @@
 package app.models.document
 
 import app.common.testing.TestObjects._
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 import utest._
+
 import scala.collection.immutable.Seq
 
 object TaskTest extends TestSuite {

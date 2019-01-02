@@ -1,8 +1,8 @@
 package app.models
 
+import app.models.access.JvmEntityAccess
 import com.google.inject.AbstractModule
 import hydro.models.access.EntityAccess
-import app.models.access.JvmEntityAccess
 
 final class ModelsModule extends AbstractModule {
   override def configure() = {

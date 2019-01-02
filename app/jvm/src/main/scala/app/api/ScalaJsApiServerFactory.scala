@@ -1,24 +1,19 @@
 package app.api
 
-import app.api.Picklers._
 import app.api.ScalaJsApi._
 import app.api.UpdateTokens.toUpdateToken
-import com.google.inject._
 import app.common.PlayI18n
-import hydro.common.time.Clock
-import hydro.models.Entity
-import hydro.models.access.DbQuery
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import app.models.modification.EntityModification
 import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 import app.models.user.User
 import app.models.user.Users
+import com.google.inject._
 import hydro.api.PicklableDbQuery
+import hydro.common.time.Clock
+import hydro.models.Entity
+import hydro.models.access.DbQuery
 
 import scala.collection.immutable.Seq
 

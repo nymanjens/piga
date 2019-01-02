@@ -1,15 +1,11 @@
 package hydro.models.access
 
-import hydro.models.Entity
 import app.models.access.ModelFields
+import app.models.modification.EntityType
+import hydro.models.Entity
 import hydro.models.access.DbQuery.Filter
 import hydro.models.access.DbQuery.Sorting
 import hydro.models.access.DbQueryImplicits._
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
 
 import scala.async.Async.async
 import scala.async.Async.await

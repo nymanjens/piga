@@ -1,31 +1,24 @@
 package app.flux.stores.document
 
-import hydro.common.LoggingUtils.LogExceptionsCallback
-import hydro.common.LoggingUtils.logExceptions
-import hydro.common.Listenable
-import hydro.common.Listenable.WritableListenable
-
-import scala.concurrent.duration._
-import scala.scalajs.js
-import hydro.flux.stores.StateStore
 import app.flux.stores.document.DocumentStore.Replacement
 import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
-import hydro.models.access.JsEntityAccess
 import app.models.document.Document
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
 import app.models.modification.EntityModification
-import app.models.modification.EntityType
-import app.models.modification.EntityTypes
-import app.models.document.TaskEntity
-import app.models.document.DocumentEntity
-import app.models.user.User
+import hydro.common.Listenable
+import hydro.common.Listenable.WritableListenable
+import hydro.common.LoggingUtils.logExceptions
+import hydro.flux.stores.StateStore
+import hydro.models.access.JsEntityAccess
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
 
 final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEntityAccess)

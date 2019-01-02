@@ -1,17 +1,17 @@
 package app.common.testing
 
-import scala.collection.immutable.Seq
 import app.common.OrderToken
+import app.common.testing.TestObjects._
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
-import app.models.document.Task
-import app.models.document.TextWithMarkup
-import app.common.testing.TestObjects._
-import hydro.common.time.LocalDateTime
 import app.models.document.Document
 import app.models.document.Task
+import app.models.document.TextWithMarkup
+import hydro.common.time.LocalDateTime
+
+import scala.collection.immutable.Seq
 
 object JsTestObjects {
 

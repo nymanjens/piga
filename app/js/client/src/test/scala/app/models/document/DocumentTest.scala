@@ -7,8 +7,6 @@ import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 import utest._
 
 import scala.collection.immutable.Seq

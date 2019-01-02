@@ -1,13 +1,10 @@
 package app.models.document
 
-import hydro.common.DomNodeUtils.nodeIsLi
 import app.common.OrderToken
+import app.models.access.ModelFields
+import hydro.common.DomNodeUtils.nodeIsLi
 import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
-import app.models.access.ModelFields
-import hydro.models.access.ModelField
-import app.models.document.Document.IndexedCursor
-import app.models.document.Document.IndexedSelection
 import org.scalajs.dom
 
 import scala.annotation.tailrec

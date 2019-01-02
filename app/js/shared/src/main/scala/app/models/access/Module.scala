@@ -4,7 +4,6 @@ import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
-
 import app.models.user.User
 import hydro.models.access.EntityModificationPushClientFactory
 import hydro.models.access.HybridRemoteDatabaseProxy

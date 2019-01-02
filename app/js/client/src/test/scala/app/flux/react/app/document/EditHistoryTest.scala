@@ -1,16 +1,12 @@
 package app.flux.react.app.document
 
-import app.common.GuavaReplacement.Iterables
 import app.common.GuavaReplacement.Iterables.getOnlyElement
-import app.common.testing.TestObjects._
 import app.common.testing.JsTestObjects._
 import app.common.testing.TestModule
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Task
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
 import utest._
 
 import scala.collection.immutable.Seq

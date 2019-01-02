@@ -1,18 +1,12 @@
 package app.flux.react.app.document
 
-import app.common.testing.TestObjects._
 import app.common.testing.JsTestObjects._
-import hydro.common.time.LocalDateTime
+import app.common.testing.TestObjects._
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
-import app.models.document.TextWithMarkup.Formatting
-import app.models.document.Task
 import app.models.document.TextWithMarkup
-import hydro.scala2js.StandardConverters._
-import app.scala2js.AppConverters._
+import app.models.document.TextWithMarkup.Formatting
 import utest._
-
-import scala.collection.immutable.Seq
 
 object TaskEditorTest extends TestSuite {
 

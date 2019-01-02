@@ -3,17 +3,17 @@ package app.flux.stores
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import app.common.I18n
-import hydro.common.time.Clock
 import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStoreFactory
+import app.models.user.User
+import hydro.common.time.Clock
 import hydro.flux.action.Dispatcher
 import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
 import hydro.models.access.EntityModificationPushClientFactory
 import hydro.models.access.JsEntityAccess
-import app.models.user.User
 
 final class Module(implicit i18n: I18n,
                    user: User,

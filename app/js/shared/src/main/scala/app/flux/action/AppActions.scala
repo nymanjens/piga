@@ -1,8 +1,8 @@
 package app.flux.action
 
 import app.common.OrderToken
-import hydro.flux.action.Action
 import app.models.document.DocumentEntity
+import hydro.flux.action.Action
 
 import scala.collection.immutable.Seq
 
