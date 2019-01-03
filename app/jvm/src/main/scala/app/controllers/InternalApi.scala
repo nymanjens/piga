@@ -14,7 +14,7 @@ import hydro.common.publisher.Publishers
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import hydro.models.modification.EntityModification
-import app.models.modification.EntityModificationEntity
+import hydro.models.modification.EntityModificationEntity
 import hydro.models.modification.EntityType
 import hydro.models.slick.SlickUtils.dbApi._
 import hydro.models.slick.SlickUtils.dbRun

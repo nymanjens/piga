@@ -9,7 +9,7 @@ import hydro.common.Tags
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityModification
-import app.models.modification.EntityModificationEntity
+import hydro.models.modification.EntityModificationEntity
 import hydro.models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
 import hydro.models.slick.SlickUtils.instantToSqlTimestampMapper
 import hydro.models.slick.SlickUtils.localDateTimeToSqlDateMapper

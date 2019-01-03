@@ -9,7 +9,7 @@ import hydro.common.publisher.TriggerablePublisher
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityModification
-import app.models.modification.EntityModificationEntity
+import hydro.models.modification.EntityModificationEntity
 import hydro.models.modification.EntityType
 import app.models.modification.EntityTypes
 import hydro.models.slick.SlickUtils.dbApi._
