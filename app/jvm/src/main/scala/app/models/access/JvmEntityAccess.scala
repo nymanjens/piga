@@ -8,6 +8,8 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityTypes
 import app.models.slick.SlickEntityTableDef
+import app.models.slick.SlickEntityTableDefs
+import app.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
 import app.models.user.User
 import com.google.inject._
 import hydro.common.UpdateTokens.toUpdateToken
@@ -52,7 +54,7 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
 
   def newSlickQuery[E <: Entity]()(
       implicit entityTableDef: SlickEntityTableDef[E]): TableQuery[entityTableDef.Table] =
-    SlickEntityManager.forType.newQuery.asInstanceOf[TableQuery[entityTableDef.Table]]
+    SlickEntityManager.forType[E].newQuery.asInstanceOf[TableQuery[entityTableDef.Table]]
 
   def entityModificationPublisher: Publisher[ModificationsWithToken] = entityModificationPublisher_
 
@@ -110,9 +112,9 @@ final class JvmEntityAccess @Inject()(clock: Clock) extends EntityAccess {
 
   private def getEntityTableDef(entityType: EntityType.any): SlickEntityTableDef[entityType.get] = {
     val tableDef = entityType match {
-      case User.Type           => implicitly[SlickEntityTableDef[User]]
-      case DocumentEntity.Type => implicitly[SlickEntityTableDef[DocumentEntity]]
-      case TaskEntity.Type     => implicitly[SlickEntityTableDef[TaskEntity]]
+      case User.Type           => SlickEntityTableDefs.UserDef
+      case DocumentEntity.Type => SlickEntityTableDefs.DocumentEntityDef
+      case TaskEntity.Type     => SlickEntityTableDefs.TaskEntityDef
     }
     tableDef.asInstanceOf[SlickEntityTableDef[entityType.get]]
   }
