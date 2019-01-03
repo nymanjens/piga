@@ -1,7 +1,7 @@
 package app.api
 
 import app.api.ScalaJsApi.UserPrototype
-import app.api.UpdateTokens.toUpdateToken
+import hydro.common.UpdateTokens.toUpdateToken
 import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import app.common.testing.TestObjects._
 import app.common.testing._

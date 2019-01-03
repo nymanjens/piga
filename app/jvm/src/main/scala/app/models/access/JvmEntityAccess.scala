@@ -4,7 +4,7 @@ import java.time.Duration
 import java.util.concurrent.Executors
 
 import app.api.ScalaJsApi.ModificationsWithToken
-import app.api.UpdateTokens.toUpdateToken
+import hydro.common.UpdateTokens.toUpdateToken
 import app.common.publisher.TriggerablePublisher
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
