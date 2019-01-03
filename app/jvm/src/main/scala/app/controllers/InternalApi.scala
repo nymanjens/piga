@@ -10,7 +10,7 @@ import app.api.ScalaJsApi.UserPrototype
 import app.api.ScalaJsApiServerFactory
 import hydro.common.UpdateTokens.toInstant
 import hydro.common.UpdateTokens.toUpdateToken
-import app.common.publisher.Publishers
+import hydro.common.publisher.Publishers
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import hydro.models.modification.EntityModification

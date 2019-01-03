@@ -2,7 +2,7 @@ package app.api
 
 import app.api.ScalaJsApi._
 import hydro.common.UpdateTokens.toUpdateToken
-import app.common.PlayI18n
+import hydro.common.PlayI18n
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
 import hydro.models.modification.EntityModification
