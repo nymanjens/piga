@@ -12,10 +12,10 @@ import app.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.modification.EntityType
 import app.models.modification.EntityTypes
-import app.models.slick.SlickEntityManager
-import app.models.slick.SlickEntityTableDef
 import app.models.slick.SlickUtils.dbApi._
 import app.models.slick.SlickUtils.dbRun
+import app.models.slick.SlickEntityManager
+import app.models.slick.SlickEntityTableDef
 import app.models.user.User
 import com.google.inject._
 import hydro.common.time.Clock

@@ -1,6 +1,5 @@
 package hydro.models.access
 
-import app.api.Picklers._
 import app.api.ScalaJsApi.ModificationsWithToken
 import app.api.ScalaJsApi.UpdateToken
 import boopickle.Default.Unpickle

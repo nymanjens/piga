@@ -9,7 +9,6 @@ import app.models.modification.EntityType
 import autowire._
 import boopickle.Default._
 import hydro.api.PicklableDbQuery
-import app.api.Picklers._
 import hydro.api.ScalaJsApiRequest
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.websocket.SerialWebsocketClientParallelizer
