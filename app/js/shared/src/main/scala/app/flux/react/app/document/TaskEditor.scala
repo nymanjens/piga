@@ -1,11 +1,11 @@
 package app.flux.react.app.document
 
-import app.common.GuavaReplacement.Splitter
-import app.common.ScalaUtils.ifThenOption
-import app.common.ScalaUtils.visibleForTesting
-import app.common.I18n
-import app.common.OrderToken
-import app.common.Tags
+import hydro.common.GuavaReplacement.Splitter
+import hydro.common.ScalaUtils.ifThenOption
+import hydro.common.ScalaUtils.visibleForTesting
+import hydro.common.I18n
+import hydro.common.OrderToken
+import hydro.common.Tags
 import app.flux.react.app.document.KeyCombination._
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore

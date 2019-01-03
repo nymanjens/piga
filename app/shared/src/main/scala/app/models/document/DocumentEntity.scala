@@ -1,6 +1,6 @@
 package app.models.document
 
-import app.common.OrderToken
+import hydro.common.OrderToken
 import hydro.models.modification.EntityType
 import hydro.models.Entity
 

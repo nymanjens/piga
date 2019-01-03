@@ -5,7 +5,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.{LocalDateTime => JavaLocalDateTime}
 
-import app.common.OrderToken
+import hydro.common.OrderToken
 import hydro.common.time.LocalDateTime
 import hydro.common.time.LocalDateTimes
 import slick.basic.DatabaseConfig

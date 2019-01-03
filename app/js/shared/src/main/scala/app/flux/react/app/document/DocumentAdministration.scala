@@ -1,7 +1,7 @@
 package app.flux.react.app.document
 
-import app.common.I18n
-import app.common.OrderToken
+import hydro.common.I18n
+import hydro.common.OrderToken
 import app.flux.action.AppActions
 import app.flux.stores.document.AllDocumentsStore
 import app.models.document.DocumentEntity

@@ -1,6 +1,6 @@
 package app.flux.react.app.document
 
-import app.common.GuavaReplacement.Iterables.getOnlyElement
+import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 
 private[document] sealed trait KeyCombination {

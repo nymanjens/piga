@@ -1,7 +1,7 @@
 package app.models.access
 
-import app.common.GuavaReplacement.ImmutableBiMap
-import app.common.OrderToken
+import hydro.common.GuavaReplacement.ImmutableBiMap
+import hydro.common.OrderToken
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityType

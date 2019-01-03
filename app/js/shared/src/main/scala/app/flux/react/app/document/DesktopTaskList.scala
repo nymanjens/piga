@@ -1,6 +1,6 @@
 package app.flux.react.app.document
 
-import app.common.I18n
+import hydro.common.I18n
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document

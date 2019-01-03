@@ -1,6 +1,6 @@
 package app.flux.action
 
-import app.common.OrderToken
+import hydro.common.OrderToken
 import app.models.document.DocumentEntity
 import hydro.flux.action.Action
 

@@ -2,7 +2,7 @@ package app.flux.stores.document
 
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
-import app.common.OrderToken
+import hydro.common.OrderToken
 import app.flux.action.AppActions._
 import app.flux.stores.document.AllDocumentsStore.State
 import app.models.document.DocumentEntity

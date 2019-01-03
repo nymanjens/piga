@@ -4,8 +4,8 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import app.api.Picklers._
-import app.common.OrderToken
-import app.common.Tags
+import hydro.common.OrderToken
+import hydro.common.Tags
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityModification

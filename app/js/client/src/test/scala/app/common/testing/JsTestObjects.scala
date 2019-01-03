@@ -1,6 +1,6 @@
 package app.common.testing
 
-import app.common.OrderToken
+import hydro.common.OrderToken
 import app.common.testing.TestObjects._
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection

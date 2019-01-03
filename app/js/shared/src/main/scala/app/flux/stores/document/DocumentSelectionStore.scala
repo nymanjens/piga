@@ -1,6 +1,6 @@
 package app.flux.stores.document
 
-import app.common.ScalaUtils.visibleForTesting
+import hydro.common.ScalaUtils.visibleForTesting
 import app.models.document.Document
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection

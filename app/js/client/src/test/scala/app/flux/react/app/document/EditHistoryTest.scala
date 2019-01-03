@@ -1,6 +1,6 @@
 package app.flux.react.app.document
 
-import app.common.GuavaReplacement.Iterables.getOnlyElement
+import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import app.common.testing.JsTestObjects._
 import app.common.testing.TestModule
 import app.flux.react.app.document.EditHistory.Edit
