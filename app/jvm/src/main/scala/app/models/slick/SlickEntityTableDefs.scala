@@ -3,9 +3,9 @@ package app.models.slick
 import java.nio.ByteBuffer
 import java.time.Instant
 
+import app.api.Picklers._
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
-import hydro.models.slick.SlickEntityTableDef.EntityTable
 import app.models.user.User
 import boopickle.Default.Pickle
 import boopickle.Default.Unpickle
@@ -14,7 +14,8 @@ import hydro.common.time.LocalDateTime
 import hydro.common.Tags
 import hydro.models.modification.EntityModification
 import hydro.models.modification.EntityModificationEntity
-import app.api.Picklers._
+import hydro.models.slick.SlickEntityTableDef
+import hydro.models.slick.SlickEntityTableDef.EntityTable
 import hydro.models.slick.SlickUtils._
 import hydro.models.slick.SlickUtils.dbApi._
 import hydro.models.slick.SlickUtils.dbApi.{Tag => SlickTag}
