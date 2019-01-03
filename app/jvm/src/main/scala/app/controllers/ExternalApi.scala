@@ -1,4 +1,4 @@
-package controllers
+package app.controllers
 
 import app.models.access.JvmEntityAccess
 import com.google.inject.Inject
