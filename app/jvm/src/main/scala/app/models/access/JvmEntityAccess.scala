@@ -7,9 +7,9 @@ import app.api.ScalaJsApi.ModificationsWithToken
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.modification.EntityTypes
-import app.models.slick.SlickEntityTableDef
+import hydro.models.slick.SlickEntityTableDef
 import app.models.slick.SlickEntityTableDefs
-import app.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
+import hydro.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
 import app.models.user.User
 import com.google.inject._
 import hydro.common.UpdateTokens.toUpdateToken

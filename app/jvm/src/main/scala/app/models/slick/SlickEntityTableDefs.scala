@@ -5,7 +5,7 @@ import java.time.Instant
 
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
-import app.models.slick.SlickEntityTableDef.EntityTable
+import hydro.models.slick.SlickEntityTableDef.EntityTable
 import app.models.user.User
 import boopickle.Default.Pickle
 import boopickle.Default.Unpickle

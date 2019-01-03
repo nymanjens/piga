@@ -10,7 +10,7 @@ import app.api.ScalaJsApi.UserPrototype
 import app.api.ScalaJsApiServerFactory
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
-import app.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
+import hydro.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
 import app.models.user.User
 import boopickle.Default._
 import com.google.inject.Inject
