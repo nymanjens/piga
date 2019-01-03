@@ -2,7 +2,7 @@ import app.api.ScalaJsApiModule
 import app.common.CommonModule
 import app.models.ModelsModule
 import com.google.inject.AbstractModule
-import tools.ApplicationStartHook
+import app.tools.ApplicationStartHook
 
 final class Module extends AbstractModule {
   override def configure() = {
