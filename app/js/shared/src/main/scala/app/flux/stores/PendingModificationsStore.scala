@@ -4,7 +4,7 @@ import app.flux.stores.PendingModificationsStore.State
 import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import app.models.user.User
 import hydro.common.Listenable
 import hydro.flux.stores.StateStore

@@ -1,7 +1,7 @@
 package app.common.testing
 
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
+import hydro.models.modification.EntityModification
+import hydro.models.modification.EntityType
 import hydro.models.Entity
 import hydro.models.access.JsEntityAccess.Listener
 

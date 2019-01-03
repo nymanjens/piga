@@ -3,6 +3,7 @@ package app.models.modification
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.user.User
+import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
 

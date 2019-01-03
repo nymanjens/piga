@@ -1,7 +1,7 @@
 package app.models.document
 
 import app.common.OrderToken
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import hydro.common.time.LocalDateTime
 
 import scala.collection.immutable.Seq

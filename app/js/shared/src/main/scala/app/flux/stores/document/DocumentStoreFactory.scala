@@ -2,7 +2,7 @@ package app.flux.stores.document
 
 import app.models.document.Document
 import app.models.document.DocumentEntity
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import hydro.common.Listenable
 import hydro.common.Listenable.ListenableMap
 import hydro.common.LoggingUtils.logFailure

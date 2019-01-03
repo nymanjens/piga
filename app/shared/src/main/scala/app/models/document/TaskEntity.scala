@@ -1,7 +1,7 @@
 package app.models.document
 
 import app.common.OrderToken
-import app.models.modification.EntityType
+import hydro.models.modification.EntityType
 import hydro.common.time.LocalDateTime
 import hydro.models.Entity
 

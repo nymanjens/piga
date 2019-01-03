@@ -3,8 +3,8 @@ package app.models.access
 import app.common.testing.FakeScalaJsApiClient
 import app.common.testing.TestModule
 import app.common.testing.TestObjects._
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
+import hydro.models.modification.EntityModification
+import hydro.models.modification.EntityType
 import app.models.user.User
 import hydro.common.testing.ModificationsBuffer
 import hydro.common.time.Clock

@@ -3,8 +3,8 @@ package app.models.access
 import app.common.testing.TestObjects.testUser
 import app.common.testing._
 import app.models.access.InMemoryEntityDatabase.EntitiesFetcher
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
+import hydro.models.modification.EntityModification
+import hydro.models.modification.EntityType
 import app.models.user.User
 import hydro.models.Entity
 import hydro.models.access.DbQueryImplicits._

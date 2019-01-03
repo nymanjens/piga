@@ -7,7 +7,7 @@ import app.models.document.Document
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
 import hydro.common.LoggingUtils.logExceptions

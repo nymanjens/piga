@@ -4,8 +4,8 @@ import java.time.Instant
 import java.time.ZoneId
 
 import app.models.access.JvmEntityAccess
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
+import hydro.models.modification.EntityModification
+import hydro.models.modification.EntityType
 import app.models.user.User
 import hydro.common.time.LocalDateTime
 import hydro.models.Entity

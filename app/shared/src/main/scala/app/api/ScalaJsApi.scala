@@ -2,8 +2,8 @@ package app.api
 
 import app.api.ScalaJsApi._
 import app.models.document.DocumentEntity
-import app.models.modification.EntityModification
-import app.models.modification.EntityType
+import hydro.models.modification.EntityModification
+import hydro.models.modification.EntityType
 import app.models.user.User
 import hydro.api.PicklableDbQuery
 import hydro.models.Entity

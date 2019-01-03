@@ -8,7 +8,7 @@ import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Task
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import hydro.common.time.Clock
 import hydro.common.time.JavaTimeImplicits._
 

@@ -8,7 +8,7 @@ import app.common.OrderToken
 import app.common.Tags
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
-import app.models.modification.EntityModification
+import hydro.models.modification.EntityModification
 import app.models.modification.EntityModificationEntity
 import app.models.slick.SlickUtils.dbApi.{Table => SlickTable, Tag => SlickTag, _}
 import app.models.slick.SlickUtils.instantToSqlTimestampMapper
