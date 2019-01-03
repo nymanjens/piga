@@ -5,6 +5,7 @@ import java.time.ZoneId
 import com.google.inject._
 import hydro.common.time.Clock
 import hydro.common.time.JvmClock
+import hydro.common.I18n
 
 final class CommonModule extends AbstractModule {
 
