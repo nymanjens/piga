@@ -2,7 +2,7 @@ package app.models.access
 
 import app.common.testing.TestObjects.testUser
 import app.common.testing._
-import app.models.access.InMemoryEntityDatabase.EntitiesFetcher
+import hydro.models.access.InMemoryEntityDatabase.EntitiesFetcher
 import hydro.models.modification.EntityModification
 import hydro.models.modification.EntityType
 import app.models.user.User
