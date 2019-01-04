@@ -3,10 +3,10 @@
 # ~~~~
 
 # General
-GET  /                                 app.controllers.Application.index
-GET  /app/                             app.controllers.Application.reactAppRoot
-GET  /app/*anyString                   app.controllers.Application.reactApp(anyString)
-GET  /appwithoutcreds/                 app.controllers.Application.reactAppWithoutCredentials
+GET  /                                 hydro.controllers.StandardActions.index
+GET  /app/                             hydro.controllers.StandardActions.reactAppRoot
+GET  /app/*anyString                   hydro.controllers.StandardActions.reactApp(anyString)
+GET  /appwithoutcreds/                 hydro.controllers.StandardActions.reactAppWithoutCredentials
 
 # Javscript files
 GET  /localDatabaseWebWorker.js        app.controllers.JavascriptFiles.localDatabaseWebWorker
@@ -19,7 +19,7 @@ GET  /websocket/scalajsapi/            app.controllers.InternalApi.scalaJsApiWeb
 GET  /websocket/entitymodificationpush/:updateToken/  app.controllers.InternalApi.entityModificationPushWebsocket(updateToken)
 
 # External API
-GET  /externalapi/healthcheck/         app.controllers.ExternalApi.healthCheck
+GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthCheck
 
 # Auth
 GET  /login/                           hydro.controllers.Auth.login(returnTo ?= "/")
