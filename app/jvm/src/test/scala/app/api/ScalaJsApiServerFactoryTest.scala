@@ -9,6 +9,7 @@ import hydro.common.testing._
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
 import hydro.models.modification.EntityModificationEntity
+import hydro.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityDef
 import hydro.models.slick.SlickUtils.dbRun
 import app.models.user.User
 import com.google.inject._

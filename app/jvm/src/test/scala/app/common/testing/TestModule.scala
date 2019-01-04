@@ -1,10 +1,13 @@
 package app.common.testing
 
 import app.api.ScalaJsApiModule
-import app.common._
 import app.models.ModelsModule
 import com.google.inject._
+import hydro.common.testing.FakeClock
 import hydro.common.time._
+import hydro.common.PlayI18n
+import hydro.common.testing.FakePlayI18n
+import hydro.common.I18n
 
 final class TestModule extends AbstractModule {
 
