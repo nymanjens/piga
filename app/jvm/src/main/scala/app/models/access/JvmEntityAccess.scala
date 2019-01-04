@@ -25,6 +25,7 @@ import hydro.models.access.DbQuery
 import hydro.models.access.DbQueryExecutor
 import hydro.models.access.DbResultSet
 import hydro.models.access.EntityAccess
+import hydro.models.access.InMemoryEntityDatabase
 import hydro.models.slick.SlickEntityManager
 import net.jcip.annotations.GuardedBy
 import org.reactivestreams.Publisher
