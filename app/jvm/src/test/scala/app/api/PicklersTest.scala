@@ -4,6 +4,7 @@ import app.api.Picklers._
 import app.api.ScalaJsApi._
 import app.common.testing.TestObjects._
 import app.common.testing._
+import hydro.common.testing._
 import hydro.models.modification.EntityModification
 import hydro.models.modification.EntityType
 import app.models.user.User
