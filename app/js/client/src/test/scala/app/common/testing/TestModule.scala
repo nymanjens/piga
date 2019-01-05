@@ -1,6 +1,10 @@
 package app.common.testing
 
 import app.flux.stores.document.DocumentSelectionStore
+import hydro.common.testing.FakeClock
+import hydro.common.testing.FakeI18n
+import hydro.common.testing.FakeJsEntityAccess
+import hydro.common.testing.FakeRouterContext
 import hydro.flux.action.Dispatcher
 import hydro.models.access.EntityModificationPushClientFactory
 
