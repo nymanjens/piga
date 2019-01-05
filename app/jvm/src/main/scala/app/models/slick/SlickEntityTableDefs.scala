@@ -25,12 +25,7 @@ import scala.collection.immutable.Seq
 object SlickEntityTableDefs {
 
   val all: Seq[SlickEntityTableDef[_]] =
-    Seq(
-      UserDef,
-      DocumentEntityDef,
-      TaskEntityDef,
-      EntityModificationEntityDef,
-    )
+    Seq(UserDef, DocumentEntityDef, TaskEntityDef, EntityModificationEntityDef)
 
   implicit object UserDef extends SlickEntityTableDef[User] {
 
