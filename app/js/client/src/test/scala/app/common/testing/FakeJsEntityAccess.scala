@@ -12,7 +12,7 @@ import scala.concurrent.Promise
 import scala.concurrent.duration._
 import scala.scalajs.js
 
-final class FakeJsEntityAccess extends JsEntityAccess {
+class FakeJsEntityAccess extends JsEntityAccess {
 
   private val modificationsBuffer: ModificationsBuffer = new ModificationsBuffer()
   private var _pendingModifications: PendingModifications =
