@@ -13,6 +13,7 @@ import hydro.models.slick.StandardSlickEntityTableDefs.EntityModificationEntityD
 import hydro.models.slick.SlickUtils.dbRun
 import app.models.user.User
 import com.google.inject._
+import hydro.api.PicklableDbQuery
 import hydro.models.access.DbQuery
 import hydro.models.access.DbQueryImplicits._
 import org.junit.runner._

@@ -197,7 +197,7 @@ object TaskEditorTest extends TestSuite {
 
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
-  private class Module extends common.testing.TestModule {
+  private class Module extends app.common.testing.TestModule {
     val taskEditor = new TaskEditor
   }
 }
