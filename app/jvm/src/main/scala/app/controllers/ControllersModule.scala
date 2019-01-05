@@ -32,6 +32,6 @@ final class ControllersModule extends AbstractModule {
     VersionedAsset("bootstrap/dist/js/bootstrap.min.js"),
     VersionedAsset("metismenu/dist/metisMenu.min.js"),
     VersionedAsset("startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"),
-    UnversionedAsset("bootstrap/dist/fonts/glyphicons-halflings-regular.woff2"),
+    UnversionedAsset("bootstrap/dist/fonts/glyphicons-halflings-regular.woff2")
   )
 }
