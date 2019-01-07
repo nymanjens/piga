@@ -3,28 +3,28 @@
 # ~~~~
 
 # General
-GET  /                                 controllers.Application.index
-GET  /app/                             controllers.Application.reactAppRoot
-GET  /app/*anyString                   controllers.Application.reactApp(anyString)
-GET  /appwithoutcreds/                 controllers.Application.reactAppWithoutCredentials
+GET  /                                 hydro.controllers.StandardActions.index
+GET  /app/                             hydro.controllers.StandardActions.reactAppRoot
+GET  /app/*anyString                   hydro.controllers.StandardActions.reactApp(anyString)
+GET  /appwithoutcreds/                 hydro.controllers.StandardActions.reactAppWithoutCredentials
 
 # Javscript files
-GET  /localDatabaseWebWorker.js        controllers.JavascriptFiles.localDatabaseWebWorker
-GET  /serviceWorker.js                 controllers.JavascriptFiles.serviceWorker
+GET  /localDatabaseWebWorker.js        hydro.controllers.JavascriptFiles.localDatabaseWebWorker
+GET  /serviceWorker.js                 hydro.controllers.JavascriptFiles.serviceWorker
 
 # Internal API
-POST /scalajsapi/*path                 controllers.InternalApi.scalaJsApiPost(path: String)
-GET  /scalajsapi/*path                 controllers.InternalApi.scalaJsApiGet(path: String)
-GET  /websocket/scalajsapi/            controllers.InternalApi.scalaJsApiWebsocket
-GET  /websocket/entitymodificationpush/:updateToken/  controllers.InternalApi.entityModificationPushWebsocket(updateToken)
+POST /scalajsapi/*path                 hydro.controllers.InternalApi.scalaJsApiPost(path: String)
+GET  /scalajsapi/*path                 hydro.controllers.InternalApi.scalaJsApiGet(path: String)
+GET  /websocket/scalajsapi/            hydro.controllers.InternalApi.scalaJsApiWebsocket
+GET  /websocket/entitymodificationpush/:updateToken/  hydro.controllers.InternalApi.entityModificationPushWebsocket(updateToken)
 
 # External API
-GET  /externalapi/healthcheck/         controllers.ExternalApi.healthCheck
+GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthCheck
 
 # Auth
-GET  /login/                           controllers.Auth.login(returnTo ?= "/")
-POST /login/                           controllers.Auth.authenticate(returnTo ?= "/")
-GET  /logout/                          controllers.Auth.logout
+GET  /login/                           hydro.controllers.Auth.login(returnTo ?= "/")
+POST /login/                           hydro.controllers.Auth.authenticate(returnTo ?= "/")
+GET  /logout/                          hydro.controllers.Auth.logout
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
