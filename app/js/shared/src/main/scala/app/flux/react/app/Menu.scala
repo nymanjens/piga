@@ -19,7 +19,7 @@ private[app] final class Menu(implicit i18n: I18n,
     extends HydroReactComponent {
 
   // **************** API ****************//
-  def apply(router: RouterContext): VdomElement = {
+  def apply()(implicit router: RouterContext): VdomElement = {
     component(Props(router))
   }
 
