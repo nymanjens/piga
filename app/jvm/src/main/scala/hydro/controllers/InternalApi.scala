@@ -51,16 +51,6 @@ final class InternalApi @Inject()(implicit override val messagesApi: MessagesApi
     Ok(bytes)
   }
 
-  def scalaJsApiWebsocket = WebSocket.accept[Array[Byte], Array[Byte]] { request =>
-    implicit val user = AuthenticatedAction.requireAuthenticatedUser(request)
-
-    Flow[Array[Byte]].map { requestBytes =>
-      val request = Unpickle[ScalaJsApiRequest].fromBytes(ByteBuffer.wrap(requestBytes))
-
-      doScalaJsApiCall(request.path, request.args)
-    }
-  }
-
   def entityModificationPushWebsocket(updateToken: UpdateToken) = WebSocket.accept[Array[Byte], Array[Byte]] {
     request =>
       def modificationsToBytes(modificationsWithToken: ModificationsWithToken): Array[Byte] = {
