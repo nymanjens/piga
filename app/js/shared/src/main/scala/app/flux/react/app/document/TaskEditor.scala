@@ -303,6 +303,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
           }
 
+        case SpecialKey(Delete, /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) => // Delete rest of line
+          event.preventDefault()
+          replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.toEndOfTask))
+
         case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
           event.preventDefault()
           val indentIncrease = if (keyCombination.shift) -1 else 1
