@@ -46,7 +46,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
     case UpdateDocuments(documents) =>
       scalaJsApiClient.updateDocuments(documents)
     case RemoveDocument(existingDocument) =>
-      entityAccess.persistModifications(EntityModification.createDelete(existingDocument))
+      entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
   }
 
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
