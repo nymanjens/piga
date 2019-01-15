@@ -18,8 +18,6 @@ import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
-import hydro.common.LoggingUtils.LogExceptionsCallback
-import hydro.common.LoggingUtils.logExceptions
 import hydro.common.time.Clock
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
@@ -76,12 +74,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       formatting = Formatting.none
     )
 
-    def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
+    def willMount(props: Props, state: State): Callback = {
       props.documentStore.register(this)
-      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
+      $.modState(state => state.copy(document = props.documentStore.state.document))
     }
 
-    def didMount(props: Props, state: State): Callback = LogExceptionsCallback {
+    def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document)
       // Add timeout because scroll to view doesn't seem to work immediately after mount
       js.timers.setTimeout(20.milliseconds) {
@@ -89,23 +87,25 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       dom.window.addEventListener("resize", resizeListener)
+      Callback.empty
     }
 
-    def willUnmount(props: Props, state: State): Callback = LogExceptionsCallback {
+    def willUnmount(props: Props, state: State): Callback = {
       dom.window.removeEventListener("resize", resizeListener)
 
       documentSelectionStore
         .setSelection(state.document, IndexedSelection.tupleFromSelection(dom.window.getSelection()))
 
       props.documentStore.deregister(this)
+      Callback.empty
     }
 
     override def onStateUpdate() = {
       val props = $.props.runNow()
-      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
+      $.modState(state => state.copy(document = props.documentStore.state.document)).runNow()
     }
 
-    def render(props: Props, state: State): VdomElement = logExceptions {
+    def render(props: Props, state: State): VdomElement = {
       case class RenderedTag(span: VdomElement, style: String)
       def renderTags(tags: Seq[String], seqIndex: Int): Seq[RenderedTag] = tags.zipWithIndex.map {
         case (tag, tagIndex) =>
@@ -172,28 +172,27 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       Integer.max(windowHeight.toInt - 230, 400)
     }
 
-    private def handleCopy(event: ReactEventFromInput): Callback = logExceptions {
+    private def handleCopy(event: ReactEventFromInput): Callback = $.state.map[Unit] { implicit state =>
       event.preventDefault()
 
       modifyEventClipboardData(event)
-      Callback.empty
     }
 
-    private def handleCut(event: ReactEventFromInput): Callback = logExceptions {
+    private def handleCut(event: ReactEventFromInput): Callback = $.state flatMap { implicit state =>
       event.preventDefault()
 
       modifyEventClipboardData(event)
 
       val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
 
-      documentSelectionStore.setSelection($.state.runNow().document, selection)
+      documentSelectionStore.setSelection(state.document, selection)
 
       replaceSelection(replacement = Replacement.empty, selection)
     }
 
-    private def modifyEventClipboardData(event: ReactEventFromInput): Unit = {
+    private def modifyEventClipboardData(event: ReactEventFromInput)(implicit state: State): Unit = {
       val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
-      val document = $.state.runNow().document
+      val document = state.document
 
       if (selection.start != selection.end) {
         val ClipboardData(htmlText, plainText) = convertToClipboardData(document, selection)
@@ -203,11 +202,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
     }
 
-    private def handlePaste(event: ReactEventFromInput): Callback = logExceptions {
+    private def handlePaste(event: ReactEventFromInput): Callback = $.state flatMap { implicit state =>
       event.preventDefault()
       val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
-      implicit val document = $.state.runNow().document
+      implicit val document = state.document
       val formatting =
         if (lastSingletonFormating.cursor == start.detach) {
           lastSingletonFormating.formatting
@@ -222,12 +221,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selection)
     }
 
-    private def updateCursor: Callback = logExceptions {
+    private def updateCursor: Callback = {
       val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       $.modState(_.copy(highlightedTaskIndex = selection.end.seqIndex))
     }
 
-    private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = logExceptions {
+    private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback = {
       val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
       val IndexedSelection(start, end) = selection
       implicit val document = $.state.runNow().document
@@ -890,8 +889,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
     }
 
-    private def setSelection(selection: IndexedSelection): Callback = LogExceptionsCallback {
-      val document = $.state.runNow().document
+    private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
+      val document = state.document
       def mapToNonCollapsedCursor(cursor: IndexedCursor): IndexedCursor = {
         if (maybeGetTaskElement(cursor).isDefined) {
           cursor
