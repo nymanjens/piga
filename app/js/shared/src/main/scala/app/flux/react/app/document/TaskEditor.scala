@@ -527,7 +527,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
 
       val tasksToReplace = for (i <- taskIndices) yield oldDocument.tasks(i)
       val tasksToAdd =
@@ -560,7 +560,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def duplicateTasks(taskIndices: Range, selectionBeforeEdit: IndexedSelection)(
         implicit state: State,
         props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
 
       val newOrderTokens = {
         val taskBefore = oldDocument.tasksOption(taskIndices.last)
@@ -586,7 +586,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
         taskUpdate: Task => Task)(implicit state: State, props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
 
       val IndexedSelection(start, end) = if (updateChildren) selection.includeChildren() else selection
       val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
@@ -603,7 +603,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def updateCharactersInSelection(
         selection: IndexedSelection,
         characterTransform: String => String)(implicit state: State, props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
       val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
       val tasksToAdd =
         for (task <- tasksToReplace)
@@ -682,7 +682,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                   formatting => updateFunc(formatting, value)
                 ))
 
-        val oldDocument = $.state.runNow().document
+        val oldDocument = state.document
         val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
         val tasksToAdd = {
           val candidate = setFormatting(tasksToReplace, value = true)
@@ -716,7 +716,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def editLink(originalSelection: IndexedSelection)(implicit state: State,
                                                               props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
 
       def expandSelection(selection: IndexedSelection): IndexedSelection = {
         def expand(link: String, cursor: IndexedCursor, direction: Int): IndexedCursor = {
@@ -789,7 +789,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     private def moveTasksInSeq(selectionBeforeEdit: IndexedSelection,
                                direction: Int)(implicit state: State, props: Props): Callback = {
-      implicit val oldDocument = $.state.runNow().document
+      implicit val oldDocument = state.document
       val selectionWithChildren = selectionBeforeEdit.includeChildren()
       val IndexedSelection(start, end) = selectionWithChildren
 
@@ -843,8 +843,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
     }
 
-    private def selectExtendedWordAround(cursor: IndexedCursor): Callback = {
-      val document = $.state.runNow().document
+    private def selectExtendedWordAround(cursor: IndexedCursor)(implicit state: State): Callback = {
+      val document = state.document
       val taskContent = document.tasks(cursor.seqIndex).contentString
 
       def moveOffset(offsetInTask: Int, step: Int): Int = {
