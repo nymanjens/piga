@@ -6,6 +6,7 @@ import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.Unique
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.uielements.Bootstrap.Size
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -29,9 +30,9 @@ object Table {
                 ^.colSpan := props.colSpan,
                 <.span(
                   ^.className := "primary-title",
-                  <.i(
-                    ^.className := s"fa fa-angle-${if (state.expanded) "down" else "right"}",
-                    ^.style := js.Dictionary("width" -> "12px")),
+                  Bootstrap.FontAwesomeIcon(s"angle-${if (state.expanded) "down" else "right"}")(
+                    ^.style := js.Dictionary("width" -> "12px")
+                  ),
                   " ",
                   title
                 ),
@@ -65,11 +66,10 @@ object Table {
                 <.td(
                   ^.colSpan := props.colSpan,
                   ^.style := js.Dictionary("textAlign" -> "center"),
-                  <.a(
+                  Bootstrap.Button(size = Size.sm, circle = true, tag = <.a)(
                     ^.onClick --> props.expandNumEntriesCallback.get,
-                    ^.tpe := "button",
-                    ^^.classes("btn", "btn-sm", "btn-default", "btn-circle", "expand-num-entries"),
-                    <.i(^^.classes("fa", "fa-ellipsis-h"))
+                    ^.className := "expand-num-entries",
+                    Bootstrap.FontAwesomeIcon("ellipsis-h"),
                   )
                 )
               )

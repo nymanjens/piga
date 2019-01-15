@@ -5,11 +5,15 @@ import app.models.user.User
 import hydro.common.LoggingUtils.logExceptions
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.<<
+import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.HalfPanel
 import hydro.flux.react.uielements.Table
 import hydro.flux.stores.UserStore
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import hydro.flux.react.uielements.Bootstrap.Variant
+import hydro.flux.react.uielements.Bootstrap.Size
+import hydro.flux.react.uielements.Bootstrap
 
 import scala.collection.immutable.Seq
 import scala.scalajs.js
@@ -38,8 +42,6 @@ final class AllUsersList(implicit i18n: I18n, userStore: UserStore) extends Hydr
             <.th(i18n("app.login-name")),
             <.th(i18n("app.full-name")),
             <.th(i18n("app.is-admin")),
-            <.th(i18n("app.expand-cash-flow")),
-            <.th(i18n("app.expand-liquidation"))
           ),
           tableRowDatas = tableRowDatas(state)
         )
@@ -60,7 +62,7 @@ final class AllUsersList(implicit i18n: I18n, userStore: UserStore) extends Hydr
               Seq[VdomElement](
                 <.td(user.loginName),
                 <.td(user.name),
-                <.td(<<.ifThen(user.isAdmin)(<.i(^.className := "fa fa-check"))),
+                <.td(<<.ifThen(user.isAdmin)(Bootstrap.FontAwesomeIcon("check"))),
               ))
           }
       }

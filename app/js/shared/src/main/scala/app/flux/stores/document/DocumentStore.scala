@@ -58,7 +58,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   // **************** Private helper methods **************** //
   private def syncReplacement(replacement: Replacement): Future[_] = {
     val deletes = replacement.removedTasks.toVector
-      .map(t => EntityModification.createDelete(t.toTaskEntity(_state.document)))
+      .map(t => EntityModification.createRemove(t.toTaskEntity(_state.document)))
     val adds = replacement.addedTasks.map(t => EntityModification.Add(t.toTaskEntity(_state.document)))
 
     entityAccess.persistModifications(deletes ++ adds)
