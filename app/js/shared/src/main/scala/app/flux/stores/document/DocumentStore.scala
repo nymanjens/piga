@@ -53,7 +53,11 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
 
   /** Number of task additions that is not yet synced to `EntityAccess`. */
   private[document] def unsyncedNumberOfTasks: Listenable[Int] =
-    syncer.listenableValue.map(_.addedTasks.size)
+    syncer.listenableValue.map { replacement =>
+      if (replacement.addedTasks.nonEmpty) replacement.addedTasks.size
+      else if (replacement.removedTasks.nonEmpty) 1
+      else 0
+    }
 
   // **************** Private helper methods **************** //
   private def syncReplacement(replacement: Replacement): Future[_] = {
