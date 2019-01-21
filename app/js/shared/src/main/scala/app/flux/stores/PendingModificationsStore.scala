@@ -56,6 +56,10 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess,
         }
     }
 
+    if (modifications.nonEmpty) {
+      editCount = Math.max(1, editCount)
+    }
+
     editCount
   }
 
