@@ -55,7 +55,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   private[document] def unsyncedNumberOfTasks: Listenable[Int] =
     syncer.listenableValue.map { replacement =>
       if (replacement.addedTasks.nonEmpty) replacement.addedTasks.size
-      else if (replacement.removedTasks.nonEmpty) 1
+      else if (replacement.removedTasks.nonEmpty) replacement.removedTasks.size
       else 0
     }
 
