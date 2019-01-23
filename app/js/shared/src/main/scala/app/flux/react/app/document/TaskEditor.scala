@@ -318,7 +318,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
               event.preventDefault()
               val indentIncrease = if (keyCombination.shift) -1 else 1
-              updateTasksInSelection(selection, updateChildren = true) { task =>
+              // Don't indent children if task is empty
+              val updateChildren = !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
+              updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
                 task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
               }
 
