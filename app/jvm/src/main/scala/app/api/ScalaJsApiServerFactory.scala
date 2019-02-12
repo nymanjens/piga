@@ -48,11 +48,6 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
     override def persistEntityModifications(modifications: Seq[EntityModification]): Unit = {
       // check permissions
       for (modification <- modifications) {
-        require(
-          !modification.isInstanceOf[EntityModification.Update[_]],
-          "Update modifications are not allowed by remote clients " +
-            "(see EntityModification.Update documentation)"
-        )
         require(modification.entityType != User.Type, "Please modify users by calling upsertUser() instead")
       }
 
