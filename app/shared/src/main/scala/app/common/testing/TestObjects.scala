@@ -58,15 +58,20 @@ object TestObjects {
   def testUser: User = testUserA
   def testUserRedacted: User = testUser.copy(passwordHash = "<redacted>")
 
-  def testUserPrototype = UserPrototype.create(
-    id = testUser.id,
-    loginName = testUser.loginName,
-    plainTextPassword = "dlkfjasfd",
-    name = testUser.name,
-    isAdmin = testUser.isAdmin)
+  def testUserPrototype =
+    UserPrototype.create(
+      id = testUser.id,
+      loginName = testUser.loginName,
+      plainTextPassword = "dlkfjasfd",
+      name = testUser.name,
+      isAdmin = testUser.isAdmin)
 
   def testDocumentEntity: DocumentEntity =
-    DocumentEntity(name = "Some test document", orderToken = orderTokenA, idOption = Some(129830))
+    DocumentEntity(
+      name = "Some test document",
+      orderToken = orderTokenA,
+      idOption = Some(129830),
+      lastUpdateTime = testLastUpdateTime)
   def testTaskEntity: TaskEntity = TaskEntity(
     documentId = testDocumentEntity.id,
     contentHtml = "abc<b>def</b>",
@@ -75,7 +80,8 @@ object TestObjects {
     collapsed = true,
     delayedUntil = Some(testDate),
     tags = Seq("tag"),
-    idOption = Some(821379)
+    idOption = Some(821379),
+    lastUpdateTime = testLastUpdateTime
   )
 
   def testModificationA: EntityModification = EntityModification.Add(testTaskEntity)
