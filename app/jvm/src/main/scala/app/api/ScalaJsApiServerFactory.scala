@@ -138,7 +138,7 @@ final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
       }
 
       // Do update
-      entityAccess.persistEntityModifications(documents.map(d => EntityModification.createUpdate(d)))
+      entityAccess.persistEntityModifications(documents.map(d => EntityModification.createUpdateAllFields(d)))
     }
   }
 }
