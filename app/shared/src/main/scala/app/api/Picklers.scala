@@ -6,6 +6,7 @@ import app.models.user.User
 import boopickle.Default._
 import hydro.api.StandardPicklers
 import hydro.models.Entity
+import hydro.models.UpdatableEntity.LastUpdateTime
 
 object Picklers extends StandardPicklers {
 
@@ -17,6 +18,7 @@ object Picklers extends StandardPicklers {
       state.pickle(user.name)
       state.pickle(user.isAdmin)
       state.pickle(user.idOption)
+      state.pickle(user.lastUpdateTime)
     }
     override def unpickle(implicit state: UnpickleState): User = logExceptions {
       User(
@@ -24,7 +26,8 @@ object Picklers extends StandardPicklers {
         passwordHash = "<redacted>",
         name = state.unpickle[String],
         isAdmin = state.unpickle[Boolean],
-        idOption = state.unpickle[Option[Long]]
+        idOption = state.unpickle[Option[Long]],
+        lastUpdateTime = state.unpickle[LastUpdateTime]
       )
     }
   }
