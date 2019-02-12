@@ -50,9 +50,10 @@ object SlickEntityTableDefs {
     final class Table(tag: SlickTag) extends EntityTable[DocumentEntity](tag, tableName) {
       def name = column[String]("name")
       def orderToken = column[OrderToken]("orderToken")
+      def lastUpdateTime = column[LastUpdateTime]("lastUpdateTime")
 
       override def * =
-        (name, orderToken, id.?) <> (DocumentEntity.tupled, DocumentEntity.unapply)
+        (name, orderToken, id.?, lastUpdateTime) <> (DocumentEntity.tupled, DocumentEntity.unapply)
     }
   }
 
@@ -74,9 +75,19 @@ object SlickEntityTableDefs {
       def collapsed = column[Boolean]("collapsed")
       def delayedUntil = column[Option[LocalDateTime]]("delayedUntil")
       def tags = column[Seq[String]]("tagsString")(tagsSeqToStringMapper)
+      def lastUpdateTime = column[LastUpdateTime]("lastUpdateTime")
 
       override def * =
-        (documentId, contentHtml, orderToken, indentation, collapsed, delayedUntil, tags, id.?) <> (TaskEntity.tupled, TaskEntity.unapply)
+        (
+          documentId,
+          contentHtml,
+          orderToken,
+          indentation,
+          collapsed,
+          delayedUntil,
+          tags,
+          id.?,
+          lastUpdateTime) <> (TaskEntity.tupled, TaskEntity.unapply)
     }
   }
 }
