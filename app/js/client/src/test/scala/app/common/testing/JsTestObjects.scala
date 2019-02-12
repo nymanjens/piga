@@ -15,16 +15,16 @@ import scala.collection.immutable.Seq
 
 object JsTestObjects {
 
-  val taskA = newTask("Task A", orderToken = orderTokenA, indentation = 2)
-  val taskB = newTask("Task B", orderToken = orderTokenB, indentation = 3)
-  val taskC = newTask("Task C", orderToken = orderTokenC)
-  val taskD = newTask("Task D", orderToken = orderTokenD)
-  val taskE = newTask("Task E", orderToken = orderTokenE)
-  val testTask = taskA
+  def taskA = newTask("Task A", orderToken = orderTokenA, indentation = 2)
+  def taskB = newTask("Task B", orderToken = orderTokenB, indentation = 3)
+  def taskC = newTask("Task C", orderToken = orderTokenC)
+  def taskD = newTask("Task D", orderToken = orderTokenD)
+  def taskE = newTask("Task E", orderToken = orderTokenE)
+  def testTask = taskA
 
-  val testSelection = IndexedSelection.singleton(IndexedCursor(2, 123))
-  val testDetachedCursor = DetachedCursor(taskA, 12938)
-  val testDetachedSelection = DetachedSelection(testDetachedCursor, testDetachedCursor)
+  def testSelection = IndexedSelection.singleton(IndexedCursor(2, 123))
+  def testDetachedCursor = DetachedCursor(taskA, 12938)
+  def testDetachedSelection = DetachedSelection(testDetachedCursor, testDetachedCursor)
 
   def newTask(contentString: String = null,
               content: TextWithMarkup = null,

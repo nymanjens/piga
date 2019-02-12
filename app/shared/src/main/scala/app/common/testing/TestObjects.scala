@@ -18,22 +18,22 @@ import scala.collection.immutable.Seq
 
 object TestObjects {
 
-  val orderTokenA: OrderToken = OrderToken.middleBetween(None, Some(OrderToken.middle))
-  val orderTokenB: OrderToken = OrderToken.middleBetween(Some(OrderToken.middle), None)
-  val orderTokenC: OrderToken = OrderToken.middleBetween(Some(orderTokenB), None)
-  val orderTokenD: OrderToken = OrderToken.middleBetween(Some(orderTokenC), None)
-  val orderTokenE: OrderToken = OrderToken.middleBetween(Some(orderTokenD), None)
+  def orderTokenA: OrderToken = OrderToken.middleBetween(None, Some(OrderToken.middle))
+  def orderTokenB: OrderToken = OrderToken.middleBetween(Some(OrderToken.middle), None)
+  def orderTokenC: OrderToken = OrderToken.middleBetween(Some(orderTokenB), None)
+  def orderTokenD: OrderToken = OrderToken.middleBetween(Some(orderTokenC), None)
+  def orderTokenE: OrderToken = OrderToken.middleBetween(Some(orderTokenD), None)
   def testOrderToken: OrderToken = orderTokenC
 
-  val testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
-  val testInstantA: Instant = Instant.ofEpochMilli(999000001)
-  val testInstantB: Instant = Instant.ofEpochMilli(999000002)
-  val testInstantC: Instant = Instant.ofEpochMilli(999000003)
-  val testInstantD: Instant = Instant.ofEpochMilli(999000004)
+  def testDate: LocalDateTime = LocalDateTimes.createDateTime(2008, MARCH, 13)
+  def testInstantA: Instant = Instant.ofEpochMilli(999000001)
+  def testInstantB: Instant = Instant.ofEpochMilli(999000002)
+  def testInstantC: Instant = Instant.ofEpochMilli(999000003)
+  def testInstantD: Instant = Instant.ofEpochMilli(999000004)
   def testInstant: Instant = testInstantA
-  val testUpdateToken: UpdateToken = s"123782:12378"
+  def testUpdateToken: UpdateToken = s"123782:12378"
 
-  val testLastUpdateTime = LastUpdateTime.allFieldsUpdated(testInstant)
+  def testLastUpdateTime = LastUpdateTime.allFieldsUpdated(testInstant)
 
   def testUserA: User = User(
     loginName = "testUserA",
@@ -45,7 +45,7 @@ object TestObjects {
     idOption = Option(918273),
     lastUpdateTime = testLastUpdateTime,
   )
-  val testUserB: User = User(
+  def testUserB: User = User(
     loginName = "testUserB",
     passwordHash =
       "be196838736ddfd0007dd8b2e8f46f22d440d4c5959925cb49135abc9cdb01e84961aa43dd0ddb6ee59975eb649280d9f44088840af37451828a6412b9b574fc",
@@ -58,16 +58,16 @@ object TestObjects {
   def testUser: User = testUserA
   def testUserRedacted: User = testUser.copy(passwordHash = "<redacted>")
 
-  val testUserPrototype = UserPrototype.create(
+  def testUserPrototype = UserPrototype.create(
     id = testUser.id,
     loginName = testUser.loginName,
     plainTextPassword = "dlkfjasfd",
     name = testUser.name,
     isAdmin = testUser.isAdmin)
 
-  val testDocumentEntity: DocumentEntity =
+  def testDocumentEntity: DocumentEntity =
     DocumentEntity(name = "Some test document", orderToken = orderTokenA, idOption = Some(129830))
-  val testTaskEntity: TaskEntity = TaskEntity(
+  def testTaskEntity: TaskEntity = TaskEntity(
     documentId = testDocumentEntity.id,
     contentHtml = "abc<b>def</b>",
     orderToken = orderTokenA,
@@ -78,12 +78,12 @@ object TestObjects {
     idOption = Some(821379)
   )
 
-  val testModificationA: EntityModification = EntityModification.Add(testTaskEntity)
-  val testModificationB: EntityModification =
+  def testModificationA: EntityModification = EntityModification.Add(testTaskEntity)
+  def testModificationB: EntityModification =
     EntityModification.Add(testUserB.copy(passwordHash = "<redacted>"))
   def testModification: EntityModification = testModificationA
 
-  val testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
+  def testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
     user = testUserRedacted,
     allAccessibleDocuments = Seq(testDocumentEntity),
     i18nMessages = Map("abc" -> "def"),
