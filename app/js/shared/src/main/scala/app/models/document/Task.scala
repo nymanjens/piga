@@ -3,6 +3,7 @@ package app.models.document
 import hydro.common.OrderToken
 import hydro.models.modification.EntityModification
 import hydro.common.time.LocalDateTime
+import hydro.models.UpdatableEntity.LastUpdateTime
 
 import scala.collection.immutable.Seq
 
@@ -12,19 +13,11 @@ final class Task private (val id: Long,
                           val indentation: Int,
                           val collapsed: Boolean,
                           val delayedUntil: Option[LocalDateTime],
-                          val tags: Seq[String])
-    extends Ordered[Task] {
+                          val tags: Seq[String],
+                          lastUpdateTime: LastUpdateTime,
+) extends Ordered[Task] {
 
   def contentString: String = content.contentString
-
-  def equalsIgnoringId(that: Task): Boolean = {
-    this.content == that.content &&
-    this.orderToken == that.orderToken &&
-    this.indentation == that.indentation &&
-    this.collapsed == that.collapsed &&
-    this.delayedUntil == that.delayedUntil &&
-    this.tags == that.tags
-  }
 
   def toTaskEntity(implicit document: Document): TaskEntity =
     TaskEntity(
@@ -35,34 +28,9 @@ final class Task private (val id: Long,
       collapsed = collapsed,
       delayedUntil = delayedUntil,
       tags = tags,
-      idOption = Some(id)
+      idOption = Some(id),
+      lastUpdateTime = lastUpdateTime,
     )
-
-  def copyWithId(newId: Long): Task =
-    new Task(
-      id = newId,
-      content = content,
-      orderToken = orderToken,
-      indentation = indentation,
-      collapsed = collapsed,
-      delayedUntil = delayedUntil,
-      tags = tags)
-
-  def copyWithRandomId(content: TextWithMarkup = null,
-                       orderToken: OrderToken = null,
-                       indentation: Int = -1,
-                       collapsed: java.lang.Boolean = null,
-                       delayedUntil: Option[LocalDateTime] = null,
-                       tags: Seq[String] = null): Task = {
-    Task.withRandomId(
-      content = Option(content) getOrElse this.content,
-      orderToken = Option(orderToken) getOrElse this.orderToken,
-      indentation = if (indentation == -1) this.indentation else indentation,
-      collapsed = if (collapsed == null) this.collapsed else collapsed,
-      delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
-      tags = Option(tags) getOrElse this.tags
-    )
-  }
 
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
@@ -91,7 +59,8 @@ object Task {
       indentation = indentation,
       collapsed = collapsed,
       delayedUntil = delayedUntil,
-      tags = tags
+      tags = tags,
+      lastUpdateTime = LastUpdateTime.neverUpdated,
     )
 
   def fromTaskEntity(taskEntity: TaskEntity): Task =
@@ -102,6 +71,7 @@ object Task {
       indentation = taskEntity.indentation,
       collapsed = taskEntity.collapsed,
       delayedUntil = taskEntity.delayedUntil,
-      tags = taskEntity.tags
+      tags = taskEntity.tags,
+      lastUpdateTime = taskEntity.lastUpdateTime,
     )
 }
