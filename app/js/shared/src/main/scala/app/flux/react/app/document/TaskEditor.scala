@@ -508,14 +508,22 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               ifIndexOrEmpty(replacement.parts.length - 1)(
                 oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
             val baseTask = tasksToReplace.head
-            baseTask.copyWithRandomId(
-              content = newContent,
-              orderToken = newOrderToken,
-              indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
-              collapsed = if (i == 0) baseTask.collapsed else false,
-              delayedUntil = if (i == 0) baseTask.delayedUntil else None,
-              tags = if (i == 0) baseTask.tags else Seq()
-            )
+            if (i == 0) {
+              baseTask.updated(
+                content = newContent,
+                orderToken = newOrderToken,
+                indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent
+              )
+            } else {
+              Task.withRandomId(
+                content = newContent,
+                orderToken = newOrderToken,
+                indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
+                collapsed = false,
+                delayedUntil = None,
+                tags = Seq(),
+              )
+            }
           }
 
       replaceWithHistory(

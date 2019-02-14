@@ -43,14 +43,17 @@ final class Task private (val id: Long,
               delayedUntil: Option[LocalDateTime] = null,
               tags: Seq[String] = null)(implicit clock: Clock): Task = {
     val fieldMask: Seq[ModelField[_, TaskEntity]] = {
-      def ifNonNull(value: Any, field: ModelField[_, TaskEntity]) =
-        if (value == null) Seq() else Seq(field)
-      ifNonNull(content, ModelFields.TaskEntity.contentHtml) ++
-        ifNonNull(content, ModelFields.TaskEntity.orderToken) ++
-        ifNonNull(content, ModelFields.TaskEntity.indentation) ++
-        ifNonNull(content, ModelFields.TaskEntity.collapsed) ++
-        ifNonNull(content, ModelFields.TaskEntity.delayedUntil) ++
-        ifNonNull(content, ModelFields.TaskEntity.tags)
+      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]) = value match {
+        case null           => Seq()
+        case `currentValue` => Seq()
+        case _              => Seq(field)
+      }
+      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
+        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
+        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
+        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
+        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
+        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
     }
     new Task(
       id = id,
