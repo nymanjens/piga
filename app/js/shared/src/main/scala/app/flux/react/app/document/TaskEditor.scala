@@ -582,7 +582,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         )
       }
       val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
-        yield oldDocument.tasks(i).copyWithRandomId(orderToken = orderToken)
+        yield {
+          val taskToCopy = oldDocument.tasks(i)
+          Task.withRandomId(
+            content = taskToCopy.content,
+            orderToken = orderToken,
+            indentation = taskToCopy.indentation,
+            collapsed = taskToCopy.collapsed,
+            delayedUntil = taskToCopy.delayedUntil,
+            tags = taskToCopy.tags,
+          )
+        }
 
       replaceWithHistory(
         tasksToReplace = Seq(),
