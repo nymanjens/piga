@@ -1,9 +1,13 @@
 package app.models.document
 
+import app.models.access.ModelFields
 import hydro.common.OrderToken
+import hydro.common.time.Clock
 import hydro.models.modification.EntityModification
 import hydro.common.time.LocalDateTime
 import hydro.models.UpdatableEntity.LastUpdateTime
+import hydro.models.access.ModelField
+import hydro.models.access.ModelField
 
 import scala.collection.immutable.Seq
 
@@ -31,6 +35,35 @@ final class Task private (val id: Long,
       idOption = Some(id),
       lastUpdateTime = lastUpdateTime,
     )
+
+  def updated(content: TextWithMarkup = null,
+              orderToken: OrderToken = null,
+              indentation: Int = -1,
+              collapsed: java.lang.Boolean = null,
+              delayedUntil: Option[LocalDateTime] = null,
+              tags: Seq[String] = null)(implicit clock: Clock): Task = {
+    val fieldMask: Seq[ModelField[_, TaskEntity]] = {
+      def ifNonNull(value: Any, field: ModelField[_, TaskEntity]) =
+        if (value == null) Seq() else Seq(field)
+      ifNonNull(content, ModelFields.TaskEntity.contentHtml) ++
+        ifNonNull(content, ModelFields.TaskEntity.orderToken) ++
+        ifNonNull(content, ModelFields.TaskEntity.indentation) ++
+        ifNonNull(content, ModelFields.TaskEntity.collapsed) ++
+        ifNonNull(content, ModelFields.TaskEntity.delayedUntil) ++
+        ifNonNull(content, ModelFields.TaskEntity.tags)
+    }
+    new Task(
+      id = id,
+      content = Option(content) getOrElse this.content,
+      orderToken = Option(orderToken) getOrElse this.orderToken,
+      indentation = if (indentation == -1) this.indentation else indentation,
+      collapsed = if (collapsed == null) this.collapsed else collapsed,
+      delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
+      tags = Option(tags) getOrElse this.tags,
+      lastUpdateTime = lastUpdateTime
+        .merge(LastUpdateTime.someFieldsUpdated(fieldMask, clock.nowInstant), forceIncrement = true),
+    )
+  }
 
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {

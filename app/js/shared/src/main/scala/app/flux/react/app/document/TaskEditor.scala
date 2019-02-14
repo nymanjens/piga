@@ -321,7 +321,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               // Don't indent children if task is empty
               val updateChildren = !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
               updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
-                task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
+                task.updated(indentation = zeroIfNegative(task.indentation + indentIncrease))
               }
 
             // Italic
@@ -437,14 +437,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                task.copyWithRandomId(collapsed = false)
+                task.updated(collapsed = false)
               }
 
             // Collapse tasks
             case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                task.copyWithRandomId(collapsed = true)
+                task.updated(collapsed = true)
               }
 
             // Convert to upper case
