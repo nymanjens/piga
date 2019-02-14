@@ -23,6 +23,15 @@ final class Task private (val id: Long,
 
   def contentString: String = content.contentString
 
+  def equalsIgnoringMetadata(that: Task): Boolean = {
+    this.content == that.content &&
+      this.orderToken == that.orderToken &&
+      this.indentation == that.indentation &&
+      this.collapsed == that.collapsed &&
+      this.delayedUntil == that.delayedUntil &&
+      this.tags == that.tags
+  }
+
   def toTaskEntity(implicit document: Document): TaskEntity =
     TaskEntity(
       documentId = document.id,
@@ -44,7 +53,7 @@ final class Task private (val id: Long,
               tags: Seq[String] = null)(implicit clock: Clock): Task = {
     val fieldMask: Seq[ModelField[_, TaskEntity]] = {
       def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]) = value match {
-        case null           => Seq()
+        case null | -1      => Seq()
         case `currentValue` => Seq()
         case _              => Seq(field)
       }

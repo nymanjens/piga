@@ -628,7 +628,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val tasksToAdd =
         for (task <- tasksToReplace)
           yield
-            task.copyWithRandomId(
+            task.updated(
               content = task.content.withTransformedCharacters(
                 beginOffset = selection.startOffsetInTask(task),
                 endOffset = selection.endOffsetInTask(task),
@@ -662,7 +662,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                       tagsToRemove: Seq[String],
                       tagsToAdd: Seq[String]): Callback = {
         def updated(task: Task): Task =
-          task.copyWithRandomId(tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+          task.updated(tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
           tasksToReplace = for (i <- selection.seqIndices) yield document.tasks(i),
           tasksToAdd = for (i <- selection.seqIndices) yield updated(document.tasks(i)),
@@ -695,7 +695,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
           for (task <- tasks)
             yield
-              task.copyWithRandomId(
+              task.updated(
                 content = task.content.withFormatting(
                   beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                   endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
@@ -778,7 +778,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val tasksToAdd = {
           for (task <- tasksToReplace)
             yield
-              task.copyWithRandomId(
+              task.updated(
                 content = task.content
                   .withFormatting(
                     beginOffset = selection.startOffsetInTask(task),
@@ -849,7 +849,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
         val tasksToAdd =
           for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
-            yield task.copyWithRandomId(orderToken = newOrderToken)
+            yield task.updated(orderToken = newOrderToken)
 
         replaceWithHistory(
           tasksToReplace = tasksToReplace,
@@ -900,7 +900,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             true
           } else {
             (tasksToReplace.sorted zip tasksToAdd.sorted).forall {
-              case (t1, t2) => t1 equalsIgnoringId t2
+              case (t1, t2) => t1 equalsIgnoringMetadata t2
             }
           }
         } else {
