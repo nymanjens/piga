@@ -25,11 +25,11 @@ final class Task private (val id: Long,
 
   def equalsIgnoringMetadata(that: Task): Boolean = {
     this.content == that.content &&
-      this.orderToken == that.orderToken &&
-      this.indentation == that.indentation &&
-      this.collapsed == that.collapsed &&
-      this.delayedUntil == that.delayedUntil &&
-      this.tags == that.tags
+    this.orderToken == that.orderToken &&
+    this.indentation == that.indentation &&
+    this.collapsed == that.collapsed &&
+    this.delayedUntil == that.delayedUntil &&
+    this.tags == that.tags
   }
 
   def toTaskEntity(implicit document: Document): TaskEntity =
@@ -76,6 +76,18 @@ final class Task private (val id: Long,
         .merge(LastUpdateTime.someFieldsUpdated(fieldMask, clock.nowInstant), forceIncrement = true),
     )
   }
+
+  def copyWithId(newId: Long): Task =
+    new Task(
+      id = newId,
+      content = content,
+      orderToken = orderToken,
+      indentation = indentation,
+      collapsed = collapsed,
+      delayedUntil = delayedUntil,
+      tags = tags,
+      lastUpdateTime = lastUpdateTime,
+    )
 
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
