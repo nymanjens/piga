@@ -15,6 +15,7 @@ import boopickle.Default._
 import app.api.Picklers._
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hydro.api.ScalaJsApiRequest
 import hydro.common.UpdateTokens.toInstant
 import hydro.common.UpdateTokens.toUpdateToken
 import hydro.common.publisher.Publishers
