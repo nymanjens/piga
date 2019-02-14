@@ -964,25 +964,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
   }
 
   // **************** Helper classes and methods **************** //
-  @visibleForTesting private[document] case class Replacement(parts: Seq[Replacement.Part]) {
-    def contentString: String = parts.map(_.contentString).mkString
-  }
-  @visibleForTesting private[document] object Replacement {
-    def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
-      Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
-    def fromString(string: String, formatting: Formatting): Replacement =
-      Replacement.create(TextWithMarkup(string, formatting))
-    def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
-      Replacement.create(
-        TextWithMarkup.empty,
-        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
-    def empty: Replacement = Replacement.create(TextWithMarkup.empty)
-
-    case class Part(content: TextWithMarkup, indentationRelativeToCurrent: Int) {
-      def contentString: String = content.contentString
-    }
-  }
-  @visibleForTesting private[document] case class ClipboardData(htmlText: String, plainText: String)
   @visibleForTesting private[document] def convertToClipboardData(
       document: Document,
       selection: IndexedSelection): ClipboardData = {
@@ -1028,14 +1009,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
   }
 
   @visibleForTesting private[document] def clipboardStringToReplacement(
-      clipboardString: String,
+      clipboardData: ClipboardData,
       baseFormatting: Formatting): Replacement = {
-    val html = {
-      val resultHolder = dom.document.createElement("span")
-      resultHolder.innerHTML = clipboardString
-      resultHolder
-    }
-
     def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
         true
@@ -1082,7 +1057,21 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       pushChildNodesWithoutLi()
     }
 
-    addPastedText(Seq(html), nextRelativeIndentation = -1)
+    if (clipboardData.htmlText.nonEmpty) {
+      val htmlElement = {
+        val resultHolder = dom.document.createElement("span")
+        resultHolder.innerHTML = clipboardData.htmlText
+        resultHolder
+      }
+      addPastedText(Seq(htmlElement), nextRelativeIndentation = -1)
+    } else {
+      Splitter.on('\n').split(clipboardData.plainText).foreach { line =>
+        partsBuilder.append(
+          Replacement.Part(
+            content = TextWithMarkup(line, formatting = baseFormatting),
+            indentationRelativeToCurrent = 0))
+      }
+    }
     Replacement(partsBuilder.toVector)
   }
 
@@ -1111,15 +1100,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     rect.right <= dom.window.innerWidth
   }
 
-  private def getAnyClipboardString(event: ReactEventFromInput): String = {
-    val htmlString =
-      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String]
-    if (htmlString.nonEmpty) {
-      htmlString
-    } else {
-      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String]
-    }
-  }
+  private def getAnyClipboardString(event: ReactEventFromInput): ClipboardData = ClipboardData(
+    htmlText =
+      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
+    plainText =
+      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
+  )
 
   private def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
     Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
@@ -1153,5 +1139,26 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
 
+  @visibleForTesting private[document] case class Replacement(parts: Seq[Replacement.Part]) {
+    def contentString: String = parts.map(_.contentString).mkString
+  }
+  @visibleForTesting private[document] object Replacement {
+    def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
+      Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
+    def fromString(string: String, formatting: Formatting): Replacement =
+      Replacement.create(TextWithMarkup(string, formatting))
+    def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
+      Replacement.create(
+        TextWithMarkup.empty,
+        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
+    def empty: Replacement = Replacement.create(TextWithMarkup.empty)
+
+    case class Part(content: TextWithMarkup, indentationRelativeToCurrent: Int) {
+      def contentString: String = content.contentString
+    }
+  }
+
   private case class SingletonFormating(cursor: DetachedCursor, formatting: Formatting)
+
+  @visibleForTesting private[document] case class ClipboardData(htmlText: String, plainText: String)
 }

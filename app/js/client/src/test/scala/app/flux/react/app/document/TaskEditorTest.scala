@@ -74,44 +74,53 @@ object TaskEditorTest extends TestSuite {
         taskEditor.Replacement.Part(TextWithMarkup(content), indentation)
       def replacementPartFormatted(content: TextWithMarkup, indentation: Int = 0) =
         taskEditor.Replacement.Part(content, indentation)
+      def asHtml(s: String) = taskEditor.ClipboardData(htmlText = s, plainText = "")
+      def asText(s: String) = taskEditor.ClipboardData(htmlText = "", plainText = s)
 
-      "without list tags" - {
-        "p and div" - {
-          taskEditor.clipboardStringToReplacement(
-            removeWhitespace("""
+      "htmlText input" - {
+        "without list tags" - {
+          "p and div" - {
+            taskEditor.clipboardStringToReplacement(
+              asHtml(removeWhitespace("""
               <p>a<br />b</p>
               <div>c</div>
               d
-            """),
-            baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("a"), replacementPart("b"), replacementPart("c"), replacementPart("d"))
-        }
-        "br" - {
-          taskEditor.clipboardStringToReplacement("abc<br/>def", baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("abc"), replacementPart("def"))
-        }
-        "newline" - {
-          taskEditor.clipboardStringToReplacement("abc\ndef", baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("abc"), replacementPart("def"))
-        }
-        "ignores formatting" - {
-          taskEditor.clipboardStringToReplacement("<b>abc</b>", baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("abc"))
-        }
-        "plain text" - {
-          taskEditor.clipboardStringToReplacement(
-            """
+            """)),
+              baseFormatting = Formatting.none) ==>
+              replacement(
+                TextWithMarkup("a"),
+                replacementPart("b"),
+                replacementPart("c"),
+                replacementPart("d"))
+          }
+          "br" - {
+            taskEditor
+              .clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("abc"), replacementPart("def"))
+          }
+          "newline" - {
+            taskEditor.clipboardStringToReplacement(asHtml("abc\ndef"), baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("abc"), replacementPart("def"))
+          }
+          "ignores formatting" - {
+            taskEditor
+              .clipboardStringToReplacement(asHtml("<b>abc</b>"), baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("abc"))
+          }
+          "plain text" - {
+            taskEditor.clipboardStringToReplacement(
+              asHtml("""
               |x
               |y
-            """.stripMargin.trim,
-            baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("x"), replacementPart("y"))
+            """.stripMargin.trim),
+              baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("x"), replacementPart("y"))
+          }
         }
-      }
-      "with list tags" - {
-        "single level" - {
-          taskEditor.clipboardStringToReplacement(
-            removeWhitespace("""
+        "with list tags" - {
+          "single level" - {
+            taskEditor.clipboardStringToReplacement(
+              asHtml(removeWhitespace("""
              <ul>
                <li>
                  <p>a<br />b</p>
@@ -119,32 +128,46 @@ object TaskEditorTest extends TestSuite {
                </li>
                <li>xyz</li>
              </ul>
-            """),
-            baseFormatting = Formatting.none
-          ) ==>
-            replacement(TextWithMarkup("a\nb\nc"), replacementPart("xyz"))
+            """)),
+              baseFormatting = Formatting.none
+            ) ==>
+              replacement(TextWithMarkup("a\nb\nc"), replacementPart("xyz"))
+          }
         }
-      }
-      "inside and outside list tags" - {
-        taskEditor.clipboardStringToReplacement(
-          removeWhitespace("""
+        "inside and outside list tags" - {
+          taskEditor.clipboardStringToReplacement(
+            asHtml(removeWhitespace("""
              a<i>b</i>c
              <ul>
                <li>
                  d<i>e</i>f
                </li>
              </ul>
-            """),
-          baseFormatting = Formatting.none
-        ) ==>
-          replacement(
-            TextWithMarkup("abc"),
-            replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
+            """)),
+            baseFormatting = Formatting.none
+          ) ==>
+            replacement(
+              TextWithMarkup("abc"),
+              replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
+        }
+      }
+      "plainText input" - {
+        "newline" - {
+          taskEditor.clipboardStringToReplacement(asText("abc\ndef"), baseFormatting = Formatting.none) ==>
+            replacement(TextWithMarkup("abc"), replacementPart("def"))
+        }
+        "with HTML tag" - {
+          taskEditor
+            .clipboardStringToReplacement(asText("abc<br/>def"), baseFormatting = Formatting.none) ==>
+            replacement(TextWithMarkup("abc<br/>def"))
+        }
       }
     }
     "convertToClipboardData(clipboardStringToReplacement)" - {
+      def asHtml(s: String) = taskEditor.ClipboardData(htmlText = s, plainText = "")
       def roundTrip(html: String): Unit = {
-        val replacement = taskEditor.clipboardStringToReplacement(html, baseFormatting = Formatting.none)
+        val replacement =
+          taskEditor.clipboardStringToReplacement(asHtml(html), baseFormatting = Formatting.none)
         val clipboardData = taskEditor.convertToClipboardData(
           newDocument(
             replacement.parts.map(
