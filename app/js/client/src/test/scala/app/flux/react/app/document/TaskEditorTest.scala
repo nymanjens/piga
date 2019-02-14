@@ -150,6 +150,11 @@ object TaskEditorTest extends TestSuite {
               TextWithMarkup("abc"),
               replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
         }
+        "with baseFormatting" - {
+          taskEditor
+            .clipboardStringToReplacement(asHtml("abc"), baseFormatting = Formatting(italic = true)) ==>
+            replacement(italic("abc"))
+        }
       }
       "plainText input" - {
         "newline" - {
@@ -160,6 +165,11 @@ object TaskEditorTest extends TestSuite {
           taskEditor
             .clipboardStringToReplacement(asText("abc<br/>def"), baseFormatting = Formatting.none) ==>
             replacement(TextWithMarkup("abc<br/>def"))
+        }
+        "with baseFormatting" - {
+          taskEditor
+            .clipboardStringToReplacement(asText("abc"), baseFormatting = Formatting(italic = true)) ==>
+            replacement(italic("abc"))
         }
       }
     }
