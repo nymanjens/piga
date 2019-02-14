@@ -512,9 +512,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               content = newContent,
               orderToken = newOrderToken,
               indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
-              collapsed = if (newContent.nonEmpty) baseTask.collapsed else false,
-              delayedUntil = if (newContent.nonEmpty) baseTask.delayedUntil else None,
-              tags = if (newContent.nonEmpty) baseTask.tags else Seq()
+              collapsed = if (i == 0) baseTask.collapsed else false,
+              delayedUntil = if (i == 0) baseTask.delayedUntil else None,
+              tags = if (i == 0) baseTask.tags else Seq()
             )
           }
 
