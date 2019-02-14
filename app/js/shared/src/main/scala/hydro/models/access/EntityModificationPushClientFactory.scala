@@ -112,8 +112,8 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
         websocketClient match {
           case Some(clientFuture)
               if clientFuture.isCompleted &&
-                (clock.nowInstant - lastPacketTime) > java.time.Duration.ofSeconds(60) &&
-                (clock.nowInstant - lastStartToOpenTime) > java.time.Duration.ofSeconds(60) =>
+                (clock.nowInstant - lastPacketTime) > java.time.Duration.ofSeconds(10) &&
+                (clock.nowInstant - lastStartToOpenTime) > java.time.Duration.ofSeconds(10) =>
             println(
               s"  [$name] WebSocket didn't receive heartbeat for 60 seconds. Closing and restarting connection")
             websocketClient = None

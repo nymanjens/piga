@@ -141,7 +141,7 @@ object InternalApi {
     private val publisher_ : TriggerablePublisher[EntityModificationPushHeartbeat.type] =
       new TriggerablePublisher()
 
-    actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = 30.seconds) {
+    actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = 5.seconds) {
       publisher_.trigger(EntityModificationPushHeartbeat)
     }
 
