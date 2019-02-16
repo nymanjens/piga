@@ -49,7 +49,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
       val forwardEdit = edits(nextRedoEditIndex - 1)
-      randomizeIdsInHistory(forwardEdit.reverse.addedTasks.map(_.id))
+      randomizeIdsInHistory(forwardEdit.reverse.addedTasks.filter(!_.hasUpdatesSinceCreation).map(_.id))
       val newForwardEdit = edits(nextRedoEditIndex - 1)
 
       nextRedoEditIndex -= 1
@@ -64,7 +64,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
   def redo(): Option[Edit] = {
     if (nextRedoEditIndex < edits.length) {
       val edit = edits(nextRedoEditIndex)
-      randomizeIdsInHistory(edit.addedTasks.map(_.id))
+      randomizeIdsInHistory(edit.addedTasks.filter(!_.hasUpdatesSinceCreation).map(_.id))
       val newEdit = edits(nextRedoEditIndex)
 
       nextRedoEditIndex += 1

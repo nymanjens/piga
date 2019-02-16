@@ -8,6 +8,7 @@ import hydro.common.time.LocalDateTime
 import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.access.ModelField
 import hydro.models.access.ModelField
+import hydro.models.access.ModelField.any
 
 import scala.collection.immutable.Seq
 
@@ -22,6 +23,8 @@ final class Task private (val id: Long,
 ) extends Ordered[Task] {
 
   def contentString: String = content.contentString
+
+  def hasUpdatesSinceCreation: Boolean = lastUpdateTime != LastUpdateTime.neverUpdated
 
   def equalsIgnoringMetadata(that: Task): Boolean = {
     this.content == that.content &&
@@ -51,8 +54,8 @@ final class Task private (val id: Long,
               collapsed: java.lang.Boolean = null,
               delayedUntil: Option[LocalDateTime] = null,
               tags: Seq[String] = null)(implicit clock: Clock): Task = {
-    val fieldMask: Seq[ModelField[_, TaskEntity]] = {
-      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]) = value match {
+    val fieldMask = {
+      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] = value match {
         case null | -1      => Seq()
         case `currentValue` => Seq()
         case _              => Seq(field)
