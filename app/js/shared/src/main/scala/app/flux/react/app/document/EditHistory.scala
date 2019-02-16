@@ -5,6 +5,7 @@ import java.time.Instant
 
 import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import app.flux.react.app.document.EditHistory.Edit
+import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Task
@@ -48,14 +49,20 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
-      val forwardEdit = edits(nextRedoEditIndex - 1)
-      randomizeIdsInHistory(forwardEdit.reverse.addedTasks.filter(!_.hasUpdatesSinceCreation).map(_.id))
-      val newForwardEdit = edits(nextRedoEditIndex - 1)
+      val edit = edits(nextRedoEditIndex - 1).reverse
+
+      val newEdit = edit.copy(addedTasks = for (task <- edit.addedTasks) yield {
+        val newTask = EditHistory.makeReapplyableTask(task, edit)
+        replaceTaskInHistory(task, newTask)
+        replaceIdsInHistory(task.id, newTask.id)
+        newTask
+      })
+      require(newEdit == edits(nextRedoEditIndex - 1).reverse)
 
       nextRedoEditIndex -= 1
       lastEditCanBeMerged = false
 
-      Some(newForwardEdit.reverse)
+      Some(newEdit)
     } else {
       None
     }
@@ -64,8 +71,14 @@ private[document] final class EditHistory(implicit clock: Clock) {
   def redo(): Option[Edit] = {
     if (nextRedoEditIndex < edits.length) {
       val edit = edits(nextRedoEditIndex)
-      randomizeIdsInHistory(edit.addedTasks.filter(!_.hasUpdatesSinceCreation).map(_.id))
-      val newEdit = edits(nextRedoEditIndex)
+
+      val newEdit = edit.copy(addedTasks = for (task <- edit.addedTasks) yield {
+        val newTask = EditHistory.makeReapplyableTask(task, edit)
+        replaceTaskInHistory(task, newTask)
+        replaceIdsInHistory(task.id, newTask.id)
+        newTask
+      })
+      require(newEdit == edits(nextRedoEditIndex))
 
       nextRedoEditIndex += 1
       lastEditCanBeMerged = false
@@ -74,6 +87,16 @@ private[document] final class EditHistory(implicit clock: Clock) {
       None
     }
   }
+
+  private def replaceTaskInHistory(oldTask: Task, newTask: Task): Unit = {
+    ???
+  }
+
+  private def replaceIdsInHistory(oldId: Long, newId: Long): Unit = {
+    ???
+  }
+
+  private def applyUpdateToHistory(isApplicable: Task => Boolean, updated: Task => Task): Unit = ???
 
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
@@ -124,6 +147,15 @@ private[document] final class EditHistory(implicit clock: Clock) {
 }
 
 private[document] object EditHistory {
+
+  private[document] def makeReapplyableTask(task: Task, parentEdit: Edit)(implicit clock: Clock): Task = {
+    if (task.hasUpdatesSinceCreation) {
+      ???
+    } else { // This is a new task
+      task.copyWithId(EntityModification.generateRandomId())
+    }
+  }
+
   private[document] case class Edit(removedTasks: Seq[Task],
                                     addedTasks: Seq[Task],
                                     selectionBeforeEdit: DetachedSelection,
