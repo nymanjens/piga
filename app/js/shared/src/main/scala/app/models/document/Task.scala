@@ -99,11 +99,6 @@ final class Task private (val id: Long,
 
   // **************** Object methods **************** //
   override def toString: String = s"Task($id, $contentString)"
-  override def equals(o: scala.Any): Boolean = o match {
-    case that: Task => this.id == that.id
-    case _          => false
-  }
-  override def hashCode(): Int = id.hashCode()
 }
 object Task {
   def withRandomId(content: TextWithMarkup,
