@@ -88,15 +88,13 @@ private[document] final class EditHistory(implicit clock: Clock) {
     }
   }
 
-  private def replaceTaskInHistory(oldTask: Task, newTask: Task): Unit = {
-    ???
-  }
+  private def replaceTaskInHistory(oldTask: Task, newTask: Task): Unit =
+    applyUpdateToHistory(task => if (task == oldTask) newTask else task)
 
-  private def replaceIdsInHistory(oldId: Long, newId: Long): Unit = {
-    ???
-  }
+  private def replaceIdsInHistory(oldId: Long, newId: Long): Unit =
+    applyUpdateToHistory(task => if (task.id == oldId) task.copyWithId(newId) else task)
 
-  private def applyUpdateToHistory(isApplicable: Task => Boolean, updated: Task => Task): Unit = ???
+  private def applyUpdateToHistory(updated: Task => Task): Unit = ???
 
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
