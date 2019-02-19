@@ -626,18 +626,17 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selection: IndexedSelection,
         characterTransform: String => String)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-      val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
-        for (task <- tasksToReplace)
-          yield
-            task.updated(
-              content = task.content.withTransformedCharacters(
-                beginOffset = selection.startOffsetInTask(task),
-                endOffset = selection.endOffsetInTask(task),
-                characterTransform = characterTransform
-              )
-            )
 
+      val taskUpdates = for (task <- oldDocument.tasksIn(selection))
+        yield
+          TaskUpdate.fromFields(
+            originalTask = task,
+            content = task.content.withTransformedCharacters(
+              beginOffset = selection.startOffsetInTask(task),
+              endOffset = selection.endOffsetInTask(task),
+              characterTransform = characterTransform
+            )
+          )
       replaceWithHistory(
         edit = DocumentEdit(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
