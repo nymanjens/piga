@@ -608,12 +608,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
-        taskUpdate: Task => Task)(implicit state: State, props: Props): Callback = {
+        taskUpdate: Task => TaskUpdate)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-
-      val IndexedSelection(start, end) = if (updateChildren) selection.includeChildren() else selection
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-      val tasksToAdd = tasksToReplace.map(taskUpdate)
+      val updateSelection = if (updateChildren) selection.includeChildren() else selection
+      val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
 
       replaceWithHistory(
         edit = DocumentEdit(taskUpdates = taskUpdates),
