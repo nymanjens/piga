@@ -13,6 +13,8 @@ import app.models.document.Document.DetachedCursor
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.Document
+import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.TaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
@@ -838,23 +840,19 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       if (task1.isEmpty && task2.isEmpty) {
         Callback.empty
       } else {
-
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-
         val newOrderTokens = {
           OrderToken.evenlyDistributedValuesBetween(
-            numValues = tasksToReplace.length,
+            numValues = selectionWithChildren.seqIndices.length,
             lowerExclusive = task1.map(_.orderToken),
             higherExclusive = task2.map(_.orderToken)
           )
         }
-        val tasksToAdd =
-          for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
-            yield task.updated(orderToken = newOrderToken)
+
+        val taskUpdates = for ((i, newOrderToken) <- selectionWithChildren.seqIndices zip newOrderTokens)
+          yield TaskUpdate.fromFields(originalTask = oldDocument.tasks(i), orderToken = newOrderToken)
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit(taskUpdates = taskUpdates),
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
             selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
@@ -890,38 +888,22 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def replaceWithHistory(
-        tasksToReplace: Seq[Task],
-        tasksToAdd: Seq[Task],
+        edit: DocumentEdit,
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "")(implicit state: State, props: Props): Callback = {
-      def isNoOp: Boolean = {
-        if (tasksToReplace.size == tasksToAdd.size && selectionBeforeEdit == selectionAfterEdit) {
-          if (tasksToReplace.isEmpty) {
-            true
-          } else {
-            (tasksToReplace.sorted zip tasksToAdd.sorted).forall {
-              case (t1, t2) => t1 equalsIgnoringMetadata t2
-            }
-          }
-        } else {
-          false
-        }
-      }
 
-      if (isNoOp) {
+      if (edit.isNoOp) {
         Callback.empty
       } else {
         val documentStore = props.documentStore
         val oldDocument = state.document
-        val newDocument =
-          documentStore.replaceTasksWithoutCallingListeners(toReplace = tasksToReplace, toAdd = tasksToAdd)
+        val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
 
         $.modState(
           _.copy(document = newDocument), {
             editHistory.addEdit(
-              removedTasks = tasksToReplace,
-              addedTasks = tasksToAdd,
+              documentEdit = edit,
               selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
               selectionAfterEdit = selectionAfterEdit.detach(newDocument),
               replacementString = replacementString

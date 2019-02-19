@@ -13,11 +13,30 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-case class DocumentEdit(removedTasks: Seq[Task], addedTasks: Seq[Task], taskUpdates: Seq[TaskUpdate]) {
+case class DocumentEdit(removedTasks: Seq[Task] = Seq(), addedTasks: Seq[Task] = Seq(), taskUpdates: Seq[TaskUpdate] = Seq()) {
 
   def reverse: DocumentEdit = ???
 
   def toEntityModifications: Seq[EntityModification] = ???
+
+  def isNoOp: Boolean = {
+    def removedEqualsAdded = {
+      if (removedTasks.size == addedTasks.size) {
+        if (removedTasks.isEmpty) {
+          true
+        } else {
+          (removedTasks.sorted zip addedTasks.sorted).forall {
+            case (t1, t2) => t1 equalsIgnoringMetadata t2
+          }
+        }
+      } else {
+        false
+      }
+    }
+    def updatesAreNoOp = taskUpdates.forall(_.isNoOp)
+
+    removedEqualsAdded && updatesAreNoOp
+  }
 }
 object DocumentEdit {
   case class TaskUpdate private (
@@ -30,6 +49,8 @@ object DocumentEdit {
       tags: Option[Seq[String]],
   ) {
     def reverse: TaskUpdate = ???
+
+    def isNoOp: Boolean = ???
 
     def toEntityModification(implicit clock: Clock,
                              document: Document): EntityModification.Update[TaskEntity] = {

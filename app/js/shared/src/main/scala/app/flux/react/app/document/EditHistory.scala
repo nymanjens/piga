@@ -8,6 +8,7 @@ import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
+import app.models.document.DocumentEdit
 import app.models.document.Task
 import hydro.models.modification.EntityModification
 import hydro.common.time.Clock
@@ -23,11 +24,16 @@ private[document] final class EditHistory(implicit clock: Clock) {
   private var lastEditCanBeMerged: Boolean = false
 
   // **************** public API **************** //
-  def addEdit(removedTasks: Seq[Task],
-              addedTasks: Seq[Task],
+  def addEdit(documentEdit: DocumentEdit,
               selectionBeforeEdit: DetachedSelection,
               selectionAfterEdit: DetachedSelection,
-              replacementString: String): Unit = {
+              replacementString: String): Unit = ???
+
+  @Deprecated def addEdit(removedTasks: Seq[Task],
+                          addedTasks: Seq[Task],
+                          selectionBeforeEdit: DetachedSelection,
+                          selectionAfterEdit: DetachedSelection,
+                          replacementString: String): Unit = {
     val newEdit = new Edit(
       removedTasks = removedTasks,
       addedTasks = addedTasks,
@@ -154,8 +160,7 @@ private[document] object EditHistory {
     }
   }
 
-  private[document] case class Edit(removedTasks: Seq[Task],
-                                    addedTasks: Seq[Task],
+  private[document] case class Edit(documentEdit: DocumentEdit,
                                     selectionBeforeEdit: DetachedSelection,
                                     selectionAfterEdit: DetachedSelection,
                                     private[EditHistory] val replacementString: String,
