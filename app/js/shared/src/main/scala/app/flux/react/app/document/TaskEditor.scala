@@ -542,7 +542,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
-      val tasksToReplace = for (i <- taskIndices) yield oldDocument.tasks(i)
+      val tasksToRemove = for (i <- taskIndices) yield oldDocument.tasks(i)
       val tasksToAdd =
         if (oldDocument.tasks.size > taskIndices.size) Seq()
         else // Removing all tasks in this document --> Replace the last task with an empty task
@@ -557,8 +557,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             ))
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit(removedTasks = tasksToRemove, addedTasks = tasksToAdd),
         selectionBeforeEdit = IndexedSelection(
           IndexedCursor.atStartOfTask(taskIndices.head),
           IndexedCursor.atEndOfTask(taskIndices.last)),
