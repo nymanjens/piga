@@ -4,6 +4,7 @@ import app.flux.stores.document.DocumentStore.Replacement
 import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
 import app.models.document.Document
+import app.models.document.DocumentEdit
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
@@ -57,6 +58,8 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     alreadyAddedTaskIds ++= toAdd.map(_.id)
     newDocument
   }
+
+  def applyEditWithoutCallingListeners(documentEdit: DocumentEdit): Document = ???
 
   /** Number of task additions that is not yet synced to `EntityAccess`. */
   private[document] def unsyncedNumberOfTasks: Listenable[Int] =

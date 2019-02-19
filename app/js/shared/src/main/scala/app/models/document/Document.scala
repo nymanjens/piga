@@ -26,6 +26,8 @@ final class Document(val id: Long,
 
   def withAppliedEntityModifications(modifications: Seq[EntityModification]): Document = ???
 
+  def withAppliedEdit(documentEdit: DocumentEdit): Document = ???
+
   // TODO: Remove
   @Deprecated def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
