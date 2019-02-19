@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.models.access.ModelFields
+import app.models.document.Task.FakeJsTaskEntity
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.models.modification.EntityModification
@@ -9,22 +10,24 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.access.ModelField
 import hydro.models.access.ModelField
 import hydro.models.access.ModelField.any
+import hydro.models.Entity
+import hydro.models.UpdatableEntity
 
 import scala.collection.immutable.Seq
 
-final class Task private (val id: Long,
-                          val content: TextWithMarkup,
-                          val orderToken: OrderToken,
-                          val indentation: Int,
-                          val collapsed: Boolean,
-                          val delayedUntil: Option[LocalDateTime],
-                          val tags: Seq[String],
-                          lastUpdateTime: LastUpdateTime,
-) extends Ordered[Task] {
+case class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
+
+  def id: Long = jsTaskEntity.id
+  def content: TextWithMarkup = jsTaskEntity.content
+  def orderToken: OrderToken = jsTaskEntity.orderToken
+  def indentation: Int = jsTaskEntity.indentation
+  def collapsed: Boolean = jsTaskEntity.collapsed
+  def delayedUntil: Option[LocalDateTime] = jsTaskEntity.delayedUntil
+  def tags: Seq[String] = jsTaskEntity.tags
 
   def contentString: String = content.contentString
 
-  def hasUpdatesSinceCreation: Boolean = lastUpdateTime != LastUpdateTime.neverUpdated
+  def hasUpdatesSinceCreation: Boolean = jsTaskEntity.lastUpdateTime != LastUpdateTime.neverUpdated
 
   def equalsIgnoringMetadata(that: Task): Boolean = {
     this.content == that.content &&
@@ -35,31 +38,34 @@ final class Task private (val id: Long,
     this.tags == that.tags
   }
 
-  def toTaskEntity(implicit document: Document): TaskEntity =
+  def toTaskEntity: TaskEntity =
     TaskEntity(
-      documentId = document.id,
-      contentHtml = content.toHtml,
-      orderToken = orderToken,
-      indentation = indentation,
-      collapsed = collapsed,
-      delayedUntil = delayedUntil,
-      tags = tags,
-      idOption = Some(id),
-      lastUpdateTime = lastUpdateTime,
+      documentId = jsTaskEntity.documentId,
+      contentHtml = jsTaskEntity.content.toHtml,
+      orderToken = jsTaskEntity.orderToken,
+      indentation = jsTaskEntity.indentation,
+      collapsed = jsTaskEntity.collapsed,
+      delayedUntil = jsTaskEntity.delayedUntil,
+      tags = jsTaskEntity.tags,
+      idOption = jsTaskEntity.idOption,
+      lastUpdateTime = jsTaskEntity.lastUpdateTime,
     )
 
-  def updated(content: TextWithMarkup = null,
-              orderToken: OrderToken = null,
-              indentation: Int = -1,
-              collapsed: java.lang.Boolean = null,
-              delayedUntil: Option[LocalDateTime] = null,
-              tags: Seq[String] = null)(implicit clock: Clock): Task = {
+  def merged(that: Task): Task = ???
+
+  @Deprecated def updated(content: TextWithMarkup = null,
+                          orderToken: OrderToken = null,
+                          indentation: Int = -1,
+                          collapsed: java.lang.Boolean = null,
+                          delayedUntil: Option[LocalDateTime] = null,
+                          tags: Seq[String] = null)(implicit clock: Clock): Task = {
     val fieldMask = {
-      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] = value match {
-        case null | -1      => Seq()
-        case `currentValue` => Seq()
-        case _              => Seq(field)
-      }
+      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
+        value match {
+          case null | -1      => Seq()
+          case `currentValue` => Seq()
+          case _              => Seq(field)
+        }
       ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
         ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
         ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
@@ -80,53 +86,65 @@ final class Task private (val id: Long,
     )
   }
 
-  def copyWithId(newId: Long): Task =
-    new Task(
-      id = newId,
-      content = content,
-      orderToken = orderToken,
-      indentation = indentation,
-      collapsed = collapsed,
-      delayedUntil = delayedUntil,
-      tags = tags,
-      lastUpdateTime = lastUpdateTime,
-    )
+  def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = id))
 
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken
   }
-
-  // **************** Object methods **************** //
-  override def toString: String = s"Task($id, $contentString)"
 }
+
 object Task {
   def withRandomId(content: TextWithMarkup,
                    orderToken: OrderToken,
                    indentation: Int,
                    collapsed: Boolean,
                    delayedUntil: Option[LocalDateTime],
-                   tags: Seq[String]): Task =
+                   tags: Seq[String])(implicit document: Document): Task =
     new Task(
-      id = EntityModification.generateRandomId(),
-      content = content,
-      orderToken = orderToken,
-      indentation = indentation,
-      collapsed = collapsed,
-      delayedUntil = delayedUntil,
-      tags = tags,
-      lastUpdateTime = LastUpdateTime.neverUpdated,
-    )
+      Task.FakeJsTaskEntity(
+        documentId = document.id,
+        content = content,
+        orderToken = orderToken,
+        indentation = indentation,
+        collapsed = collapsed,
+        delayedUntil = delayedUntil,
+        tags = tags,
+        idValue = EntityModification.generateRandomId(),
+        lastUpdateTime = LastUpdateTime.neverUpdated,
+      ))
 
   def fromTaskEntity(taskEntity: TaskEntity): Task =
     new Task(
-      id = taskEntity.id,
-      content = TextWithMarkup.fromHtml(taskEntity.contentHtml),
-      orderToken = taskEntity.orderToken,
-      indentation = taskEntity.indentation,
-      collapsed = taskEntity.collapsed,
-      delayedUntil = taskEntity.delayedUntil,
-      tags = taskEntity.tags,
-      lastUpdateTime = taskEntity.lastUpdateTime,
-    )
+      Task.FakeJsTaskEntity(
+        documentId = taskEntity.documentId,
+        content = TextWithMarkup.fromHtml(taskEntity.contentHtml),
+        orderToken = taskEntity.orderToken,
+        indentation = taskEntity.indentation,
+        collapsed = taskEntity.collapsed,
+        delayedUntil = taskEntity.delayedUntil,
+        tags = taskEntity.tags,
+        idValue = taskEntity.id,
+        lastUpdateTime = taskEntity.lastUpdateTime,
+      ))
+
+  /**
+    * Fake entity that provides a way to re-use UpdatableEntity logic without converting `TextWithMarkup` into
+    * `String`.
+    */
+  private case class FakeJsTaskEntity(documentId: Long,
+                                      content: TextWithMarkup,
+                                      orderToken: OrderToken,
+                                      indentation: Int,
+                                      collapsed: Boolean,
+                                      delayedUntil: Option[LocalDateTime],
+                                      tags: Seq[String],
+                                      idValue: Long,
+                                      override val lastUpdateTime: LastUpdateTime =
+                                        LastUpdateTime.neverUpdated,
+  ) extends UpdatableEntity {
+    override def idOption: Option[Long] = Some(id)
+    override def withId(id: Long) = copy(idValue = id)
+    override def withLastUpdateTime(time: LastUpdateTime): Entity = copy(lastUpdateTime = time)
+  }
 }
