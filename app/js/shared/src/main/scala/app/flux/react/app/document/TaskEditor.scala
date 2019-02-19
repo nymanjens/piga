@@ -133,31 +133,32 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
-            case (task, i, maybeAmountCollapsed) =>
-              val nodeType = state.document.tasksOption(i + 1) match {
+            case (task, taskIndex, maybeAmountCollapsed) =>
+              // TODO: val taskIndex = document.indexOf(task)
+              val nodeType = state.document.tasksOption(taskIndex + 1) match {
                 case _ if task.indentation == 0                                => "root"
                 case Some(nextTask) if nextTask.indentation > task.indentation => "node"
                 case _                                                         => "leaf"
               }
-              val renderedTags = renderTags(task.tags, seqIndex = i)
+              val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
-                s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}""")
+                s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}""")
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
-                ^.key := s"li-$i",
-                ^.id := s"teli-$i",
+                ^.key := s"li-$taskIndex",
+                ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
                   Seq(nodeType) ++
                     ifThenOption(task.collapsed)("collapsed") ++
-                    ifThenOption(state.highlightedTaskIndex == i)("highlighted")),
-                VdomAttr("num") := i,
+                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted")),
+                VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
                 task.content.toVdomNode
               ) +: {
                 if (styleStrings.nonEmpty) {
-                  Seq(<.styleTag(^.key := s"listyle-$i", styleStrings.mkString("\n")))
+                  Seq(<.styleTag(^.key := s"listyle-$taskIndex", styleStrings.mkString("\n")))
                 } else {
                   Seq()
                 }

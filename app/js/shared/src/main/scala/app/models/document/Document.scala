@@ -5,6 +5,7 @@ import app.models.access.ModelFields
 import hydro.common.DomNodeUtils.nodeIsLi
 import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
+import hydro.models.modification.EntityModification
 import org.scalajs.dom
 
 import scala.annotation.tailrec
@@ -15,15 +16,24 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
+final class Document(val id: Long,
+                     val name: String,
+                     val orderToken: OrderToken,
+                     private val taskMap: OrderedTaskMap) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
-  def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
+  def tasks: Seq[Task] = ???
+
+  def withAppliedEntityModifications(modifications: Seq[EntityModification]): Document = ???
+
+  // TODO: Remove
+  @deprecated def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
     new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
 
-  def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
+  // TODO: Remove
+  @deprecated def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
     (toReplace.toVector, toAdd.toVector) match {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
         // Optimization
@@ -58,8 +68,10 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
         new Document(id, name, orderToken, newTasks.toVector)
     }
 
-  def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
-  def minusTaskWithId(taskId: Long): Document =
+  // TODO: Remove
+  @deprecated def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
+  // TODO: Remove
+  @deprecated def minusTaskWithId(taskId: Long): Document =
     new Document(id, name, orderToken, tasks.filter(_.id != taskId))
 
   def indexOf(task: Task): Int = {
