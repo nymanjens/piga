@@ -777,22 +777,22 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
-        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-        val tasksToAdd = {
-          for (task <- tasksToReplace)
-            yield
-              task.updated(
-                content = task.content
-                  .withFormatting(
-                    beginOffset = selection.startOffsetInTask(task),
-                    endOffset = selection.endOffsetInTask(task),
-                    updateFunc = _.copy(link = newLink)
-                  ))
-        }
+        val taskUpdates = for (i <- selection.seqIndices)
+          yield {
+            val task = oldDocument.tasks(i)
+            TaskUpdate.fromFields(
+              originalTask = task,
+              content = task.content
+                .withFormatting(
+                  beginOffset = selection.startOffsetInTask(task),
+                  endOffset = selection.endOffsetInTask(task),
+                  updateFunc = _.copy(link = newLink)
+                )
+            )
+          }
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit(taskUpdates = taskUpdates),
           selectionBeforeEdit = originalSelection,
           selectionAfterEdit = selection
         )
