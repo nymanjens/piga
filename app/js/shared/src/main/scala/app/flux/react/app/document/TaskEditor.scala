@@ -598,8 +598,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
 
       replaceWithHistory(
-        tasksToReplace = Seq(),
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit(addedTasks = tasksToAdd),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
           selectionBeforeEdit.start.plusTasks(taskIndices.size),
