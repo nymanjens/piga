@@ -27,13 +27,13 @@ final class Document(val id: Long,
   def withAppliedEntityModifications(modifications: Seq[EntityModification]): Document = ???
 
   // TODO: Remove
-  @deprecated def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
+  @Deprecated def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
     new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
 
   // TODO: Remove
-  @deprecated def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
+  @Deprecated def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
     (toReplace.toVector, toAdd.toVector) match {
       case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
         // Optimization
@@ -69,9 +69,9 @@ final class Document(val id: Long,
     }
 
   // TODO: Remove
-  @deprecated def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
+  @Deprecated def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
   // TODO: Remove
-  @deprecated def minusTaskWithId(taskId: Long): Document =
+  @Deprecated def minusTaskWithId(taskId: Long): Document =
     new Document(id, name, orderToken, tasks.filter(_.id != taskId))
 
   def indexOf(task: Task): Int = {

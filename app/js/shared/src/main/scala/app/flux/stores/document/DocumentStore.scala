@@ -32,6 +32,12 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     merge = _ merge _,
     sync = syncReplacement
   )
+
+  /**
+    * Set that keeps the IDs of all added tasks.
+    *
+    * This is used to avoid UI glitches when a task is added and immediately removed.
+    */
   private val alreadyAddedTaskIds: mutable.Set[Long] = mutable.Set()
 
   // **************** Implementation of StateStore methods **************** //
@@ -43,7 +49,8 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
     * to this front-end.
     */
-  def replaceTasksWithoutCallingListeners(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document = {
+  @Deprecated def replaceTasksWithoutCallingListeners(toReplace: Iterable[Task],
+                                                      toAdd: Iterable[Task]): Document = {
     val newDocument = _state.document.replaced(toReplace, toAdd)
     _state = _state.copy(document = newDocument)
     syncer.syncWithDelay(Replacement(removedTasks = toReplace.toSet, addedTasks = toAdd.toSet))
