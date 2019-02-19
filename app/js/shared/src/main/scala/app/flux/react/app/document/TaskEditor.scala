@@ -662,12 +662,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       def replaceTags(indexedSelection: IndexedSelection,
                       tagsToRemove: Seq[String],
                       tagsToAdd: Seq[String]): Callback = {
-        def updated(task: Task): Task =
-          task.updated(tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+        val taskUpdates = for (task <- document.tasksIn(selection))
+          yield
+            TaskUpdate.fromFields(
+              originalTask = task,
+              tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
-          tasksToReplace = for (i <- selection.seqIndices) yield document.tasks(i),
-          tasksToAdd = for (i <- selection.seqIndices) yield updated(document.tasks(i)),
-          edit = DocumentEdit(taskUpdates = taskUpdates),
+          edit = DocumentEdit(taskUpdates = taskUpdates.filter(!_.isNoOp)),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
