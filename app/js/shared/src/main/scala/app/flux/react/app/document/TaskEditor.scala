@@ -616,8 +616,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val tasksToAdd = tasksToReplace.map(taskUpdate)
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -640,8 +639,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             )
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -669,6 +667,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         replaceWithHistory(
           tasksToReplace = for (i <- selection.seqIndices) yield document.tasks(i),
           tasksToAdd = for (i <- selection.seqIndices) yield updated(document.tasks(i)),
+          edit = DocumentEdit(taskUpdates = taskUpdates),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -695,30 +694,31 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
-        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
+        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[TaskUpdate] =
           for (task <- tasks)
             yield
-              task.updated(
+              TaskUpdate.fromFields(
+                originalTask = task,
                 content = task.content.withFormatting(
                   beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                   endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
                   formatting => updateFunc(formatting, value)
-                ))
+                )
+              )
 
         val oldDocument = state.document
-        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-        val tasksToAdd = {
-          val candidate = setFormatting(tasksToReplace, value = true)
-          if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
-            setFormatting(tasksToReplace, value = false)
+
+        val taskUpdates = {
+          val candidate = setFormatting(oldDocument.tasksIn(selection), value = true)
+          if (candidate.forall(_.isNoOp)) {
+            setFormatting(oldDocument.tasksIn(selection), value = false)
           } else {
             candidate
           }
         }
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit(taskUpdates = taskUpdates),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -777,9 +777,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
-        val taskUpdates = for (i <- selection.seqIndices)
-          yield {
-            val task = oldDocument.tasks(i)
+        val taskUpdates = for (task <- oldDocument.tasksIn(selection))
+          yield
             TaskUpdate.fromFields(
               originalTask = task,
               content = task.content
@@ -789,7 +788,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                   updateFunc = _.copy(link = newLink)
                 )
             )
-          }
 
         replaceWithHistory(
           edit = DocumentEdit(taskUpdates = taskUpdates),
@@ -848,8 +846,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           )
         }
 
-        val taskUpdates = for ((i, newOrderToken) <- selectionWithChildren.seqIndices zip newOrderTokens)
-          yield TaskUpdate.fromFields(originalTask = oldDocument.tasks(i), orderToken = newOrderToken)
+        val taskUpdates =
+          for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
+            yield TaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
 
         replaceWithHistory(
           edit = DocumentEdit(taskUpdates = taskUpdates),

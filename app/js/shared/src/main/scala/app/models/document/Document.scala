@@ -2,6 +2,7 @@ package app.models.document
 
 import hydro.common.OrderToken
 import app.models.access.ModelFields
+import app.models.document.Document.IndexedSelection
 import hydro.common.DomNodeUtils.nodeIsLi
 import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
@@ -109,6 +110,8 @@ final class Document(val id: Long,
     case i if i >= tasks.length => None
     case _                      => Some(tasks(index))
   }
+
+  def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
 
