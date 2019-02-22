@@ -476,8 +476,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         case None => Callback.empty
         case Some(edit) =>
           val documentStore = props.documentStore
-          val newDocument = documentStore
-            .replaceTasksWithoutCallingListeners(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
+          val newDocument = documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
           $.modState(
             _.copy(document = newDocument),
             setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
