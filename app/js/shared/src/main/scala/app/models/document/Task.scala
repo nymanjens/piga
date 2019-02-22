@@ -95,6 +95,19 @@ case class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Ta
 }
 
 object Task {
+  val nullInstance: Task = new Task(
+    Task.FakeJsTaskEntity(
+      documentId = -1,
+      content = TextWithMarkup.empty,
+      orderToken = OrderToken.middle,
+      indentation = 0,
+      collapsed = false,
+      delayedUntil = None,
+      tags = Seq(),
+      idValue = -1,
+      lastUpdateTime = LastUpdateTime.neverUpdated,
+    ))
+
   def withRandomId(content: TextWithMarkup,
                    orderToken: OrderToken,
                    indentation: Int,

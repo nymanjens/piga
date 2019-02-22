@@ -64,15 +64,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
-      cursor = DetachedCursor(
-        task = Task.withRandomId(
-          TextWithMarkup.empty,
-          OrderToken.middle,
-          indentation = 0,
-          collapsed = false,
-          delayedUntil = None,
-          tags = Seq()),
-        offsetInTask = 0),
+      cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
     )
 
