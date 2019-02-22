@@ -15,7 +15,7 @@ import hydro.models.UpdatableEntity
 
 import scala.collection.immutable.Seq
 
-final class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
+final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
 
   def id: Long = jsTaskEntity.id
   def content: TextWithMarkup = jsTaskEntity.content
