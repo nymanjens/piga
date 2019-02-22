@@ -1,12 +1,12 @@
 package app.models.document
 
-import hydro.common.OrderToken
 import app.models.access.ModelFields
 import app.models.document.Document.IndexedSelection
 import hydro.common.DomNodeUtils.nodeIsLi
+import hydro.common.GuavaReplacement.Iterables.getOnlyElement
+import hydro.common.OrderToken
 import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
-import hydro.models.modification.EntityModification
 import org.scalajs.dom
 
 import scala.annotation.tailrec
@@ -16,66 +16,71 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.Try
 
-final class Document(val id: Long,
-                     val name: String,
-                     val orderToken: OrderToken,
-                     private val taskMap: OrderedTaskMap) {
+final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
   require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
 
-  def tasks: Seq[Task] = ???
+  def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
+    new Document(
+      id,
+      name,
+      orderToken,
+      tasks = {
+        def quickUpdate(taskIndex: Int, taskUpdate: Task) = {
+          // Optimization
+          val oldTask = tasks(taskIndex)
+          tasks.updated(taskIndex, oldTask mergedWith taskUpdate)
+        }
+        def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
+          val newTasks = mutable.Buffer[Task]()
+          var addedTasksIndex = 0
+          def nextTaskToAdd: Option[Task] =
+            if (addedTasksIndex < edit.addedTasks.size) Some(edit.addedTasks(addedTasksIndex)) else None
+          def maybeApplyUpdate(oldTask: Task): Task = {
+            edit.taskUpdatesById.get(oldTask.id) match {
+              case Some(taskUpdate) => oldTask mergedWith taskUpdate
+              case None             => oldTask
+            }
+          }
 
-  def withAppliedEntityModifications(modifications: Seq[EntityModification]): Document = ???
+          for {
+            t <- tasks
+            if !edit.removedTasksIds.contains(t.id)
+          } {
+            while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
+              newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+              addedTasksIndex += 1
+            }
+            if (nextTaskToAdd.map(_.id) == Some(t.id)) {
+              addedTasksIndex += 1
+            }
+            newTasks += maybeApplyUpdate(t)
+          }
+          while (nextTaskToAdd.isDefined) {
+            newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+            addedTasksIndex += 1
+          }
 
-  def withAppliedEdit(documentEdit: DocumentEdit.WithUpdateTimes): Document = ???
+          newTasks.toVector
+        }
 
-  // TODO: Remove
-  @Deprecated def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
+        (edit.removedTasksIds, edit.addedTasks, edit.taskUpdates.size) match {
+          case (Seq(), Seq(), 1) =>
+            val update = getOnlyElement(edit.taskUpdates)
+            Try(indexOf(update)).toOption match {
+              case Some(taskIndex) => quickUpdate(taskIndex, update)
+              case _               => comprehensiveUpdate(edit)
+            }
+          case _ => comprehensiveUpdate(edit)
+        }
+      }
+    )
+
+  def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
     new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
-
-  // TODO: Remove
-  @Deprecated def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
-    (toReplace.toVector, toAdd.toVector) match {
-      case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
-        // Optimization
-        val taskIndex = indexOf(replace)
-        new Document(id, name, orderToken, tasks.updated(taskIndex, add))
-
-      case (toReplaceSeq, toAddSeq) =>
-        val toReplaceSet = toReplaceSeq.toSet
-        val newTasks = mutable.Buffer[Task]()
-        var toAddSeqIndex = 0
-        def nextTaskToAdd: Option[Task] =
-          if (toAddSeqIndex < toAddSeq.size) Some(toAddSeq(toAddSeqIndex)) else None
-
-        for {
-          t <- tasks
-          if !toReplaceSet.contains(t)
-        } {
-          while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
-            newTasks += nextTaskToAdd.get
-            toAddSeqIndex += 1
-          }
-          if (nextTaskToAdd == Some(t)) {
-            toAddSeqIndex += 1
-          }
-          newTasks += t
-        }
-        while (nextTaskToAdd.isDefined) {
-          newTasks += nextTaskToAdd.get
-          toAddSeqIndex += 1
-        }
-
-        new Document(id, name, orderToken, newTasks.toVector)
-    }
-
-  // TODO: Remove
-  @Deprecated def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
-  // TODO: Remove
-  @Deprecated def minusTaskWithId(taskId: Long): Document =
-    new Document(id, name, orderToken, tasks.filter(_.id != taskId))
 
   def indexOf(task: Task): Int = {
     def inner(lowerIndex: Int, upperIndex: Int): Int = {

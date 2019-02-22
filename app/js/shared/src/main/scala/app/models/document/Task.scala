@@ -49,7 +49,7 @@ final class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[T
       lastUpdateTime = jsTaskEntity.lastUpdateTime,
     )
 
-//  def merged(that: Task): Task = ???
+  def mergedWith(that: Task): Task = ???
 
 //  @Deprecated def updated(content: TextWithMarkup = null,
 //                          orderToken: OrderToken = null,

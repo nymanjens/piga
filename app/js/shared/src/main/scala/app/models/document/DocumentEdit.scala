@@ -55,9 +55,11 @@ object DocumentEdit {
     }
   }
 
-  case class WithUpdateTimes(removedTasksIds: Seq[Long],
+  case class WithUpdateTimes(removedTasksIds: Set[Long],
                              addedTasks: Seq[Task],
-                             taskUpdatesById: Map[Long, EntityModification.Update[Task]]) {
+                             taskUpdatesById: Map[Long, Task]) {
+
+    def taskUpdates: Iterable[Task] = taskUpdatesById.values
 
     def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = ???
 
@@ -65,9 +67,10 @@ object DocumentEdit {
   }
   object WithUpdateTimes {
     val empty =
-      DocumentEdit.WithUpdateTimes(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdatesById = Map())
+      DocumentEdit.WithUpdateTimes(removedTasksIds = Set(), addedTasks = Seq(), taskUpdatesById = Map())
 
-    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock): DocumentEdit.WithUpdateTimes = ???
+    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock): DocumentEdit.WithUpdateTimes =
+      ???
   }
 
   case class MaskedTaskUpdate private (
