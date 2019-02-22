@@ -5,7 +5,6 @@ import java.time.Instant
 
 import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import app.flux.react.app.document.EditHistory.Edit
-import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.DocumentEdit
@@ -25,11 +24,11 @@ private[document] final class EditHistory(implicit clock: Clock) {
   private var lastEditCanBeMerged: Boolean = false
 
   // **************** public API **************** //
-  def addEdit(documentEdit: DocumentEdit,
+  def addEdit(documentEdit: DocumentEdit.Reversible,
               selectionBeforeEdit: DetachedSelection,
               selectionAfterEdit: DetachedSelection,
               replacementString: String): Unit = {
-    val newEdit = new Edit(
+    val newEdit = Edit(
       documentEdit = documentEdit,
       selectionBeforeEdit = selectionBeforeEdit,
       selectionAfterEdit = selectionAfterEdit,
@@ -93,7 +92,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
         edits.update(
           i,
           edit.copy(
-            documentEdit = DocumentEdit(
+            documentEdit = DocumentEdit.Reversible(
               addedTasks = updateTaskIdsInSeq(edit.documentEdit.addedTasks),
               removedTasks = updateTaskIdsInSeq(edit.documentEdit.removedTasks),
               taskUpdates = updateTaskIdsInUpdates(edit.documentEdit.taskUpdates),
@@ -131,13 +130,13 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
 private[document] object EditHistory {
 
-  private[document] case class Edit(documentEdit: DocumentEdit,
+  private[document] case class Edit(documentEdit: DocumentEdit.Reversible,
                                     selectionBeforeEdit: DetachedSelection,
                                     selectionAfterEdit: DetachedSelection,
                                     private[EditHistory] val replacementString: String,
                                     private[EditHistory] val timestamp: Instant) {
     def reverse: Edit =
-      new Edit(
+      Edit(
         documentEdit = documentEdit.reverse,
         selectionBeforeEdit = selectionAfterEdit,
         selectionAfterEdit = selectionBeforeEdit,
@@ -146,7 +145,7 @@ private[document] object EditHistory {
       )
 
     private[EditHistory] def mergedWith(that: Edit): Edit = {
-      new Edit(
+      Edit(
         documentEdit = this.documentEdit mergedWith that.documentEdit,
         selectionBeforeEdit = this.selectionBeforeEdit,
         selectionAfterEdit = that.selectionAfterEdit,
@@ -156,7 +155,7 @@ private[document] object EditHistory {
     }
 
     private[EditHistory] def addsSingleCharOnSameLine: Boolean = {
-      val upsertSize = (documentEdit.addedTasks.size + documentEdit.taskUpdates.size)
+      val upsertSize = documentEdit.addedTasks.size + documentEdit.taskUpdates.size
       upsertSize == 1 && replacementString.length == 1 && replacementString.charAt(0) != '\n'
     }
   }

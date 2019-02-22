@@ -13,51 +13,64 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-case class DocumentEdit(removedTasks: Seq[Task] = Seq(),
+object DocumentEdit {
+  case class Reversible(removedTasks: Seq[Task] = Seq(),
                         addedTasks: Seq[Task] = Seq(),
                         taskUpdates: Seq[MaskedTaskUpdate] = Seq()) {
 
-  def reverse: DocumentEdit = ???
+    def reverse: DocumentEdit.Reversible = ???
 
-  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
-    val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
-    val deletes = removedTasks.map(t => EntityModification.createRemove(t.toTaskEntity))
-    val updates = taskUpdates.map(_.toEntityModification)
-  }
+    //  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
+    //    val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
+    //    val deletes = removedTasks.map(t => EntityModification.createRemove(t.toTaskEntity))
+    //    val updates = taskUpdates.map(_.toEntityModification)
+    //  }
 
-  def mergedWith(that: DocumentEdit): DocumentEdit = {
-    val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
-    DocumentEdit(
-      removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
-      addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
-      taskUpdates = ???
-    )
-  }
-
-  def isNoOp: Boolean = {
-    def removedEqualsAdded = {
-      if (removedTasks.size == addedTasks.size) {
-        if (removedTasks.isEmpty) {
-          true
-        } else {
-          (removedTasks.sorted zip addedTasks.sorted).forall {
-            case (t1, t2) => t1 equalsIgnoringMetadata t2
-          }
-        }
-      } else {
-        false
-      }
+    def mergedWith(that: DocumentEdit.Reversible): DocumentEdit.Reversible = {
+      val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
+      DocumentEdit.Reversible(
+        removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
+        addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
+        taskUpdates = ???
+      )
     }
-    def updatesAreNoOp = taskUpdates.forall(_.isNoOp)
 
-    removedEqualsAdded && updatesAreNoOp
+    def isNoOp: Boolean = {
+      def removedEqualsAdded = {
+        if (removedTasks.size == addedTasks.size) {
+          if (removedTasks.isEmpty) {
+            true
+          } else {
+            (removedTasks.sorted zip addedTasks.sorted).forall {
+              case (t1, t2) => t1 equalsIgnoringMetadata t2
+            }
+          }
+        } else {
+          false
+        }
+      }
+      def updatesAreNoOp = taskUpdates.forall(_.isNoOp)
+
+      removedEqualsAdded && updatesAreNoOp
+    }
   }
-}
-object DocumentEdit {
 
-  val empty: DocumentEdit = DocumentEdit()
+  case class WithUpdateTimes(removedTasksIds: Seq[Long],
+                             addedTasks: Seq[Task],
+                             taskUpdatesById: Map[Long, EntityModification.Update[Task]]) {
 
-  case class MaskedTaskUpdate private(
+    def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = ???
+
+    def toEntityModifications: Seq[EntityModification] = ???
+  }
+  object WithUpdateTimes {
+    val empty =
+      DocumentEdit.WithUpdateTimes(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdatesById = Map())
+
+    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock): DocumentEdit.WithUpdateTimes = ???
+  }
+
+  case class MaskedTaskUpdate private (
       originalTask: Task,
       content: Option[TextWithMarkup],
       orderToken: Option[OrderToken],

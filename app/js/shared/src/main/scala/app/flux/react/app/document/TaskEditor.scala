@@ -528,7 +528,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
 
       replaceWithHistory(
-        edit = DocumentEdit(
+        edit = DocumentEdit.Reversible(
           removedTasks = tasksToRemove,
           addedTasks = addedTasks.toVector,
           taskUpdates = taskUpdates.toVector),
@@ -557,7 +557,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             ))
 
       replaceWithHistory(
-        edit = DocumentEdit(removedTasks = tasksToRemove, addedTasks = tasksToAdd),
+        edit = DocumentEdit.Reversible(removedTasks = tasksToRemove, addedTasks = tasksToAdd),
         selectionBeforeEdit = IndexedSelection(
           IndexedCursor.atStartOfTask(taskIndices.head),
           IndexedCursor.atEndOfTask(taskIndices.last)),
@@ -597,7 +597,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
 
       replaceWithHistory(
-        edit = DocumentEdit(addedTasks = tasksToAdd),
+        edit = DocumentEdit.Reversible(addedTasks = tasksToAdd),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
           selectionBeforeEdit.start.plusTasks(taskIndices.size),
@@ -612,7 +612,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
 
       replaceWithHistory(
-        edit = DocumentEdit(taskUpdates = taskUpdates),
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -634,7 +634,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             )
           )
       replaceWithHistory(
-        edit = DocumentEdit(taskUpdates = taskUpdates),
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -663,7 +663,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               originalTask = task,
               tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
-          edit = DocumentEdit(taskUpdates = taskUpdates.filter(!_.isNoOp)),
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates.filter(!_.isNoOp)),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -714,7 +714,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
 
         replaceWithHistory(
-          edit = DocumentEdit(taskUpdates = taskUpdates),
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -786,7 +786,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             )
 
         replaceWithHistory(
-          edit = DocumentEdit(taskUpdates = taskUpdates),
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = originalSelection,
           selectionAfterEdit = selection
         )
@@ -847,7 +847,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             yield MaskedTaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
 
         replaceWithHistory(
-          edit = DocumentEdit(taskUpdates = taskUpdates),
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
             selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
@@ -883,7 +883,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def replaceWithHistory(
-        edit: DocumentEdit,
+        edit: DocumentEdit.Reversible,
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "")(implicit state: State, props: Props): Callback = {

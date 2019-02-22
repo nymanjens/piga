@@ -4,6 +4,7 @@ import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
 import app.models.document.Document
 import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
@@ -27,12 +28,13 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   entityAccess.registerListener(JsEntityAccessListener)
 
   private var _state: State = State(document = initialDocument)
-  private val syncer: SyncerWithReplenishingDelay[DocumentEdit] = new SyncerWithReplenishingDelay(
-    delay = 500.milliseconds,
-    emptyValue = DocumentEdit.empty,
-    merge = _ mergedWith _,
-    sync = syncDocumentEdit
-  )
+  private val syncer: SyncerWithReplenishingDelay[DocumentEdit.WithUpdateTimes] =
+    new SyncerWithReplenishingDelay(
+      delay = 500.milliseconds,
+      emptyValue = DocumentEdit.WithUpdateTimes.empty,
+      merge = _ mergedWith _,
+      sync = syncDocumentEdit
+    )
 
   /**
     * Set that keeps the IDs of all added tasks.
@@ -50,11 +52,12 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
     * to this front-end.
     */
-  def applyEditWithoutCallingListeners(edit: DocumentEdit): Document = {
-    val newDocument = _state.document.withAppliedEdit(edit)
+  def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Document = {
+    val editWithUpdateTimes = DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)
+    val newDocument = _state.document.withAppliedEdit(editWithUpdateTimes)
     _state = _state.copy(document = newDocument)
-    syncer.syncWithDelay(edit)
-    alreadyAddedTaskIds ++= edit.addedTasks.map(_.id)
+    syncer.syncWithDelay(editWithUpdateTimes)
+    alreadyAddedTaskIds ++= editWithUpdateTimes.addedTasks.map(_.id)
     newDocument
   }
 
@@ -63,13 +66,13 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     syncer.listenableValue.map { edit =>
       val involvedIds = Set() ++
         edit.addedTasks.map(_.id) ++
-        edit.removedTasks.map(_.id) ++
-        edit.taskUpdates.map(_.originalTask.id)
+        edit.removedTasksIds ++
+        edit.taskUpdatesById.keySet
       involvedIds.size
     }
 
   // **************** Private helper methods **************** //
-  private def syncDocumentEdit(edit: DocumentEdit): Future[_] = {
+  private def syncDocumentEdit(edit: DocumentEdit.WithUpdateTimes): Future[_] = {
     entityAccess.persistModifications(edit.toEntityModifications)
   }
 
