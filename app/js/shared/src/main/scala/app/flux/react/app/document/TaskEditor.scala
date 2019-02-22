@@ -488,7 +488,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         implicit state: State,
         props: Props): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
-      val oldDocument = state.document
+      implicit val oldDocument = state.document
 
       val newOrderTokens = {
         val previousTask = oldDocument.tasksOption(start.seqIndex - 1)
@@ -499,39 +499,46 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           higherExclusive = nextTask.map(_.orderToken)
         )
       }
-      val tasksToReplace = for (i <- selectionBeforeEdit.seqIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
-        for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
-          yield {
-            def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
-              if (i == index) tags else TextWithMarkup.empty
-            val newContent = ifIndexOrEmpty(0)(
-              oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
-              replacementPart.content +
-              ifIndexOrEmpty(replacement.parts.length - 1)(
-                oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
-            val baseTask = tasksToReplace.head
-            if (i == 0) {
-              baseTask.updated(
+
+      val firstTask = oldDocument.tasks(start.seqIndex)
+
+      val tasksToRemove = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id == firstTask.id)
+      val taskUpdates = mutable.Buffer[TaskUpdate]()
+      val addedTasks = mutable.Buffer[Task]()
+
+      for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
+        yield {
+          def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
+            if (i == index) tags else TextWithMarkup.empty
+          val newContent = ifIndexOrEmpty(0)(firstTask.content.sub(0, start.offsetInTask)) +
+            replacementPart.content +
+            ifIndexOrEmpty(replacement.parts.length - 1)(
+              oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
+          if (i == 0) {
+            taskUpdates.append(
+              TaskUpdate.fromFields(
+                firstTask,
                 content = newContent,
                 orderToken = newOrderToken,
-                indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent
-              )
-            } else {
+                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent))
+          } else {
+            addedTasks.append(
               Task.withRandomId(
                 content = newContent,
                 orderToken = newOrderToken,
-                indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
+                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent,
                 collapsed = false,
                 delayedUntil = None,
                 tags = Seq(),
-              )
-            }
+              ))
           }
+        }
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit(
+          removedTasks = tasksToRemove,
+          addedTasks = addedTasks.toVector,
+          taskUpdates = taskUpdates.toVector),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection.singleton(
           (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
