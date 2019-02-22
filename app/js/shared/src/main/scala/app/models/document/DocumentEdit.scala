@@ -13,11 +13,22 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-case class DocumentEdit(removedTasks: Seq[Task] = Seq(), addedTasks: Seq[Task] = Seq(), taskUpdates: Seq[TaskUpdate] = Seq()) {
+case class DocumentEdit(removedTasks: Seq[Task] = Seq(),
+                        addedTasks: Seq[Task] = Seq(),
+                        taskUpdates: Seq[TaskUpdate] = Seq()) {
 
   def reverse: DocumentEdit = ???
 
   def toEntityModifications: Seq[EntityModification] = ???
+
+  def mergedWith(that: DocumentEdit): DocumentEdit = {
+    val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
+    DocumentEdit(
+      removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
+      addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
+      taskUpdates = ???
+    )
+  }
 
   def isNoOp: Boolean = {
     def removedEqualsAdded = {

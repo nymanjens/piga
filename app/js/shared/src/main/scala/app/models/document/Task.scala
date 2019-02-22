@@ -27,8 +27,6 @@ final class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[T
 
   def contentString: String = content.contentString
 
-  def hasUpdatesSinceCreation: Boolean = jsTaskEntity.lastUpdateTime != LastUpdateTime.neverUpdated
-
   def equalsIgnoringMetadata(that: Task): Boolean = {
     this.content == that.content &&
     this.orderToken == that.orderToken &&

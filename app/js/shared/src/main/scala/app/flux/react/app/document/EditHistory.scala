@@ -9,6 +9,7 @@ import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.TaskUpdate
 import app.models.document.Task
 import hydro.models.modification.EntityModification
 import hydro.common.time.Clock
@@ -27,16 +28,9 @@ private[document] final class EditHistory(implicit clock: Clock) {
   def addEdit(documentEdit: DocumentEdit,
               selectionBeforeEdit: DetachedSelection,
               selectionAfterEdit: DetachedSelection,
-              replacementString: String): Unit = ???
-
-  @Deprecated def addEdit(removedTasks: Seq[Task],
-                          addedTasks: Seq[Task],
-                          selectionBeforeEdit: DetachedSelection,
-                          selectionAfterEdit: DetachedSelection,
-                          replacementString: String): Unit = {
+              replacementString: String): Unit = {
     val newEdit = new Edit(
-      removedTasks = removedTasks,
-      addedTasks = addedTasks,
+      documentEdit = documentEdit,
       selectionBeforeEdit = selectionBeforeEdit,
       selectionAfterEdit = selectionAfterEdit,
       replacementString = replacementString,
@@ -55,15 +49,9 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
-      val edit = edits(nextRedoEditIndex - 1).reverse
-
-      val newEdit = edit.copy(addedTasks = for (task <- edit.addedTasks) yield {
-        val newTask = EditHistory.makeReapplyableTask(task, edit)
-        replaceTaskInHistory(task, newTask)
-        replaceIdsInHistory(task.id, newTask.id)
-        newTask
-      })
-      require(newEdit == edits(nextRedoEditIndex - 1).reverse)
+      def getEdit() = edits(nextRedoEditIndex - 1).reverse
+      randomizeIdsInHistory(getEdit().documentEdit.addedTasks.map(_.id))
+      val newEdit = getEdit()
 
       nextRedoEditIndex -= 1
       lastEditCanBeMerged = false
@@ -76,15 +64,9 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   def redo(): Option[Edit] = {
     if (nextRedoEditIndex < edits.length) {
-      val edit = edits(nextRedoEditIndex)
-
-      val newEdit = edit.copy(addedTasks = for (task <- edit.addedTasks) yield {
-        val newTask = EditHistory.makeReapplyableTask(task, edit)
-        replaceTaskInHistory(task, newTask)
-        replaceIdsInHistory(task.id, newTask.id)
-        newTask
-      })
-      require(newEdit == edits(nextRedoEditIndex))
+      def getEdit() = edits(nextRedoEditIndex)
+      randomizeIdsInHistory(getEdit().documentEdit.addedTasks.map(_.id))
+      val newEdit = getEdit()
 
       nextRedoEditIndex += 1
       lastEditCanBeMerged = false
@@ -94,18 +76,12 @@ private[document] final class EditHistory(implicit clock: Clock) {
     }
   }
 
-  private def replaceTaskInHistory(oldTask: Task, newTask: Task): Unit =
-    applyUpdateToHistory(task => if (task == oldTask) newTask else task)
-
-  private def replaceIdsInHistory(oldId: Long, newId: Long): Unit =
-    applyUpdateToHistory(task => if (task.id == oldId) task.copyWithId(newId) else task)
-
-  private def applyUpdateToHistory(updated: Task => Task): Unit = ???
-
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
       def updateTaskIds(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task
       def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = tasks.map(updateTaskIds)
+      def updateTaskIdsInUpdates(tasks: Seq[TaskUpdate]): Seq[TaskUpdate] =
+        tasks.map(t => t.copy(originalTask = updateTaskIds(t.originalTask)))
       def updateTaskIdsInCursor(cursor: DetachedCursor): DetachedCursor =
         cursor.copy(task = updateTaskIds(cursor.task))
       def updateTaskIdsInSelection(selection: DetachedSelection): DetachedSelection =
@@ -117,8 +93,11 @@ private[document] final class EditHistory(implicit clock: Clock) {
         edits.update(
           i,
           edit.copy(
-            addedTasks = updateTaskIdsInSeq(edit.addedTasks),
-            removedTasks = updateTaskIdsInSeq(edit.removedTasks),
+            documentEdit = DocumentEdit(
+              addedTasks = updateTaskIdsInSeq(edit.documentEdit.addedTasks),
+              removedTasks = updateTaskIdsInSeq(edit.documentEdit.removedTasks),
+              taskUpdates = updateTaskIdsInUpdates(edit.documentEdit.taskUpdates),
+            ),
             selectionBeforeEdit = updateTaskIdsInSelection(edit.selectionBeforeEdit),
             selectionAfterEdit = updateTaskIdsInSelection(edit.selectionAfterEdit)
           )
@@ -134,7 +113,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {
     def hasCollapsedMiddleSelection: Boolean =
       edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isSingleton
-    def sameLineIsEdited: Boolean = edit1.addedTasks == edit2.removedTasks
+    def sameLineIsEdited: Boolean = edit1.documentEdit.addedTasks == edit2.documentEdit.removedTasks
     def tooMuchTimeBetween: Boolean =
       Duration.between(edit1.timestamp, edit2.timestamp) > Duration.ofSeconds(3)
     def isCombiningWord: Boolean = {
@@ -152,14 +131,6 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
 private[document] object EditHistory {
 
-  private[document] def makeReapplyableTask(task: Task, parentEdit: Edit)(implicit clock: Clock): Task = {
-    if (task.hasUpdatesSinceCreation) {
-      ???
-    } else { // This is a new task
-      task.copyWithId(EntityModification.generateRandomId())
-    }
-  }
-
   private[document] case class Edit(documentEdit: DocumentEdit,
                                     selectionBeforeEdit: DetachedSelection,
                                     selectionAfterEdit: DetachedSelection,
@@ -167,8 +138,7 @@ private[document] object EditHistory {
                                     private[EditHistory] val timestamp: Instant) {
     def reverse: Edit =
       new Edit(
-        removedTasks = addedTasks,
-        addedTasks = removedTasks,
+        documentEdit = documentEdit.reverse,
         selectionBeforeEdit = selectionAfterEdit,
         selectionAfterEdit = selectionBeforeEdit,
         replacementString = null,
@@ -176,10 +146,8 @@ private[document] object EditHistory {
       )
 
     private[EditHistory] def mergedWith(that: Edit): Edit = {
-      val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
       new Edit(
-        removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
-        addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
+        documentEdit = this.documentEdit mergedWith that.documentEdit,
         selectionBeforeEdit = this.selectionBeforeEdit,
         selectionAfterEdit = that.selectionAfterEdit,
         replacementString = this.replacementString + that.replacementString,
@@ -187,7 +155,9 @@ private[document] object EditHistory {
       )
     }
 
-    private[EditHistory] def addsSingleCharOnSameLine: Boolean =
-      addedTasks.size == 1 && replacementString.length == 1 && replacementString.charAt(0) != '\n'
+    private[EditHistory] def addsSingleCharOnSameLine: Boolean = {
+      val upsertSize = (documentEdit.addedTasks.size + documentEdit.taskUpdates.size)
+      upsertSize == 1 && replacementString.length == 1 && replacementString.charAt(0) != '\n'
+    }
   }
 }
