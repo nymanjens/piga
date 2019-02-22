@@ -19,7 +19,11 @@ case class DocumentEdit(removedTasks: Seq[Task] = Seq(),
 
   def reverse: DocumentEdit = ???
 
-  def toEntityModifications: Seq[EntityModification] = ???
+  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
+    val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
+    val deletes = removedTasks.map(t => EntityModification.createRemove(t.toTaskEntity))
+    val updates = taskUpdates.map(_.toEntityModification)
+  }
 
   def mergedWith(that: DocumentEdit): DocumentEdit = {
     val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
@@ -50,6 +54,9 @@ case class DocumentEdit(removedTasks: Seq[Task] = Seq(),
   }
 }
 object DocumentEdit {
+
+  val empty: DocumentEdit = DocumentEdit()
+
   case class TaskUpdate private (
       originalTask: Task,
       content: Option[TextWithMarkup],
@@ -63,8 +70,7 @@ object DocumentEdit {
 
     def isNoOp: Boolean = ???
 
-    def toEntityModification(implicit clock: Clock,
-                             document: Document): EntityModification.Update[TaskEntity] = {
+    def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
       var newTaskEntity = originalTask.toTaskEntity
       val fieldMask = mutable.Buffer[ModelField[_, TaskEntity]]()
 

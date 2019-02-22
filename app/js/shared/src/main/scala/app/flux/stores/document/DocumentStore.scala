@@ -1,6 +1,5 @@
 package app.flux.stores.document
 
-import app.flux.stores.document.DocumentStore.Replacement
 import app.flux.stores.document.DocumentStore.State
 import app.flux.stores.document.DocumentStore.SyncerWithReplenishingDelay
 import app.models.document.Document
@@ -8,12 +7,13 @@ import app.models.document.DocumentEdit
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
-import hydro.models.modification.EntityModification
 import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
 import hydro.common.LoggingUtils.logExceptions
+import hydro.common.time.Clock
 import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess
+import hydro.models.modification.EntityModification
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -22,16 +22,16 @@ import scala.concurrent.duration._
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
 
-final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEntityAccess)
+final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEntityAccess, clock: Clock)
     extends StateStore[State] {
   entityAccess.registerListener(JsEntityAccessListener)
 
   private var _state: State = State(document = initialDocument)
-  private val syncer: SyncerWithReplenishingDelay[Replacement] = new SyncerWithReplenishingDelay(
+  private val syncer: SyncerWithReplenishingDelay[DocumentEdit] = new SyncerWithReplenishingDelay(
     delay = 500.milliseconds,
-    emptyValue = Replacement.empty,
-    merge = _ merge _,
-    sync = syncReplacement
+    emptyValue = DocumentEdit.empty,
+    merge = _ mergedWith _,
+    sync = syncDocumentEdit
   )
 
   /**
@@ -45,37 +45,32 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   override def state: State = _state
 
   // **************** Additional API **************** //
-  /** Replaces tasks in state without calling the store listeners.
+  /** Applies the given edit in the local state without calling the store listeners.
     *
     * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
     * to this front-end.
     */
-  @Deprecated def replaceTasksWithoutCallingListeners(toReplace: Iterable[Task],
-                                                      toAdd: Iterable[Task]): Document = {
-    val newDocument = _state.document.replaced(toReplace, toAdd)
+  def applyEditWithoutCallingListeners(edit: DocumentEdit): Document = {
+    val newDocument = _state.document.withAppliedEdit(edit)
     _state = _state.copy(document = newDocument)
-    syncer.syncWithDelay(Replacement(removedTasks = toReplace.toSet, addedTasks = toAdd.toSet))
-    alreadyAddedTaskIds ++= toAdd.map(_.id)
+    syncer.syncWithDelay(edit)
+    alreadyAddedTaskIds ++= edit.addedTasks.map(_.id)
     newDocument
   }
 
-  def applyEditWithoutCallingListeners(documentEdit: DocumentEdit): Document = ???
-
   /** Number of task additions that is not yet synced to `EntityAccess`. */
   private[document] def unsyncedNumberOfTasks: Listenable[Int] =
-    syncer.listenableValue.map { replacement =>
-      if (replacement.addedTasks.nonEmpty) replacement.addedTasks.size
-      else if (replacement.removedTasks.nonEmpty) replacement.removedTasks.size
-      else 0
+    syncer.listenableValue.map { edit =>
+      val involvedIds = Set() ++
+        edit.addedTasks.map(_.id) ++
+        edit.removedTasks.map(_.id) ++
+        edit.taskUpdates.map(_.originalTask.id)
+      involvedIds.size
     }
 
   // **************** Private helper methods **************** //
-  private def syncReplacement(replacement: Replacement): Future[_] = {
-    val deletes = replacement.removedTasks.toVector
-      .map(t => EntityModification.createRemove(t.toTaskEntity(_state.document)))
-    val adds = replacement.addedTasks.map(t => EntityModification.Add(t.toTaskEntity(_state.document)))
-
-    entityAccess.persistModifications(deletes ++ adds)
+  private def syncDocumentEdit(edit: DocumentEdit): Future[_] = {
+    entityAccess.persistModifications(edit.toEntityModifications)
   }
 
   // **************** Private inner types **************** //
@@ -134,19 +129,5 @@ object DocumentStore {
     }
 
     def listenableValue: Listenable[T] = currentValue
-  }
-
-  private case class Replacement(removedTasks: Set[Task], addedTasks: Set[Task]) {
-    def merge(that: Replacement): Replacement = {
-      val overlappingTasks = this.addedTasks intersect that.removedTasks
-
-      Replacement(
-        removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
-        addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
-      )
-    }
-  }
-  private object Replacement {
-    val empty: Replacement = Replacement(Set(), Set())
   }
 }
