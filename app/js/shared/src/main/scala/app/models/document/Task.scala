@@ -49,7 +49,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       lastUpdateTime = jsTaskEntity.lastUpdateTime,
     )
 
-  def mergedWith(that: Task): Task = ???
+  def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
 
 //  @Deprecated def updated(content: TextWithMarkup = null,
 //                          orderToken: OrderToken = null,
@@ -157,8 +157,7 @@ object Task {
                                       delayedUntil: Option[LocalDateTime],
                                       tags: Seq[String],
                                       idValue: Long,
-                                      override val lastUpdateTime: LastUpdateTime =
-                                        LastUpdateTime.neverUpdated,
+                                      override val lastUpdateTime: LastUpdateTime,
   ) extends UpdatableEntity {
     override def idOption: Option[Long] = Some(id)
     override def withId(id: Long) = copy(idValue = id)
