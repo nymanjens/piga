@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.models.access.ModelFields
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task.FakeJsTaskEntity
 import hydro.common.OrderToken
 import hydro.common.time.Clock
@@ -50,6 +51,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     )
 
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
+
+  def withAppliedUpdate(maskedTaskUpdate: MaskedTaskUpdate): Task = ???
 
 //  @Deprecated def updated(content: TextWithMarkup = null,
 //                          orderToken: OrderToken = null,
