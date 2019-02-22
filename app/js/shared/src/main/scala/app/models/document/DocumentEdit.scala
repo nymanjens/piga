@@ -1,7 +1,7 @@
 package app.models.document
 
 import app.models.access.ModelFields
-import app.models.document.DocumentEdit.TaskUpdate
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 case class DocumentEdit(removedTasks: Seq[Task] = Seq(),
                         addedTasks: Seq[Task] = Seq(),
-                        taskUpdates: Seq[TaskUpdate] = Seq()) {
+                        taskUpdates: Seq[MaskedTaskUpdate] = Seq()) {
 
   def reverse: DocumentEdit = ???
 
@@ -57,7 +57,7 @@ object DocumentEdit {
 
   val empty: DocumentEdit = DocumentEdit()
 
-  case class TaskUpdate private (
+  case class MaskedTaskUpdate private(
       originalTask: Task,
       content: Option[TextWithMarkup],
       orderToken: Option[OrderToken],
@@ -66,7 +66,7 @@ object DocumentEdit {
       delayedUntil: Option[Option[LocalDateTime]],
       tags: Option[Seq[String]],
   ) {
-    def reverse: TaskUpdate = ???
+    def reverse: MaskedTaskUpdate = ???
 
     def isNoOp: Boolean = ???
 
@@ -91,7 +91,7 @@ object DocumentEdit {
       EntityModification.createUpdate(newTaskEntity, fieldMask.toVector)
     }
   }
-  object TaskUpdate {
+  object MaskedTaskUpdate {
     def fromFields(
         originalTask: Task,
         content: TextWithMarkup = null,
@@ -100,13 +100,13 @@ object DocumentEdit {
         collapsed: java.lang.Boolean = null,
         delayedUntil: Option[LocalDateTime] = null,
         tags: Seq[String] = null,
-    ): TaskUpdate = {
+    ): MaskedTaskUpdate = {
       def ifUpdate[V](value: V, currentValue: V): Option[V] = value match {
         case null | -1      => None
         case `currentValue` => None
         case _              => Some(value)
       }
-      TaskUpdate(
+      MaskedTaskUpdate(
         originalTask = originalTask,
         content = ifUpdate(content, originalTask.content),
         orderToken = ifUpdate(orderToken, originalTask.orderToken),

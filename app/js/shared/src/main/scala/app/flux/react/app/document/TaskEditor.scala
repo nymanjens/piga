@@ -14,7 +14,7 @@ import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.Document
 import app.models.document.DocumentEdit
-import app.models.document.DocumentEdit.TaskUpdate
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
@@ -316,7 +316,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               // Don't indent children if task is empty
               val updateChildren = !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
               updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
-                TaskUpdate.fromFields(task, indentation = zeroIfNegative(task.indentation + indentIncrease))
+                MaskedTaskUpdate.fromFields(
+                  task,
+                  indentation = zeroIfNegative(task.indentation + indentIncrease))
               }
 
             // Italic
@@ -432,14 +434,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                TaskUpdate.fromFields(task, collapsed = false)
+                MaskedTaskUpdate.fromFields(task, collapsed = false)
               }
 
             // Collapse tasks
             case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                TaskUpdate.fromFields(task, collapsed = true)
+                MaskedTaskUpdate.fromFields(task, collapsed = true)
               }
 
             // Convert to upper case
@@ -494,7 +496,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val firstTask = oldDocument.tasks(start.seqIndex)
 
       val tasksToRemove = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id == firstTask.id)
-      val taskUpdates = mutable.Buffer[TaskUpdate]()
+      val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
       val addedTasks = mutable.Buffer[Task]()
 
       for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
@@ -507,7 +509,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
           if (i == 0) {
             taskUpdates.append(
-              TaskUpdate.fromFields(
+              MaskedTaskUpdate.fromFields(
                 firstTask,
                 content = newContent,
                 orderToken = newOrderToken,
@@ -604,7 +606,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
-        taskUpdate: Task => TaskUpdate)(implicit state: State, props: Props): Callback = {
+        taskUpdate: Task => MaskedTaskUpdate)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val updateSelection = if (updateChildren) selection.includeChildren() else selection
       val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
@@ -623,7 +625,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       val taskUpdates = for (task <- oldDocument.tasksIn(selection))
         yield
-          TaskUpdate.fromFields(
+          MaskedTaskUpdate.fromFields(
             originalTask = task,
             content = task.content.withTransformedCharacters(
               beginOffset = selection.startOffsetInTask(task),
@@ -657,7 +659,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                       tagsToAdd: Seq[String]): Callback = {
         val taskUpdates = for (task <- document.tasksIn(selection))
           yield
-            TaskUpdate.fromFields(
+            MaskedTaskUpdate.fromFields(
               originalTask = task,
               tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
@@ -688,10 +690,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
-        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[TaskUpdate] =
+        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[MaskedTaskUpdate] =
           for (task <- tasks)
             yield
-              TaskUpdate.fromFields(
+              MaskedTaskUpdate.fromFields(
                 originalTask = task,
                 content = task.content.withFormatting(
                   beginOffset = if (task == tasks.head) start.offsetInTask else 0,
@@ -773,7 +775,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
         val taskUpdates = for (task <- oldDocument.tasksIn(selection))
           yield
-            TaskUpdate.fromFields(
+            MaskedTaskUpdate.fromFields(
               originalTask = task,
               content = task.content
                 .withFormatting(
@@ -842,7 +844,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
         val taskUpdates =
           for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
-            yield TaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
+            yield MaskedTaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
 
         replaceWithHistory(
           edit = DocumentEdit(taskUpdates = taskUpdates),

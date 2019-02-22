@@ -9,7 +9,7 @@ import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.DocumentEdit
-import app.models.document.DocumentEdit.TaskUpdate
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import hydro.models.modification.EntityModification
 import hydro.common.time.Clock
@@ -80,7 +80,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
       def updateTaskIds(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task
       def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = tasks.map(updateTaskIds)
-      def updateTaskIdsInUpdates(tasks: Seq[TaskUpdate]): Seq[TaskUpdate] =
+      def updateTaskIdsInUpdates(tasks: Seq[MaskedTaskUpdate]): Seq[MaskedTaskUpdate] =
         tasks.map(t => t.copy(originalTask = updateTaskIds(t.originalTask)))
       def updateTaskIdsInCursor(cursor: DetachedCursor): DetachedCursor =
         cursor.copy(task = updateTaskIds(cursor.task))

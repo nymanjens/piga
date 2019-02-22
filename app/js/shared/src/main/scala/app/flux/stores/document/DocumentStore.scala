@@ -75,6 +75,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
 
   // **************** Private inner types **************** //
   private[document] object JsEntityAccessListener extends JsEntityAccess.Listener {
+    // TODO: Don't forget alreadyAddedTaskIds
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
       var newDocument = _state.document
       for (modification <- modifications) modification match {
