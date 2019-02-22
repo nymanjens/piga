@@ -31,7 +31,10 @@ object DocumentEdit {
       DocumentEdit.Reversible(
         removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
         addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
-        taskUpdates = ???
+        taskUpdates = {
+          val idToUpdates = (this.taskUpdates ++ that.taskUpdates).groupBy(_.originalTask.id)
+          idToUpdates.values.map(_.reduce(_ mergedWith _)).toVector
+        },
       )
     }
 
@@ -89,6 +92,8 @@ object DocumentEdit {
     def reverse: MaskedTaskUpdate = ???
 
     def isNoOp: Boolean = ???
+
+    def mergedWith(that: MaskedTaskUpdate): MaskedTaskUpdate = ???
 
     def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
       var newTaskEntity = originalTask.toTaskEntity
