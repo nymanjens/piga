@@ -20,6 +20,7 @@ object DocumentEdit {
 
     def reverse: DocumentEdit.Reversible = ???
 
+    // TODO: Remove
     //  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
     //    val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
     //    val deletes = removedTasks.map(t => EntityModification.createRemove(t.toTaskEntity))
@@ -104,26 +105,27 @@ object DocumentEdit {
 
     def mergedWith(that: MaskedTaskUpdate): MaskedTaskUpdate = ???
 
-    def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
-      var newTaskEntity = originalTask.toTaskEntity
-      val fieldMask = mutable.Buffer[ModelField[_, TaskEntity]]()
-
-      def maybeApplyField[V](maybeValue: Option[V], field: ModelField[V, TaskEntity]): Unit = {
-        if (maybeValue.isDefined) {
-          newTaskEntity = field.set(newTaskEntity, maybeValue.get)
-          fieldMask.append(field)
-        }
-      }
-
-      maybeApplyField(content.map(_.toHtml), ModelFields.TaskEntity.contentHtml)
-      maybeApplyField(orderToken, ModelFields.TaskEntity.orderToken)
-      maybeApplyField(indentation, ModelFields.TaskEntity.indentation)
-      maybeApplyField(collapsed, ModelFields.TaskEntity.collapsed)
-      maybeApplyField(delayedUntil, ModelFields.TaskEntity.delayedUntil)
-      maybeApplyField(tags, ModelFields.TaskEntity.tags)
-
-      EntityModification.createUpdate(newTaskEntity, fieldMask.toVector)
-    }
+    // TODO: Remove
+//    def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
+//      var newTaskEntity = originalTask.toTaskEntity
+//      val fieldMask = mutable.Buffer[ModelField[_, TaskEntity]]()
+//
+//      def maybeApplyField[V](maybeValue: Option[V], field: ModelField[V, TaskEntity]): Unit = {
+//        if (maybeValue.isDefined) {
+//          newTaskEntity = field.set(newTaskEntity, maybeValue.get)
+//          fieldMask.append(field)
+//        }
+//      }
+//
+//      maybeApplyField(content.map(_.toHtml), ModelFields.TaskEntity.contentHtml)
+//      maybeApplyField(orderToken, ModelFields.TaskEntity.orderToken)
+//      maybeApplyField(indentation, ModelFields.TaskEntity.indentation)
+//      maybeApplyField(collapsed, ModelFields.TaskEntity.collapsed)
+//      maybeApplyField(delayedUntil, ModelFields.TaskEntity.delayedUntil)
+//      maybeApplyField(tags, ModelFields.TaskEntity.tags)
+//
+//      EntityModification.createUpdate(newTaskEntity, fieldMask.toVector)
+//    }
   }
   object MaskedTaskUpdate {
     def fromFields(
