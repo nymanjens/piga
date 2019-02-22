@@ -15,7 +15,7 @@ import hydro.models.UpdatableEntity
 
 import scala.collection.immutable.Seq
 
-case class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
+final class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
 
   def id: Long = jsTaskEntity.id
   def content: TextWithMarkup = jsTaskEntity.content
@@ -51,40 +51,40 @@ case class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Ta
       lastUpdateTime = jsTaskEntity.lastUpdateTime,
     )
 
-  def merged(that: Task): Task = ???
+//  def merged(that: Task): Task = ???
 
-  @Deprecated def updated(content: TextWithMarkup = null,
-                          orderToken: OrderToken = null,
-                          indentation: Int = -1,
-                          collapsed: java.lang.Boolean = null,
-                          delayedUntil: Option[LocalDateTime] = null,
-                          tags: Seq[String] = null)(implicit clock: Clock): Task = {
-    val fieldMask = {
-      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
-        value match {
-          case null | -1      => Seq()
-          case `currentValue` => Seq()
-          case _              => Seq(field)
-        }
-      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
-        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
-        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
-        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
-        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
-        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
-    }
-    new Task(
-      id = id,
-      content = Option(content) getOrElse this.content,
-      orderToken = Option(orderToken) getOrElse this.orderToken,
-      indentation = if (indentation == -1) this.indentation else indentation,
-      collapsed = if (collapsed == null) this.collapsed else collapsed,
-      delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
-      tags = Option(tags) getOrElse this.tags,
-      lastUpdateTime = lastUpdateTime
-        .merge(LastUpdateTime.someFieldsUpdated(fieldMask, clock.nowInstant), forceIncrement = true),
-    )
-  }
+//  @Deprecated def updated(content: TextWithMarkup = null,
+//                          orderToken: OrderToken = null,
+//                          indentation: Int = -1,
+//                          collapsed: java.lang.Boolean = null,
+//                          delayedUntil: Option[LocalDateTime] = null,
+//                          tags: Seq[String] = null)(implicit clock: Clock): Task = {
+//    val fieldMask = {
+//      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
+//        value match {
+//          case null | -1      => Seq()
+//          case `currentValue` => Seq()
+//          case _              => Seq(field)
+//        }
+//      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
+//        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
+//        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
+//        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
+//        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
+//        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
+//    }
+//    new Task(
+//      id = id,
+//      content = Option(content) getOrElse this.content,
+//      orderToken = Option(orderToken) getOrElse this.orderToken,
+//      indentation = if (indentation == -1) this.indentation else indentation,
+//      collapsed = if (collapsed == null) this.collapsed else collapsed,
+//      delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
+//      tags = Option(tags) getOrElse this.tags,
+//      lastUpdateTime = lastUpdateTime
+//        .merge(LastUpdateTime.someFieldsUpdated(fieldMask, clock.nowInstant), forceIncrement = true),
+//    )
+//  }
 
   def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = id))
 
@@ -92,6 +92,12 @@ case class Task private (jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Ta
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken
   }
+  // **************** Object methods **************** //
+  override def equals(o: scala.Any): Boolean = o match {
+    case that: Task => this.jsTaskEntity == that.jsTaskEntity
+    case _          => false
+  }
+  override def hashCode(): Int = jsTaskEntity.hashCode()
 }
 
 object Task {
