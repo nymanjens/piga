@@ -78,24 +78,36 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
 
   // **************** Private inner types **************** //
   private[document] object JsEntityAccessListener extends JsEntityAccess.Listener {
-    // TODO: Don't forget alreadyAddedTaskIds
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit = {
       var newDocument = _state.document
-      for (modification <- modifications) modification match {
-        // Task updates
-        case EntityModification.Add(taskEntity: TaskEntity)
-            if taskEntity.documentId == _state.document.id && !alreadyAddedTaskIds.contains(taskEntity.id) =>
-          alreadyAddedTaskIds += taskEntity.id
-          newDocument = newDocument + Task.fromTaskEntity(taskEntity)
-        case modification @ EntityModification.Remove(entityId)
-            if modification.entityType == TaskEntity.Type =>
-          newDocument = newDocument.minusTaskWithId(entityId)
-        // Document updates
+
+      // Apply Task modifications
+      newDocument = newDocument.withAppliedEdit(
+        DocumentEdit.WithUpdateTimes.create(
+          removedTasksIds = modifications.collect {
+            case modification @ EntityModification.Remove(entityId)
+                if modification.entityType == TaskEntity.Type =>
+              entityId
+          },
+          addedTasks = modifications.collect {
+            case EntityModification.Add(taskEntity: TaskEntity)
+                if taskEntity.documentId == _state.document.id &&
+                  !alreadyAddedTaskIds.contains(taskEntity.id) =>
+              alreadyAddedTaskIds += taskEntity.id
+              Task.fromTaskEntity(taskEntity)
+          },
+          taskUpdates = modifications.collect {
+            case EntityModification.Update(taskEntity: TaskEntity)
+                if taskEntity.documentId == _state.document.id =>
+              Task.fromTaskEntity(taskEntity)
+          },
+        ))
+
+      // Apply Document updates
+      modifications.collect {
         case EntityModification.Update(documentEntity: DocumentEntity)
             if documentEntity.id == state.document.id =>
           newDocument = newDocument.updateFromDocumentEntity(documentEntity)
-
-        case _ =>
       }
 
       if (_state.document != newDocument) {

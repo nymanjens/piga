@@ -55,9 +55,9 @@ object DocumentEdit {
     }
   }
 
-  case class WithUpdateTimes(removedTasksIds: Set[Long],
-                             addedTasks: Seq[Task],
-                             taskUpdatesById: Map[Long, Task]) {
+  case class WithUpdateTimes private (removedTasksIds: Set[Long],
+                                      addedTasks: Seq[Task],
+                                      taskUpdatesById: Map[Long, Task]) {
 
     def taskUpdates: Iterable[Task] = taskUpdatesById.values
 
@@ -71,6 +71,10 @@ object DocumentEdit {
 
     def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock): DocumentEdit.WithUpdateTimes =
       ???
+
+    def create(removedTasksIds: Iterable[Long],
+               addedTasks: Iterable[Task],
+               taskUpdates: Iterable[Task]): DocumentEdit.WithUpdateTimes = ???
   }
 
   case class MaskedTaskUpdate private (
