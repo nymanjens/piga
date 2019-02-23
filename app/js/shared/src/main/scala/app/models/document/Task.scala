@@ -1,16 +1,14 @@
 package app.models.document
 
-import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
+import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import app.models.document.Task.FakeJsTaskEntity
 import hydro.common.OrderToken
 import hydro.common.time.Clock
-import hydro.models.modification.EntityModification
 import hydro.common.time.LocalDateTime
+import hydro.models.modification.EntityModification
 import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.access.ModelField
-import hydro.models.access.ModelField
-import hydro.models.access.ModelField.any
 import hydro.models.Entity
 import hydro.models.UpdatableEntity
 import hydro.models.access.ModelField.FieldType
@@ -18,6 +16,7 @@ import hydro.models.access.ModelField.IdModelField
 import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
+import scala.collection.mutable
 
 final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) extends Ordered[Task] {
 
@@ -56,59 +55,26 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
 
   def withAppliedUpdateAndNewUpdateTime(maskedTaskUpdate: MaskedTaskUpdate)(implicit clock: Clock): Task = {
-    // TODO: Use Option[Task] from document as base
-    val taskWithUpdatedFields = maskedTaskUpdate.reverse.originalTask.jsTaskEntity
-    val fieldMask = {
-//      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
-//        value match {
-//          case null | -1      => Seq()
-//          case `currentValue` => Seq()
-//          case _              => Seq(field)
-//        }
-//      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
-//        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
-//        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
-//        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
-//        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
-//        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
-      null // TODO
+    var taskWithUpdatedFields = jsTaskEntity
+    val fieldMask = mutable.Buffer[ModelField[_, FakeJsTaskEntity]]()
+
+    def applyUpdate[V](fieldUpdate: Option[FieldUpdate[V]],
+                       modelField: ModelField[V, FakeJsTaskEntity]): Unit = {
+      if (fieldUpdate.isDefined) {
+        taskWithUpdatedFields = modelField.set(taskWithUpdatedFields, fieldUpdate.get.newValue)
+        fieldMask.append(modelField)
+      }
     }
-    val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask)
+    applyUpdate(maskedTaskUpdate.content, FakeJsTaskEntity.Fields.content)
+    applyUpdate(maskedTaskUpdate.orderToken, FakeJsTaskEntity.Fields.orderToken)
+    applyUpdate(maskedTaskUpdate.indentation, FakeJsTaskEntity.Fields.indentation)
+    applyUpdate(maskedTaskUpdate.collapsed, FakeJsTaskEntity.Fields.collapsed)
+    applyUpdate(maskedTaskUpdate.delayedUntil, FakeJsTaskEntity.Fields.delayedUntil)
+    applyUpdate(maskedTaskUpdate.tags, FakeJsTaskEntity.Fields.tags)
+
+    val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask.toVector)
     new Task(modification.updatedEntity)
   }
-
-//  @Deprecated def updated(content: TextWithMarkup = null,
-//                          orderToken: OrderToken = null,
-//                          indentation: Int = -1,
-//                          collapsed: java.lang.Boolean = null,
-//                          delayedUntil: Option[LocalDateTime] = null,
-//                          tags: Seq[String] = null)(implicit clock: Clock): Task = {
-//    val fieldMask = {
-//      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
-//        value match {
-//          case null | -1      => Seq()
-//          case `currentValue` => Seq()
-//          case _              => Seq(field)
-//        }
-//      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
-//        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
-//        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
-//        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
-//        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
-//        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
-//    }
-//    new Task(
-//      id = id,
-//      content = Option(content) getOrElse this.content,
-//      orderToken = Option(orderToken) getOrElse this.orderToken,
-//      indentation = if (indentation == -1) this.indentation else indentation,
-//      collapsed = if (collapsed == null) this.collapsed else collapsed,
-//      delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
-//      tags = Option(tags) getOrElse this.tags,
-//      lastUpdateTime = lastUpdateTime
-//        .merge(LastUpdateTime.someFieldsUpdated(fieldMask, clock.nowInstant), forceIncrement = true),
-//    )
-//  }
 
   def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = id))
 
@@ -199,7 +165,7 @@ object Task {
       case object id extends IdModelField[E]
       case object documentId
           extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
-      case object contentHtml
+      case object content
           extends ModelField[TextWithMarkup, E]("content", _.content, v => _.copy(content = v))
       case object orderToken
           extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
