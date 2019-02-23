@@ -116,6 +116,8 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     case _                      => Some(tasks(index))
   }
 
+  def taskOption(id: Long, orderTokenHint: OrderToken = null): Option[Task] = ???
+
   def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))

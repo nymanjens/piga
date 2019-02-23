@@ -13,6 +13,9 @@ import hydro.models.access.ModelField
 import hydro.models.access.ModelField.any
 import hydro.models.Entity
 import hydro.models.UpdatableEntity
+import hydro.models.access.ModelField.FieldType
+import hydro.models.access.ModelField.IdModelField
+import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
 
@@ -52,7 +55,27 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
 
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
 
-  def withAppliedUpdate(maskedTaskUpdate: MaskedTaskUpdate): Task = ???
+  def withAppliedUpdateAndNewUpdateTime(maskedTaskUpdate: MaskedTaskUpdate)(implicit clock: Clock): Task = {
+    // TODO: Use Option[Task] from document as base
+    val taskWithUpdatedFields = maskedTaskUpdate.reverse.originalTask.jsTaskEntity
+    val fieldMask = {
+//      def ifUpdate(value: Any, currentValue: Any, field: ModelField[_, TaskEntity]): Seq[ModelField.any] =
+//        value match {
+//          case null | -1      => Seq()
+//          case `currentValue` => Seq()
+//          case _              => Seq(field)
+//        }
+//      ifUpdate(content, this.content, ModelFields.TaskEntity.contentHtml) ++
+//        ifUpdate(orderToken, this.orderToken, ModelFields.TaskEntity.orderToken) ++
+//        ifUpdate(indentation, this.indentation, ModelFields.TaskEntity.indentation) ++
+//        ifUpdate(collapsed, this.collapsed, ModelFields.TaskEntity.collapsed) ++
+//        ifUpdate(delayedUntil, this.delayedUntil, ModelFields.TaskEntity.delayedUntil) ++
+//        ifUpdate(tags, this.tags, ModelFields.TaskEntity.tags)
+      null // TODO
+    }
+    val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask)
+    new Task(modification.updatedEntity)
+  }
 
 //  @Deprecated def updated(content: TextWithMarkup = null,
 //                          orderToken: OrderToken = null,
@@ -165,5 +188,31 @@ object Task {
     override def idOption: Option[Long] = Some(id)
     override def withId(id: Long) = copy(idValue = id)
     override def withLastUpdateTime(time: LastUpdateTime): Entity = copy(lastUpdateTime = time)
+  }
+  private object FakeJsTaskEntity {
+    implicit val Type: EntityType[FakeJsTaskEntity] = EntityType()
+
+    object Fields {
+      private type E = FakeJsTaskEntity
+      implicit private val textWithMarkupFieldType: FieldType[TextWithMarkup] = null
+
+      case object id extends IdModelField[E]
+      case object documentId
+          extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
+      case object contentHtml
+          extends ModelField[TextWithMarkup, E]("content", _.content, v => _.copy(content = v))
+      case object orderToken
+          extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
+      case object indentation
+          extends ModelField[Int, E]("indentation", _.indentation, v => _.copy(indentation = v))
+      case object collapsed
+          extends ModelField[Boolean, E]("collapsed", _.collapsed, v => _.copy(collapsed = v))
+      case object delayedUntil
+          extends ModelField[Option[LocalDateTime], E](
+            "delayedUntil",
+            _.delayedUntil,
+            v => _.copy(delayedUntil = v))
+      case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
+    }
   }
 }

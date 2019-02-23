@@ -77,12 +77,14 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
-      def updateTaskIds(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task
-      def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = tasks.map(updateTaskIds)
+      def updateTaskId(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task
+      def updateTaskId2(update: MaskedTaskUpdate): MaskedTaskUpdate =
+        if (update.taskId == oldId) update.copy(taskId = newId) else update
+      def updateTaskIdsInSeq(tasks: Seq[Task]): Seq[Task] = tasks.map(updateTaskId)
       def updateTaskIdsInUpdates(tasks: Seq[MaskedTaskUpdate]): Seq[MaskedTaskUpdate] =
-        tasks.map(t => t.copy(originalTask = updateTaskIds(t.originalTask)))
+        tasks.map(updateTaskId2)
       def updateTaskIdsInCursor(cursor: DetachedCursor): DetachedCursor =
-        cursor.copy(task = updateTaskIds(cursor.task))
+        cursor.copy(task = updateTaskId(cursor.task))
       def updateTaskIdsInSelection(selection: DetachedSelection): DetachedSelection =
         DetachedSelection(
           start = updateTaskIdsInCursor(selection.start),

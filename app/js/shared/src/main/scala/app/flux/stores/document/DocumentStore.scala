@@ -53,7 +53,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     * to this front-end.
     */
   def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Document = {
-    val editWithUpdateTimes = DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)
+    val editWithUpdateTimes = DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)(clock, state.document)
     val newDocument = _state.document.withAppliedEdit(editWithUpdateTimes)
     _state = _state.copy(document = newDocument)
     syncer.syncWithDelay(editWithUpdateTimes)

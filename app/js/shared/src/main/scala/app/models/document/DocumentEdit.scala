@@ -2,6 +2,7 @@ package app.models.document
 
 import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
+import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
@@ -33,7 +34,7 @@ object DocumentEdit {
         removedTasks = this.removedTasks ++ that.removedTasks.filterNot(overlappingTasks),
         addedTasks = that.addedTasks ++ this.addedTasks.filterNot(overlappingTasks),
         taskUpdates = {
-          val idToUpdates = (this.taskUpdates ++ that.taskUpdates).groupBy(_.originalTask.id)
+          val idToUpdates = (this.taskUpdates ++ that.taskUpdates).groupBy(_.taskId)
           idToUpdates.values.map(_.reduce(_ mergedWith _)).toVector
         },
       )
@@ -73,11 +74,17 @@ object DocumentEdit {
     val empty =
       DocumentEdit.WithUpdateTimes(removedTasksIds = Set(), addedTasks = Seq(), taskUpdatesById = Map())
 
-    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock): DocumentEdit.WithUpdateTimes =
+    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock,
+                                                      document: Document): DocumentEdit.WithUpdateTimes =
       create(
         removedTasksIds = edit.removedTasks.map(_.id),
         addedTasks = edit.addedTasks,
-        taskUpdates = edit.taskUpdates.map(update => update.originalTask.withAppliedUpdate(update)),
+        taskUpdates = edit.taskUpdates
+          .flatMap { update =>
+            document
+              .taskOption(id = update.taskId, orderTokenHint = update.originalOrderToken)
+              .map(currentTask => currentTask.withAppliedUpdateAndNewUpdateTime(update))
+          },
       )
 
     def create(removedTasksIds: Iterable[Long],
@@ -91,13 +98,14 @@ object DocumentEdit {
   }
 
   case class MaskedTaskUpdate private (
-      originalTask: Task,
-      content: Option[TextWithMarkup],
-      orderToken: Option[OrderToken],
-      indentation: Option[Int],
-      collapsed: Option[Boolean],
-      delayedUntil: Option[Option[LocalDateTime]],
-      tags: Option[Seq[String]],
+      taskId: Long,
+      originalOrderToken: OrderToken,
+      content: Option[FieldUpdate[TextWithMarkup]],
+      orderToken: Option[FieldUpdate[OrderToken]],
+      indentation: Option[FieldUpdate[Int]],
+      collapsed: Option[FieldUpdate[Boolean]],
+      delayedUntil: Option[FieldUpdate[Option[LocalDateTime]]],
+      tags: Option[FieldUpdate[Seq[String]]],
   ) {
     def reverse: MaskedTaskUpdate = ???
 
@@ -137,13 +145,14 @@ object DocumentEdit {
         delayedUntil: Option[LocalDateTime] = null,
         tags: Seq[String] = null,
     ): MaskedTaskUpdate = {
-      def ifUpdate[V](value: V, currentValue: V): Option[V] = value match {
+      def ifUpdate[V](value: V, currentValue: V): Option[FieldUpdate[V]] = value match {
         case null | -1      => None
         case `currentValue` => None
-        case _              => Some(value)
+        case _              => Some(FieldUpdate(oldValue = currentValue, newValue = value))
       }
       MaskedTaskUpdate(
-        originalTask = originalTask,
+        taskId = originalTask.id,
+        originalOrderToken = originalTask.orderToken,
         content = ifUpdate(content, originalTask.content),
         orderToken = ifUpdate(orderToken, originalTask.orderToken),
         indentation = ifUpdate(indentation, originalTask.indentation),
@@ -152,5 +161,7 @@ object DocumentEdit {
         tags = ifUpdate(tags, originalTask.tags),
       )
     }
+
+    case class FieldUpdate[V](oldValue: V, newValue: V)
   }
 }
