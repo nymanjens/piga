@@ -19,7 +19,7 @@ object DocumentEdit {
                         addedTasks: Seq[Task] = Seq(),
                         taskUpdates: Seq[MaskedTaskUpdate] = Seq()) {
 
-    def reverse: DocumentEdit.Reversible = ???
+    def reversed: DocumentEdit.Reversible = ???
 
     // TODO: Remove
     //  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
@@ -107,7 +107,7 @@ object DocumentEdit {
       delayedUntil: Option[FieldUpdate[Option[LocalDateTime]]],
       tags: Option[FieldUpdate[Seq[String]]],
   ) {
-    def reverse: MaskedTaskUpdate = ???
+    def reversed: MaskedTaskUpdate = ???
 
     def isNoOp: Boolean = ???
 

@@ -48,7 +48,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
-      def getEdit() = edits(nextRedoEditIndex - 1).reverse
+      def getEdit() = edits(nextRedoEditIndex - 1).reversed
       randomizeIdsInHistory(getEdit().documentEdit.addedTasks.map(_.id))
       val newEdit = getEdit()
 
@@ -137,9 +137,9 @@ private[document] object EditHistory {
                                     selectionAfterEdit: DetachedSelection,
                                     private[EditHistory] val replacementString: String,
                                     private[EditHistory] val timestamp: Instant) {
-    def reverse: Edit =
+    def reversed: Edit =
       Edit(
-        documentEdit = documentEdit.reverse,
+        documentEdit = documentEdit.reversed,
         selectionBeforeEdit = selectionAfterEdit,
         selectionAfterEdit = selectionBeforeEdit,
         replacementString = null,
