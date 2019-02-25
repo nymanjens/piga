@@ -72,7 +72,12 @@ object DocumentEdit {
 
     def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = ???
 
-    def toEntityModifications: Seq[EntityModification] = ???
+    def toEntityModifications: Seq[EntityModification] = {
+      val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
+      val updates = taskUpdates.map(t => EntityModification.Update(t.toTaskEntity))
+      val deletes = removedTasksIds.map(id => EntityModification.Remove[TaskEntity](id))
+      adds ++ updates ++ deletes
+    }
   }
   object WithUpdateTimes {
     val empty =
@@ -122,9 +127,32 @@ object DocumentEdit {
       tags = tags.map(_.reversed),
     )
 
-    def isNoOp: Boolean = ???
+    def isNoOp: Boolean = this.reversed == this
 
-    def mergedWith(that: MaskedTaskUpdate): MaskedTaskUpdate = ???
+    def mergedWith(that: MaskedTaskUpdate): MaskedTaskUpdate = {
+      def mergeFieldUpdates[V](thisFieldUpdate: Option[FieldUpdate[V]],
+                               thatFieldUpdate: Option[FieldUpdate[V]]): Option[FieldUpdate[V]] =
+        (thisFieldUpdate, thatFieldUpdate) match {
+          case (None, None)    => None
+          case (Some(u), None) => Some(u)
+          case (None, Some(u)) => Some(u)
+          case (Some(thisU), Some(thatU)) =>
+            require(thisU.newValue == thatU.oldValue)
+            Some(FieldUpdate(oldValue = thisU.oldValue, newValue = thatU.newValue))
+        }
+
+      require(this.taskId == that.taskId)
+      MaskedTaskUpdate(
+        taskId = this.taskId,
+        originalOrderToken = this.originalOrderToken,
+        content = mergeFieldUpdates(this.content, that.content),
+        orderToken = mergeFieldUpdates(this.orderToken, that.orderToken),
+        indentation = mergeFieldUpdates(this.indentation, that.indentation),
+        collapsed = mergeFieldUpdates(this.collapsed, that.collapsed),
+        delayedUntil = mergeFieldUpdates(this.delayedUntil, that.delayedUntil),
+        tags = mergeFieldUpdates(this.tags, that.tags),
+      )
+    }
 
     // TODO: Remove
 //    def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
