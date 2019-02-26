@@ -88,6 +88,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     this.orderToken compare that.orderToken
   }
   // **************** Object methods **************** //
+  override def toString: String = jsTaskEntity.toString
+
   override def equals(o: scala.Any): Boolean = o match {
     case that: Task => this.jsTaskEntity == that.jsTaskEntity
     case _          => false
