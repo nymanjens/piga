@@ -70,7 +70,17 @@ object DocumentEdit {
 
     def taskUpdates: Iterable[Task] = taskUpdatesById.values
 
-    def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = ???
+    def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = {
+      val overlappingTaskIds = this.addedTasks.map(_.id).toSet intersect that.removedTasksIds
+      DocumentEdit.WithUpdateTimes(
+        removedTasksIds = this.removedTasksIds ++ that.removedTasksIds,
+        addedTasks = this.addedTasks.filterNot(t => overlappingTaskIds contains t.id) ++ that.addedTasks,
+        taskUpdatesById = {
+          for ((id, updates) <- (this.taskUpdates ++ that.taskUpdates).groupBy(_.id))
+            yield id -> updates.reduce(_ mergedWith _)
+        },
+      )
+    }
 
     def toEntityModifications: Seq[EntityModification] = {
       val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
