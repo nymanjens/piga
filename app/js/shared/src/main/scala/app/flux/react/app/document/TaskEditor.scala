@@ -494,7 +494,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       val firstTask = oldDocument.tasks(start.seqIndex)
 
-      val tasksToRemove = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id == firstTask.id)
+      val tasksToRemove = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
       val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
       val addedTasks = mutable.Buffer[Task]()
 
