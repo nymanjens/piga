@@ -1,11 +1,13 @@
 package app.models.document
 
+import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import app.models.document.Task.FakeJsTaskEntity
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
+import hydro.common.GuavaReplacement.ImmutableBiMap
 import hydro.models.modification.EntityModification
 import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.access.ModelField
@@ -49,7 +51,10 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       delayedUntil = jsTaskEntity.delayedUntil,
       tags = jsTaskEntity.tags,
       idOption = jsTaskEntity.idOption,
-      lastUpdateTime = jsTaskEntity.lastUpdateTime,
+      lastUpdateTime = jsTaskEntity.lastUpdateTime.copy(timePerField = {
+        for ((fakeField, time) <- jsTaskEntity.lastUpdateTime.timePerField)
+          yield FakeJsTaskEntity.fakeToEntityFieldBiMap.get(fakeField) -> time
+      }.toMap),
     )
 
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
@@ -134,7 +139,10 @@ object Task {
         delayedUntil = taskEntity.delayedUntil,
         tags = taskEntity.tags,
         idValue = taskEntity.id,
-        lastUpdateTime = taskEntity.lastUpdateTime,
+        lastUpdateTime = taskEntity.lastUpdateTime.copy(timePerField = {
+          for ((entityField, time) <- taskEntity.lastUpdateTime.timePerField)
+            yield FakeJsTaskEntity.fakeToEntityFieldBiMap.inverse().get(entityField) -> time
+        }.toMap),
       ))
 
   /**
@@ -157,6 +165,18 @@ object Task {
   }
   private object FakeJsTaskEntity {
     implicit val Type: EntityType[FakeJsTaskEntity] = EntityType()
+
+    val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
+      ImmutableBiMap
+        .builder[ModelField.any, ModelField.any]()
+        .put(Fields.id, ModelFields.TaskEntity.id)
+        .put(Fields.documentId, ModelFields.TaskEntity.documentId)
+        .put(Fields.content, ModelFields.TaskEntity.contentHtml)
+        .put(Fields.orderToken, ModelFields.TaskEntity.orderToken)
+        .put(Fields.indentation, ModelFields.TaskEntity.indentation)
+        .put(Fields.collapsed, ModelFields.TaskEntity.collapsed)
+        .put(Fields.delayedUntil, ModelFields.TaskEntity.delayedUntil)
+        .build()
 
     object Fields {
       private type E = FakeJsTaskEntity
