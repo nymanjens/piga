@@ -151,7 +151,7 @@ object Task {
                                       idValue: Long,
                                       override val lastUpdateTime: LastUpdateTime,
   ) extends UpdatableEntity {
-    override def idOption: Option[Long] = Some(id)
+    override def idOption: Option[Long] = Some(idValue)
     override def withId(id: Long) = copy(idValue = id)
     override def withLastUpdateTime(time: LastUpdateTime): Entity = copy(lastUpdateTime = time)
   }
