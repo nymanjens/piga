@@ -1,18 +1,12 @@
 package app.models.document
 
-import app.models.access.ModelFields
-import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
-import hydro.models.access.ModelField
 import hydro.models.modification.EntityModification
-import hydro.models.UpdatableEntity
-import hydro.models.UpdatableEntity.LastUpdateTime
 
 import scala.collection.immutable.Seq
-import scala.collection.mutable
 
 object DocumentEdit {
   case class Reversible(removedTasks: Seq[Task] = Seq(),
@@ -98,12 +92,11 @@ object DocumentEdit {
       create(
         removedTasksIds = edit.removedTasks.map(_.id),
         addedTasks = edit.addedTasks,
-        taskUpdates = edit.taskUpdates
-          .flatMap { update =>
-            document
-              .taskOption(id = update.taskId, orderTokenHint = update.originalOrderToken)
-              .map(currentTask => currentTask.withAppliedUpdateAndNewUpdateTime(update))
-          },
+        taskUpdates = for {
+          update <- edit.taskUpdates
+          taskIndex <- document
+            .maybeIndexOf(taskId = update.taskId, orderTokenHint = update.originalOrderToken)
+        } yield document.tasks(taskIndex).withAppliedUpdateAndNewUpdateTime(update),
       )
 
     def create(removedTasksIds: Iterable[Long],

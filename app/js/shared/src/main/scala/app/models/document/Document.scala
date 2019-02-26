@@ -68,7 +68,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
         (edit.removedTasksIds, edit.addedTasks, edit.taskUpdates.size) match {
           case (Seq(), Seq(), 1) =>
             val update = getOnlyElement(edit.taskUpdates)
-            Try(indexOf(update)).toOption match {
+            maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
               case Some(taskIndex) => quickUpdate(taskIndex, update)
               case _               => comprehensiveUpdate(edit)
             }
@@ -82,32 +82,42 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
 
-  def indexOf(task: Task): Int = {
-    def inner(lowerIndex: Int, upperIndex: Int): Int = {
-      require(lowerIndex <= upperIndex, s"$task is not in $tasks")
-      val index = (upperIndex + lowerIndex) / 2
-      tasks(index) match {
-        case t if t.id == task.id =>
-          require(task == t)
-          index
-        case t if task.orderToken < t.orderToken  => inner(lowerIndex, upperIndex - 1)
-        case t if task.orderToken == t.orderToken => findWithEqualOrderTokenAround(index)
-        case _                                    => inner(index + 1, upperIndex)
+  def maybeIndexOf(taskId: Long, orderTokenHint: OrderToken = null): Option[Int] = {
+    def indexOfViaOrderToken(): Option[Int] = {
+      def findWithEqualOrderTokenAround(index: Int): Option[Int] = {
+        var i = index
+        while (i > 0 && tasks(i - 1).orderToken == orderTokenHint) {
+          i -= 1
+        }
+        while (tasks(i).id != taskId && tasks(i).orderToken == orderTokenHint) {
+          i += 1
+        }
+        if (tasks(i).id == taskId) Some(i) else None
       }
-    }
-    def findWithEqualOrderTokenAround(index: Int): Int = {
-      var i = index
-      while (i > 0 && tasks(i - 1).orderToken == task.orderToken) {
-        i -= 1
+
+      def inner(lowerIndex: Int, upperIndex: Int): Option[Int] = {
+        if (lowerIndex > upperIndex) {
+          None
+        } else {
+          val index = (upperIndex + lowerIndex) / 2
+          tasks(index) match {
+            case t if t.id == taskId                 => Some(index)
+            case t if orderTokenHint < t.orderToken  => inner(lowerIndex, upperIndex - 1)
+            case t if orderTokenHint == t.orderToken => findWithEqualOrderTokenAround(index)
+            case _                                   => inner(index + 1, upperIndex)
+          }
+        }
       }
-      while (tasks(i).id != task.id) {
-        require(tasks(i).orderToken == task.orderToken, s"$task is not in $tasks")
-        i += 1
-      }
-      i
+
+      inner(0, tasks.length - 1)
     }
 
-    inner(0, tasks.length - 1)
+    def indexOfViaIdOnly(): Option[Int] = tasks.toStream.map(_.id).indexOf(taskId) match {
+      case -1    => None
+      case index => Some(index)
+    }
+
+    indexOfViaOrderToken() orElse indexOfViaIdOnly()
   }
 
   def tasksOption(index: Int): Option[Task] = index match {
@@ -115,8 +125,6 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     case i if i >= tasks.length => None
     case _                      => Some(tasks(index))
   }
-
-  def taskOption(id: Long, orderTokenHint: OrderToken = null): Option[Task] = ???
 
   def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
@@ -337,7 +345,13 @@ object Document {
 
   case class DetachedCursor(task: Task, offsetInTask: Int) {
     def attachToDocument(implicit document: Document): IndexedCursor =
-      IndexedCursor(seqIndex = document.indexOf(task), offsetInTask = offsetInTask)
+      IndexedCursor(
+        seqIndex = document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) getOrElse {
+          println(s"  Warning: Could not find task in document: task = $task")
+          0
+        },
+        offsetInTask = offsetInTask
+      )
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isSingleton: Boolean = start == end

@@ -128,7 +128,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
             case (task, taskIndex, maybeAmountCollapsed) =>
-              // TODO: val taskIndex = document.indexOf(task)
               val nodeType = state.document.tasksOption(taskIndex + 1) match {
                 case _ if task.indentation == 0                                => "root"
                 case Some(nextTask) if nextTask.indentation > task.indentation => "node"
