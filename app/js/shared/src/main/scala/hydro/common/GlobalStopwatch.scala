@@ -10,13 +10,13 @@ object GlobalStopwatch {
   private var startTime: Instant = Instant.now()
   private var lastLogTime: Instant = Instant.now()
 
-  def startAndLog(stepName: String): Unit = {
+  def startAndLog(stepName: => String): Unit = {
+    console.log(s"  {GlobalStopwatch} Starting timer ($stepName)")
     startTime = Instant.now()
     lastLogTime = Instant.now()
-    console.log(s"  {GlobalStopwatch} Starting timer ($stepName)")
   }
 
-  def logTimeSinceStart(stepName: String): Unit = {
+  def logTimeSinceStart(stepName: => String): Unit = {
     val now = Instant.now()
     val lastDiff = lastLogTime - now
     val startDiff = startTime - now
