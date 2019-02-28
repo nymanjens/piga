@@ -19,7 +19,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Try
 
 final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
-  require(tasks.sorted == tasks, s"Tasks are not ordered: $tasks") // TODD: Remove this check when we're confident that this works
 
   def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
     new Document(
@@ -62,18 +61,18 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
             addedTasksIndex += 1
           }
 
-          newTasks.toStream.sorted.toVector
+          newTasks.toVector.sorted
         }
 
-        (edit.removedTasksIds, edit.addedTasks, edit.taskUpdates.size) match {
-          case (Seq(), Seq(), 1) =>
-            val update = getOnlyElement(edit.taskUpdates)
-            maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
-              case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
-                quickUpdate(taskIndex, update)
-              case _ => comprehensiveUpdate(edit)
-            }
-          case _ => comprehensiveUpdate(edit)
+        if (edit.removedTasksIds.isEmpty && edit.addedTasks.isEmpty && edit.taskUpdates.size == 1) {
+          val update = getOnlyElement(edit.taskUpdates)
+          maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
+            case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
+              quickUpdate(taskIndex, update)
+            case _ => comprehensiveUpdate(edit)
+          }
+        } else {
+          comprehensiveUpdate(edit)
         }
       }
     )
