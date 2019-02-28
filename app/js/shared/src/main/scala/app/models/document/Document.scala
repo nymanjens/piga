@@ -62,15 +62,16 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
             addedTasksIndex += 1
           }
 
-          newTasks.toVector
+          newTasks.toStream.sorted.toVector
         }
 
         (edit.removedTasksIds, edit.addedTasks, edit.taskUpdates.size) match {
           case (Seq(), Seq(), 1) =>
             val update = getOnlyElement(edit.taskUpdates)
             maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
-              case Some(taskIndex) => quickUpdate(taskIndex, update)
-              case _               => comprehensiveUpdate(edit)
+              case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
+                quickUpdate(taskIndex, update)
+              case _ => comprehensiveUpdate(edit)
             }
           case _ => comprehensiveUpdate(edit)
         }
