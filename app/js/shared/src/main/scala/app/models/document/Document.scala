@@ -19,7 +19,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Try
 
 final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
-  require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
+  require(tasks.sorted == tasks, s"Tasks are not ordered: $tasks") // TODD: Remove this check when we're confident that this works
 
   def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
     new Document(
