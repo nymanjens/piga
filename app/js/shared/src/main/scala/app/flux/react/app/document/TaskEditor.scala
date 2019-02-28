@@ -472,7 +472,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           val newDocument = documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
           $.modState(
             _.copy(document = newDocument),
-            setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
+            Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument)))
           )
       }
 
@@ -895,7 +895,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
 
         $.modState(
-          _.copy(document = newDocument), {
+          _.copy(document = newDocument),
+          Callback.empty.flatMap { _ =>
             editHistory.addEdit(
               documentEdit = edit,
               selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
