@@ -84,6 +84,28 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
 
   def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = id))
 
+  def copyForTests(content: TextWithMarkup = null,
+                   orderToken: OrderToken = null,
+                   indentation: Int = -1,
+                   collapsed: java.lang.Boolean = null,
+                   delayedUntil: Option[LocalDateTime] = null,
+                   tags: Seq[String] = null,
+  ): Task = {
+    def toScala(bool: java.lang.Boolean): Boolean = bool
+    new Task(
+      Task.FakeJsTaskEntity(
+        documentId = this.jsTaskEntity.documentId,
+        content = Option(content) getOrElse this.content,
+        orderToken = Option(orderToken) getOrElse this.orderToken,
+        indentation = if (indentation == -1) this.indentation else indentation,
+        collapsed = toScala(Option(collapsed) getOrElse this.collapsed),
+        delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
+        tags = Option(tags) getOrElse this.tags,
+        idValue = this.id,
+        lastUpdateTime = this.jsTaskEntity.lastUpdateTime,
+      ))
+  }
+
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     this.orderToken compare that.orderToken

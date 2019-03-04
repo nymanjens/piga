@@ -47,54 +47,18 @@ object DocumentTest extends TestSuite {
       documentA == documentE ==> false
       documentA.hashCode() == documentE.hashCode() ==> false
     }
-    "replaced" - {
-      val document = newDocument(taskA, taskB, taskC)
-
-      document.replaced(toReplace = Seq(taskB), toAdd = Seq(taskBB)) ==>
-        newDocument(taskA, taskBB, taskC)
-      document.replaced(toReplace = Seq(taskB, taskC), toAdd = Seq(taskD, taskE)) ==>
-        newDocument(taskA, taskD, taskE)
-      document.replaced(toReplace = Seq(taskA), toAdd = Seq(taskD)) ==>
-        newDocument(taskB, taskC, taskD)
-      document.replaced(toReplace = Seq(taskA), toAdd = Seq(taskC, taskD, taskE)) ==>
-        newDocument(taskB, taskC, taskD, taskE)
-      newDocument(taskB, taskD, taskE).replaced(toReplace = Seq(taskB), toAdd = Seq(taskC, taskE)) ==>
-        newDocument(taskC, taskD, taskE)
-    }
-    "plus" - {
-      val document = newDocument(taskB, taskD)
-      "first task" - {
-        document + taskA ==> newDocument(taskA, taskB, taskD)
-      }
-      "last task" - {
-        document + taskE ==> newDocument(taskB, taskD, taskE)
-      }
-      "middle task" - {
-        document + taskC ==> newDocument(taskB, taskC, taskD)
-      }
-      "task is already in list" - {
-        document + taskB ==> document
-      }
-    }
-    "minusTaskWithId" - {
-      val document = newDocument(taskB, taskD)
-      "existing task" - {
-        document.minusTaskWithId(taskB.id) ==> newDocument(taskD)
-      }
-      "task not in list" - {
-        document.minusTaskWithId(18230983210L) ==> newDocument(taskB, taskD)
-      }
-    }
-    "indexOf" - {
+    "maybeIndexOf" - {
       val document = newDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)
+      val orderTokenHint = OrderToken.middle
 
-      document.indexOf(taskA) ==> 0
-      document.indexOf(taskB) ==> 1
-      document.indexOf(taskBB) ==> 2
-      document.indexOf(taskC) ==> 3
-      document.indexOf(taskD) ==> 4
-      document.indexOf(taskE) ==> 5
-      document.indexOf(taskEE) ==> 6
+      document.maybeIndexOf(taskA.id, orderTokenHint) ==> Some(0)
+      document.maybeIndexOf(taskB.id, orderTokenHint) ==> Some(1)
+      document.maybeIndexOf(taskBB.id, orderTokenHint) ==> Some(2)
+      document.maybeIndexOf(taskC.id, orderTokenHint) ==> Some(3)
+      document.maybeIndexOf(taskD.id, orderTokenHint) ==> Some(4)
+      document.maybeIndexOf(taskE.id, orderTokenHint) ==> Some(5)
+      document.maybeIndexOf(taskEE.id, orderTokenHint) ==> Some(6)
+      document.maybeIndexOf(taskF.id, orderTokenHint) ==> None
     }
     "familyTreeRange" - {
       "Flat list" - {
@@ -260,7 +224,7 @@ object DocumentTest extends TestSuite {
     }
   }
 
-  private def collapsed(task: Task): Task = task.copyWithRandomId(collapsed = true)
+  private def collapsed(task: Task): Task = task.copyForTests(collapsed = true)
   private def indentation(newIndentation: Int, task: Task): Task =
-    task.copyWithRandomId(indentation = newIndentation)
+    task.copyForTests(indentation = newIndentation)
 }
