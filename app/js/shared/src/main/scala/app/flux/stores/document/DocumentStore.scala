@@ -12,7 +12,6 @@ import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.time.Clock
-import hydro.common.GlobalStopwatch
 import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess
 import hydro.models.modification.EntityModification
@@ -54,9 +53,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     * to this front-end.
     */
   def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Document = {
-    GlobalStopwatch.logTimeSinceStart("<<<< DocumentEdit.WithUpdateTimes.fromReversible")
     val editWithUpdateTimes = DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)(clock, state.document)
-    GlobalStopwatch.logTimeSinceStart(">>>> DocumentEdit.WithUpdateTimes.fromReversible")
     val newDocument = _state.document.withAppliedEdit(editWithUpdateTimes)
     _state = _state.copy(document = newDocument)
     syncer.syncWithDelay(editWithUpdateTimes)

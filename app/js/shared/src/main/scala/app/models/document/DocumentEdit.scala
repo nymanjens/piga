@@ -4,7 +4,6 @@ import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
-import hydro.common.GlobalStopwatch
 import hydro.models.modification.EntityModification
 
 import scala.collection.immutable.Seq
@@ -77,11 +76,6 @@ object DocumentEdit {
       )
     }
 
-    def canonicalized: DocumentEdit.WithUpdateTimes = {
-      // TODO
-      this
-    }
-
     def toEntityModifications: Seq[EntityModification] = {
       val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
       val updates = taskUpdates.map(t => EntityModification.Update(t.toTaskEntity))
@@ -100,20 +94,9 @@ object DocumentEdit {
         addedTasks = edit.addedTasks,
         taskUpdates = for {
           update <- edit.taskUpdates
-          taskIndex <- {
-            GlobalStopwatch.logTimeSinceStart("maybeIndexOf")
-             val x = document
-              .maybeIndexOf(taskId = update.taskId, orderTokenHint = update.originalOrderToken)
-            GlobalStopwatch.logTimeSinceStart("maybeIndexOf done")
-            x
-
-          }
-        } yield {
-          GlobalStopwatch.logTimeSinceStart("withAppliedUpdateAndNewUpdateTime")
-          val x = document.tasks(taskIndex).withAppliedUpdateAndNewUpdateTime(update)
-          GlobalStopwatch.logTimeSinceStart("withAppliedUpdateAndNewUpdateTime done")
-          x
-        },
+          taskIndex <- document
+            .maybeIndexOf(taskId = update.taskId, orderTokenHint = update.originalOrderToken)
+        } yield document.tasks(taskIndex).withAppliedUpdateAndNewUpdateTime(update),
       )
 
     def create(removedTasksIds: Iterable[Long],
