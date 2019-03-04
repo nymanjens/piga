@@ -77,6 +77,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     applyUpdate(maskedTaskUpdate.delayedUntil, FakeJsTaskEntity.Fields.delayedUntil)
     applyUpdate(maskedTaskUpdate.tags, FakeJsTaskEntity.Fields.tags)
 
+    require(fieldMask.nonEmpty, s"Empty fieldMask for maskedTaskUpdate: $maskedTaskUpdate")
     val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask.toVector)
     new Task(modification.updatedEntity)
   }

@@ -94,6 +94,7 @@ object DocumentEdit {
         addedTasks = edit.addedTasks,
         taskUpdates = for {
           update <- edit.taskUpdates
+          if !update.isNoOp
           taskIndex <- document
             .maybeIndexOf(taskId = update.taskId, orderTokenHint = update.originalOrderToken)
         } yield document.tasks(taskIndex).withAppliedUpdateAndNewUpdateTime(update),
