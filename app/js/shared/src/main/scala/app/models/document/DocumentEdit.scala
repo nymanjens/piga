@@ -134,11 +134,11 @@ object DocumentEdit {
           case (Some(u), None) => Some(u)
           case (None, Some(u)) => Some(u)
           case (Some(thisU), Some(thatU)) =>
-            require(thisU.newValue == thatU.oldValue)
+            require(thisU.newValue == thatU.oldValue, "newValue and oldValue don't match")
             Some(FieldUpdate(oldValue = thisU.oldValue, newValue = thatU.newValue))
         }
 
-      require(this.taskId == that.taskId)
+      require(this.taskId == that.taskId, "Task IDs don't match")
       MaskedTaskUpdate(
         taskId = this.taskId,
         originalOrderToken = this.originalOrderToken,
