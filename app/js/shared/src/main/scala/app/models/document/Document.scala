@@ -342,15 +342,19 @@ object Document {
     }
   }
 
-  case class DetachedCursor(task: Task, offsetInTask: Int) {
+  case class DetachedCursor(taskId: Long, originalOrderToken: OrderToken, offsetInTask: Int) {
     def attachToDocument(implicit document: Document): IndexedCursor =
       IndexedCursor(
-        seqIndex = document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) getOrElse {
-          println(s"  Warning: Could not find task in document: task = $task")
+        seqIndex = document.maybeIndexOf(taskId, orderTokenHint = originalOrderToken) getOrElse {
+          println(s"  Warning: Could not find task in document: taskId = $taskId")
           0
         },
         offsetInTask = offsetInTask
       )
+  }
+  object DetachedCursor {
+    def apply(task: Task, offsetInTask: Int): DetachedCursor =
+      DetachedCursor(taskId = task.id, originalOrderToken = task.orderToken, offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isSingleton: Boolean = start == end

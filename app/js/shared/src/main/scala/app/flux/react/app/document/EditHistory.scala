@@ -84,7 +84,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
       def updateTaskIdsInUpdates(tasks: Seq[MaskedTaskUpdate]): Seq[MaskedTaskUpdate] =
         tasks.map(updateTaskId2)
       def updateTaskIdsInCursor(cursor: DetachedCursor): DetachedCursor =
-        cursor.copy(task = updateTaskId(cursor.task))
+        cursor.copy(taskId = if (cursor.taskId == oldId) newId else cursor.taskId)
       def updateTaskIdsInSelection(selection: DetachedSelection): DetachedSelection =
         DetachedSelection(
           start = updateTaskIdsInCursor(selection.start),
