@@ -132,9 +132,8 @@ final class Document(val id: Long,
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
     o match {
-      case that if this.hashCode != that.hashCode() => false
-      case that: Document =>
-        this.id == that.id && this.name == that.name && this.orderToken == that.orderToken && this.tasks == that.tasks
+      // Heuristic: Rely solely on the hashCode and accept unlikely collisions
+      case that: Document => this.hashCode == that.hashCode
       case _ => false
     }
   }

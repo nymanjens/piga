@@ -91,10 +91,11 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   override def toString: String = jsTaskEntity.toString
 
   override def equals(o: scala.Any): Boolean = o match {
-    case that: Task => this.jsTaskEntity == that.jsTaskEntity
+    // Heuristic: Rely solely on the hashCode and accept unlikely collisions
+    case that: Task => this.hashCode == that.hashCode
     case _          => false
   }
-  override def hashCode(): Int = jsTaskEntity.hashCode()
+  override lazy val hashCode: Int = jsTaskEntity.hashCode()
 }
 
 object Task {

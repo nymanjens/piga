@@ -21,6 +21,7 @@ import app.models.document.TextWithMarkup.Formatting
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
 import hydro.common.time.Clock
+import hydro.common.GlobalStopwatch
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
 import hydro.flux.stores.StateStore
@@ -479,6 +480,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(
         implicit state: State,
         props: Props): Callback = {
+      GlobalStopwatch.startAndLog("replaceSelection()")
       val IndexedSelection(start, end) = selectionBeforeEdit
       implicit val oldDocument = state.document
 
@@ -886,7 +888,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "")(implicit state: State, props: Props): Callback = {
-
       if (edit.isNoOp) {
         Callback.empty
       } else {
@@ -894,16 +895,24 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         val oldDocument = state.document
         val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
 
+        GlobalStopwatch.logTimeSinceStart("modState (before first part)")
         $.modState(
-          _.copy(document = newDocument),
+          { s =>
+            GlobalStopwatch.logTimeSinceStart("modState (first part)")
+            s.copy(document = newDocument)
+          },
           Callback.empty.flatMap { _ =>
+            GlobalStopwatch.logTimeSinceStart("modState (second part start)")
             editHistory.addEdit(
               documentEdit = edit,
               selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
               selectionAfterEdit = selectionAfterEdit.detach(newDocument),
               replacementString = replacementString
             )
-            setSelection(selectionAfterEdit)
+            setSelection(selectionAfterEdit) map { r =>
+              GlobalStopwatch.logTimeSinceStart("modState (second part done)")
+              r
+            }
           }
         )
       }
