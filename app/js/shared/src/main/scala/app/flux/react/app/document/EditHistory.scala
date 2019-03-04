@@ -114,7 +114,8 @@ private[document] final class EditHistory(implicit clock: Clock) {
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {
     def hasCollapsedMiddleSelection: Boolean =
       edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isSingleton
-    def sameLineIsEdited: Boolean = edit1.documentEdit.addedTasks == edit2.documentEdit.removedTasks
+    def sameLineIsEdited: Boolean =
+      edit1.documentEdit.taskUpdates.map(_.taskId) == edit2.documentEdit.taskUpdates.map(_.taskId)
     def tooMuchTimeBetween: Boolean =
       Duration.between(edit1.timestamp, edit2.timestamp) > Duration.ofSeconds(3)
     def isCombiningWord: Boolean = {
@@ -157,8 +158,12 @@ private[document] object EditHistory {
     }
 
     private[EditHistory] def addsSingleCharOnSameLine: Boolean = {
-      val upsertSize = documentEdit.addedTasks.size + documentEdit.taskUpdates.size
-      upsertSize == 1 && replacementString.length == 1 && replacementString.charAt(0) != '\n'
+      val noAdds = documentEdit.addedTasks.isEmpty
+      val noRemovals = documentEdit.removedTasks.isEmpty
+      val singleUpdate = documentEdit.taskUpdates.size == 1
+      def eligibleReplacementString = replacementString.length == 1 && replacementString.charAt(0) != '\n'
+
+      noAdds && noRemovals && singleUpdate && eligibleReplacementString
     }
   }
 }
