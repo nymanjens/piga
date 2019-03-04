@@ -19,13 +19,6 @@ object DocumentEdit {
       taskUpdates = taskUpdates.map(_.reversed),
     )
 
-    // TODO: Remove
-    //  def toEntityModifications(implicit clock: Clock): Seq[EntityModification] = {
-    //    val adds = addedTasks.map(t => EntityModification.Add(t.toTaskEntity))
-    //    val deletes = removedTasks.map(t => EntityModification.createRemove(t.toTaskEntity))
-    //    val updates = taskUpdates.map(_.toEntityModification)
-    //  }
-
     def mergedWith(that: DocumentEdit.Reversible): DocumentEdit.Reversible = {
       val overlappingTasks = this.addedTasks.toSet intersect that.removedTasks.toSet
       DocumentEdit.Reversible(
@@ -157,28 +150,6 @@ object DocumentEdit {
         tags = mergeFieldUpdates(this.tags, that.tags),
       )
     }
-
-    // TODO: Remove
-//    def toEntityModification(implicit clock: Clock): EntityModification.Update[TaskEntity] = {
-//      var newTaskEntity = originalTask.toTaskEntity
-//      val fieldMask = mutable.Buffer[ModelField[_, TaskEntity]]()
-//
-//      def maybeApplyField[V](maybeValue: Option[V], field: ModelField[V, TaskEntity]): Unit = {
-//        if (maybeValue.isDefined) {
-//          newTaskEntity = field.set(newTaskEntity, maybeValue.get)
-//          fieldMask.append(field)
-//        }
-//      }
-//
-//      maybeApplyField(content.map(_.toHtml), ModelFields.TaskEntity.contentHtml)
-//      maybeApplyField(orderToken, ModelFields.TaskEntity.orderToken)
-//      maybeApplyField(indentation, ModelFields.TaskEntity.indentation)
-//      maybeApplyField(collapsed, ModelFields.TaskEntity.collapsed)
-//      maybeApplyField(delayedUntil, ModelFields.TaskEntity.delayedUntil)
-//      maybeApplyField(tags, ModelFields.TaskEntity.tags)
-//
-//      EntityModification.createUpdate(newTaskEntity, fieldMask.toVector)
-//    }
   }
   object MaskedTaskUpdate {
     def fromFields(
