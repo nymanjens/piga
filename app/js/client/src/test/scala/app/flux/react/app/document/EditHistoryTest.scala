@@ -46,33 +46,35 @@ object EditHistoryTest extends TestSuite {
       editHistory.undo() ==> None
     }
 
-    //    "Only updates (mergable)" - {
-    //      val abc = newTask("ABC")
-    //      val abcd = newTask("ABCD")
-    //      val abcdS = newTask("ABCD ")
-    //      val abcdSe = newTask("ABCD E")
-    //      val abcdx = newTask("ABCDX")
-    //
-    //      "merged" - {
-    //        addSameLineUpdateEdit(abc, abcd, "D")
-    //        addSameLineUpdateEdit(abcd, abcdS, " ")
-    //        addSameLineUpdateEdit(abcdS, abcdSe, "E")
-    //
-    //        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
-    //        assertEdit(editHistory.undo(), abcd_, abc)
-    //      }
-    //      "not merged after undo()" - {
-    //        addSameLineUpdateEdit(abc, abcd, "D")
-    //        addSameLineUpdateEdit(abcd, abcdS, " ")
-    //        addSameLineUpdateEdit(abcdS, abcdSe, "E")
-    //
-    //        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
-    //
-    //        addSameLineUpdateEdit(abcd_, abcdx, "X")
-    //
-    //        assertEdit(editHistory.undo(), abcdx, abcd_)
-    //      }
-    //    }
+    "Only updates (mergable)" - {
+      val abc = newTask("ABC")
+
+      "merged" - {
+        val updateAbcd = addSameLineUpdateEdit(abc, "ABCD", "D")
+        val abcd = abc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+        val updateAbcdS = addSameLineUpdateEdit(abcd, "ABCD ", " ")
+        val abcdS = abcd.withAppliedUpdateAndNewUpdateTime(updateAbcdS)
+        val updateAbcdSe = addSameLineUpdateEdit(abcdS, "ABCD E", "E")
+        val abcdSe = abcdS.withAppliedUpdateAndNewUpdateTime(updateAbcdSe)
+        val updateAbcdSef = addSameLineUpdateEdit(abcdSe, "ABCD EF", "F")
+
+        assertEditWithUpdate(
+          editHistory.undo(),
+          (updateAbcdS mergedWith updateAbcdSe mergedWith updateAbcdSef).reversed)
+        assertEditWithUpdate(editHistory.undo(), updateAbcd.reversed)
+      }
+      "not merged after undo()" - {
+        val updateAbcd = addSameLineUpdateEdit(abc, "ABCD", "D")
+        val abcd = abc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+        val updateAbcdS = addSameLineUpdateEdit(abcd, "ABCD ", " ")
+        val abcdS = abcd.withAppliedUpdateAndNewUpdateTime(updateAbcdS)
+        val updateAbcdSe = addSameLineUpdateEdit(abcdS, "ABCD E", "E")
+        assertEditWithUpdate(editHistory.undo(), (updateAbcdS mergedWith updateAbcdSe).reversed)
+        val updateAbcdz = addSameLineUpdateEdit(abcd, "ABCDZ", "Z")
+
+        assertEditWithUpdate(editHistory.undo(), updateAbcdz.reversed)
+      }
+    }
 
 //    "Adds and removes" - {
 //      val abc = newTask("ABC")
