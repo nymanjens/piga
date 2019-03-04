@@ -21,7 +21,7 @@ object TaskTest extends TestSuite {
         tags = Seq("a"))
       val task1B = Task.fromTaskEntity(
         TaskEntity(
-          documentId = 123,
+          documentId = document.id,
           contentHtml = "a",
           orderToken = orderTokenA,
           indentation = 1,
