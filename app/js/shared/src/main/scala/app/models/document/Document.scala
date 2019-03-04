@@ -18,73 +18,107 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Try
 
-final class Document(val id: Long,
-                     val name: String,
-                     val orderToken: OrderToken,
-                     val tasks: Seq[Task],
-                     private val idToIndexMap: Map[Long, Int]) {
+final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
 
-  def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document = {
-    val canonicalEdit = edit.canonicalized
-
-    def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
-      val mutableTasks = tasks.toBuffer
-
-      for (update <- edit.taskUpdates) {
-        idToIndexMap.get(update.id) match {
-          case Some(index) => mutableTasks.update(index, mutableTasks(index) mergedWith update)
-          case None        =>
-        }
-      }
-      for (removedTaskId <- edit.removedTasksIds) {
-        idToIndexMap.get(removedTaskId) match {
-          case Some(index) => mutableTasks.remove(index)
-          case None        =>
-        }
-      }
-      mutableTasks.appendAll(edit.addedTasks)
-
-      mutableTasks.toVector.sorted
-    }
-
-    def quickUpdate(taskIndex: Int, taskUpdate: Task) = {
-      // Optimization
-      val oldTask = tasks(taskIndex)
-      tasks.updated(taskIndex, oldTask mergedWith taskUpdate)
-    }
-
-    val newTasks =
-      if (canonicalEdit.removedTasksIds.isEmpty && canonicalEdit.addedTasks.isEmpty && canonicalEdit.taskUpdates.size == 1) {
-        val update = getOnlyElement(canonicalEdit.taskUpdates)
-        maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
-          case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
-            quickUpdate(taskIndex, update)
-          case _ => comprehensiveUpdate(canonicalEdit)
-        }
-      } else {
-        comprehensiveUpdate(canonicalEdit)
-      }
-
+  def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
     new Document(
       id,
       name,
       orderToken,
-      tasks = newTasks,
-      idToIndexMap = newTasks.toStream.map(_.id).zipWithIndex.toMap,
+      tasks = {
+        def quickUpdate(taskIndex: Int, taskUpdate: Task) = {
+          // Optimization
+          val oldTask = tasks(taskIndex)
+          tasks.updated(taskIndex, oldTask mergedWith taskUpdate)
+        }
+        def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
+          val newTasks = mutable.Buffer[Task]()
+          var addedTasksIndex = 0
+          def nextTaskToAdd: Option[Task] =
+            if (addedTasksIndex < edit.addedTasks.size) Some(edit.addedTasks(addedTasksIndex)) else None
+          def maybeApplyUpdate(oldTask: Task): Task = {
+            edit.taskUpdatesById.get(oldTask.id) match {
+              case Some(taskUpdate) => oldTask mergedWith taskUpdate
+              case None             => oldTask
+            }
+          }
+
+          for {
+            t <- tasks
+            if !edit.removedTasksIds.contains(t.id)
+          } {
+            while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
+              newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+              addedTasksIndex += 1
+            }
+            if (nextTaskToAdd.map(_.id) == Some(t.id)) {
+              addedTasksIndex += 1
+            }
+            newTasks += maybeApplyUpdate(t)
+          }
+          while (nextTaskToAdd.isDefined) {
+            newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+            addedTasksIndex += 1
+          }
+
+          newTasks.toVector.sorted
+        }
+
+        if (edit.removedTasksIds.isEmpty && edit.addedTasks.isEmpty && edit.taskUpdates.size == 1) {
+          val update = getOnlyElement(edit.taskUpdates)
+          maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
+            case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
+              quickUpdate(taskIndex, update)
+            case _ => comprehensiveUpdate(edit)
+          }
+        } else {
+          comprehensiveUpdate(edit)
+        }
+      }
     )
-  }
 
   def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
-    new Document(
-      id = id,
-      name = documentEntity.name,
-      orderToken = documentEntity.orderToken,
-      tasks = tasks,
-      idToIndexMap = idToIndexMap)
+    new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
 
-  def maybeIndexOf(taskId: Long, orderTokenHint: OrderToken = null): Option[Int] = idToIndexMap.get(taskId)
+  def maybeIndexOf(taskId: Long, orderTokenHint: OrderToken = null): Option[Int] = {
+    def indexOfViaOrderToken(): Option[Int] = {
+      def findWithEqualOrderTokenAround(index: Int): Option[Int] = {
+        var i = index
+        while (i > 0 && tasks(i - 1).orderToken == orderTokenHint) {
+          i -= 1
+        }
+        while (tasks(i).id != taskId && tasks(i).orderToken == orderTokenHint) {
+          i += 1
+        }
+        if (tasks(i).id == taskId) Some(i) else None
+      }
+
+      def inner(lowerIndex: Int, upperIndex: Int): Option[Int] = {
+        if (lowerIndex > upperIndex) {
+          None
+        } else {
+          val index = (upperIndex + lowerIndex) / 2
+          tasks(index) match {
+            case t if t.id == taskId                 => Some(index)
+            case t if orderTokenHint < t.orderToken  => inner(lowerIndex, upperIndex - 1)
+            case t if orderTokenHint == t.orderToken => findWithEqualOrderTokenAround(index)
+            case _                                   => inner(index + 1, upperIndex)
+          }
+        }
+      }
+
+      inner(0, tasks.length - 1)
+    }
+
+    def indexOfViaIdOnly(): Option[Int] = tasks.toStream.map(_.id).indexOf(taskId) match {
+      case -1    => None
+      case index => Some(index)
+    }
+
+    indexOfViaOrderToken() orElse indexOfViaIdOnly()
+  }
 
   def tasksOption(index: Int): Option[Task] = index match {
     case i if i < 0             => None
@@ -153,14 +187,11 @@ object Document {
     async {
       val tasks = await(
         entityAccess.newQuery[TaskEntity]().filter(ModelFields.TaskEntity.documentId === entity.id).data())
-      val sortedTasks = tasks.map(Task.fromTaskEntity).sorted
       new Document(
         id = entity.id,
         name = entity.name,
         orderToken = entity.orderToken,
-        tasks = sortedTasks,
-        idToIndexMap = sortedTasks.toStream.map(_.id).zipWithIndex.toMap,
-      )
+        tasks = tasks.map(Task.fromTaskEntity).sorted)
     }
 
   case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {
