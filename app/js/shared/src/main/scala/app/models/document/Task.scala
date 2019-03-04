@@ -82,7 +82,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     new Task(modification.updatedEntity)
   }
 
-  def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = id))
+  def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = newId))
 
   def copyForTests(content: TextWithMarkup = null,
                    orderToken: OrderToken = null,
