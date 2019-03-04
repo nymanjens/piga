@@ -1,11 +1,14 @@
 package app.models.document
 
+import app.common.testing.JsTestObjects.newDocument
 import app.common.testing.TestObjects._
 import utest._
 
 import scala.collection.immutable.Seq
 
 object TaskTest extends TestSuite {
+
+  implicit private val document = newDocument()
 
   override def tests = TestSuite {
     "equals and hashCode" - {
@@ -38,10 +41,10 @@ object TaskTest extends TestSuite {
       task1A == task1B ==> true
       task1A == task2 ==> false
 
-      task1A.hashCode() == task1B.hashCode() ==> true
-      task1A.hashCode() == task2.hashCode() ==> false
+      task1A.hashCode == task1B.hashCode ==> true
+      task1A.hashCode == task2.hashCode ==> false
     }
-    "equalsIgnoringId" - {
+    "equalsIgnoringMetadata" - {
       val taskA1 = Task.withRandomId(
         content = TextWithMarkup("a"),
         orderToken = orderTokenA,
@@ -64,49 +67,8 @@ object TaskTest extends TestSuite {
         delayedUntil = Some(testDate),
         tags = Seq("a"))
 
-      (taskA1 equalsIgnoringId taskA2) ==> true
-      (taskA1 equalsIgnoringId taskB) ==> false
-    }
-    "copyWithRandomId" - {
-      val task = Task.withRandomId(
-        content = TextWithMarkup("a"),
-        orderToken = orderTokenA,
-        indentation = 1,
-        collapsed = true,
-        delayedUntil = Some(testDate),
-        tags = Seq("a"))
-
-      "without any other changes" - {
-        val newTask = task.copyWithRandomId()
-        assert(newTask.id != task.id)
-        newTask.content ==> task.content
-        newTask.orderToken ==> task.orderToken
-        newTask.indentation ==> task.indentation
-      }
-      "with indentation changes" - {
-        val newTask = task.copyWithRandomId(indentation = 7)
-        assert(newTask.id != task.id)
-        newTask.content ==> task.content
-        newTask.orderToken ==> task.orderToken
-        newTask.indentation ==> 7
-      }
-      "with all changes" - {
-        val newTask =
-          task.copyWithRandomId(
-            content = TextWithMarkup("x"),
-            orderToken = orderTokenB,
-            indentation = 7,
-            collapsed = false,
-            delayedUntil = None,
-            tags = Seq("x"))
-        assert(newTask.id != task.id)
-        newTask.content ==> TextWithMarkup("x")
-        newTask.orderToken ==> orderTokenB
-        newTask.indentation ==> 7
-        newTask.collapsed ==> false
-        newTask.delayedUntil ==> None
-        newTask.tags ==> Seq("x")
-      }
+      (taskA1 equalsIgnoringMetadata taskA2) ==> true
+      (taskA1 equalsIgnoringMetadata taskB) ==> false
     }
   }
 }

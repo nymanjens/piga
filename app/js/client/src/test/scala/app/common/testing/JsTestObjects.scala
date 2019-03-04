@@ -34,6 +34,8 @@ object JsTestObjects {
               delayedUntil: Option[LocalDateTime] = Some(testDate),
               tags: Seq[String] = Seq("test-tag")): Task = {
     require(content != null || contentString != null)
+    implicit val document = newDocument()
+
     Task.withRandomId(
       content = Option(content) getOrElse TextWithMarkup(contentString),
       orderToken = orderToken,
