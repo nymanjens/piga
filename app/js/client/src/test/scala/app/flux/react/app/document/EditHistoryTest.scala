@@ -6,6 +6,7 @@ import app.common.testing.TestModule
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
+import app.models.document.DocumentEdit
 import app.models.document.Task
 import utest._
 
@@ -76,22 +77,24 @@ object EditHistoryTest extends TestSuite {
   private def addSimpleEdit(removedTask: Task, addedTask: Task, replacementString: String = "")(
       implicit editHistory: EditHistory): Unit = {
     editHistory.addEdit(
-      removedTasks = Seq(removedTask),
-      addedTasks = Seq(addedTask),
+      documentEdit = DocumentEdit.Reversible(
+        removedTasks = Seq(removedTask),
+        addedTasks = Seq(addedTask),
+      ),
       selectionBeforeEdit = DetachedSelection.singleton(DetachedCursor(removedTask, 0)),
       selectionAfterEdit = DetachedSelection.singleton(DetachedCursor(addedTask, 0)),
       replacementString = replacementString
     )
   }
   private def assertEdit(edit: Option[Edit], removedTask: Task, addedTaskWithNewId: Task): Task = {
-    assert(edit.get.removedTasks == Seq(removedTask))
+    assert(edit.get.documentEdit.removedTasks == Seq(removedTask))
 
-    val addedTaskInEdit = getOnlyElement(edit.get.addedTasks)
+    val addedTaskInEdit = getOnlyElement(edit.get.documentEdit.addedTasks)
     assert(addedTaskInEdit.copyWithId(0) == addedTaskWithNewId.copyWithId(0))
     assert(addedTaskInEdit.id != addedTaskWithNewId.id)
 
-    assert(edit.get.selectionBeforeEdit.start.task.id == removedTask.id)
-    assert(edit.get.selectionAfterEdit.start.task.id == addedTaskInEdit.id)
+    assert(edit.get.selectionBeforeEdit.start.taskId == removedTask.id)
+    assert(edit.get.selectionAfterEdit.start.taskId == addedTaskInEdit.id)
 
     addedTaskInEdit
   }
