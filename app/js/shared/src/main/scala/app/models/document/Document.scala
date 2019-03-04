@@ -16,7 +16,6 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.util.Try
 
 final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
 
@@ -166,13 +165,13 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
     o match {
-      case that if this.hashCode != that.hashCode() => false
       case that: Document =>
         this.id == that.id && this.name == that.name && this.orderToken == that.orderToken && this.tasks == that.tasks
       case _ => false
     }
   }
-  override lazy val hashCode: Int = {
+
+  override def hashCode: Int = {
     var code = 11 + id.hashCode()
     code = code * 7 + name.hashCode()
     code = code * 7 + orderToken.hashCode()
