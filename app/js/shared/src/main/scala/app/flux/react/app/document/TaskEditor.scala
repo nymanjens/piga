@@ -494,7 +494,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       val firstTask = oldDocument.tasks(start.seqIndex)
 
-      val tasksToRemove = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
+      val removedTasks = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
       val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
       val addedTasks = mutable.Buffer[Task]()
 
@@ -528,7 +528,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
-          removedTasks = tasksToRemove,
+          removedTasks = removedTasks,
           addedTasks = addedTasks.toVector,
           taskUpdates = taskUpdates.toVector),
         selectionBeforeEdit = selectionBeforeEdit,
@@ -541,8 +541,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
-      val tasksToRemove = for (i <- taskIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
+      val removedTasks = for (i <- taskIndices) yield oldDocument.tasks(i)
+      val addedTasks =
         if (oldDocument.tasks.size > taskIndices.size) Seq()
         else // Removing all tasks in this document --> Replace the last task with an empty task
           Seq(
@@ -556,7 +556,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             ))
 
       replaceWithHistory(
-        edit = DocumentEdit.Reversible(removedTasks = tasksToRemove, addedTasks = tasksToAdd),
+        edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
         selectionBeforeEdit = IndexedSelection(
           IndexedCursor.atStartOfTask(taskIndices.head),
           IndexedCursor.atEndOfTask(taskIndices.last)),
@@ -582,7 +582,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           higherExclusive = taskAfter.map(_.orderToken)
         )
       }
-      val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
+      val addedTasks = for ((i, orderToken) <- taskIndices zip newOrderTokens)
         yield {
           val taskToCopy = oldDocument.tasks(i)
           Task.withRandomId(
@@ -596,7 +596,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         }
 
       replaceWithHistory(
-        edit = DocumentEdit.Reversible(addedTasks = tasksToAdd),
+        edit = DocumentEdit.Reversible(addedTasks = addedTasks),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
           selectionBeforeEdit.start.plusTasks(taskIndices.size),

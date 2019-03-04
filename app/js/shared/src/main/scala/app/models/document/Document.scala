@@ -33,7 +33,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
         def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
           val newTasks = mutable.Buffer[Task]()
           var addedTasksIndex = 0
-          def nextTaskToAdd: Option[Task] =
+          def nextAddedTask: Option[Task] =
             if (addedTasksIndex < edit.addedTasks.size) Some(edit.addedTasks(addedTasksIndex)) else None
           def maybeApplyUpdate(oldTask: Task): Task = {
             edit.taskUpdatesById.get(oldTask.id) match {
@@ -46,17 +46,17 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
             t <- tasks
             if !edit.removedTasksIds.contains(t.id)
           } {
-            while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
-              newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+            while (nextAddedTask.isDefined && nextAddedTask.get < t) {
+              newTasks += maybeApplyUpdate(nextAddedTask.get)
               addedTasksIndex += 1
             }
-            if (nextTaskToAdd.map(_.id) == Some(t.id)) {
+            if (nextAddedTask.map(_.id) == Some(t.id)) {
               addedTasksIndex += 1
             }
             newTasks += maybeApplyUpdate(t)
           }
-          while (nextTaskToAdd.isDefined) {
-            newTasks += maybeApplyUpdate(nextTaskToAdd.get)
+          while (nextAddedTask.isDefined) {
+            newTasks += maybeApplyUpdate(nextAddedTask.get)
             addedTasksIndex += 1
           }
 
