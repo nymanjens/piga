@@ -1,28 +1,38 @@
 package app.models.document
 
+import java.time.Duration
+
+import hydro.common.time.JavaTimeImplicits._
 import app.common.testing.JsTestObjects._
+import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
+import hydro.common.testing.FakeClock
+import hydro.models.modification.EntityModification
 import utest._
 
 import scala.collection.immutable.Seq
 
 object DocumentEditTest extends TestSuite {
 
-  val taskF = newTask("Task F")
-  val taskG = newTask("Task G")
+  implicit private val clock = new TestModule().fakeClock
+
+  private val taskF = newTask("Task F")
+  private val taskG = newTask("Task G")
+
+  private val taskDUpdate = MaskedTaskUpdate
+    .fromFields(originalTask = taskD, content = TextWithMarkup("edited"), orderToken = orderTokenE)
+  private val reversibleEdit = DocumentEdit.Reversible(
+    removedTasks = Seq(taskA, taskB),
+    addedTasks = Seq(taskC, taskE),
+    taskUpdates = Seq(taskDUpdate),
+  )
+  private val taskDAfterUpdate = taskD.withAppliedUpdateAndNewUpdateTime(taskDUpdate)
 
   override def tests = TestSuite {
     "DocumentEdit.Reversible" - {
-      val edit = DocumentEdit.Reversible(
-        removedTasks = Seq(taskA, taskB),
-        addedTasks = Seq(taskC, taskE),
-        taskUpdates = Seq(
-          MaskedTaskUpdate
-            .fromFields(originalTask = taskD, content = TextWithMarkup("edited"), orderToken = orderTokenE)),
-      )
-      val taskDAfterUpdate = taskD.copyForTests(content = TextWithMarkup("edited"), orderToken = orderTokenE)
+      val edit = reversibleEdit
       "reversed" - {
         edit.reversed ==> DocumentEdit.Reversible(
           removedTasks = Seq(taskC, taskE),
@@ -91,14 +101,44 @@ object DocumentEditTest extends TestSuite {
       }
     }
     "DocumentEdit.WithUpdateTimes" - {
+      val edit = DocumentEdit.WithUpdateTimes
+        .create(
+          removedTasksIds = Set(taskA.id, taskB.id),
+          addedTasks = Seq(taskC, taskE),
+          taskUpdates = Seq(taskDAfterUpdate))
+
       "fromReversible" - {
-        1 ==> 0
+        implicit val document = newDocument(taskD)
+        DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit) ==> edit
       }
       "mergedWith" - {
-        1 ==> 0
+        clock.setNowInstant(FakeClock.defaultInstant.plusSeconds(60))
+        val taskDAfterUpdate2 =
+          taskD.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate
+              .fromFields(taskD, content = TextWithMarkup("edited2"), indentation = 96))
+        val taskCAfterUpdate =
+          taskC.withAppliedUpdateAndNewUpdateTime(MaskedTaskUpdate.fromFields(taskC, tags = Seq("xioq")))
+        val otherEdit = DocumentEdit.WithUpdateTimes.create(
+          removedTasksIds = Set(taskE.id, taskG.id),
+          addedTasks = Seq(taskF),
+          taskUpdates = Seq(taskDAfterUpdate2, taskCAfterUpdate),
+        )
+
+        val result = edit mergedWith otherEdit
+
+        result.removedTasksIds ==> Set(taskA.id, taskB.id, taskG.id)
+        result.addedTasks.toSet ==> Set(taskC, taskF)
+        result.taskUpdates.toSet ==> Set(taskDAfterUpdate mergedWith taskDAfterUpdate2, taskCAfterUpdate)
       }
       "toEntityModifications" - {
-        1 ==> 0
+        edit.toEntityModifications.toSet ==> Set(
+          EntityModification.Remove[TaskEntity](taskA.id),
+          EntityModification.Remove[TaskEntity](taskB.id),
+          EntityModification.Add(taskC.toTaskEntity),
+          EntityModification.Add(taskE.toTaskEntity),
+          EntityModification.Update(taskDAfterUpdate.toTaskEntity),
+        )
       }
     }
     "MaskedTaskUpdate" - {
