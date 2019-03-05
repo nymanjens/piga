@@ -60,7 +60,7 @@ object DocumentEdit {
     def mergedWith(that: DocumentEdit.WithUpdateTimes): DocumentEdit.WithUpdateTimes = {
       val overlappingTaskIds = this.addedTasks.map(_.id).toSet intersect that.removedTasksIds
       DocumentEdit.WithUpdateTimes(
-        removedTasksIds = this.removedTasksIds ++ that.removedTasksIds,
+        removedTasksIds = this.removedTasksIds ++ that.removedTasksIds.filterNot(overlappingTaskIds),
         addedTasks = this.addedTasks.filterNot(t => overlappingTaskIds contains t.id) ++ that.addedTasks,
         taskUpdatesById = {
           for ((id, updates) <- (this.taskUpdates ++ that.taskUpdates).groupBy(_.id))
