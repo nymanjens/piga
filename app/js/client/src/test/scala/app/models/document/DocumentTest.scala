@@ -2,21 +2,95 @@ package app.models.document
 
 import hydro.common.OrderToken
 import app.common.testing.JsTestObjects._
+import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
+import app.models.document.DocumentEdit.MaskedTaskUpdate
+import app.models.document.DocumentEditTest.taskDUpdate
 import utest._
 
 import scala.collection.immutable.Seq
 
 object DocumentTest extends TestSuite {
+
+  implicit private val clock = new TestModule().fakeClock
+
   val taskBB = newTask("Task BB", orderToken = orderTokenB)
   val taskEE = newTask("Task EE", orderToken = orderTokenE)
   val taskF = newTask("Task F", orderToken = OrderToken.middleBetween(Some(orderTokenE), None))
 
   override def tests = TestSuite {
+    "withAppliedEdit" - {
+      "tasks removed" - {
+        val document = newDocument(taskA, taskB, taskC)
+        val edit = DocumentEdit.WithUpdateTimes
+          .create(removedTasksIds = Seq(taskB.id), addedTasks = Seq(), taskUpdates = Seq())
+
+        "removes" - {
+          document.withAppliedEdit(edit) ==> newDocument(taskA, taskC)
+        }
+        "is idempotent" - {
+          document.withAppliedEdit(edit).withAppliedEdit(edit) ==> document.withAppliedEdit(edit)
+        }
+      }
+      "tasks added" - {
+        val document = newDocument(taskA, taskB, taskD)
+        val edit = DocumentEdit.WithUpdateTimes
+          .create(removedTasksIds = Seq(), addedTasks = Seq(taskC), taskUpdates = Seq())
+
+        "adds" - {
+          document.withAppliedEdit(edit) ==> newDocument(taskA, taskB, taskC, taskD)
+        }
+        "is idempotent" - {
+          document.withAppliedEdit(edit).withAppliedEdit(edit) ==> document.withAppliedEdit(edit)
+        }
+      }
+      "tasks updated" - {
+        val document = newDocument(taskA, taskB, taskC)
+
+        "single update" - {
+          val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited")))
+          val edit = DocumentEdit.WithUpdateTimes
+            .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
+
+          document.withAppliedEdit(edit) ==> newDocument(taskA, taskBAfterUpdate, taskC)
+        }
+        "single update with changing orderToken" - {
+          val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate
+              .fromFields(originalTask = taskB, content = TextWithMarkup("edited"), orderToken = orderTokenE))
+          val edit = DocumentEdit.WithUpdateTimes
+            .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
+
+          document.withAppliedEdit(edit) ==> newDocument(taskA, taskC, taskBAfterUpdate)
+        }
+        "multiple updates" - {
+          val taskAAfterUpdate = taskA.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate.fromFields(originalTask = taskA, content = TextWithMarkup("edited A")))
+          val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited B")))
+          val edit = DocumentEdit.WithUpdateTimes
+            .create(
+              removedTasksIds = Seq(),
+              addedTasks = Seq(),
+              taskUpdates = Seq(taskAAfterUpdate, taskBAfterUpdate))
+
+          document.withAppliedEdit(edit) ==> newDocument(taskAAfterUpdate, taskBAfterUpdate, taskC)
+        }
+        "is idempotent" - {
+          val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited")))
+          val edit = DocumentEdit.WithUpdateTimes
+            .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
+
+          document.withAppliedEdit(edit).withAppliedEdit(edit) ==> document.withAppliedEdit(edit)
+        }
+      }
+    }
     "equals and hashCode" - {
       val documentA: AnyRef =
         new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskA))

@@ -1,5 +1,7 @@
 package app.models.document
 
+import java.util.Objects
+
 import app.models.access.ModelFields
 import app.models.document.Document.IndexedSelection
 import hydro.common.DomNodeUtils.nodeIsLi
@@ -170,14 +172,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
       case _ => false
     }
   }
-
-  override def hashCode: Int = {
-    var code = 11 + id.hashCode()
-    code = code * 7 + name.hashCode()
-    code = code * 7 + orderToken.hashCode()
-    code = code * 7 + tasks.hashCode()
-    code
-  }
+  override def hashCode: Int = Objects.hash(id.asInstanceOf[java.lang.Long], name, orderToken, tasks)
   override def toString: String = s"Document($id, $name, $tasks)"
 }
 object Document {
