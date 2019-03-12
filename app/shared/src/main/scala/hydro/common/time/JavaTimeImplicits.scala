@@ -17,7 +17,6 @@ object JavaTimeImplicits {
     override def compare(x: Instant, y: Instant): Int = x compareTo y
   }
   implicit class InstantWrapper(thisInstant: Instant) extends BaseWrapper[Instant](thisInstant) {
-    def -(instant: Instant): Duration = Duration.between(thisInstant, instant)
     def -(duration: Duration): Instant = thisInstant minus duration
     def +(duration: Duration): Instant = thisInstant plus duration
     def -(instant: Instant): Duration = Duration.between(instant, thisInstant)
