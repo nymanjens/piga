@@ -13,6 +13,8 @@ import app.models.document.Document.DetachedCursor
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.Document
+import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
@@ -62,15 +64,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
-      cursor = DetachedCursor(
-        task = Task.withRandomId(
-          TextWithMarkup.empty,
-          OrderToken.middle,
-          indentation = 0,
-          collapsed = false,
-          delayedUntil = None,
-          tags = Seq()),
-        offsetInTask = 0),
+      cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
     )
 
@@ -133,31 +127,31 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
-            case (task, i, maybeAmountCollapsed) =>
-              val nodeType = state.document.tasksOption(i + 1) match {
+            case (task, taskIndex, maybeAmountCollapsed) =>
+              val nodeType = state.document.tasksOption(taskIndex + 1) match {
                 case _ if task.indentation == 0                                => "root"
                 case Some(nextTask) if nextTask.indentation > task.indentation => "node"
                 case _                                                         => "leaf"
               }
-              val renderedTags = renderTags(task.tags, seqIndex = i)
+              val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
-                s"""#teli-$i:after {content: "  {+ $amountCollapsed}";}""")
+                s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}""")
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
-                ^.key := s"li-$i",
-                ^.id := s"teli-$i",
+                ^.key := s"li-$taskIndex",
+                ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
                   Seq(nodeType) ++
                     ifThenOption(task.collapsed)("collapsed") ++
-                    ifThenOption(state.highlightedTaskIndex == i)("highlighted")),
-                VdomAttr("num") := i,
+                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted")),
+                VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
                 task.content.toVdomNode
               ) +: {
                 if (styleStrings.nonEmpty) {
-                  Seq(<.styleTag(^.key := s"listyle-$i", styleStrings.mkString("\n")))
+                  Seq(<.styleTag(^.key := s"listyle-$taskIndex", styleStrings.mkString("\n")))
                 } else {
                   Seq()
                 }
@@ -321,7 +315,9 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               // Don't indent children if task is empty
               val updateChildren = !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
               updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
-                task.copyWithRandomId(indentation = zeroIfNegative(task.indentation + indentIncrease))
+                MaskedTaskUpdate.fromFields(
+                  task,
+                  indentation = zeroIfNegative(task.indentation + indentIncrease))
               }
 
             // Italic
@@ -437,14 +433,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                task.copyWithRandomId(collapsed = false)
+                MaskedTaskUpdate.fromFields(task, collapsed = false)
               }
 
             // Collapse tasks
             case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
-                task.copyWithRandomId(collapsed = true)
+                MaskedTaskUpdate.fromFields(task, collapsed = true)
               }
 
             // Convert to upper case
@@ -473,11 +469,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         case None => Callback.empty
         case Some(edit) =>
           val documentStore = props.documentStore
-          val newDocument = documentStore
-            .replaceTasksWithoutCallingListeners(toReplace = edit.removedTasks, toAdd = edit.addedTasks)
+          val newDocument = documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
           $.modState(
             _.copy(document = newDocument),
-            setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))
+            Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument)))
           )
       }
 
@@ -485,7 +480,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         implicit state: State,
         props: Props): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
-      val oldDocument = state.document
+      implicit val oldDocument = state.document
 
       val newOrderTokens = {
         val previousTask = oldDocument.tasksOption(start.seqIndex - 1)
@@ -496,31 +491,46 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           higherExclusive = nextTask.map(_.orderToken)
         )
       }
-      val tasksToReplace = for (i <- selectionBeforeEdit.seqIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
-        for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
-          yield {
-            def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
-              if (i == index) tags else TextWithMarkup.empty
-            val newContent = ifIndexOrEmpty(0)(
-              oldDocument.tasks(start.seqIndex).content.sub(0, start.offsetInTask)) +
-              replacementPart.content +
-              ifIndexOrEmpty(replacement.parts.length - 1)(
-                oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
-            val baseTask = tasksToReplace.head
-            baseTask.copyWithRandomId(
-              content = newContent,
-              orderToken = newOrderToken,
-              indentation = baseTask.indentation + replacementPart.indentationRelativeToCurrent,
-              collapsed = if (i == 0) baseTask.collapsed else false,
-              delayedUntil = if (i == 0) baseTask.delayedUntil else None,
-              tags = if (i == 0) baseTask.tags else Seq()
-            )
+
+      val firstTask = oldDocument.tasks(start.seqIndex)
+
+      val removedTasks = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
+      val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
+      val addedTasks = mutable.Buffer[Task]()
+
+      for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
+        yield {
+          def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
+            if (i == index) tags else TextWithMarkup.empty
+          val newContent = ifIndexOrEmpty(0)(firstTask.content.sub(0, start.offsetInTask)) +
+            replacementPart.content +
+            ifIndexOrEmpty(replacement.parts.length - 1)(
+              oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
+          if (i == 0) {
+            taskUpdates.append(
+              MaskedTaskUpdate.fromFields(
+                firstTask,
+                content = newContent,
+                orderToken = newOrderToken,
+                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent))
+          } else {
+            addedTasks.append(
+              Task.withRandomId(
+                content = newContent,
+                orderToken = newOrderToken,
+                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent,
+                collapsed = false,
+                delayedUntil = None,
+                tags = Seq(),
+              ))
           }
+        }
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit.Reversible(
+          removedTasks = removedTasks,
+          addedTasks = addedTasks.toVector,
+          taskUpdates = taskUpdates.toVector),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection.singleton(
           (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
@@ -531,8 +541,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
-      val tasksToReplace = for (i <- taskIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
+      val removedTasks = for (i <- taskIndices) yield oldDocument.tasks(i)
+      val addedTasks =
         if (oldDocument.tasks.size > taskIndices.size) Seq()
         else // Removing all tasks in this document --> Replace the last task with an empty task
           Seq(
@@ -546,8 +556,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             ))
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
         selectionBeforeEdit = IndexedSelection(
           IndexedCursor.atStartOfTask(taskIndices.head),
           IndexedCursor.atEndOfTask(taskIndices.last)),
@@ -573,12 +582,21 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           higherExclusive = taskAfter.map(_.orderToken)
         )
       }
-      val tasksToAdd = for ((i, orderToken) <- taskIndices zip newOrderTokens)
-        yield oldDocument.tasks(i).copyWithRandomId(orderToken = orderToken)
+      val addedTasks = for ((i, orderToken) <- taskIndices zip newOrderTokens)
+        yield {
+          val taskToCopy = oldDocument.tasks(i)
+          Task.withRandomId(
+            content = taskToCopy.content,
+            orderToken = orderToken,
+            indentation = taskToCopy.indentation,
+            collapsed = taskToCopy.collapsed,
+            delayedUntil = taskToCopy.delayedUntil,
+            tags = taskToCopy.tags,
+          )
+        }
 
       replaceWithHistory(
-        tasksToReplace = Seq(),
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit.Reversible(addedTasks = addedTasks),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
           selectionBeforeEdit.start.plusTasks(taskIndices.size),
@@ -587,16 +605,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
-        taskUpdate: Task => Task)(implicit state: State, props: Props): Callback = {
+        taskUpdate: Task => MaskedTaskUpdate)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-
-      val IndexedSelection(start, end) = if (updateChildren) selection.includeChildren() else selection
-      val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-      val tasksToAdd = tasksToReplace.map(taskUpdate)
+      val updateSelection = if (updateChildren) selection.includeChildren() else selection
+      val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
 
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -606,21 +621,19 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selection: IndexedSelection,
         characterTransform: String => String)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-      val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-      val tasksToAdd =
-        for (task <- tasksToReplace)
-          yield
-            task.copyWithRandomId(
-              content = task.content.withTransformedCharacters(
-                beginOffset = selection.startOffsetInTask(task),
-                endOffset = selection.endOffsetInTask(task),
-                characterTransform = characterTransform
-              )
-            )
 
+      val taskUpdates = for (task <- oldDocument.tasksIn(selection))
+        yield
+          MaskedTaskUpdate.fromFields(
+            originalTask = task,
+            content = task.content.withTransformedCharacters(
+              beginOffset = selection.startOffsetInTask(task),
+              endOffset = selection.endOffsetInTask(task),
+              characterTransform = characterTransform
+            )
+          )
       replaceWithHistory(
-        tasksToReplace = tasksToReplace,
-        tasksToAdd = tasksToAdd,
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
         selectionAfterEdit = selection
       )
@@ -643,11 +656,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       def replaceTags(indexedSelection: IndexedSelection,
                       tagsToRemove: Seq[String],
                       tagsToAdd: Seq[String]): Callback = {
-        def updated(task: Task): Task =
-          task.copyWithRandomId(tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+        val taskUpdates = for (task <- document.tasksIn(selection))
+          yield
+            MaskedTaskUpdate.fromFields(
+              originalTask = task,
+              tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
-          tasksToReplace = for (i <- selection.seqIndices) yield document.tasks(i),
-          tasksToAdd = for (i <- selection.seqIndices) yield updated(document.tasks(i)),
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates.filter(!_.isNoOp)),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -674,30 +689,31 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       val IndexedSelection(start, end) = selection
 
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
-        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[Task] =
+        def setFormatting(tasks: Seq[Task], value: Boolean): Seq[MaskedTaskUpdate] =
           for (task <- tasks)
             yield
-              task.copyWithRandomId(
+              MaskedTaskUpdate.fromFields(
+                originalTask = task,
                 content = task.content.withFormatting(
                   beginOffset = if (task == tasks.head) start.offsetInTask else 0,
                   endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
                   formatting => updateFunc(formatting, value)
-                ))
+                )
+              )
 
         val oldDocument = state.document
-        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-        val tasksToAdd = {
-          val candidate = setFormatting(tasksToReplace, value = true)
-          if (candidate.map(_.content) == tasksToReplace.map(_.content)) {
-            setFormatting(tasksToReplace, value = false)
+
+        val taskUpdates = {
+          val candidate = setFormatting(oldDocument.tasksIn(selection), value = true)
+          if (candidate.forall(_.isNoOp)) {
+            setFormatting(oldDocument.tasksIn(selection), value = false)
           } else {
             candidate
           }
         }
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = selection,
           selectionAfterEdit = selection
         )
@@ -756,22 +772,20 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
-        val tasksToReplace = for (i <- selection.seqIndices) yield oldDocument.tasks(i)
-        val tasksToAdd = {
-          for (task <- tasksToReplace)
-            yield
-              task.copyWithRandomId(
-                content = task.content
-                  .withFormatting(
-                    beginOffset = selection.startOffsetInTask(task),
-                    endOffset = selection.endOffsetInTask(task),
-                    updateFunc = _.copy(link = newLink)
-                  ))
-        }
+        val taskUpdates = for (task <- oldDocument.tasksIn(selection))
+          yield
+            MaskedTaskUpdate.fromFields(
+              originalTask = task,
+              content = task.content
+                .withFormatting(
+                  beginOffset = selection.startOffsetInTask(task),
+                  endOffset = selection.endOffsetInTask(task),
+                  updateFunc = _.copy(link = newLink)
+                )
+            )
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = originalSelection,
           selectionAfterEdit = selection
         )
@@ -819,23 +833,20 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       if (task1.isEmpty && task2.isEmpty) {
         Callback.empty
       } else {
-
-        val tasksToReplace = for (i <- start.seqIndex to end.seqIndex) yield oldDocument.tasks(i)
-
         val newOrderTokens = {
           OrderToken.evenlyDistributedValuesBetween(
-            numValues = tasksToReplace.length,
+            numValues = selectionWithChildren.seqIndices.length,
             lowerExclusive = task1.map(_.orderToken),
             higherExclusive = task2.map(_.orderToken)
           )
         }
-        val tasksToAdd =
-          for ((task, newOrderToken) <- tasksToReplace zip newOrderTokens)
-            yield task.copyWithRandomId(orderToken = newOrderToken)
+
+        val taskUpdates =
+          for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
+            yield MaskedTaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
 
         replaceWithHistory(
-          tasksToReplace = tasksToReplace,
-          tasksToAdd = tasksToAdd,
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
             selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
@@ -871,46 +882,27 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
     }
 
     private def replaceWithHistory(
-        tasksToReplace: Seq[Task],
-        tasksToAdd: Seq[Task],
+        edit: DocumentEdit.Reversible,
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "")(implicit state: State, props: Props): Callback = {
-      def isNoOp: Boolean = {
-        if (tasksToReplace.size == tasksToAdd.size && selectionBeforeEdit == selectionAfterEdit) {
-          if (tasksToReplace.isEmpty) {
-            true
-          } else {
-            (tasksToReplace.sorted zip tasksToAdd.sorted).forall {
-              case (t1, t2) => t1 equalsIgnoringId t2
-            }
-          }
-        } else {
-          false
+
+      val documentStore = props.documentStore
+      val oldDocument = state.document
+      val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
+
+      $.modState(
+        _.copy(document = newDocument),
+        Callback.empty.flatMap { _ =>
+          editHistory.addEdit(
+            documentEdit = edit,
+            selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
+            selectionAfterEdit = selectionAfterEdit.detach(newDocument),
+            replacementString = replacementString
+          )
+          setSelection(selectionAfterEdit)
         }
-      }
-
-      if (isNoOp) {
-        Callback.empty
-      } else {
-        val documentStore = props.documentStore
-        val oldDocument = state.document
-        val newDocument =
-          documentStore.replaceTasksWithoutCallingListeners(toReplace = tasksToReplace, toAdd = tasksToAdd)
-
-        $.modState(
-          _.copy(document = newDocument), {
-            editHistory.addEdit(
-              removedTasks = tasksToReplace,
-              addedTasks = tasksToAdd,
-              selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
-              selectionAfterEdit = selectionAfterEdit.detach(newDocument),
-              replacementString = replacementString
-            )
-            setSelection(selectionAfterEdit)
-          }
-        )
-      }
+      )
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>

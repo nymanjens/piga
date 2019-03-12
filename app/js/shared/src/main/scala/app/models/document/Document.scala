@@ -1,8 +1,12 @@
 package app.models.document
 
-import hydro.common.OrderToken
+import java.util.Objects
+
 import app.models.access.ModelFields
+import app.models.document.Document.IndexedSelection
 import hydro.common.DomNodeUtils.nodeIsLi
+import hydro.common.GuavaReplacement.Iterables.getOnlyElement
+import hydro.common.OrderToken
 import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.JsEntityAccess
 import org.scalajs.dom
@@ -16,78 +20,105 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
-  require(tasks.sorted == tasks, tasks) // TODD: Remove this check when we're confident that this works
+
+  def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
+    new Document(
+      id,
+      name,
+      orderToken,
+      tasks = {
+        def quickUpdate(taskIndex: Int, taskUpdate: Task) = {
+          // Optimization
+          val oldTask = tasks(taskIndex)
+          tasks.updated(taskIndex, oldTask mergedWith taskUpdate)
+        }
+        def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
+          val newTasks = mutable.Buffer[Task]()
+          var addedTasksIndex = 0
+          def nextAddedTask: Option[Task] =
+            if (addedTasksIndex < edit.addedTasks.size) Some(edit.addedTasks(addedTasksIndex)) else None
+          def maybeApplyUpdate(oldTask: Task): Task = {
+            edit.taskUpdatesById.get(oldTask.id) match {
+              case Some(taskUpdate) => oldTask mergedWith taskUpdate
+              case None             => oldTask
+            }
+          }
+
+          for {
+            t <- tasks
+            if !edit.removedTasksIds.contains(t.id)
+          } {
+            while (nextAddedTask.isDefined && nextAddedTask.get < t) {
+              newTasks += maybeApplyUpdate(nextAddedTask.get)
+              addedTasksIndex += 1
+            }
+            if (nextAddedTask.map(_.id) == Some(t.id)) {
+              addedTasksIndex += 1
+            }
+            newTasks += maybeApplyUpdate(t)
+          }
+          while (nextAddedTask.isDefined) {
+            newTasks += maybeApplyUpdate(nextAddedTask.get)
+            addedTasksIndex += 1
+          }
+
+          newTasks.toVector.sorted
+        }
+
+        if (edit.removedTasksIds.isEmpty && edit.addedTasks.isEmpty && edit.taskUpdates.size == 1) {
+          val update = getOnlyElement(edit.taskUpdates)
+          maybeIndexOf(update.id, orderTokenHint = update.orderToken) match {
+            case Some(taskIndex) if tasks(taskIndex).orderToken == update.orderToken =>
+              quickUpdate(taskIndex, update)
+            case _ => comprehensiveUpdate(edit)
+          }
+        } else {
+          comprehensiveUpdate(edit)
+        }
+      }
+    )
 
   def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
     new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
   }
 
-  def replaced(toReplace: Iterable[Task], toAdd: Iterable[Task]): Document =
-    (toReplace.toVector, toAdd.toVector) match {
-      case (Seq(replace), Seq(add)) if replace.orderToken == add.orderToken =>
-        // Optimization
-        val taskIndex = indexOf(replace)
-        new Document(id, name, orderToken, tasks.updated(taskIndex, add))
-
-      case (toReplaceSeq, toAddSeq) =>
-        val toReplaceSet = toReplaceSeq.toSet
-        val newTasks = mutable.Buffer[Task]()
-        var toAddSeqIndex = 0
-        def nextTaskToAdd: Option[Task] =
-          if (toAddSeqIndex < toAddSeq.size) Some(toAddSeq(toAddSeqIndex)) else None
-
-        for {
-          t <- tasks
-          if !toReplaceSet.contains(t)
-        } {
-          while (nextTaskToAdd.isDefined && nextTaskToAdd.get < t) {
-            newTasks += nextTaskToAdd.get
-            toAddSeqIndex += 1
-          }
-          if (nextTaskToAdd == Some(t)) {
-            toAddSeqIndex += 1
-          }
-          newTasks += t
+  def maybeIndexOf(taskId: Long, orderTokenHint: OrderToken = null): Option[Int] = {
+    def indexOfViaOrderToken(): Option[Int] = {
+      def findWithEqualOrderTokenAround(index: Int): Option[Int] = {
+        var i = index
+        while (i > 0 && tasks(i - 1).orderToken == orderTokenHint) {
+          i -= 1
         }
-        while (nextTaskToAdd.isDefined) {
-          newTasks += nextTaskToAdd.get
-          toAddSeqIndex += 1
+        while (tasks(i).id != taskId && tasks(i).orderToken == orderTokenHint) {
+          i += 1
         }
+        if (tasks(i).id == taskId) Some(i) else None
+      }
 
-        new Document(id, name, orderToken, newTasks.toVector)
+      def inner(lowerIndex: Int, upperIndex: Int): Option[Int] = {
+        if (lowerIndex > upperIndex) {
+          None
+        } else {
+          val index = (upperIndex + lowerIndex) / 2
+          tasks(index) match {
+            case t if t.id == taskId                 => Some(index)
+            case t if orderTokenHint < t.orderToken  => inner(lowerIndex, upperIndex - 1)
+            case t if orderTokenHint == t.orderToken => findWithEqualOrderTokenAround(index)
+            case _                                   => inner(index + 1, upperIndex)
+          }
+        }
+      }
+
+      inner(0, tasks.length - 1)
     }
 
-  def +(task: Task): Document = replaced(toReplace = Seq(), toAdd = Seq(task))
-  def minusTaskWithId(taskId: Long): Document =
-    new Document(id, name, orderToken, tasks.filter(_.id != taskId))
-
-  def indexOf(task: Task): Int = {
-    def inner(lowerIndex: Int, upperIndex: Int): Int = {
-      require(lowerIndex <= upperIndex, s"$task is not in $tasks")
-      val index = (upperIndex + lowerIndex) / 2
-      tasks(index) match {
-        case t if t.id == task.id =>
-          require(task == t)
-          index
-        case t if task.orderToken < t.orderToken  => inner(lowerIndex, upperIndex - 1)
-        case t if task.orderToken == t.orderToken => findWithEqualOrderTokenAround(index)
-        case _                                    => inner(index + 1, upperIndex)
-      }
-    }
-    def findWithEqualOrderTokenAround(index: Int): Int = {
-      var i = index
-      while (i > 0 && tasks(i - 1).orderToken == task.orderToken) {
-        i -= 1
-      }
-      while (tasks(i).id != task.id) {
-        require(tasks(i).orderToken == task.orderToken, s"$task is not in $tasks")
-        i += 1
-      }
-      i
+    def indexOfViaIdOnly(): Option[Int] = tasks.toStream.map(_.id).indexOf(taskId) match {
+      case -1    => None
+      case index => Some(index)
     }
 
-    inner(0, tasks.length - 1)
+    indexOfViaOrderToken() orElse indexOfViaIdOnly()
   }
 
   def tasksOption(index: Int): Option[Task] = index match {
@@ -95,6 +126,8 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
     case i if i >= tasks.length => None
     case _                      => Some(tasks(index))
   }
+
+  def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
 
@@ -134,19 +167,12 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
   // **************** Object methods **************** //
   override def equals(o: scala.Any): Boolean = {
     o match {
-      case that if this.hashCode != that.hashCode() => false
       case that: Document =>
         this.id == that.id && this.name == that.name && this.orderToken == that.orderToken && this.tasks == that.tasks
       case _ => false
     }
   }
-  override lazy val hashCode: Int = {
-    var code = 11 + id.hashCode()
-    code = code * 7 + name.hashCode()
-    code = code * 7 + orderToken.hashCode()
-    code = code * 7 + tasks.hashCode()
-    code
-  }
+  override def hashCode: Int = Objects.hash(id.asInstanceOf[java.lang.Long], name, orderToken, tasks)
   override def toString: String = s"Document($id, $name, $tasks)"
 }
 object Document {
@@ -311,9 +337,19 @@ object Document {
     }
   }
 
-  case class DetachedCursor(task: Task, offsetInTask: Int) {
+  case class DetachedCursor(taskId: Long, originalOrderToken: OrderToken, offsetInTask: Int) {
     def attachToDocument(implicit document: Document): IndexedCursor =
-      IndexedCursor(seqIndex = document.indexOf(task), offsetInTask = offsetInTask)
+      IndexedCursor(
+        seqIndex = document.maybeIndexOf(taskId, orderTokenHint = originalOrderToken) getOrElse {
+          println(s"  Warning: Could not find task in document: taskId = $taskId")
+          0
+        },
+        offsetInTask = offsetInTask
+      )
+  }
+  object DetachedCursor {
+    def apply(task: Task, offsetInTask: Int): DetachedCursor =
+      DetachedCursor(taskId = task.id, originalOrderToken = task.orderToken, offsetInTask = offsetInTask)
   }
   case class DetachedSelection(start: DetachedCursor, end: DetachedCursor) {
     def isSingleton: Boolean = start == end

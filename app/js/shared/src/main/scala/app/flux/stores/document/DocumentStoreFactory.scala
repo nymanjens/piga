@@ -6,6 +6,7 @@ import hydro.models.modification.EntityModification
 import hydro.common.Listenable
 import hydro.common.Listenable.ListenableMap
 import hydro.common.LoggingUtils.logFailure
+import hydro.common.time.Clock
 import hydro.models.access.JsEntityAccess
 
 import scala.async.Async.async
@@ -15,7 +16,7 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess) {
+final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess, clock: Clock) {
   private val cache: ListenableMap[DocumentId, Future[DocumentStore]] = ListenableMap()
 
   // **************** API ****************//

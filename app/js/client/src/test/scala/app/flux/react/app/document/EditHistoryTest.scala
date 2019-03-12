@@ -6,7 +6,11 @@ import app.common.testing.TestModule
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
+import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
+import app.models.document.TextWithMarkup
+import hydro.common.OrderToken
 import utest._
 
 import scala.collection.immutable.Seq
@@ -17,81 +21,169 @@ object EditHistoryTest extends TestSuite {
     implicit val clock = new TestModule().fakeClock
     implicit val editHistory = new EditHistory
 
-    "normal operation" - {
+    "Only updates (non-mergable)" - {
       val abc = newTask("ABC")
-      val abcd = newTask("ABCD")
       val xyz = newTask("XYZ")
-      val xy = newTask("XY")
-      val xyx = newTask("XYX")
-      val xyr = newTask("XYR")
 
-      addSimpleEdit(abc, abcd, "D")
-      addSimpleEdit(xyz, xy)
-      addSimpleEdit(xy, xyx, "X")
+      val updateAbcd = addSameLineUpdateEdit(abc, "ABCD", "D")
+      val updateXy = addSameLineUpdateEdit(xyz, "XY")
+      val xy = xyz.withAppliedUpdateAndNewUpdateTime(updateXy)
+      val updateXyx = addSameLineUpdateEdit(xy, "XYX", "X")
 
       editHistory.redo() ==> None
-      val xy_ = assertEdit(editHistory.undo(), xyx, xy)
-      assertEdit(editHistory.undo(), xy_, xyz)
-      val abc_ = assertEdit(editHistory.undo(), abcd, abc)
+      assertEditWithUpdate(editHistory.undo(), updateXyx.reversed)
+      assertEditWithUpdate(editHistory.undo(), updateXy.reversed)
+      assertEditWithUpdate(editHistory.undo(), updateAbcd.reversed)
       editHistory.undo() ==> None
 
-      val abcd_ = assertEdit(editHistory.redo(), abc_, abcd)
+      assertEditWithUpdate(editHistory.redo(), updateAbcd)
 
-      addSimpleEdit(abcd_, xyr)
+      val abcd = abc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+      val updateZZZ = addSameLineUpdateEdit(abcd, "ZZZ")
 
       editHistory.redo() ==> None
-      val abcd__ = assertEdit(editHistory.undo(), xyr, abcd_)
-      assertEdit(editHistory.undo(), abcd__, abc_)
+      assertEditWithUpdate(editHistory.undo(), updateZZZ.reversed)
+      assertEditWithUpdate(editHistory.undo(), updateAbcd.reversed)
       editHistory.undo() ==> None
     }
-    "with mergeable edits" - {
+
+    "Only updates (mergable)" - {
       val abc = newTask("ABC")
-      val abcd = newTask("ABCD")
-      val abcdS = newTask("ABCD ")
-      val abcdSe = newTask("ABCD E")
-      val abcdx = newTask("ABCDX")
 
       "merged" - {
-        addSimpleEdit(abc, abcd, "D")
-        addSimpleEdit(abcd, abcdS, " ")
-        addSimpleEdit(abcdS, abcdSe, "E")
+        val updateAbcd = addSameLineUpdateEdit(abc, "ABCD", "D")
+        val abcd = abc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+        val updateAbcdS = addSameLineUpdateEdit(abcd, "ABCD ", " ")
+        val abcdS = abcd.withAppliedUpdateAndNewUpdateTime(updateAbcdS)
+        val updateAbcdSe = addSameLineUpdateEdit(abcdS, "ABCD E", "E")
+        val abcdSe = abcdS.withAppliedUpdateAndNewUpdateTime(updateAbcdSe)
+        val updateAbcdSef = addSameLineUpdateEdit(abcdSe, "ABCD EF", "F")
 
-        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
-        assertEdit(editHistory.undo(), abcd_, abc)
+        assertEditWithUpdate(
+          editHistory.undo(),
+          (updateAbcdS mergedWith updateAbcdSe mergedWith updateAbcdSef).reversed)
+        assertEditWithUpdate(editHistory.undo(), updateAbcd.reversed)
       }
       "not merged after undo()" - {
-        addSimpleEdit(abc, abcd, "D")
-        addSimpleEdit(abcd, abcdS, " ")
-        addSimpleEdit(abcdS, abcdSe, "E")
+        val updateAbcd = addSameLineUpdateEdit(abc, "ABCD", "D")
+        val abcd = abc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+        val updateAbcdS = addSameLineUpdateEdit(abcd, "ABCD ", " ")
+        val abcdS = abcd.withAppliedUpdateAndNewUpdateTime(updateAbcdS)
+        val updateAbcdSe = addSameLineUpdateEdit(abcdS, "ABCD E", "E")
+        assertEditWithUpdate(editHistory.undo(), (updateAbcdS mergedWith updateAbcdSe).reversed)
+        val updateAbcdz = addSameLineUpdateEdit(abcd, "ABCDZ", "Z")
 
-        val abcd_ = assertEdit(editHistory.undo(), abcdSe, abcd)
-
-        addSimpleEdit(abcd_, abcdx, "X")
-
-        assertEdit(editHistory.undo(), abcdx, abcd_)
+        assertEditWithUpdate(editHistory.undo(), updateAbcdz.reversed)
       }
+    }
+
+    "Adds and removes" - {
+      val taskAbc = newTask("ABC")
+      val task2 = newTask("DEF")
+      val task3 = newTask("GHI")
+      val task4 = newTask("JKL")
+      val task5 = newTask("MNO")
+      val task6 = newTask("PQR")
+
+      addEdit(addedTask = taskAbc)
+      val updateAbcd = addSameLineUpdateEdit(taskAbc, "ABCD", "D")
+      val taskAbcd = taskAbc.withAppliedUpdateAndNewUpdateTime(updateAbcd)
+      addEdit(addedTask = task2)
+      addEdit(addedTask = task3)
+      addEdit(removedTask = task3)
+      addEdit(removedTask = taskAbcd)
+
+      editHistory.redo() ==> None
+      val taskAbcd_ = assertEdit(editHistory.undo(), addedTaskWithNewId = taskAbcd)
+      val task3_ = assertEdit(editHistory.undo(), addedTaskWithNewId = task3)
+      assertEdit(editHistory.undo(), removedTask = task3_)
+      assertEdit(editHistory.undo(), removedTask = task2)
+      val updateAbcd_ = updateAbcd.copy(taskId = taskAbcd_.id)
+      assertEditWithUpdate(editHistory.undo(), updateAbcd_.reversed)
+      val taskAbc_ = taskAbc.copyWithId(taskAbcd_.id)
+      assertEdit(editHistory.undo(), removedTask = taskAbc_)
+      editHistory.undo() ==> None
+
+      val taskAbc__ = assertEdit(editHistory.redo(), addedTaskWithNewId = taskAbc_)
+      val updateAbcd__ = updateAbcd_.copy(taskId = taskAbc__.id)
+      assertEditWithUpdate(editHistory.redo(), updateAbcd__)
     }
   }
 
-  private def addSimpleEdit(removedTask: Task, addedTask: Task, replacementString: String = "")(
-      implicit editHistory: EditHistory): Unit = {
+  private def addSameLineUpdateEdit(originalTask: Task, newContent: String, replacementString: String = "")(
+      implicit editHistory: EditHistory): DocumentEdit.MaskedTaskUpdate = {
+    val taskUpdate =
+      MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
     editHistory.addEdit(
-      removedTasks = Seq(removedTask),
-      addedTasks = Seq(addedTask),
-      selectionBeforeEdit = DetachedSelection.singleton(DetachedCursor(removedTask, 0)),
-      selectionAfterEdit = DetachedSelection.singleton(DetachedCursor(addedTask, 0)),
+      documentEdit = DocumentEdit.Reversible(
+        removedTasks = Seq(),
+        addedTasks = Seq(),
+        taskUpdates = Seq(taskUpdate),
+      ),
+      selectionBeforeEdit = DetachedSelection.singleton(
+        DetachedCursor(originalTask.id, originalTask.orderToken, originalTask.contentString.length)),
+      selectionAfterEdit = DetachedSelection.singleton(
+        DetachedCursor(originalTask.id, originalTask.orderToken, newContent.length)),
       replacementString = replacementString
     )
+    taskUpdate
   }
-  private def assertEdit(edit: Option[Edit], removedTask: Task, addedTaskWithNewId: Task): Task = {
-    assert(edit.get.removedTasks == Seq(removedTask))
 
-    val addedTaskInEdit = getOnlyElement(edit.get.addedTasks)
-    assert(addedTaskInEdit.copyWithId(0) == addedTaskWithNewId.copyWithId(0))
-    assert(addedTaskInEdit.id != addedTaskWithNewId.id)
+  private def addEdit(removedTask: Task = null, addedTask: Task = null)(
+      implicit editHistory: EditHistory): Unit = {
+    val anyTask = if (removedTask == null) addedTask else removedTask
 
-    assert(edit.get.selectionBeforeEdit.start.task.id == removedTask.id)
-    assert(edit.get.selectionAfterEdit.start.task.id == addedTaskInEdit.id)
+    editHistory.addEdit(
+      documentEdit = DocumentEdit.Reversible(
+        removedTasks = Seq() ++ Option(removedTask),
+        addedTasks = Seq() ++ Option(addedTask),
+        taskUpdates = Seq(),
+      ),
+      selectionBeforeEdit = DetachedSelection.singleton(DetachedCursor(anyTask, 0)),
+      selectionAfterEdit = DetachedSelection.singleton(DetachedCursor(anyTask, 0)),
+      replacementString = "",
+    )
+  }
+
+  private def assertEditWithUpdate(edit: Option[Edit], taskUpdate: MaskedTaskUpdate): Unit = {
+    assert(edit.isDefined)
+    assert(edit.get.documentEdit.removedTasks.isEmpty)
+    assert(edit.get.documentEdit.addedTasks.isEmpty)
+    assert(edit.get.documentEdit.taskUpdates.size == 1)
+
+    assert(getOnlyElement(edit.get.documentEdit.taskUpdates) == taskUpdate)
+
+    assert(edit.get.selectionBeforeEdit.start.taskId == taskUpdate.taskId)
+    assert(edit.get.selectionAfterEdit.start.taskId == taskUpdate.taskId)
+  }
+
+  private def assertEdit(edit: Option[Edit],
+                         removedTask: Task = null,
+                         addedTaskWithNewId: Task = null): Task = {
+    if (removedTask != null) {
+      assert(edit.get.documentEdit.removedTasks == Seq(removedTask))
+
+      assert(edit.get.selectionBeforeEdit.start.taskId == removedTask.id)
+    } else {
+      assert(edit.get.documentEdit.removedTasks.isEmpty)
+    }
+
+    val addedTaskInEdit =
+      if (addedTaskWithNewId != null) {
+        val addedTaskInEdit = getOnlyElement(edit.get.documentEdit.addedTasks)
+        assert(addedTaskInEdit.copyWithId(0) == addedTaskWithNewId.copyWithId(0))
+        assert(addedTaskInEdit.id != addedTaskWithNewId.id)
+
+        assert(edit.get.selectionBeforeEdit.start.taskId == addedTaskInEdit.id)
+        assert(edit.get.selectionAfterEdit.start.taskId == addedTaskInEdit.id)
+
+        addedTaskInEdit
+      } else {
+        assert(edit.get.documentEdit.addedTasks.isEmpty)
+        null
+      }
+
+    assert(edit.get.documentEdit.taskUpdates.isEmpty)
 
     addedTaskInEdit
   }
