@@ -29,7 +29,7 @@ object JsTestObjects {
   def newTask(contentString: String = null,
               content: TextWithMarkup = null,
               orderToken: OrderToken = orderTokenB,
-              indentation: Int = 1,
+              indentation: Int = 2,
               collapsed: Boolean = false,
               delayedUntil: Option[LocalDateTime] = Some(testDate),
               tags: Seq[String] = Seq("test-tag")): Task = {

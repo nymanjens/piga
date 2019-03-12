@@ -4,6 +4,7 @@ import java.time.Duration
 
 import hydro.common.time.JavaTimeImplicits._
 import app.common.testing.JsTestObjects._
+import app.common.testing.JsTestObjects.testTask
 import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.document.DocumentEdit.MaskedTaskUpdate
@@ -143,6 +144,7 @@ object DocumentEditTest extends TestSuite {
     }
     "MaskedTaskUpdate" - {
       "fromFields" - {
+        val testTask = newTask("test task", collapsed = true)
         val update = MaskedTaskUpdate
           .fromFields(originalTask = testTask, content = TextWithMarkup("edited"), orderToken = orderTokenE)
 

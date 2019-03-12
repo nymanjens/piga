@@ -202,6 +202,7 @@ object Task {
         .put(Fields.indentation, ModelFields.TaskEntity.indentation)
         .put(Fields.collapsed, ModelFields.TaskEntity.collapsed)
         .put(Fields.delayedUntil, ModelFields.TaskEntity.delayedUntil)
+        .put(Fields.tags, ModelFields.TaskEntity.tags)
         .build()
 
     object Fields {

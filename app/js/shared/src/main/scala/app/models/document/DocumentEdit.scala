@@ -161,10 +161,10 @@ object DocumentEdit {
         delayedUntil: Option[LocalDateTime] = null,
         tags: Seq[String] = null,
     ): MaskedTaskUpdate = {
-      def ifUpdate[V](value: V, currentValue: V): Option[FieldUpdate[V]] = value match {
+      def ifUpdate[V](value: Any, currentValue: V): Option[FieldUpdate[V]] = value match {
         case null | -1      => None
         case `currentValue` => None
-        case _              => Some(FieldUpdate(oldValue = currentValue, newValue = value))
+        case _              => Some(FieldUpdate(oldValue = currentValue, newValue = value.asInstanceOf[V]))
       }
       MaskedTaskUpdate(
         taskId = originalTask.id,
