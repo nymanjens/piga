@@ -887,26 +887,22 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "")(implicit state: State, props: Props): Callback = {
 
-      if (edit.isNoOp) {
-        Callback.empty
-      } else {
-        val documentStore = props.documentStore
-        val oldDocument = state.document
-        val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
+      val documentStore = props.documentStore
+      val oldDocument = state.document
+      val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
 
-        $.modState(
-          _.copy(document = newDocument),
-          Callback.empty.flatMap { _ =>
-            editHistory.addEdit(
-              documentEdit = edit,
-              selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
-              selectionAfterEdit = selectionAfterEdit.detach(newDocument),
-              replacementString = replacementString
-            )
-            setSelection(selectionAfterEdit)
-          }
-        )
-      }
+      $.modState(
+        _.copy(document = newDocument),
+        Callback.empty.flatMap { _ =>
+          editHistory.addEdit(
+            documentEdit = edit,
+            selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
+            selectionAfterEdit = selectionAfterEdit.detach(newDocument),
+            replacementString = replacementString
+          )
+          setSelection(selectionAfterEdit)
+        }
+      )
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
