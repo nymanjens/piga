@@ -493,6 +493,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       val firstTask = oldDocument.tasks(start.seqIndex)
+      val replacementIndexMatchedToFirstTask = {
+        if (replacement.parts.size > 1 && replacement.parts.head.contentString.isEmpty && start.offsetInTask == 0)
+          1
+        else 0
+      }
 
       val removedTasks = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
       val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
@@ -506,7 +511,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             replacementPart.content +
             ifIndexOrEmpty(replacement.parts.length - 1)(
               oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
-          if (i == 0) {
+          if (i == replacementIndexMatchedToFirstTask) {
             taskUpdates.append(
               MaskedTaskUpdate.fromFields(
                 firstTask,
