@@ -466,6 +466,14 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
               event.preventDefault()
               editTagsInTasks(selection)
 
+            // Find next occurrence of selected string
+            case CharacterKey('g', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+              event.preventDefault()
+              findNextOccurrenceOfSelectedString(selection)
+            case CharacterKey('G', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+              event.preventDefault()
+              findNextOccurrenceOfSelectedString(selection, backwards = true)
+
             case _ =>
               Callback.empty
           }
@@ -965,6 +973,24 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
           .asInstanceOf[js.Dynamic]
           .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "nearest", inline = "nearest"))
       }
+    }
+
+    private def findNextOccurrenceOfSelectedString(selection: IndexedSelection, backwards: Boolean = false)(
+        implicit state: State): Callback = {
+      def windowFind(string: String,
+                     caseSensitive: Boolean = false,
+                     backwards: Boolean = false,
+                     wrapAround: Boolean = false): Unit = {
+        dom.window.asInstanceOf[js.Dynamic].find(string, caseSensitive, backwards, wrapAround)
+      }
+
+      if (!selection.isSingleton) {
+        val document = state.document
+        val selectedText = convertToClipboardData(document, selection).plainText
+        windowFind(selectedText, backwards = backwards, wrapAround = true)
+      }
+
+      Callback.empty
     }
   }
 
