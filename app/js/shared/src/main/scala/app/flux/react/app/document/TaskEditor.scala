@@ -1,18 +1,12 @@
 package app.flux.react.app.document
 
-import hydro.common.GuavaReplacement.Splitter
-import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.ScalaUtils.visibleForTesting
-import hydro.common.I18n
-import hydro.common.OrderToken
-import hydro.common.Tags
 import app.flux.react.app.document.KeyCombination._
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
+import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
-import app.models.document.Document
 import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
@@ -20,6 +14,12 @@ import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
+import hydro.common.GuavaReplacement.Splitter
+import hydro.common.I18n
+import hydro.common.OrderToken
+import hydro.common.ScalaUtils.ifThenOption
+import hydro.common.ScalaUtils.visibleForTesting
+import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
@@ -30,6 +30,7 @@ import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
+import org.scalajs.dom.console
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -120,6 +121,13 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.spellCheck := false,
         VdomAttr("suppressContentEditableWarning") := true,
         ^.onKeyDown ==> handleKeyDown,
+        // Fix for multi-press key combinations:
+        // When a non-ascii character such as ë is typed on a keyboard with
+        // two separate key presses, onKeyDown will have an undefined key but onKeyPress will have the correct value.
+        //
+        // Since onKeyDown calls preventDefault() for all handled events, it's safe to call it again for onKeyPress
+        // as a fall-back.
+        ^.onKeyPress ==> handleKeyDown,
         ^.onSelect ==> (_ => updateCursor),
         ^.onPaste ==> handlePaste,
         ^.onCut ==> handleCut,
