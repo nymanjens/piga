@@ -261,7 +261,8 @@ object TextWithMarkup {
             case ParsedNode.S(e)    => fromHtmlNodesInner(children(e), formatting.copy(strikethrough = true))
             case ParsedNode.A(e) =>
               fromHtmlNodesInner(children(e), formatting.copy(link = Some(e.getAttribute("href"))))
-            case _ => fromHtmlNodesInner(children(node), formatting)
+            case ParsedNode.Style(e) => Seq() // Ignore style tags
+            case _                   => fromHtmlNodesInner(children(node), formatting)
           }
         }
       } yield part

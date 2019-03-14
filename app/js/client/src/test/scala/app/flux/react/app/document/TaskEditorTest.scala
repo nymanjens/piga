@@ -121,6 +121,13 @@ object TaskEditorTest extends TestSuite {
               .clipboardStringToReplacement(asHtml("<!-- comment -->abc"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"))
           }
+          "ignores style tags" - {
+            taskEditor
+              .clipboardStringToReplacement(
+                asHtml("""<style type="text/css">STYLE</style>abc"""),
+                baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("abc"))
+          }
         }
         "with list tags" - {
           "single level" - {
