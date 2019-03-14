@@ -89,6 +89,9 @@ object TextWithMarkupTest extends TestSuite {
             .withFormatting(2, 4, _.copy(bold = true))
         textWithMarkup.toHtml ==> """<a href="example.com">AB<b>C</b></a><b>D</b>"""
       }
+      "non-ascii" - {
+        TextWithMarkup("AäB").toHtml ==> "AäB"
+      }
     }
     "fromHtml" - {
       "p" - {
@@ -127,6 +130,9 @@ object TextWithMarkupTest extends TestSuite {
       }
       "ignores irrelevant elements" - {
         TextWithMarkup.fromHtml("A<span>B</span>") ==> TextWithMarkup("AB")
+      }
+      "non-ascii" - {
+        TextWithMarkup.fromHtml("AäB") ==> TextWithMarkup("AäB")
       }
     }
   }
