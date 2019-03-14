@@ -116,6 +116,11 @@ object TaskEditorTest extends TestSuite {
               baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("x"), replacementPart("y"))
           }
+          "ignores html comments" - {
+            taskEditor
+              .clipboardStringToReplacement(asHtml("<!-- comment -->abc"), baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("abc"))
+          }
         }
         "with list tags" - {
           "single level" - {
