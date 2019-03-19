@@ -1,9 +1,9 @@
 package app.flux.react.app.document
 
-import hydro.common.I18n
 import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStoreFactory
+import hydro.common.I18n
 import hydro.common.time.Clock
 import hydro.flux.action.Dispatcher
 import hydro.flux.react.uielements.PageHeader

@@ -24,14 +24,12 @@ import hydro.common.time.Clock
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
-import hydro.flux.stores.StateStore
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
-import org.scalajs.dom.console
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable

@@ -1,16 +1,14 @@
 package app.flux.react.app.document
 
-import hydro.common.I18n
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document
-import hydro.common.LoggingUtils.LogExceptionsCallback
+import hydro.common.I18n
 import hydro.common.LoggingUtils.logExceptions
 import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.uielements.WaitForFuture
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
-import hydro.flux.stores.StateStore
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

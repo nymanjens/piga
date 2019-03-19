@@ -1,12 +1,12 @@
 package app.flux.react.app.document
 
-import hydro.common.I18n
-import hydro.common.OrderToken
 import app.flux.action.AppActions
 import app.flux.stores.document.AllDocumentsStore
 import app.models.document.DocumentEntity
+import hydro.common.I18n
 import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
+import hydro.common.OrderToken
 import hydro.flux.action.Dispatcher
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.HalfPanel
@@ -14,11 +14,10 @@ import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.uielements.Table
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
-import hydro.flux.stores.StateStore
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^.^
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.vdom.html_<^.^
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq
