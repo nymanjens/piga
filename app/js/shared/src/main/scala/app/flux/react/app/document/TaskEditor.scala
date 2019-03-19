@@ -44,7 +44,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   private val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialStateFromProps(props => State(document = props.documentStore.state.document))
+    .initialStateFromProps(
+      props =>
+        State(
+          document = props.documentStore.state.document,
+          pendingTaskIds = props.documentStore.state.pendingTaskIds))
     .renderBackend[Backend]
     .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
     .componentDidMount(scope => scope.backend.didMount(scope.props, scope.state))
@@ -58,7 +62,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   // **************** Private inner types ****************//
   private case class Props(documentStore: DocumentStore, router: RouterContext)
-  private case class State(document: Document, highlightedTaskIndex: Int = 0)
+  private case class State(document: Document, pendingTaskIds: Set[Long], highlightedTaskIndex: Int = 0) {
+    def copyFromStore(documentStore: DocumentStore): State =
+      copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
+  }
 
   private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
 
@@ -71,7 +78,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     def willMount(props: Props, state: State): Callback = {
       props.documentStore.register(this)
-      $.modState(state => state.copy(document = props.documentStore.state.document))
+      $.modState(_.copyFromStore(props.documentStore))
     }
 
     def didMount(props: Props, state: State): Callback = {
@@ -97,7 +104,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
     override def onStateUpdate() = {
       val props = $.props.runNow()
-      $.modState(state => state.copy(document = props.documentStore.state.document)).runNow()
+      $.modState(_.copyFromStore(props.documentStore)).runNow()
     }
 
     def render(props: Props, state: State): VdomElement = {
@@ -153,7 +160,8 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                 ^^.classes(
                   Seq(nodeType) ++
                     ifThenOption(task.collapsed)("collapsed") ++
-                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted")),
+                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
+                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
                 VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
                 task.content.toVdomNode
@@ -485,9 +493,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         case None => Callback.empty
         case Some(edit) =>
           val documentStore = props.documentStore
-          val newDocument = documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
+          documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
+          val newDocument = documentStore.state.document
           $.modState(
-            _.copy(document = newDocument),
+            _.copyFromStore(documentStore),
             Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument)))
           )
       }
@@ -910,10 +919,11 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
       val documentStore = props.documentStore
       val oldDocument = state.document
-      val newDocument = documentStore.applyEditWithoutCallingListeners(edit)
+      documentStore.applyEditWithoutCallingListeners(edit)
+      val newDocument = documentStore.state.document
 
       $.modState(
-        _.copy(document = newDocument),
+        _.copyFromStore(documentStore),
         Callback.empty.flatMap { _ =>
           editHistory.addEdit(
             documentEdit = edit,

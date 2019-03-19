@@ -8,6 +8,7 @@ import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEntity
 import app.models.document.Task
 import app.models.document.TaskEntity
+import app.models.modification.EntityTypes
 import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
 import hydro.common.LoggingUtils.logExceptions
@@ -27,7 +28,13 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     extends StateStore[State] {
   entityAccess.registerListener(JsEntityAccessListener)
 
-  private var _state: State = State(document = initialDocument)
+  private var _state: State = State(
+    document = initialDocument,
+    pendingTaskIds = {
+      val idsInDocument = initialDocument.tasks.map(_.id).toSet
+      pendingModificationTaskIds(entityAccess) intersect idsInDocument
+    }
+  )
   private val syncer: SyncerWithReplenishingDelay[DocumentEdit.WithUpdateTimes] =
     new SyncerWithReplenishingDelay(
       delay = 500.milliseconds,
@@ -52,13 +59,19 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
     * to this front-end.
     */
-  def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Document = {
-    val editWithUpdateTimes = DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)(clock, state.document)
+  def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Unit = {
+    val editWithUpdateTimes =
+      DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)(clock, state.document)
     val newDocument = _state.document.withAppliedEdit(editWithUpdateTimes)
-    _state = _state.copy(document = newDocument)
+    val newPendingTaskIds = {
+      val addedTaskIds = editWithUpdateTimes.addedTasks.map(_.id)
+      val updatedTaskIds = editWithUpdateTimes.taskUpdatesById.keySet
+      val removedTaskIds = editWithUpdateTimes.removedTasksIds
+      _state.pendingTaskIds ++ addedTaskIds ++ updatedTaskIds -- removedTaskIds
+    }
+    _state = State(document = newDocument, pendingTaskIds = newPendingTaskIds)
     syncer.syncWithDelay(editWithUpdateTimes)
     alreadyAddedTaskIds ++= editWithUpdateTimes.addedTasks.map(_.id)
-    newDocument
   }
 
   /** Number of task additions that is not yet synced to `EntityAccess`. */
@@ -74,6 +87,13 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
   // **************** Private helper methods **************** //
   private def syncDocumentEdit(edit: DocumentEdit.WithUpdateTimes): Future[_] = {
     entityAccess.persistModifications(edit.toEntityModifications)
+  }
+
+  private def pendingModificationTaskIds(entityAccess: JsEntityAccess): Set[Long] = {
+    entityAccess.pendingModifications.modifications
+      .filter(_.entityType == TaskEntity.Type)
+      .map(_.entityId)
+      .toSet
   }
 
   // **************** Private inner types **************** //
@@ -110,8 +130,14 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
           newDocument = newDocument.updateFromDocumentEntity(documentEntity)
       }
 
-      if (_state.document != newDocument) {
-        _state = _state.copy(document = newDocument)
+      val newPendingTaskIds = {
+        val changedTaskIds = modifications.map(_.entityId).toSet
+        val changedStillPendingTaskIds = pendingModificationTaskIds(entityAccess) intersect changedTaskIds
+        _state.pendingTaskIds -- (changedTaskIds -- changedStillPendingTaskIds)
+      }
+
+      if (_state.document != newDocument || _state.pendingTaskIds != newPendingTaskIds) {
+        _state = State(document = newDocument, pendingTaskIds = newPendingTaskIds)
         invokeStateUpdateListeners()
       }
     }
@@ -119,7 +145,7 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
 }
 
 object DocumentStore {
-  case class State(document: Document)
+  case class State(document: Document, pendingTaskIds: Set[Long])
 
   private class SyncerWithReplenishingDelay[T](delay: FiniteDuration,
                                                emptyValue: T,
