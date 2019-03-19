@@ -12,6 +12,7 @@ import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.HalfPanel
 import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.uielements.Table
+import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
 import hydro.flux.stores.StateStore
 import hydro.models.access.EntityAccess
@@ -27,24 +28,21 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
                                                 allDocumentsStore: AllDocumentsStore,
                                                 dispatcher: Dispatcher,
                                                 pageHeader: PageHeader,
-) {
-
-  private val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName)
-    .initialState(State(allDocuments = allDocumentsStore.state.allDocuments, documentIdToNameInput = Map()))
-    .renderBackend[Backend]
-    .componentWillMount(scope => scope.backend.willMount(scope.state))
-    .componentWillUnmount(scope => scope.backend.willUnmount())
-    .build
+) extends HydroReactComponent {
 
   // **************** API ****************//
   def apply(router: RouterContext): VdomElement = {
     component(Props(router))
   }
 
-  // **************** Private inner types ****************//
-  private case class Props(router: RouterContext)
-  private case class State(allDocuments: Seq[DocumentEntity], documentIdToNameInput: Map[Long, String]) {
+  // **************** Implementation of HydroReactComponent methods ****************//
+  override protected val config = ComponentConfig(backendConstructor = new Backend(_), initialState = State())
+    .withStateStoresDependency(allDocumentsStore, _.copy(allDocuments = allDocumentsStore.state.allDocuments))
+
+  // **************** Implementation of HydroReactComponent types ****************//
+  protected case class Props(router: RouterContext)
+  protected case class State(allDocuments: Seq[DocumentEntity] = Seq(),
+                             documentIdToNameInput: Map[Long, String] = Map()) {
     def nameInput(documentEntity: DocumentEntity): String = {
       if (documentIdToNameInput contains documentEntity.id) {
         documentIdToNameInput(documentEntity.id)
@@ -61,22 +59,7 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
   }
 
-  private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
-
-    def willMount(state: State): Callback = LogExceptionsCallback {
-      allDocumentsStore.register(this)
-      $.modState(state => logExceptions(state.copy(allDocuments = allDocumentsStore.state.allDocuments)))
-        .runNow()
-    }
-
-    def willUnmount(): Callback = LogExceptionsCallback {
-      allDocumentsStore.deregister(this)
-    }
-
-    override def onStateUpdate() = {
-      $.modState(state => logExceptions(state.copy(allDocuments = allDocumentsStore.state.allDocuments)))
-        .runNow()
-    }
+  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
