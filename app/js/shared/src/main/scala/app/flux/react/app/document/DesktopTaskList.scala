@@ -8,6 +8,7 @@ import hydro.common.LoggingUtils.LogExceptionsCallback
 import hydro.common.LoggingUtils.logExceptions
 import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.uielements.WaitForFuture
+import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
 import hydro.flux.stores.StateStore
 import hydro.models.access.EntityAccess
@@ -19,16 +20,9 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
                                          i18n: I18n,
                                          taskEditor: TaskEditor,
                                          pageHeader: PageHeader,
-) {
+) extends HydroReactComponent {
 
   private val waitForFuture = new WaitForFuture[DocumentStore]
-  private val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName)
-    .initialStateFromProps(props => State(document = props.documentStore.state.document))
-    .renderBackend[Backend]
-    .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
-    .componentWillUnmount(scope => scope.backend.willUnmount(scope.props))
-    .build
 
   // **************** API ****************//
   def apply(documentId: Long, router: RouterContext): VdomElement = {
@@ -37,25 +31,18 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
     }
   }
 
-  // **************** Private inner types ****************//
-  private case class Props(documentStore: DocumentStore, router: RouterContext)
-  private case class State(document: Document)
-
-  private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
-
-    def willMount(props: Props, state: State): Callback = LogExceptionsCallback {
-      props.documentStore.register(this)
-      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
+  // **************** Implementation of HydroReactComponent methods ****************//
+  override protected val config = ComponentConfig(backendConstructor = new Backend(_), initialState = State())
+    .withStateStoresDependencyFromProps { props =>
+      val store = props.documentStore
+      StateStoresDependency(store, _.copy(document = store.state.document))
     }
 
-    def willUnmount(props: Props): Callback = LogExceptionsCallback {
-      props.documentStore.deregister(this)
-    }
+  // **************** Implementation of HydroReactComponent types ****************//
+  protected case class Props(documentStore: DocumentStore, router: RouterContext)
+  protected case class State(document: Document = Document.nullInstance)
 
-    override def onStateUpdate() = {
-      val props = $.props.runNow()
-      $.modState(state => logExceptions(state.copy(document = props.documentStore.state.document))).runNow()
-    }
+  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router

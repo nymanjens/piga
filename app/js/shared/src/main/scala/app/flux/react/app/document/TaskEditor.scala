@@ -67,7 +67,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
   protected class Backend($ : BackendScope[Props, State])
       extends BackendBase($)
-      with WillMount
       with DidMount
       with WillUnmount {
 
@@ -77,11 +76,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
     )
-
-    override def willMount(props: Props, state: State): Callback = {
-      props.documentStore.register(this)
-      $.modState(_.copyFromStore(props.documentStore))
-    }
 
     override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document)
@@ -100,7 +94,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       documentSelectionStore
         .setSelection(state.document, IndexedSelection.tupleFromSelection(dom.window.getSelection()))
 
-      props.documentStore.deregister(this)
       Callback.empty
     }
 
