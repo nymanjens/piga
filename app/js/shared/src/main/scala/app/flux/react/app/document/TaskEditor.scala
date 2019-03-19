@@ -518,13 +518,26 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
 
       val firstTask = oldDocument.tasks(start.seqIndex)
-      val replacementIndexMatchedToFirstTask = {
+      val taskToUpdate = {
+        // This is sometimes changed to the second task because when deleting an empty line above a task
+        // (via delete or backspace), the non-empty lines' properties (collapsed, tags, ...) should remain.
+        val secondTask =
+          if (start.seqIndex < end.seqIndex) Some(oldDocument.tasks(start.seqIndex + 1)) else None
+        if (firstTask.contentString.isEmpty
+            && secondTask.isDefined
+            && secondTask.get.contentString.nonEmpty
+            && replacement.parts.size <= 1) {
+          secondTask.get
+        } else {
+          firstTask
+        }
+      }
+      val replacementIndexMatchedToTaskToUpdate = {
         if (replacement.parts.size > 1 && replacement.parts.head.contentString.isEmpty && start.offsetInTask == 0)
           1
         else 0
       }
 
-      val removedTasks = oldDocument.tasksIn(selectionBeforeEdit).filter(_.id != firstTask.id)
       val taskUpdates = mutable.Buffer[MaskedTaskUpdate]()
       val addedTasks = mutable.Buffer[Task]()
 
@@ -536,25 +549,29 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
             replacementPart.content +
             ifIndexOrEmpty(replacement.parts.length - 1)(
               oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
-          if (i == replacementIndexMatchedToFirstTask) {
+          val newIndentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent
+          if (i == replacementIndexMatchedToTaskToUpdate) {
             taskUpdates.append(
               MaskedTaskUpdate.fromFields(
-                firstTask,
+                taskToUpdate,
                 content = newContent,
                 orderToken = newOrderToken,
-                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent))
+                indentation = newIndentation))
           } else {
             addedTasks.append(
               Task.withRandomId(
                 content = newContent,
                 orderToken = newOrderToken,
-                indentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent,
+                indentation = newIndentation,
                 collapsed = false,
                 delayedUntil = None,
                 tags = Seq(),
               ))
           }
         }
+      val removedTasks = oldDocument
+        .tasksIn(selectionBeforeEdit)
+        .filterNot(task => taskUpdates.exists(update => update.taskId == task.id))
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
