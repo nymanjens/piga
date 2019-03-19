@@ -44,7 +44,7 @@ private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
-    def render(props: Props, state: State): VdomElement = logExceptions {
+    override def render(props: Props, state: State): VdomElement = logExceptions {
       implicit val router = props.router
 
       <.span(
