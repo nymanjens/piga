@@ -21,6 +21,7 @@ import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.ScalaUtils.visibleForTesting
 import hydro.common.Tags
 import hydro.common.time.Clock
+import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
 import hydro.flux.stores.StateStore
@@ -40,34 +41,35 @@ import scala.scalajs.js
 private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                                          i18n: I18n,
                                          clock: Clock,
-                                         documentSelectionStore: DocumentSelectionStore) {
-
-  private val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName)
-    .initialStateFromProps(
-      props =>
-        State(
-          document = props.documentStore.state.document,
-          pendingTaskIds = props.documentStore.state.pendingTaskIds))
-    .renderBackend[Backend]
-    .componentWillMount(scope => scope.backend.willMount(scope.props, scope.state))
-    .componentDidMount(scope => scope.backend.didMount(scope.props, scope.state))
-    .componentWillUnmount(scope => scope.backend.willUnmount(scope.props, scope.state))
-    .build
+                                         documentSelectionStore: DocumentSelectionStore)
+    extends HydroReactComponent {
 
   // **************** API ****************//
   def apply(documentStore: DocumentStore)(implicit router: RouterContext): VdomElement = {
     component(Props(documentStore, router))
   }
 
-  // **************** Private inner types ****************//
-  private case class Props(documentStore: DocumentStore, router: RouterContext)
-  private case class State(document: Document, pendingTaskIds: Set[Long], highlightedTaskIndex: Int = 0) {
+  // **************** Implementation of HydroReactComponent methods ****************//
+  override protected val config = ComponentConfig(backendConstructor = new Backend(_), initialState = State())
+    .withStateStoresDependencyFromProps { props =>
+      val store = props.documentStore
+      StateStoresDependency(store, _.copyFromStore(store))
+    }
+
+  // **************** Implementation of HydroReactComponent types ****************//
+  protected case class Props(documentStore: DocumentStore, router: RouterContext)
+  protected case class State(document: Document = Document.nullInstance,
+                             pendingTaskIds: Set[Long] = Set(),
+                             highlightedTaskIndex: Int = 0) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
   }
 
-  private class Backend($ : BackendScope[Props, State]) extends StateStore.Listener {
+  protected class Backend($ : BackendScope[Props, State])
+      extends BackendBase($)
+      with WillMount
+      with DidMount
+      with WillUnmount {
 
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private val editHistory: EditHistory = new EditHistory()
@@ -76,12 +78,12 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       formatting = Formatting.none
     )
 
-    def willMount(props: Props, state: State): Callback = {
+    override def willMount(props: Props, state: State): Callback = {
       props.documentStore.register(this)
       $.modState(_.copyFromStore(props.documentStore))
     }
 
-    def didMount(props: Props, state: State): Callback = {
+    override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document)
       // Add timeout because scroll to view doesn't seem to work immediately after mount
       js.timers.setTimeout(20.milliseconds) {
@@ -92,7 +94,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       Callback.empty
     }
 
-    def willUnmount(props: Props, state: State): Callback = {
+    override def willUnmount(props: Props, state: State): Callback = {
       dom.window.removeEventListener("resize", resizeListener)
 
       documentSelectionStore
@@ -102,12 +104,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       Callback.empty
     }
 
-    override def onStateUpdate() = {
-      val props = $.props.runNow()
-      $.modState(_.copyFromStore(props.documentStore)).runNow()
-    }
-
-    def render(props: Props, state: State): VdomElement = {
+    override def render(props: Props, state: State): VdomElement = {
       case class RenderedTag(span: VdomElement, style: String)
       def renderTags(tags: Seq[String], seqIndex: Int): Seq[RenderedTag] = tags.zipWithIndex.map {
         case (tag, tagIndex) =>

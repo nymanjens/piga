@@ -177,6 +177,8 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 }
 object Document {
 
+  val nullInstance: Document = new Document(id = -1, name = "", orderToken = OrderToken.middle, tasks = Seq())
+
   def fromDocumentEntity(entity: DocumentEntity)(implicit entityAccess: JsEntityAccess): Future[Document] =
     async {
       val tasks = await(
