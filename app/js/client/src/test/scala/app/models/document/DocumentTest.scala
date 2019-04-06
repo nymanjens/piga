@@ -112,6 +112,13 @@ object DocumentTest extends TestSuite {
 
         document.withAppliedEdit(edit) ==> newDocument(taskA, taskB, taskC)
       }
+      "addition and removal" - {
+        val document = newDocument(taskA, taskB, taskC)
+        val edit = DocumentEdit.WithUpdateTimes
+          .create(removedTasksIds = Seq(taskD.id), addedTasks = Seq(taskD), taskUpdates = Seq())
+
+        document.withAppliedEdit(edit) ==> newDocument(taskA, taskB, taskC)
+      }
     }
     "equals and hashCode" - {
       val documentA: AnyRef =
