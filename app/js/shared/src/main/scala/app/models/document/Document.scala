@@ -33,10 +33,6 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
           tasks.updated(taskIndex, oldTask mergedWith taskUpdate)
         }
         def comprehensiveUpdate(edit: DocumentEdit.WithUpdateTimes) = {
-          val newTasks = mutable.Buffer[Task]()
-          var addedTasksIndex = 0
-          def nextAddedTask: Option[Task] =
-            if (addedTasksIndex < edit.addedTasks.size) Some(edit.addedTasks(addedTasksIndex)) else None
           def maybeApplyUpdate(oldTask: Task): Task = {
             edit.taskUpdatesById.get(oldTask.id) match {
               case Some(taskUpdate) => oldTask mergedWith taskUpdate
@@ -44,23 +40,20 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
             }
           }
 
+          val addedTasksMap = mutable.Map(
+            edit.addedTasks
+              .filterNot(task => edit.removedTasksIds contains task.id)
+              .map(task => task.id -> maybeApplyUpdate(task)): _*)
+          val newTasks = mutable.Buffer[Task]()
+
           for {
-            t <- tasks
-            if !edit.removedTasksIds.contains(t.id)
+            task <- tasks
+            if !edit.removedTasksIds.contains(task.id)
           } {
-            while (nextAddedTask.isDefined && nextAddedTask.get < t) {
-              newTasks += maybeApplyUpdate(nextAddedTask.get)
-              addedTasksIndex += 1
-            }
-            if (nextAddedTask.map(_.id) == Some(t.id)) {
-              addedTasksIndex += 1
-            }
-            newTasks += maybeApplyUpdate(t)
+            newTasks += maybeApplyUpdate(task)
+            addedTasksMap.remove(task.id) // Don't add already present tasks
           }
-          while (nextAddedTask.isDefined) {
-            newTasks += maybeApplyUpdate(nextAddedTask.get)
-            addedTasksIndex += 1
-          }
+          newTasks ++= addedTasksMap.values
 
           newTasks.toVector.sorted
         }
