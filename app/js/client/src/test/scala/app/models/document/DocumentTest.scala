@@ -90,6 +90,28 @@ object DocumentTest extends TestSuite {
           document.withAppliedEdit(edit).withAppliedEdit(edit) ==> document.withAppliedEdit(edit)
         }
       }
+      "add and update in same edit" - {
+        val document = newDocument(taskA, taskC, taskD)
+        val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
+          MaskedTaskUpdate.fromFields(
+            originalTask = taskB,
+            orderToken = OrderToken.middleBetween(Some(taskC.orderToken), Some(taskD.orderToken))))
+        val edit = DocumentEdit.WithUpdateTimes
+          .create(removedTasksIds = Seq(), addedTasks = Seq(taskB), taskUpdates = Seq(taskBAfterUpdate))
+
+        document.withAppliedEdit(edit) ==> newDocument(taskA, taskC, taskBAfterUpdate, taskD)
+      }
+      "add already existing task" - {
+        val document = newDocument(taskA, taskB, taskC)
+        val edit = DocumentEdit.WithUpdateTimes
+          .create(
+            removedTasksIds = Seq(),
+            addedTasks =
+              Seq(taskB.copyForTests(orderToken = OrderToken.middleBetween(None, Some(taskA.orderToken)))),
+            taskUpdates = Seq())
+
+        document.withAppliedEdit(edit) ==> newDocument(taskA, taskB, taskC)
+      }
     }
     "equals and hashCode" - {
       val documentA: AnyRef =
