@@ -25,7 +25,7 @@ final class Module(implicit user: User,
   implicit val entityAccess: JsEntityAccess = {
     val webWorkerModule = new hydro.models.access.webworker.Module()
     implicit val localDatabaseWebWorkerApiStub = webWorkerModule.localDatabaseWebWorkerApiStub
-    val localDatabaseFuture = LocalDatabaseImpl.create(separateDbPerCollection = true)
+    val localDatabaseFuture = LocalDatabaseImpl.create(separateDbPerCollection = false)
     implicit val remoteDatabaseProxy = HybridRemoteDatabaseProxy.create(localDatabaseFuture)
     val entityAccess = new JsEntityAccessImpl()
 
