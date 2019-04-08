@@ -108,6 +108,7 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
       * This aims to solve a bug that sometimes the connection seems to be open while nothing actually gets received.
       */
     private def startCheckingLastPacketTimeNotTooLongAgo(): Unit = {
+      val timeoutDuration = 30.seconds
       def cyclicLogic(): Unit = {
         websocketClient match {
           case Some(clientFuture)
@@ -115,14 +116,14 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
                 (clock.nowInstant - lastPacketTime) > java.time.Duration.ofSeconds(10) &&
                 (clock.nowInstant - lastStartToOpenTime) > java.time.Duration.ofSeconds(10) =>
             println(
-              s"  [$name] WebSocket didn't receive heartbeat for 60 seconds. Closing and restarting connection")
+              s"  [$name] WebSocket didn't receive heartbeat for $timeoutDuration. Closing and restarting connection")
             websocketClient = None
             clientFuture.value.get.get.close()
 
             openWebsocketIfEmpty()
           case _ =>
         }
-        js.timers.setTimeout(10.seconds)(cyclicLogic())
+        js.timers.setTimeout(timeoutDuration)(cyclicLogic())
       }
       cyclicLogic()
     }
