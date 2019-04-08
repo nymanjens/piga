@@ -49,6 +49,7 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
     private var lastStartToOpenTime: Instant = clock.nowInstant
     private var lastPacketTime: Instant = clock.nowInstant
 
+    private var isClosed = false
     private var websocketClient: Option[Future[BinaryWebsocketClient]] = Some(
       openWebsocketClient(updateToken))
 
@@ -65,6 +66,7 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
         websocketClient.get.map(_.close())
       }
       websocketClient = Some(Future.failed(new IllegalStateException("WebSocket is closed")))
+      isClosed = true
       dom.window.removeEventListener("online", onlineListener)
       dom.window.removeEventListener("focus", onlineListener)
     }
@@ -108,11 +110,12 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
       * This aims to solve a bug that sometimes the connection seems to be open while nothing actually gets received.
       */
     private def startCheckingLastPacketTimeNotTooLongAgo(): Unit = {
-      val timeoutDuration = 30.seconds
+      val timeoutDuration = 15.seconds
       def cyclicLogic(): Unit = {
         websocketClient match {
           case Some(clientFuture)
               if clientFuture.isCompleted &&
+                !isClosed &&
                 (clock.nowInstant - lastPacketTime) > java.time.Duration.ofSeconds(10) &&
                 (clock.nowInstant - lastStartToOpenTime) > java.time.Duration.ofSeconds(10) =>
             println(
@@ -123,7 +126,10 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
             openWebsocketIfEmpty()
           case _ =>
         }
-        js.timers.setTimeout(timeoutDuration)(cyclicLogic())
+
+        if (!isClosed) {
+          js.timers.setTimeout(timeoutDuration)(cyclicLogic())
+        }
       }
       cyclicLogic()
     }
