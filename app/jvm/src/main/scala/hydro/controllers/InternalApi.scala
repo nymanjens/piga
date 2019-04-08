@@ -75,7 +75,7 @@ final class InternalApi @Inject()(
 
   def entityModificationPushWebsocket(updateToken: UpdateToken) = WebSocket.accept[Array[Byte], Array[Byte]] {
     request =>
-      def pakcetToBytes(packet: EntityModificationPushPacket): Array[Byte] = {
+      def packetToBytes(packet: EntityModificationPushPacket): Array[Byte] = {
         val responseBuffer = Pickle.intoBytes(packet)
         val data: Array[Byte] = Array.ofDim[Byte](responseBuffer.remaining())
         responseBuffer.get(data)
@@ -106,7 +106,7 @@ final class InternalApi @Inject()(
 
       val in = Sink.ignore
       val out = Source
-        .single(pakcetToBytes(firstMessage))
+        .single(packetToBytes(firstMessage))
         .concat(
           Source.fromPublisher(
             Publishers
@@ -114,7 +114,7 @@ final class InternalApi @Inject()(
                 Publishers.combine[EntityModificationPushPacket](
                   entityModificationPublisher,
                   entityModificationPushHeartbeatScheduler.publisher),
-                pakcetToBytes)))
+                packetToBytes)))
       Flow.fromSinkAndSource(in, out)
   }
 
