@@ -1,5 +1,6 @@
 package app.models.document
 
+import org.scalajs.dom.console
 import java.util.Objects
 
 import app.models.access.ModelFields
@@ -306,30 +307,35 @@ object Document {
     }
 
     private def cursorFromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
-      parentLiElement(node) match {
-        case None => IndexedCursor(0, 0) // Fallback
-        case Some(parentLi) =>
-          val offsetInTask = {
-            val preCursorRange = dom.document.createRange()
-            preCursorRange.selectNodeContents(parentLi)
-            preCursorRange.setEnd(node, offset)
-            preCursorRange.toString.length
-          }
+      try {
+        val parentLi = parentLiElement(node)
+        val offsetInTask = {
+          val preCursorRange = dom.document.createRange()
+          preCursorRange.selectNodeContents(parentLi)
+          preCursorRange.setEnd(node, offset)
+          preCursorRange.toString.length
+        }
 
-          IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
+        IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
+      } catch {
+        case e: NoParentLiException =>
+          console.log("Could not find parent li of node", node, " (offset = ", offset, ")")
+          e.printStackTrace()
+          IndexedCursor(0, 0) // Fallback
       }
     }
 
-    private def parentLiElement(node: dom.raw.Node): Option[dom.raw.Element] = {
+    private def parentLiElement(node: dom.raw.Node): dom.raw.Element = {
       if (node == null) {
-        println("  Warning: Could not find parent li element")
-        None
+        throw new NoParentLiException()
       } else if (nodeIsLi(node)) {
-        Some(node.asInstanceOf[dom.raw.Element])
+        node.asInstanceOf[dom.raw.Element]
       } else {
         parentLiElement(node.parentNode)
       }
     }
+
+    private final class NoParentLiException() extends Exception
   }
 
   case class DetachedCursor(taskId: Long, originalOrderToken: OrderToken, offsetInTask: Int) {
