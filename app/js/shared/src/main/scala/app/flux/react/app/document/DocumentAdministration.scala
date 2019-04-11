@@ -13,6 +13,9 @@ import hydro.flux.react.uielements.HalfPanel
 import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.uielements.Table
 import hydro.flux.react.HydroReactComponent
+import hydro.flux.react.uielements.Bootstrap
+import hydro.flux.react.uielements.Bootstrap.Size
+import hydro.flux.react.uielements.Bootstrap.Variant
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
@@ -65,8 +68,7 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
 
       <.span(
         pageHeader(router.currentPage),
-        <.div(
-          ^.className := "row",
+        Bootstrap.Row(
           HalfPanel(title = <.span(i18n("app.all-documents"))) {
             <.span(
               Table(
@@ -119,9 +121,8 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
 
     private def addButton(implicit state: State): VdomNode = {
-      <.a(
-        ^.className := "btn btn-info",
-        <.i(^.className := "fa fa-plus"),
+      Bootstrap.Button(Variant.info, tag = <.a)(
+        Bootstrap.FontAwesomeIcon("plus"),
         " ",
         i18n("app.create-new-document"),
         ^.onClick --> doAdd()
@@ -129,11 +130,9 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
 
     private def updateNameButton(document: DocumentEntity)(implicit state: State): VdomNode = {
-      <.button(
-        ^.tpe := "submit",
-        ^.className := "btn btn-info btn-xs",
+      Bootstrap.Button(Variant.info, Size.xs, tpe = "submit")(
         ^.disabled := state.nameInput(document) == document.name || state.nameInput(document).isEmpty,
-        <.i(^.className := "fa fa-pencil"),
+        Bootstrap.FontAwesomeIcon("pencil"),
         ^.onClick ==> { (e: ReactEventFromInput) =>
           e.preventDefault()
           doUpdateName(document, state.nameInput(document))
@@ -142,10 +141,9 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
     private def upDownButtons(document: DocumentEntity)(implicit state: State): VdomNode = {
       <.span(
-        <.a(
-          ^.className := "btn btn-info btn-xs",
+        Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
           ^.disabled := state.isFirst(document),
-          <.i(^.className := "fa fa-arrow-up"),
+          Bootstrap.FontAwesomeIcon("arrow-up"),
           ^.onClick --> doUpdateOrderToken(
             document,
             orderTokenBetweenIndices(
@@ -153,10 +151,9 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
               state.allDocuments.indexOf(document) - 1))
         ),
         " ",
-        <.a(
-          ^.className := "btn btn-info btn-xs",
+        Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
           ^.disabled := state.isLast(document),
-          <.i(^.className := "fa fa-arrow-down"),
+          Bootstrap.FontAwesomeIcon("arrow-down"),
           ^.onClick --> doUpdateOrderToken(
             document,
             orderTokenBetweenIndices(
@@ -167,9 +164,8 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
     }
 
     private def deleteButton(document: DocumentEntity)(implicit state: State): VdomNode = {
-      <.a(
-        ^.className := "btn btn-info btn-xs",
-        <.i(^.className := "fa fa-times"),
+      Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
+        Bootstrap.FontAwesomeIcon("times"),
         ^.onClick --> doDelete(document)
       )
     }
