@@ -17,10 +17,10 @@ object Bootstrap {
           tag: VdomTag = <.div): VdomTag = {
     val classes = mutable.Buffer[String]()
     if (sm != -1) classes += s"col-sm-$sm"
-    else if (md != -1) classes += s"col-md-$md"
-    else if (lg != -1) classes += s"col-lg-$lg"
-    else if (smOffset != -1) classes += s"col-sm-offset-$smOffset"
-    else if (mdOffset != -1) classes += s"col-md-offset-$mdOffset"
+    if (md != -1) classes += s"col-md-$md"
+    if (lg != -1) classes += s"col-lg-$lg"
+    if (smOffset != -1) classes += s"col-sm-offset-$smOffset"
+    if (mdOffset != -1) classes += s"col-md-offset-$mdOffset"
     tag(^^.classes(classes))
   }
 
@@ -46,7 +46,10 @@ object Bootstrap {
   }
 
   def Icon(className: String): VdomTag = <.i(^.className := className)
-  def FontAwesomeIcon(name: String, otherName: String = null, fixedWidth: Boolean = false): VdomTag = {
+  def FontAwesomeIcon(name: String,
+                      otherName: String = null,
+                      fixedWidth: Boolean = false,
+                      spin: Boolean = false): VdomTag = {
     val classes = mutable.Buffer[String]()
     classes += "fa"
     classes += s"fa-$name"
@@ -56,20 +59,31 @@ object Bootstrap {
     if (fixedWidth) {
       classes += s"fa-fw"
     }
+    if (spin) {
+      classes += s"fa-spin"
+    }
     <.i(^^.classes(classes))
   }
   def Glyphicon(name: String): VdomTag = Icon(s"glyphicon glyphicon-$name")
+
+  def ControlLabel: VdomTag = <.label(^.className := "control-label")
 
   def Panel(variant: Variant = Variant.default): VdomTag =
     <.div(^.className := s"panel panel-${variant.name}")
   def PanelHeading: VdomTag = <.div(^.className := "panel-heading")
   def PanelBody: VdomTag = <.div(^.className := "panel-body")
 
+  def InputGroup: VdomTag = <.div(^.className := "input-group")
+  def InputGroupAddon: VdomTag = <.span(^.className := "input-group-addon")
+  def InputGroupButton: VdomTag = <.span(^.className := "input-group-btn")
+
   def NavbarBrand(tag: VdomTag = <.span): VdomTag = tag(^.className := "navbar-brand")
 
   def Alert(variant: Variant): VdomTag = <.div(^.className := s"alert alert-${variant.name}")
 
   def FormHorizontal: VdomTag = <.form(^.className := "form-horizontal")
+  def FormGroup: VdomTag = <.div(^.className := "form-group")
+  def FormInline(tag: VdomTag = <.form): VdomTag = tag(^.className := "form-inline")
 
   case class Variant private (name: String)
   object Variant {
