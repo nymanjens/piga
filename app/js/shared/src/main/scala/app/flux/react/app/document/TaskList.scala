@@ -13,7 +13,7 @@ import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-private[app] final class DesktopTaskList(implicit entityAccess: EntityAccess,
+private[app] final class TaskList(implicit entityAccess: EntityAccess,
                                          documentStoreFactory: DocumentStoreFactory,
                                          i18n: I18n,
                                          taskEditor: TaskEditor,

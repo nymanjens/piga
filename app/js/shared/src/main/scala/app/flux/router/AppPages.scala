@@ -15,7 +15,7 @@ object AppPages {
   // **************** Document views **************** //
   case object DocumentAdministration
       extends PageBase("app.document-administration", iconClass = "fa fa-pencil fa-fw")
-  case class DesktopTaskList(documentId: Long) extends Page {
+  case class TaskList(documentId: Long) extends Page {
     override def title(implicit i18n: I18n, entityAccess: EntityAccess) = async {
       await(entityAccess.newQuery[DocumentEntity]().findById(documentId)).name
     }

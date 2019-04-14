@@ -21,6 +21,6 @@ final class Module(implicit i18n: I18n,
 
   private implicit lazy val taskEditor = new TaskEditor
 
-  implicit lazy val desktopTaskList = new DesktopTaskList
+  implicit lazy val taskList = new TaskList
   implicit lazy val documentAdministration = new DocumentAdministration
 }
