@@ -243,6 +243,6 @@ object DesktopTaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private class Module extends app.common.testing.TestModule {
-    val editor = new DesktopTaskEditor
+    val desktopTaskEditor = new DesktopTaskEditor
   }
 }
