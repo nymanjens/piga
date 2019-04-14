@@ -1,5 +1,6 @@
 package app.flux.react.app.document
 
+import app.flux.react.MobileUtils
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document
@@ -47,7 +48,8 @@ private[app] final class TaskList(implicit entityAccess: EntityAccess,
 
       <.span(
         pageHeader(router.currentPage, title = state.document.name),
-        desktopTaskEditor(props.documentStore)
+        if (MobileUtils.isMobileOrTablet) desktopTaskEditor(props.documentStore)
+        else desktopTaskEditor(props.documentStore)
       )
     }
   }
