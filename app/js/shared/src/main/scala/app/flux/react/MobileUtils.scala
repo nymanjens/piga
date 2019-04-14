@@ -8,12 +8,12 @@ import scala.util.matching.Regex
 
 object MobileUtils {
 
-  val androidRegex: Regex = "android".r
-  val blackBerryRegex: Regex = "blackberry".r
-  val iOSRegex: Regex = "iphone|ipad|ipod".r
-  val operaRegex: Regex = "opera mini".r
-  val windowsRegex1: Regex = "iemobile".r
-  val windowsRegex2: Regex = "wpdesktop".r
+  private val androidRegex: Regex = "android".r
+  private val blackBerryRegex: Regex = "blackberry".r
+  private val iOSRegex: Regex = "iphone|ipad|ipod".r
+  private val operaRegex: Regex = "opera mini".r
+  private val windowsRegex1: Regex = "iemobile".r
+  private val windowsRegex2: Regex = "wpdesktop".r
 
   lazy val isMobileOrTablet: Boolean = logExceptions {
     val navigator = dom.window.navigator
