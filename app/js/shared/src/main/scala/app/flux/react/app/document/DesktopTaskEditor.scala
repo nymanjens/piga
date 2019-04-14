@@ -1,6 +1,6 @@
 package app.flux.react.app.document
 
-import app.flux.react.app.document.KeyCombination._
+import app.flux.react.app.document.DesktopKeyCombination._
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
@@ -246,7 +246,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
           documentSelectionStore.setSelection(document, selection)
 
-          val keyCombination = KeyCombination.fromEvent(event)
+          val keyCombination = DesktopKeyCombination.fromEvent(event)
 
           //dom.console.log(s"keyCombination = $keyCombination")
 
