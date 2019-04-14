@@ -1,5 +1,6 @@
 package app.flux
 
+import app.flux.react.MobileUtils
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.LoggingUtils.logFailure
 import org.scalajs.dom
@@ -14,6 +15,8 @@ object ClientApp {
 
   def main(): Unit = async {
     console.log("  Application starting")
+
+    console.log(s"  isMobileOrTablet = ${MobileUtils.isMobileOrTablet}")
 
     // create stylesheet
     //GlobalStyles.addToDocument()
