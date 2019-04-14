@@ -36,10 +36,10 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.scalajs.js
 
-private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
-                                         i18n: I18n,
-                                         clock: Clock,
-                                         documentSelectionStore: DocumentSelectionStore)
+private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
+                                                i18n: I18n,
+                                                clock: Clock,
+                                                documentSelectionStore: DocumentSelectionStore)
     extends HydroReactComponent {
 
   // **************** API ****************//
@@ -112,7 +112,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       implicit val router = props.router
       <.div(
         ^.contentEditable := true,
-        ^.className := "task-editor",
+        ^.className := "desktop-task-editor",
         ^.spellCheck := false,
         VdomAttr("suppressContentEditableWarning") := true,
         ^.onKeyDown ==> handleKeyDown,
