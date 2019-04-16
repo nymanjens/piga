@@ -12,6 +12,7 @@ import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.SyntheticEvent
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
@@ -69,8 +70,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                     tag,
                   )
               }.toVdomArray,
-              if (task.content.isPlainText) plainTextInput(task)
-              else task.content.toVdomNode
+              if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
+              else formattedInput(task)
             )
         }.toVdomArray
       )
@@ -80,8 +81,39 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       <.input(
         ^.tpe := "text",
         ^.value := task.contentString,
+        ^.spellCheck := false,
+        ^.onSelect --> selectTask(task),
+        ^.onChange ==> { (event: ReactEventFromInput) =>
+          onPlainTextChange(newContent = event.target.value, originalTask = task)
+        },
       )
     }
+
+    private def formattedInput(task: Task): VdomNode = {
+      <.div(
+        // Making this contentEditable to allow selection, but actual content edits are not allowed
+        ^.contentEditable := true,
+        ^.spellCheck := false,
+        VdomAttr("suppressContentEditableWarning") := true,
+        ^.onSelect --> selectTask(task),
+        // Disallow all edits
+        ^.onKeyDown ==> preventDefault,
+        ^.onKeyPress ==> preventDefault,
+        ^.onPaste ==> preventDefault,
+        ^.onCut ==> preventDefault,
+        task.content.toVdomNode,
+      )
+    }
+
+    private def onPlainTextChange(newContent: String, originalTask: Task): Callback = ???
+
+    private def selectTask(task: Task): Callback = ???
+
+    private def preventDefault(event: SyntheticEvent[_]): Callback = {
+      event.preventDefault()
+      Callback.empty
+    }
+
     //
     //    private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
     //      implicit val oldDocument = state.document
