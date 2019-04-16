@@ -66,11 +66,20 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                   <.span(
                     ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
                     ^.key := tagIndex,
+                    tag,
                   )
               }.toVdomArray,
-              task.content.toVdomNode
+              if (task.content.isPlainText) plainTextInput(task)
+              else task.content.toVdomNode
             )
         }.toVdomArray
+      )
+    }
+
+    private def plainTextInput(task: Task): VdomNode = {
+      <.input(
+        ^.tpe := "text",
+        ^.value := task.contentString,
       )
     }
     //

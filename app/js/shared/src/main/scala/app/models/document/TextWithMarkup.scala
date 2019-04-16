@@ -26,6 +26,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
   def isEmpty: Boolean = contentString.isEmpty
   def nonEmpty: Boolean = contentString.nonEmpty
+  def isPlainText: Boolean = this == TextWithMarkup(contentString)
 
   lazy val toVdomNode: VdomNode = {
     var keyCounter = 0
