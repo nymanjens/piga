@@ -35,7 +35,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(documentStore: DocumentStore, router: RouterContext)
-  protected case class State(document: Document = Document.nullInstance, pendingTaskIds: Set[Long] = Set()) {
+  protected case class State(document: Document = Document.nullInstance,
+                             pendingTaskIds: Set[Long] = Set(),
+                             highlightedTaskIndex: Int = 0,
+  ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
   }
@@ -61,6 +64,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
               ^^.classes(
                 Seq(nodeType) ++
                   ifThenOption(task.collapsed)("collapsed") ++
+                  ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                   ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
               task.tags.zipWithIndex.map {
                 case (tag, tagIndex) =>
@@ -107,7 +111,14 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private def onPlainTextChange(newContent: String, originalTask: Task): Callback = ???
 
-    private def selectTask(task: Task): Callback = ???
+    private def selectTask(task: Task): Callback = {
+      $.modState { state =>
+        state.document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) match {
+          case None            => state
+          case Some(taskIndex) => state.copy(highlightedTaskIndex = taskIndex)
+        }
+      }
+    }
 
     private def preventDefault(event: SyntheticEvent[_]): Callback = {
       event.preventDefault()
