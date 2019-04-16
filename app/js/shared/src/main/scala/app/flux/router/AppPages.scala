@@ -21,4 +21,10 @@ object AppPages {
     }
     override def iconClass = "icon-list"
   }
+  case class MobileTaskList(documentId: Long) extends Page {
+    override def title(implicit i18n: I18n, entityAccess: EntityAccess) = async {
+      await(entityAccess.newQuery[DocumentEntity]().findById(documentId)).name
+    }
+    override def iconClass = "fa fa-mobile"
+  }
 }
