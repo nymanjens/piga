@@ -86,7 +86,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ^.tpe := "text",
         ^.value := task.contentString,
         ^.spellCheck := false,
-        ^.onSelect --> selectTask(task),
+        ^.onFocus --> selectTask(task),
         ^.onChange ==> { (event: ReactEventFromInput) =>
           onPlainTextChange(newContent = event.target.value, originalTask = task)
         },
@@ -94,12 +94,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     }
 
     private def formattedInput(task: Task): VdomNode = {
-      <.div(
+      <.span(
         // Making this contentEditable to allow selection, but actual content edits are not allowed
         ^.contentEditable := true,
+        ^.className := "formatted-input",
         ^.spellCheck := false,
         VdomAttr("suppressContentEditableWarning") := true,
-        ^.onSelect --> selectTask(task),
+        ^.onFocus --> selectTask(task),
         // Disallow all edits
         ^.onKeyDown ==> preventDefault,
         ^.onKeyPress ==> preventDefault,
