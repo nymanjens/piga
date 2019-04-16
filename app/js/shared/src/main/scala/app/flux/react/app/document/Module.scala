@@ -20,6 +20,7 @@ final class Module(implicit i18n: I18n,
 ) {
 
   private implicit lazy val desktopTaskEditor = new DesktopTaskEditor
+  private implicit lazy val mobileTaskEditor = new MobileTaskEditor
 
   implicit lazy val taskList = new TaskList
   implicit lazy val documentAdministration = new DocumentAdministration
