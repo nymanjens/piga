@@ -69,11 +69,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
               task.tags.zipWithIndex.map {
                 case (tag, tagIndex) =>
                   <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
+                    ^.key := tagIndex,
                     <.span(
                       ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
-                      ^.key := tagIndex,
                       tag,
-                    ))
+                    )
+                  )
               }.toVdomArray,
               if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
               else formattedInput(task)
