@@ -192,9 +192,10 @@ ul.mobile-task-editor {
   li {
     display: flex;
 
-    &.highlighted {
-      background-color: red !important;
+    &:before { // Bullets
+      margin-top: 3px;
     }
+
     .readonly-task {
       flex-grow: 100;
       display: block;
