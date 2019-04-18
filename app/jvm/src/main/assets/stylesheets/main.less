@@ -94,7 +94,6 @@ table.table-bordered {
 ul.task-editor-base {
   padding-left: 3px;
   list-style-type: none;
-  font-size: 18px;
 
   li {
     &:empty {
@@ -108,7 +107,7 @@ ul.task-editor-base {
         display: inline-block;
         margin-left: -1.7em;
         width: 1.7em;
-        font-size: 13px;
+        font-size: .7em;
       }
       &.collapsed:before {
         content: "\e158"; // glyphicon-expand
@@ -169,6 +168,7 @@ ul.task-editor-base {
 
   ul {
     &:extend(ul.task-editor-base all);
+    font-size: 18px;
 
     li {
       white-space: pre-wrap;
