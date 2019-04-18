@@ -26,7 +26,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
   def isEmpty: Boolean = contentString.isEmpty
   def nonEmpty: Boolean = contentString.nonEmpty
-  def isPlainText: Boolean = this == TextWithMarkup(contentString)
+  def isPlainText: Boolean = contentString.isEmpty || this == TextWithMarkup(contentString)
   lazy val containsLink: Boolean = urlRegex.findFirstMatchIn(contentString).isDefined
 
   lazy val toVdomNode: VdomNode = {
