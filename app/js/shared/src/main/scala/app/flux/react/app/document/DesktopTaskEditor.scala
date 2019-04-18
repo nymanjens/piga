@@ -147,6 +147,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
                   Seq(nodeType) ++
+                    ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),

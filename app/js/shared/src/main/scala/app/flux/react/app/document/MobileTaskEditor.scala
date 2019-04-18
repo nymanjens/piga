@@ -63,6 +63,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
               ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
               ^^.classes(
                 Seq(nodeType) ++
+                  ifThenOption(task.contentString.isEmpty)("empty-task") ++
                   ifThenOption(task.collapsed)("collapsed") ++
                   ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                   ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
