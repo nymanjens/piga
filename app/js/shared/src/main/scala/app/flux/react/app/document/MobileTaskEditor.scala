@@ -66,6 +66,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                   ifThenOption(task.collapsed)("collapsed") ++
                   ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                   ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
+              ^.onClick --> selectTask(task),
               task.tags.zipWithIndex.map {
                 case (tag, tagIndex) =>
                   <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
@@ -97,17 +98,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private def formattedInput(task: Task): VdomNode = {
       <.span(
-        // Making this contentEditable to allow selection, but actual content edits are not allowed
-        ^.contentEditable := true,
-        ^.className := "formatted-input",
-        ^.spellCheck := false,
-        VdomAttr("suppressContentEditableWarning") := true,
-        ^.onFocus --> selectTask(task),
-        // Disallow all edits
-        ^.onKeyDown ==> preventDefault,
-        ^.onKeyPress ==> preventDefault,
-        ^.onPaste ==> preventDefault,
-        ^.onCut ==> preventDefault,
+        ^.className := "readonly-task",
         task.content.toVdomNode,
       )
     }
