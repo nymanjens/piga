@@ -8,13 +8,6 @@ import scala.util.matching.Regex
 
 object MobileUtils {
 
-  private val androidRegex: Regex = "android".r
-  private val blackBerryRegex: Regex = "blackberry".r
-  private val iOSRegex: Regex = "iphone|ipad|ipod".r
-  private val operaRegex: Regex = "opera mini".r
-  private val windowsRegex1: Regex = "iemobile".r
-  private val windowsRegex2: Regex = "wpdesktop".r
-
   lazy val isMobileOrTablet: Boolean = logExceptions {
     val navigator = dom.window.navigator
     val userAgent = maybeAsString(navigator.userAgent)
@@ -23,15 +16,13 @@ object MobileUtils {
 
     val stringToTest = userAgent orElse vendor orElse opera getOrElse ""
 
-    stringToTest.toLowerCase match {
-      case androidRegex()    => true
-      case blackBerryRegex() => true
-      case iOSRegex()        => true
-      case operaRegex()      => true
-      case windowsRegex1()   => true
-      case windowsRegex2()   => true
-      case _                 => false
-    }
+    stringContainsAnyOf(
+      haystack = stringToTest,
+      needles = Seq("android", "blackberry", "iphone", "ipad", "ipod", "opera mini", "iemobile", "wpdesktop"))
+  }
+
+  private def stringContainsAnyOf(haystack: String, needles: Seq[String]): Boolean = {
+    needles.map(_.toLowerCase).exists(haystack.toLowerCase.contains)
   }
 
   private def maybeAsString(value: js.Any): Option[String] = {
