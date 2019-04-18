@@ -68,11 +68,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                   ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
               task.tags.zipWithIndex.map {
                 case (tag, tagIndex) =>
-                  <.span(
-                    ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
-                    ^.key := tagIndex,
-                    tag,
-                  )
+                  <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
+                    <.span(
+                      ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
+                      ^.key := tagIndex,
+                      tag,
+                    ))
               }.toVdomArray,
               if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
               else formattedInput(task)

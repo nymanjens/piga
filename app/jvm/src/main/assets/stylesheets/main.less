@@ -175,17 +175,37 @@ table.table-bordered {
 
 /****** MobileTaskEditor ******/
 .mobile-task-editor {
+  padding-left: 3px;
+  list-style-type: none;
+  font-size: 18px;
+
   li {
+    display: flex;
+
     &.highlighted {
       background-color: red !important;
     }
     .formatted-input {
-      display: inline-block;
-      width: 100%;
+      flex-grow: 100;
+      display: block;
     }
     input {
-      width: 100%;
+      flex-grow: 100;
+      display: block;
       background-color: transparent;
+    }
+
+    .tag {
+      margin-right: 6px;
+      border-radius: 0.7em;
+
+      padding: 0.19em 0.5em 0.25em;
+      position: relative;
+      bottom: 3px;
+
+      &.label-danger {
+        background-color: #af7202;
+      }
     }
   }
 }
