@@ -60,7 +60,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             }
             <.li(
               ^.key := s"li-${task.id}",
-              ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
+              ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
               ^^.classes(
                 Seq(nodeType) ++
                   ifThenOption(task.collapsed)("collapsed") ++
