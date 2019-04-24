@@ -87,6 +87,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                   if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
                   else formattedInput(task)
                 },
+                <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
+                  <.div(
+                    ^.className := "collapsed-suffix",
+                    s" {+ $amountCollapsed}"
+                  )
+                },
               )
           }.toVdomArray
         ),
