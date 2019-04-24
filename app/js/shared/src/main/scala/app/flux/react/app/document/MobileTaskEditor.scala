@@ -1,5 +1,7 @@
 package app.flux.react.app.document
 
+import hydro.flux.react.ReactVdomUtils.<<
+import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
 import app.models.document.Task
@@ -9,6 +11,9 @@ import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.uielements.Bootstrap
+import hydro.flux.react.uielements.Bootstrap.Size
+import hydro.flux.react.uielements.Bootstrap.Variant
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
@@ -49,39 +54,43 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
-      <.ul(
-        ^.className := "mobile-task-editor",
-        applyCollapsedProperty(state.document.tasks).map {
-          case (task, taskIndex, maybeAmountCollapsed) =>
-            val nodeType = state.document.tasksOption(taskIndex + 1) match {
-              case _ if task.indentation == 0                                => "root"
-              case Some(nextTask) if nextTask.indentation > task.indentation => "node"
-              case _                                                         => "leaf"
-            }
-            <.li(
-              ^.key := s"li-${task.id}",
-              ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
-              ^^.classes(
-                Seq(nodeType) ++
-                  ifThenOption(task.contentString.isEmpty)("empty-task") ++
-                  ifThenOption(task.collapsed)("collapsed") ++
-                  ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
-                  ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
-              ^.onClick --> selectTask(task),
-              task.tags.zipWithIndex.map {
-                case (tag, tagIndex) =>
-                  <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
-                    ^.key := tagIndex,
-                    <.span(
-                      ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
-                      tag,
+      <.span(
+        <.ul(
+          ^.className := "mobile-task-editor",
+          applyCollapsedProperty(state.document.tasks).map {
+            case (task, taskIndex, maybeAmountCollapsed) =>
+              val nodeType = state.document.tasksOption(taskIndex + 1) match {
+                case _ if task.indentation == 0                                => "root"
+                case Some(nextTask) if nextTask.indentation > task.indentation => "node"
+                case _                                                         => "leaf"
+              }
+              <.li(
+                ^.key := s"li-${task.id}",
+                ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
+                ^^.classes(
+                  Seq(nodeType) ++
+                    ifThenOption(task.contentString.isEmpty)("empty-task") ++
+                    ifThenOption(task.collapsed)("collapsed") ++
+                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
+                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
+                ^.onClick --> selectTask(task),
+                task.tags.zipWithIndex.map {
+                  case (tag, tagIndex) =>
+                    <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
+                      ^.key := tagIndex,
+                      <.span(
+                        ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
+                        tag,
+                      )
                     )
-                  )
-              }.toVdomArray,
-              if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
-              else formattedInput(task)
-            )
-        }.toVdomArray
+                }.toVdomArray, {
+                  if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
+                  else formattedInput(task)
+                },
+              )
+          }.toVdomArray
+        ),
+        editButtons()
       )
     }
 
@@ -103,6 +112,34 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         task.content.toVdomNode,
       )
     }
+
+    private def editButtons(): VdomNode = <.div(
+      ^.className := "edit-buttons",
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
+      ),
+      Bootstrap.Button(Variant.info, Size.xs)(
+        Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
+      ),
+    )
 
     private def onPlainTextChange(newContent: String, originalTask: Task): Callback = ???
 
