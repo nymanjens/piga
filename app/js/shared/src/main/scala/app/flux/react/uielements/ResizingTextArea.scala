@@ -32,7 +32,9 @@ object ResizingTextArea extends HydroReactComponent.Stateless {
     val theInput = Ref[html.TextArea]
 
     override def render(props: Props, state: State): VdomElement = {
-      <.textarea(props.tagMods: _*).withRef(theInput)
+      <.textarea(
+        ^.rows := 1,
+      )(props.tagMods: _*).withRef(theInput)
     }
 
     override def didUpdate(prevProps: Props,
