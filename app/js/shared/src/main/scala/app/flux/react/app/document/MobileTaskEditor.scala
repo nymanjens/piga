@@ -1,6 +1,8 @@
 package app.flux.react.app.document
 
 import app.flux.react.uielements.ResizingTextArea
+import app.flux.react.uielements.ResizingTextArea.Fixed
+import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.stores.document.DocumentStore
@@ -85,8 +87,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                       )
                     )
                 }.toVdomArray, {
-                  if (task.content.isPlainText && !task.content.containsLink && state.highlightedTaskIndex == taskIndex)
-                    plainTextInput(task)
+                  if (task.content.isPlainText && !task.content.containsLink)
+                    plainTextInput(task, taskIsHighlighted = state.highlightedTaskIndex == taskIndex)
                   else readonlyTask(task)
                 },
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
@@ -102,11 +104,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def plainTextInput(task: Task): VdomNode = {
+    private def plainTextInput(task: Task, taskIsHighlighted: Boolean): VdomNode = {
       ResizingTextArea(
+        resizeStrategy = if (taskIsHighlighted) ScaleWithInput else Fixed(numberOfRows = 1),
+      )(
         ^.value := task.contentString,
         ^.spellCheck := false,
-        ^.autoFocus := true,
         ^.onFocus --> selectTask(task),
         ^.onChange ==> { (event: ReactEventFromInput) =>
           onPlainTextChange(newContent = event.target.value, originalTask = task)
