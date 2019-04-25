@@ -105,6 +105,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       <.textarea(
         ^.value := task.contentString,
         ^.spellCheck := false,
+        ^.autoFocus := true,
         ^.onFocus --> selectTask(task),
         ^.onChange ==> { (event: ReactEventFromInput) =>
           onPlainTextChange(newContent = event.target.value, originalTask = task)
