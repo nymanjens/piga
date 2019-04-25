@@ -84,8 +84,9 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                       )
                     )
                 }.toVdomArray, {
-                  if (task.content.isPlainText && !task.content.containsLink) plainTextInput(task)
-                  else formattedInput(task)
+                  if (task.content.isPlainText && !task.content.containsLink && state.highlightedTaskIndex == taskIndex)
+                    plainTextInput(task)
+                  else readonlyTask(task)
                 },
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
                   <.div(
@@ -101,8 +102,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     }
 
     private def plainTextInput(task: Task): VdomNode = {
-      <.input(
-        ^.tpe := "text",
+      <.textarea(
         ^.value := task.contentString,
         ^.spellCheck := false,
         ^.onFocus --> selectTask(task),
@@ -112,7 +112,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def formattedInput(task: Task): VdomNode = {
+    private def readonlyTask(task: Task): VdomNode = {
       <.span(
         ^.className := "readonly-task",
         task.content.toVdomNode,
