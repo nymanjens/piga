@@ -1,5 +1,6 @@
 package app.flux.react.app.document
 
+import app.flux.react.uielements.ResizingTextArea
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.stores.document.DocumentStore
@@ -102,7 +103,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     }
 
     private def plainTextInput(task: Task): VdomNode = {
-      <.textarea(
+      ResizingTextArea(
         ^.value := task.contentString,
         ^.spellCheck := false,
         ^.autoFocus := true,
