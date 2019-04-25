@@ -8,8 +8,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.vdom.TagMod
+import org.scalajs.dom.console
+import org.scalajs.dom.html
+import org.scalajs.dom.html.Input
 
 import scala.collection.immutable.Seq
+import scala.scalajs.js
 
 object ResizingTextArea extends HydroReactComponent.Stateless {
 
@@ -24,9 +28,20 @@ object ResizingTextArea extends HydroReactComponent.Stateless {
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(tagMods: Seq[TagMod])
 
-  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
+  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) with DidUpdate {
+    val theInput = Ref[html.TextArea]
+
     override def render(props: Props, state: State): VdomElement = {
-      <.textarea(props.tagMods: _*)
+      <.textarea(props.tagMods: _*).withRef(theInput)
+    }
+
+    override def didUpdate(prevProps: Props,
+                           currentProps: Props,
+                           prevState: State,
+                           currentState: State): Callback = {
+      theInput.get.map { input =>
+        input.style.height = input.scrollHeight + "px"
+      }
     }
   }
 }

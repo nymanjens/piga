@@ -149,7 +149,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       ),
     )
 
-    private def onPlainTextChange(newContent: String, originalTask: Task): Callback = ???
+    private def onPlainTextChange(newContent: String, originalTask: Task): Callback = {
+      println("onPlainTextChange()")
+      Callback.empty
+    }
 
     private def selectTask(task: Task): Callback = {
       $.modState { state =>
