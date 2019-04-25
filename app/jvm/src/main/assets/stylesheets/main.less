@@ -98,7 +98,7 @@ ul.task-editor-base {
   li {
     &.empty-task {
       &:before { // Avoid <li> becoming size 0
-        content: " ";
+        content: "\200b"; // unicode zero width space character
       }
     }
     &:not(.empty-task):not(.root) {
