@@ -67,6 +67,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                 case Some(nextTask) if nextTask.indentation > task.indentation => "node"
                 case _                                                         => "leaf"
               }
+              val isReadOnly = !task.content.isPlainText || task.content.containsLink
               <.li(
                 ^.key := s"li-${task.id}",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
@@ -75,21 +76,22 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
-                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
+                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
+                    ifThenOption(isReadOnly)("read-only")),
                 ^.onClick --> selectTask(task),
                 task.tags.zipWithIndex.map {
                   case (tag, tagIndex) =>
                     <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
                       ^.key := tagIndex,
+                      ^.className := "tag-holder",
                       <.span(
                         ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
                         tag,
                       )
                     )
                 }.toVdomArray, {
-                  if (task.content.isPlainText && !task.content.containsLink)
-                    plainTextInput(task, taskIsHighlighted = state.highlightedTaskIndex == taskIndex)
-                  else readonlyTask(task)
+                  if (isReadOnly) readonlyTask(task)
+                  else plainTextInput(task, taskIsHighlighted = state.highlightedTaskIndex == taskIndex)
                 },
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
                   <.div(

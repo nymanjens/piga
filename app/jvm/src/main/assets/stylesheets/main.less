@@ -190,27 +190,31 @@ ul.mobile-task-editor {
   &:extend(ul.task-editor-base all);
 
   li {
-    display: flex;
-
-    &:before { // Bullets
-      margin-top: 3px;
-    }
-
-    .readonly-task {
-      flex-grow: 100;
-      display: block;
-    }
-    textarea {
-      flex-grow: 100;
-      display: block;
-      background-color: transparent;
-      border: none;
-      resize: none;
-    }
+    &:before { margin-top: 3px; } // Bullets
 
     .collapsed-suffix {
       color: #CCC;
       font-style: italic;
+    }
+
+    &.read-only {
+      .tag-holder { display: inline; }
+      .readonly-task { padding-left: 3px; } // To allign with textarea padding
+      .collapsed-suffix { float: right; }
+    }
+
+    &:not(.read-only) {
+      display: flex;
+
+      .tag-holder { display: block; }
+      .collapsed-suffix { display: block; }
+      textarea {
+        flex-grow: 100;
+        display: block;
+        background-color: transparent;
+        border: none;
+        resize: none;
+      }
     }
   }
 }
