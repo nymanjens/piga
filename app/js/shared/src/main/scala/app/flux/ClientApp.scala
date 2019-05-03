@@ -1,6 +1,6 @@
 package app.flux
 
-import app.flux.react.MobileUtils
+import app.common.MobileUtils
 import hydro.common.LoggingUtils.logExceptions
 import hydro.common.LoggingUtils.logFailure
 import org.scalajs.dom

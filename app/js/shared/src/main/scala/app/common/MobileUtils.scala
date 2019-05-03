@@ -1,10 +1,9 @@
-package app.flux.react
+package app.common
 
 import hydro.common.LoggingUtils.logExceptions
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.util.matching.Regex
 
 object MobileUtils {
 
