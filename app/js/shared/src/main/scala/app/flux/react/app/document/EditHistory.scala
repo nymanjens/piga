@@ -46,6 +46,9 @@ private[document] final class EditHistory(implicit clock: Clock) {
     }
   }
 
+  def canUndo: Boolean = nextRedoEditIndex > 0
+  def canRedo: Boolean = nextRedoEditIndex < edits.length
+
   def undo(): Option[Edit] = {
     if (nextRedoEditIndex > 0) {
       def getEdit() = edits(nextRedoEditIndex - 1).reversed

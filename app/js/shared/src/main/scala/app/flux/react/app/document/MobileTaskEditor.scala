@@ -161,10 +161,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ),
         // Undo
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := !editHistory.canUndo,
           Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
         ),
         // Redo
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := !editHistory.canRedo,
           Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
         ),
       ),
