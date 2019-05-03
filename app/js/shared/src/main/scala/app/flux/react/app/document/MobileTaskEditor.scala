@@ -142,14 +142,17 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ),
         // Move up
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := state.highlightedTaskIndex == 0,
           Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
         ),
         // Move down
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
           Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
         ),
         // Delete
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := state.document.tasks.size == 1,
           Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
         ),
         // Create empty
