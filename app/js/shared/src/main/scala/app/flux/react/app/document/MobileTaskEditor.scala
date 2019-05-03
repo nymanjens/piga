@@ -131,28 +131,36 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def editButtons(implicit state: State): VdomNode = <.div(
       ^.className := "edit-buttons",
       Bootstrap.ButtonGroup(
+        // Dedent
         Bootstrap.Button(Variant.info, Size.sm)(
           ^.disabled := state.highlightedTask.indentation == 0,
           Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
         ),
+        // Indent
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
         ),
+        // Move up
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
         ),
+        // Move down
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
         ),
+        // Delete
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
         ),
+        // Create empty
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
         ),
+        // Undo
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
         ),
+        // Redo
         Bootstrap.Button(Variant.info, Size.sm)(
           Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
         ),
