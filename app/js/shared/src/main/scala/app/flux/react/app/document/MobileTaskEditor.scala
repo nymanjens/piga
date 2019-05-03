@@ -58,8 +58,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
       <.span(
+        ^.className := "mobile-task-editor",
         <.ul(
-          ^.className := "mobile-task-editor",
           applyCollapsedProperty(state.document.tasks).map {
             case (task, taskIndex, maybeAmountCollapsed) =>
               val nodeType = state.document.tasksOption(taskIndex + 1) match {

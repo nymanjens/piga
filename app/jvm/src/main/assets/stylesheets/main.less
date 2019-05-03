@@ -186,36 +186,39 @@ ul.task-editor-base {
 }
 
 /****** MobileTaskEditor ******/
-ul.mobile-task-editor {
-  &:extend(ul.task-editor-base all);
+.mobile-task-editor {
+  ul {
+    &:extend(ul.task-editor-base all);
 
-  li {
-    &:before { margin-top: 3px; } // Bullets
+    li {
+      &:before { margin-top: 3px; } // Bullets
 
-    .collapsed-suffix {
-      color: #CCC;
-      font-style: italic;
-    }
+      .collapsed-suffix {
+        color: #CCC;
+        font-style: italic;
+      }
 
-    &.read-only {
-      .tag-holder { display: inline; }
-      .readonly-task { padding-left: 3px; } // To allign with textarea padding
-      .collapsed-suffix { float: right; }
-    }
+      &.read-only {
+        .tag-holder { display: inline; }
+        .readonly-task { padding-left: 3px; } // To allign with textarea padding
+        .collapsed-suffix { float: right; }
+      }
 
-    &:not(.read-only) {
-      display: flex;
+      &:not(.read-only) {
+        display: flex;
 
-      .tag-holder { display: block; }
-      .collapsed-suffix { display: block; }
-      textarea {
-        flex-grow: 100;
-        display: block;
-        background-color: transparent;
-        border: none;
-        resize: none;
-        padding-top: 0px;
+        .tag-holder { display: block; }
+        .collapsed-suffix { display: block; }
+        textarea {
+          flex-grow: 100;
+          display: block;
+          background-color: transparent;
+          border: none;
+          resize: none;
+          padding-top: 0px;
+        }
       }
     }
   }
 }
+
