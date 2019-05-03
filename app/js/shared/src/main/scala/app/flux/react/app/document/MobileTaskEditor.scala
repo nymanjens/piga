@@ -50,6 +50,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
+
+    lazy val highlightedTask: Task = document.tasks(highlightedTaskIndex)
   }
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
@@ -58,6 +60,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
+      implicit val implicitState = state
       <.span(
         ^.className := "mobile-task-editor",
         <.ul(
@@ -101,7 +104,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
               )
           }.toVdomArray
         ),
-        editButtons()
+        editButtons
       )
     }
 
@@ -125,10 +128,11 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def editButtons(): VdomNode = <.div(
+    private def editButtons(implicit state: State): VdomNode = <.div(
       ^.className := "edit-buttons",
       Bootstrap.ButtonGroup(
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.disabled := state.highlightedTask.indentation == 0,
           Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
         ),
         Bootstrap.Button(Variant.info, Size.sm)(
