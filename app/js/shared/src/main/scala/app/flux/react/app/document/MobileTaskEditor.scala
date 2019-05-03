@@ -128,29 +128,31 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private def editButtons(): VdomNode = <.div(
       ^.className := "edit-buttons",
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
-      ),
-      Bootstrap.Button(Variant.info, Size.sm)(
-        Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
+      Bootstrap.ButtonGroup(
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
+        ),
+        Bootstrap.Button(Variant.info, Size.sm)(
+          Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
+        ),
       ),
     )
 
