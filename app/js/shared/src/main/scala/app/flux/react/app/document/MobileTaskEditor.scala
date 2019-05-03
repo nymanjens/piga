@@ -1,10 +1,10 @@
 package app.flux.react.app.document
 
+import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
+import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.uielements.ResizingTextArea
 import app.flux.react.uielements.ResizingTextArea.Fixed
 import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
-import hydro.flux.react.ReactVdomUtils.<<
-import hydro.flux.react.ReactVdomUtils.^^
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
 import app.models.document.Task
@@ -13,6 +13,7 @@ import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.flux.react.HydroReactComponent
+import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.Bootstrap.Size
@@ -61,18 +62,16 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ^.className := "mobile-task-editor",
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
-            case (task, taskIndex, maybeAmountCollapsed) =>
-              val nodeType = state.document.tasksOption(taskIndex + 1) match {
-                case _ if task.indentation == 0                                => "root"
-                case Some(nextTask) if nextTask.indentation > task.indentation => "node"
-                case _                                                         => "leaf"
-              }
+            case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
               val isReadOnly = !task.content.isPlainText || task.content.containsLink
+
               <.li(
                 ^.key := s"li-${task.id}",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
                 ^^.classes(
-                  Seq(nodeType) ++
+                  Seq() ++
+                    ifThenOption(isRoot)("root") ++
+                    ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
@@ -205,23 +204,5 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     //            else taskIndices.head - 1))
     //      )
     //    }
-
-    private type Index = Int
-    private type AmountCollapsed = Int
-    private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Index, Option[AmountCollapsed])] = {
-      def getAmountCollapsed(tasks: Stream[(Task, Index)], collapsedIndentation: Int): Int = {
-        tasks.takeWhile(_._1.indentation > collapsedIndentation).size
-      }
-
-      def inner(tasks: Stream[(Task, Index)]): Stream[(Task, Index, Option[AmountCollapsed])] = tasks match {
-        case (task, i) #:: rest if task.collapsed =>
-          val amountCollapsed = getAmountCollapsed(rest, task.indentation)
-          (task, i, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
-        case (task, i) #:: rest => (task, i, /* maybeAmountCollapsed = */ None) #:: inner(rest)
-        case Stream.Empty       => Stream.Empty
-      }
-
-      inner(tasks.zipWithIndex.toStream)
-    }
   }
 }
