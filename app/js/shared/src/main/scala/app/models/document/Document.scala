@@ -299,6 +299,8 @@ object Document {
   }
   object IndexedSelection {
     def singleton(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
+    def atStartOfTask(index: Int): IndexedSelection =
+      IndexedSelection.singleton(IndexedCursor.atStartOfTask(index))
 
     def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
       val anchor = cursorFromNode(selection.anchorNode, selection.anchorOffset)

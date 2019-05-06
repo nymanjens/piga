@@ -7,11 +7,16 @@ import app.flux.react.uielements.ResizingTextArea.Fixed
 import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
+import app.models.document.Document.IndexedCursor
+import app.models.document.Document.IndexedSelection
+import app.models.document.DocumentEdit
 import app.models.document.Task
+import app.models.document.TextWithMarkup
 import hydro.common.I18n
 import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
 import hydro.common.time.Clock
+import hydro.common.OrderToken
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
@@ -52,6 +57,9 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
 
     lazy val highlightedTask: Task = document.tasks(highlightedTaskIndex)
+    def startOfHighlightedTask: IndexedSelection =
+      IndexedSelection.singleton(IndexedCursor.atStartOfTask(highlightedTaskIndex))
+
   }
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
@@ -61,6 +69,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
       implicit val implicitState = state
+      implicit val implicitProps = props
       <.span(
         ^.className := "mobile-task-editor",
         <.ul(
@@ -128,7 +137,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def editButtons(implicit state: State): VdomNode = <.div(
+    private def editButtons(implicit props: Props, state: State): VdomNode = <.div(
       ^.className := "edit-buttons",
       Bootstrap.ButtonGroup(
         // Dedent
@@ -153,6 +162,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         // Delete
         Bootstrap.Button(Variant.info, Size.sm)(
           ^.disabled := state.document.tasks.size == 1,
+          ^.onClick --> removeHighlightedTask(),
           Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
         ),
         // Create empty
@@ -191,35 +201,57 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       Callback.empty
     }
 
-    //
-    //    private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
-    //      implicit val oldDocument = state.document
-    //
-    //      val removedTasks = for (i <- taskIndices) yield oldDocument.tasks(i)
-    //      val addedTasks =
-    //        if (oldDocument.tasks.size > taskIndices.size) Seq()
-    //        else // Removing all tasks in this document --> Replace the last task with an empty task
-    //          Seq(
-    //            Task.withRandomId(
-    //              content = TextWithMarkup.empty,
-    //              orderToken = OrderToken.middle,
-    //              indentation = 0,
-    //              collapsed = false,
-    //              delayedUntil = None,
-    //              tags = Seq()
-    //            ))
-    //
-    //      replaceWithHistory(
-    //        edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
-    //        selectionBeforeEdit = IndexedSelection(
-    //          IndexedCursor.atStartOfTask(taskIndices.head),
-    //          IndexedCursor.atEndOfTask(taskIndices.last)),
-    //        selectionAfterEdit = IndexedSelection.singleton(
-    //          IndexedCursor.atStartOfTask(
-    //            if (oldDocument.tasks.size > taskIndices.head + taskIndices.size) taskIndices.head
-    //            else if (taskIndices.head == 0) 0
-    //            else taskIndices.head - 1))
-    //      )
-    //    }
+    private def removeHighlightedTask()(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+
+      val indicesToRemove =
+        IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren().seqIndices
+      val removedTasks = for (i <- indicesToRemove) yield oldDocument.tasks(i)
+      val addedTasks =
+        if (oldDocument.tasks.size > indicesToRemove.size) Seq()
+        else // Removing all tasks in this document --> Replace the last task with an empty task
+          Seq(
+            Task.withRandomId(
+              content = TextWithMarkup.empty,
+              orderToken = OrderToken.middle,
+              indentation = 0,
+              collapsed = false,
+              delayedUntil = None,
+              tags = Seq()
+            ))
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
+        highlightedTaskIndexAfterEdit =
+          if (oldDocument.tasks.size > indicesToRemove.head + indicesToRemove.size) indicesToRemove.head
+          else if (indicesToRemove.head == 0) 0
+          else indicesToRemove.head - 1
+      )
+    }
+
+    private def replaceWithHistory(
+        edit: DocumentEdit.Reversible,
+        highlightedTaskIndexAfterEdit: Int,
+        replacementString: String = "")(implicit oldState: State, props: Props): Callback = {
+
+      val documentStore = props.documentStore
+      val oldDocument = oldState.document
+      documentStore.applyEditWithoutCallingListeners(edit)
+      val newDocument = documentStore.state.document
+
+      $.modState(
+        _.copyFromStore(documentStore).copy(highlightedTaskIndex = highlightedTaskIndexAfterEdit),
+        Callback {
+          editHistory.addEdit(
+            documentEdit = edit,
+            selectionBeforeEdit =
+              IndexedSelection.atStartOfTask(oldState.highlightedTaskIndex).detach(oldDocument),
+            selectionAfterEdit =
+              IndexedSelection.atStartOfTask(highlightedTaskIndexAfterEdit).detach(newDocument),
+            replacementString = replacementString
+          )
+        }
+      )
+    }
   }
 }
