@@ -17,6 +17,9 @@ import hydro.common.I18n
 import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
 import hydro.common.time.Clock
+import hydro.common.CollectionUtils
+import hydro.common.GuavaReplacement
+import hydro.common.GuavaReplacement.LoadingCache
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.visibleForTesting
 import hydro.flux.react.HydroReactComponent
@@ -30,8 +33,10 @@ import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticEvent
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 
 import scala.collection.immutable.Seq
+import scala.collection.mutable
 import scala.scalajs.js
 
 private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock)
@@ -66,6 +71,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
+    private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
+      LoadingCache.fromLoader(_ => ResizingTextArea.ref())
     private val editHistory: EditHistory = new EditHistory()
 
     override def render(props: Props, state: State): VdomElement = {
@@ -122,6 +129,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def plainTextInput(task: Task)(implicit props: Props, state: State): VdomNode = {
       ResizingTextArea(
         resizeStrategy = if (state.highlightedTask == task) ScaleWithInput else Fixed(numberOfRows = 1),
+        ref = taskIdToInputRef.get(task.id)
       )(
         ^.value := task.contentString,
         ^.spellCheck := false,
@@ -237,6 +245,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             tags = Seq()
           ))),
         highlightedTaskIndexAfterEdit = state.highlightedTaskIndex + 1,
+        focusHighlightedTaskAfterEdit = true,
       )
     }
 
@@ -271,6 +280,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def replaceWithHistory(
         edit: DocumentEdit.Reversible,
         highlightedTaskIndexAfterEdit: Int = -1,
+        focusHighlightedTaskAfterEdit: Boolean = false,
         replacementString: String = "")(implicit oldState: State, props: Props): Callback = {
 
       val actualHighlightedTaskIndexAfterEdit =
@@ -292,6 +302,11 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
               IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit).detach(newDocument),
             replacementString = replacementString
           )
+
+          if (focusHighlightedTaskAfterEdit) {
+            val taskToFocus = newDocument.tasks(actualHighlightedTaskIndexAfterEdit)
+            taskIdToInputRef.get(taskToFocus.id)().focus()
+          }
         }
       )
     }
