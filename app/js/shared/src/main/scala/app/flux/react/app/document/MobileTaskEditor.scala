@@ -88,6 +88,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
               <.li(
                 ^.key := s"li-${task.id}",
+                ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 20}px"),
                 ^^.classes(
                   Seq() ++
@@ -383,6 +384,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             val taskToFocus = newDocument.tasks(actualHighlightedTaskIndexAfterEdit)
             taskIdToInputRef.get(taskToFocus.id)().focus()
           }
+          scrollIntoView(actualHighlightedTaskIndexAfterEdit)
         }
       )
     }
@@ -398,9 +400,33 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           $.modState(
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
-              // TODO: Make sure newHighlightedTaskIndex is visible
+              scrollIntoView(newHighlightedTaskIndex)
             }
           )
+      }
+
+    private def scrollIntoView(taskIndex: Int): Unit = {
+      val element = getTaskElement(taskIndex)
+      if (!elementIsFullyInView(element)) {
+        element
+          .asInstanceOf[js.Dynamic]
+          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "center", inline = "nearest"))
+      }
+    }
+
+    private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
+      val rect = element.getBoundingClientRect
+
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= dom.window.innerHeight &&
+      rect.right <= dom.window.innerWidth
+    }
+
+    private def getTaskElement(taskIndex: Int): dom.raw.Element =
+      Option(dom.document.getElementById(s"teli-$taskIndex")) match {
+        case Some(e) => e
+        case None    => throw new IllegalStateException(s"Could not find <li> task with taskIndex=$taskIndex")
       }
   }
 
