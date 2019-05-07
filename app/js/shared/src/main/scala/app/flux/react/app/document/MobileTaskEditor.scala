@@ -144,6 +144,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       Bootstrap.ButtonGroup(
         // Create empty
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> creatEmptyTaskUnderHighlighted(),
           Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
         ),
         // Delete
@@ -211,6 +212,25 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def preventDefault(event: SyntheticEvent[_]): Callback = {
       event.preventDefault()
       Callback.empty
+    }
+
+    private def creatEmptyTaskUnderHighlighted()(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(
+          addedTasks = Seq(Task.withRandomId(
+            content = TextWithMarkup.empty,
+            orderToken = OrderToken.middleBetween(
+              Some(state.highlightedTask.orderToken),
+              oldDocument.tasksOption(state.highlightedTaskIndex + 1).map(_.orderToken)),
+            indentation = state.highlightedTask.indentation,
+            collapsed = false,
+            delayedUntil = None,
+            tags = Seq()
+          ))),
+        highlightedTaskIndexAfterEdit = state.highlightedTaskIndex + 1,
+      )
     }
 
     private def removeHighlightedTask()(implicit state: State, props: Props): Callback = {
