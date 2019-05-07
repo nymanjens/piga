@@ -244,7 +244,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             delayedUntil = None,
             tags = Seq()
           ))),
-        highlightedTaskIndexAfterEdit = state.highlightedTaskIndex + 1,
+        highlightedTaskIndexAfterEdit = insertIndex + 1,
         focusHighlightedTaskAfterEdit = true,
       )
     }
