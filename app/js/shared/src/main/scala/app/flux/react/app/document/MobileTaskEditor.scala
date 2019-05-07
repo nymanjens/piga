@@ -157,19 +157,21 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ),
         // Delete
         Bootstrap.Button(Variant.info, Size.sm)(
-          ^.disabled := state.document.tasks.size == 1,
           ^.onClick --> removeHighlightedTask(),
+          ^.disabled := state.document.tasks.size == 1,
           Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
         ),
       ),
       Bootstrap.ButtonGroup(
         // Move up
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> moveHighlightedTask(direction = -1),
           ^.disabled := state.highlightedTaskIndex == 0,
           Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
         ),
         // Move down
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> moveHighlightedTask(direction = +1),
           ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
           Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
         ),
@@ -275,6 +277,55 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           else if (indicesToRemove.head == 0) 0
           else indicesToRemove.head - 1
       )
+    }
+
+    private def moveHighlightedTask(direction: Int)(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+      val selectionWithChildren = IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren()
+      val IndexedSelection(start, end) = selectionWithChildren
+
+      val seqIndexMovement = {
+        val indexThatIsHoppedOver = if (direction < 0) start.seqIndex - 1 else end.seqIndex + 1
+        oldDocument.familyTreeRange(
+          anyMemberSeqIndex = indexThatIsHoppedOver,
+          rootParentIndentation =
+            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min) match {
+          case None                    => direction * 1
+          case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
+        }
+      }
+
+      val (task1, task2) =
+        if (seqIndexMovement < 0)
+          (
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement - 1),
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement))
+        else
+          (
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement),
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1))
+
+      if (task1.isEmpty && task2.isEmpty) {
+        Callback.empty
+      } else {
+        val newOrderTokens = {
+          OrderToken.evenlyDistributedValuesBetween(
+            numValues = selectionWithChildren.seqIndices.length,
+            lowerExclusive = task1.map(_.orderToken),
+            higherExclusive = task2.map(_.orderToken)
+          )
+        }
+
+        val taskUpdates =
+          for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
+            yield MaskedTaskUpdate.fromFields(originalTask = oldTask, orderToken = newOrderToken)
+
+        replaceWithHistory(
+          edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+          highlightedTaskIndexAfterEdit = state.highlightedTaskIndex + seqIndexMovement,
+          focusHighlightedTaskAfterEdit = true,
+        )
+      }
     }
 
     private def replaceWithHistory(
