@@ -142,15 +142,18 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def editButtons(implicit props: Props, state: State): VdomNode = <.div(
       ^.className := "edit-buttons",
       Bootstrap.ButtonGroup(
-        // Dedent
+        // Create empty
         Bootstrap.Button(Variant.info, Size.sm)(
-          ^.disabled := state.highlightedTask.indentation == 0,
-          Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
         ),
-        // Indent
+        // Delete
         Bootstrap.Button(Variant.info, Size.sm)(
-          Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
+          ^.disabled := state.document.tasks.size == 1,
+          ^.onClick --> removeHighlightedTask(),
+          Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
         ),
+      ),
+      Bootstrap.ButtonGroup(
         // Move up
         Bootstrap.Button(Variant.info, Size.sm)(
           ^.disabled := state.highlightedTaskIndex == 0,
@@ -161,16 +164,17 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
           Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
         ),
-        // Delete
+        // Dedent
         Bootstrap.Button(Variant.info, Size.sm)(
-          ^.disabled := state.document.tasks.size == 1,
-          ^.onClick --> removeHighlightedTask(),
-          Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
+          ^.disabled := state.highlightedTask.indentation == 0,
+          Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
         ),
-        // Create empty
+        // Indent
         Bootstrap.Button(Variant.info, Size.sm)(
-          Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
         ),
+      ),
+      Bootstrap.ButtonGroup(
         // Undo
         Bootstrap.Button(Variant.info, Size.sm)(
           ^.disabled := !editHistory.canUndo,
