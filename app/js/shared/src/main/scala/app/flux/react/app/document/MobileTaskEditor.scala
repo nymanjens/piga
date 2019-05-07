@@ -190,11 +190,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       Bootstrap.ButtonGroup(
         // Undo
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> applyHistoryEdit(editHistory.undo()),
           ^.disabled := !editHistory.canUndo,
           Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
         ),
         // Redo
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> applyHistoryEdit(editHistory.redo()),
           ^.disabled := !editHistory.canRedo,
           Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
         ),
@@ -385,18 +387,34 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    @visibleForTesting
-    private[document] def deriveReplacementString(oldContent: String, newContent: String): String = {
-      // Note: This is a heuristic. We only handle the case where a string was attached at the end of the line
-      // TODO: Also cope with a single character inserted somewhere else
-
-      if (newContent startsWith oldContent) {
-        newContent stripPrefix oldContent
-      } else {
-        ""
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props): Callback =
+      maybeEdit match {
+        case None => Callback.empty
+        case Some(edit) =>
+          val documentStore = props.documentStore
+          documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
+          val newDocument = documentStore.state.document
+          val newHighlightedTaskIndex = edit.selectionAfterEdit.attachToDocument(newDocument).start.seqIndex
+          $.modState(
+            _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
+            Callback {
+              // TODO: Make sure newHighlightedTaskIndex is visible
+            }
+          )
       }
-    }
-
-    private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
   }
+
+  @visibleForTesting
+  private[document] def deriveReplacementString(oldContent: String, newContent: String): String = {
+    // Note: This is a heuristic. We only handle the case where a string was attached at the end of the line
+    // TODO: Also cope with a single character inserted somewhere else
+
+    if (newContent startsWith oldContent) {
+      newContent stripPrefix oldContent
+    } else {
+      ""
+    }
+  }
+
+  private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
 }
