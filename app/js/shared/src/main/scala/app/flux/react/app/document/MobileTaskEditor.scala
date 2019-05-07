@@ -10,6 +10,7 @@ import app.models.document.Document
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.DocumentEdit
+import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import hydro.common.I18n
@@ -17,6 +18,7 @@ import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.OrderToken
+import hydro.common.ScalaUtils.visibleForTesting
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
@@ -117,7 +119,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def plainTextInput(task: Task)(implicit state: State): VdomNode = {
+    private def plainTextInput(task: Task)(implicit props: Props, state: State): VdomNode = {
       ResizingTextArea(
         resizeStrategy = if (state.highlightedTask == task) ScaleWithInput else Fixed(numberOfRows = 1),
       )(
@@ -182,9 +184,15 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       ),
     )
 
-    private def onPlainTextChange(newContent: String, originalTask: Task): Callback = {
-      println("onPlainTextChange()")
-      Callback.empty
+    private def onPlainTextChange(newContent: String, originalTask: Task)(implicit state: State,
+                                                                          props: Props): Callback = {
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(
+          taskUpdates = Seq(
+            MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent)))),
+        replacementString =
+          deriveReplacementString(oldContent = originalTask.contentString, newContent = newContent),
+      )
     }
 
     private def selectTask(task: Task): Callback = {
@@ -231,27 +239,42 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private def replaceWithHistory(
         edit: DocumentEdit.Reversible,
-        highlightedTaskIndexAfterEdit: Int,
+        highlightedTaskIndexAfterEdit: Int = -1,
         replacementString: String = "")(implicit oldState: State, props: Props): Callback = {
 
+      val actualHighlightedTaskIndexAfterEdit =
+        if (highlightedTaskIndexAfterEdit == -1) oldState.highlightedTaskIndex
+        else highlightedTaskIndexAfterEdit
       val documentStore = props.documentStore
       val oldDocument = oldState.document
       documentStore.applyEditWithoutCallingListeners(edit)
       val newDocument = documentStore.state.document
 
       $.modState(
-        _.copyFromStore(documentStore).copy(highlightedTaskIndex = highlightedTaskIndexAfterEdit),
+        _.copyFromStore(documentStore).copy(highlightedTaskIndex = actualHighlightedTaskIndexAfterEdit),
         Callback {
           editHistory.addEdit(
             documentEdit = edit,
             selectionBeforeEdit =
               IndexedSelection.atStartOfTask(oldState.highlightedTaskIndex).detach(oldDocument),
             selectionAfterEdit =
-              IndexedSelection.atStartOfTask(highlightedTaskIndexAfterEdit).detach(newDocument),
+              IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit).detach(newDocument),
             replacementString = replacementString
           )
         }
       )
+    }
+
+    @visibleForTesting
+    private[document] def deriveReplacementString(oldContent: String, newContent: String): String = {
+      // Note: This is a heuristic. We only handle the case where a string was attached at the end of the line
+      // TODO: Also cope with a single character inserted somewhere else
+
+      if (newContent startsWith oldContent) {
+        newContent stripPrefix oldContent
+      } else {
+        ""
+      }
     }
   }
 }
