@@ -102,7 +102,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                     )
                 }.toVdomArray, {
                   if (isReadOnly) readonlyTask(task)
-                  else plainTextInput(task, taskIsHighlighted = state.highlightedTaskIndex == taskIndex)
+                  else plainTextInput(task)
                 },
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
                   <.div(
@@ -117,9 +117,9 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def plainTextInput(task: Task, taskIsHighlighted: Boolean): VdomNode = {
+    private def plainTextInput(task: Task)(implicit state: State): VdomNode = {
       ResizingTextArea(
-        resizeStrategy = if (taskIsHighlighted) ScaleWithInput else Fixed(numberOfRows = 1),
+        resizeStrategy = if (state.highlightedTask == task) ScaleWithInput else Fixed(numberOfRows = 1),
       )(
         ^.value := task.contentString,
         ^.spellCheck := false,
