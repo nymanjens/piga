@@ -177,11 +177,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ),
         // Dedent
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> indentHighlightedTask(indentIncrease = -1),
           ^.disabled := state.highlightedTask.indentation == 0,
           Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
         ),
         // Indent
         Bootstrap.Button(Variant.info, Size.sm)(
+          ^.onClick --> indentHighlightedTask(indentIncrease = +1),
           Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
         ),
       ),
@@ -279,6 +281,27 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
+    private def indentHighlightedTask(indentIncrease: Int)(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+
+      // Don't indent children if task is empty
+      val updateChildren = state.highlightedTask.content.nonEmpty
+
+      val taskIndicesToUpdate =
+        if (updateChildren)
+          IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren().seqIndices
+        else Seq(state.highlightedTaskIndex)
+      val taskUpdates = for (index <- taskIndicesToUpdate) yield {
+        val task = oldDocument.tasks(index)
+        MaskedTaskUpdate.fromFields(task, indentation = zeroIfNegative(task.indentation + indentIncrease))
+      }
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+        focusHighlightedTaskAfterEdit = true,
+      )
+    }
+
     private def moveHighlightedTask(direction: Int)(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val selectionWithChildren = IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren()
@@ -373,5 +396,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ""
       }
     }
+
+    private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
   }
 }
