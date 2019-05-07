@@ -217,13 +217,20 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def creatEmptyTaskUnderHighlighted()(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
+      val insertIndex =
+        IndexedSelection
+          .atStartOfTask(state.highlightedTaskIndex)
+          .includeChildren(collapsedOnly = true)
+          .end
+          .seqIndex
+
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
           addedTasks = Seq(Task.withRandomId(
             content = TextWithMarkup.empty,
             orderToken = OrderToken.middleBetween(
-              Some(state.highlightedTask.orderToken),
-              oldDocument.tasksOption(state.highlightedTaskIndex + 1).map(_.orderToken)),
+              oldDocument.tasksOption(insertIndex).map(_.orderToken),
+              oldDocument.tasksOption(insertIndex + 1).map(_.orderToken)),
             indentation = state.highlightedTask.indentation,
             collapsed = false,
             delayedUntil = None,
