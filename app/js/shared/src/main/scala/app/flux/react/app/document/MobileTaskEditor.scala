@@ -152,12 +152,12 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       ^.className := "edit-buttons",
       Bootstrap.ButtonGroup(
         // Create empty
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> creatEmptyTaskUnderHighlighted(),
           Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
         ),
         // Delete
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> removeHighlightedTask(),
           ^.disabled := state.document.tasks.size == 1,
           Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
@@ -165,38 +165,44 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       ),
       Bootstrap.ButtonGroup(
         // Move up
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> moveHighlightedTask(direction = -1),
           ^.disabled := state.highlightedTaskIndex == 0,
           Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
         ),
         // Move down
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> moveHighlightedTask(direction = +1),
           ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
           Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
         ),
         // Dedent
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> indentHighlightedTask(indentIncrease = -1),
           ^.disabled := state.highlightedTask.indentation == 0,
           Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
         ),
         // Indent
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> indentHighlightedTask(indentIncrease = +1),
           Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
+        ),
+        // Expand/collapse
+        Bootstrap.Button(Variant.info)(
+//          ^.onClick --> ...,
+          if (state.highlightedTask.collapsed) Bootstrap.Glyphicon("collapse-down")
+          else Bootstrap.Glyphicon("expand"),
         ),
       ),
       Bootstrap.ButtonGroup(
         // Undo
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> applyHistoryEdit(editHistory.undo()),
           ^.disabled := !editHistory.canUndo,
           Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
         ),
         // Redo
-        Bootstrap.Button(Variant.info, Size.sm)(
+        Bootstrap.Button(Variant.info)(
           ^.onClick --> applyHistoryEdit(editHistory.redo()),
           ^.disabled := !editHistory.canRedo,
           Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
