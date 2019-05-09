@@ -6,12 +6,6 @@ import scala.collection.immutable.Seq
 
 private[document] object TaskEditorUtils {
 
-  sealed abstract class NodeType(val name: String)
-  object NodeType {
-    case object Root extends NodeType("root")
-    case object Inner extends NodeType("root")
-    case object Leaf extends NodeType("root")
-  }
   case class TaskInSeq(task: Task,
                        index: Int,
                        maybeAmountCollapsed: Option[Int],
