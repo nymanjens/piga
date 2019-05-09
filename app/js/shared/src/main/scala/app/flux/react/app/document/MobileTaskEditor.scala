@@ -189,7 +189,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ),
         // Expand/collapse
         Bootstrap.Button(Variant.info)(
-//          ^.onClick --> ...,
+          ^.onClick --> toggleCollapseOnHighlightedTask(),
           if (state.highlightedTask.collapsed) Bootstrap.Glyphicon("collapse-down")
           else Bootstrap.Glyphicon("expand"),
         ),
@@ -308,6 +308,18 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         focusHighlightedTaskAfterEdit = true,
+      )
+    }
+
+    private def toggleCollapseOnHighlightedTask()(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+
+      val taskUpdate =
+        MaskedTaskUpdate.fromFields(state.highlightedTask, collapsed = !state.highlightedTask.collapsed)
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = Seq(taskUpdate)),
+        focusHighlightedTaskAfterEdit = false,
       )
     }
 
