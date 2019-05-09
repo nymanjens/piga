@@ -32,6 +32,7 @@ import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticEvent
+import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 
@@ -138,6 +139,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         ^.onChange ==> { (event: ReactEventFromInput) =>
           onPlainTextChange(newContent = event.target.value, originalTask = task)
         },
+        ^.onKeyDown ==> handleKeyDown,
       )
     }
 
@@ -219,6 +221,18 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         replacementString =
           deriveReplacementString(oldContent = originalTask.contentString, newContent = newContent),
       )
+    }
+
+    // Intercept newline to add a new task
+    private def handleKeyDown(event: SyntheticKeyboardEvent[_])(implicit state: State,
+                                                                props: Props): Callback = {
+      event.key match {
+        case "Enter" =>
+          event.preventDefault()
+          creatEmptyTaskUnderHighlighted()
+        case _ =>
+          Callback.empty
+      }
     }
 
     private def selectTask(task: Task): Callback = {
