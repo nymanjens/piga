@@ -90,13 +90,84 @@ table.table-bordered {
   }
 }
 
-/****** TaskEditor ******/
-.task-editor {
+/****** TaskEditorBase ******/
+ul.task-editor-base {
+  padding-left: 3px;
+  list-style-type: none;
+
+  li {
+    &.empty-task {
+      &:before { // Avoid <li> becoming size 0
+        content: "\200b"; // unicode zero width space character
+      }
+    }
+    &:not(.empty-task):not(.root) {
+      &:before {
+        font-family: 'Glyphicons Halflings';
+        display: inline-block;
+        margin-left: -1.7em;
+        width: 1.7em;
+        font-size: .7em;
+      }
+      &.collapsed:before {
+        content: "\e158"; // glyphicon-expand
+      }
+      &:not(.collapsed):before {
+        content: "\e159"; // glyphicon-collapse-down
+      }
+      &:not(.collapsed).leaf:before {
+        content: "\e157"; // glyphicon-unchecked
+      }
+    }
+
+    &.highlighted {
+      background-color: #efeeee;
+    }
+
+    &.modification-pending {
+      color: grey;
+    }
+
+    .tag {
+      display: inline !important;
+      margin-right: 6px;
+      border-radius: 0.7em;
+
+      padding: 0.19em 0.5em 0.25em;
+      position: relative;
+      bottom: 3px;
+
+      &.label-danger {
+        background-color: #af7202;
+      }
+    }
+
+    a {
+      text-decoration: underline;
+    }
+    s {
+      // Make strikethrough thicker (https://stackoverflow.com/a/16410273/1218058)
+      position: relative;
+      text-decoration: none;
+      &::after {
+        border-bottom: 0.125em solid black;
+        content: "";
+        left: 0;
+        margin-top: calc(0.125em / 2 * -1);
+        position: absolute;
+        right: 0;
+        top: 50%;
+      }
+    }
+  }
+}
+
+/****** DesktopTaskEditor ******/
+.desktop-task-editor {
   overflow-y: scroll;
 
   ul {
-    padding-left: 3px;
-    list-style-type: none;
+    &:extend(ul.task-editor-base all);
     font-size: 18px;
 
     li {
@@ -106,69 +177,61 @@ table.table-bordered {
         color: #CCC;
         font-style: italic;
       }
-      &:empty {
-        &:before { // Avoid <li> becoming size 0
-          content: " ";
-        }
-      }
-      &:not(:empty):not(.root) {
-        &:before {
-          font-family: 'Glyphicons Halflings';
-          display: inline-block;
-          margin-left: -1.7em;
-          width: 1.7em;
-          font-size: 13px;
-        }
-        &.collapsed:before {
-          content: "\e158"; // glyphicon-expand
-        }
-        &:not(.collapsed):before {
-          content: "\e159"; // glyphicon-collapse-down
-        }
-        &:not(.collapsed).leaf:before {
-          content: "\e157"; // glyphicon-unchecked
-        }
-      }
-
-      &.highlighted {
-        background-color: #efeeee;
-      }
 
       &.modification-pending {
         color: grey;
       }
+    }
+  }
+}
 
-      .tag {
-        display: inline !important;
-        margin-right: 6px;
-        border-radius: 0.7em;
+/****** MobileTaskEditor ******/
+.mobile-task-editor {
+  ul {
+    &:extend(ul.task-editor-base all);
 
-        padding: 0.19em 0.5em 0.25em;
-        position: relative;
-        bottom: 3px;
+    li {
+      &:before { margin-top: 3px; } // Bullets
 
-        &.label-danger {
-          background-color: #af7202;
-        }
+      .collapsed-suffix {
+        color: #CCC;
+        font-style: italic;
       }
 
-      a {
-        text-decoration: underline;
+      &.read-only {
+        .tag-holder { display: inline; }
+        .readonly-task { padding-left: 3px; } // To allign with textarea padding
+        .collapsed-suffix { float: right; }
       }
-      s {
-        // Make strikethrough thicker (https://stackoverflow.com/a/16410273/1218058)
-        position: relative;
-        text-decoration: none;
-        &::after {
-          border-bottom: 0.125em solid black;
-          content: "";
-          left: 0;
-          margin-top: calc(0.125em / 2 * -1);
-          position: absolute;
-          right: 0;
-          top: 50%;
+
+      &:not(.read-only) {
+        display: flex;
+
+        .tag-holder { display: block; }
+        .collapsed-suffix { display: block; }
+        textarea {
+          flex-grow: 100;
+          display: block;
+          background-color: transparent;
+          border: none;
+          resize: none;
+          padding-top: 0px;
         }
       }
     }
   }
+
+  .edit-buttons {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+
+    .btn-group {
+      background-color: white; // Because disabled buttons become partly opaque
+      margin: 3px 3px 0 3px;
+    }
+  }
 }
+

@@ -37,7 +37,7 @@ private[app] final class Menu(implicit i18n: I18n,
       sbadminMenu(
         menuItems = Seq(
           for (document <- state.allDocuments)
-            yield MenuItem(document.name, AppPages.DesktopTaskList(document.id)),
+            yield MenuItem(document.name, AppPages.TaskList(document.id)),
           Seq(
             MenuItem(
               i18n("app.document-administration.html"),

@@ -8,48 +8,48 @@ import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import utest._
 
-object TaskEditorTest extends TestSuite {
+object DesktopTaskEditorTest extends TestSuite {
 
   override def tests = TestSuite {
-    val taskEditor = (new Module).taskEditor
+    val editor = (new Module).desktopTaskEditor
 
     "convertToClipboardData" - {
       "covers multiple lines" - {
-        taskEditor.convertToClipboardData(
+        editor.convertToClipboardData(
           newDocument(newTask("abc"), newTask("defg"), newTask("hij")),
           IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))) ==>
-          taskEditor.ClipboardData(
+          editor.ClipboardData(
             htmlText = "<ul><li>bc</li><li>defg</li><li>hi</li></ul>",
             plainText = "bc\ndefg\nhi")
       }
       "with formatting" - {
-        taskEditor.convertToClipboardData(
+        editor.convertToClipboardData(
           newDocument(newTask(content = TextWithMarkup("a") + italic("b"))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
-          taskEditor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
+          editor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
       }
       "escapes html" - {
-        taskEditor.convertToClipboardData(
+        editor.convertToClipboardData(
           newDocument(newTask("a<b>cd")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
-          taskEditor.ClipboardData(htmlText = "<ul><li>a&lt;b&gt;c</li></ul>", plainText = "a<b>c")
+          editor.ClipboardData(htmlText = "<ul><li>a&lt;b&gt;c</li></ul>", plainText = "a<b>c")
       }
       "converts newline to <br>" - {
-        taskEditor.convertToClipboardData(
+        editor.convertToClipboardData(
           newDocument(newTask("a\nb")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
-          taskEditor.ClipboardData(htmlText = "<ul><li>a<br />b</li></ul>", plainText = "a\nb")
+          editor.ClipboardData(htmlText = "<ul><li>a<br />b</li></ul>", plainText = "a\nb")
       }
       "handles indentation" - {
-        taskEditor.convertToClipboardData(
+        editor.convertToClipboardData(
           newDocument(
             newTask("a", indentation = 2),
             newTask("b", indentation = 4),
             newTask("c", indentation = 1)),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
         ) ==>
-          taskEditor.ClipboardData(
+          editor.ClipboardData(
             htmlText = removeWhitespace("""
               <ul>
                 <ul>
@@ -68,19 +68,19 @@ object TaskEditorTest extends TestSuite {
       }
     }
     "clipboardStringToReplacement" - {
-      def replacement(firstPartContent: TextWithMarkup, parts: taskEditor.Replacement.Part*) =
-        taskEditor.Replacement.create(firstPartContent, parts: _*)
+      def replacement(firstPartContent: TextWithMarkup, parts: editor.Replacement.Part*) =
+        editor.Replacement.create(firstPartContent, parts: _*)
       def replacementPart(content: String, indentation: Int = 0) =
-        taskEditor.Replacement.Part(TextWithMarkup(content), indentation)
+        editor.Replacement.Part(TextWithMarkup(content), indentation)
       def replacementPartFormatted(content: TextWithMarkup, indentation: Int = 0) =
-        taskEditor.Replacement.Part(content, indentation)
-      def asHtml(s: String) = taskEditor.ClipboardData(htmlText = s, plainText = "")
-      def asText(s: String) = taskEditor.ClipboardData(htmlText = "", plainText = s)
+        editor.Replacement.Part(content, indentation)
+      def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
+      def asText(s: String) = editor.ClipboardData(htmlText = "", plainText = s)
 
       "htmlText input" - {
         "without list tags" - {
           "p and div" - {
-            taskEditor.clipboardStringToReplacement(
+            editor.clipboardStringToReplacement(
               asHtml(removeWhitespace("""
               <p>a<br />b</p>
               <div>c</div>
@@ -94,21 +94,21 @@ object TaskEditorTest extends TestSuite {
                 replacementPart("d"))
           }
           "br" - {
-            taskEditor
+            editor
               .clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"), replacementPart("def"))
           }
           "newline" - {
-            taskEditor.clipboardStringToReplacement(asHtml("abc\ndef"), baseFormatting = Formatting.none) ==>
+            editor.clipboardStringToReplacement(asHtml("abc\ndef"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"), replacementPart("def"))
           }
           "ignores formatting" - {
-            taskEditor
+            editor
               .clipboardStringToReplacement(asHtml("<b>abc</b>"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"))
           }
           "plain text" - {
-            taskEditor.clipboardStringToReplacement(
+            editor.clipboardStringToReplacement(
               asHtml("""
               |x
               |y
@@ -117,12 +117,12 @@ object TaskEditorTest extends TestSuite {
               replacement(TextWithMarkup("x"), replacementPart("y"))
           }
           "ignores html comments" - {
-            taskEditor
+            editor
               .clipboardStringToReplacement(asHtml("<!-- comment -->abc"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"))
           }
           "ignores style tags" - {
-            taskEditor
+            editor
               .clipboardStringToReplacement(
                 asHtml("""<style type="text/css">STYLE</style>abc"""),
                 baseFormatting = Formatting.none) ==>
@@ -131,7 +131,7 @@ object TaskEditorTest extends TestSuite {
         }
         "with list tags" - {
           "single level" - {
-            taskEditor.clipboardStringToReplacement(
+            editor.clipboardStringToReplacement(
               asHtml(removeWhitespace("""
              <ul>
                <li>
@@ -147,7 +147,7 @@ object TaskEditorTest extends TestSuite {
           }
         }
         "inside and outside list tags" - {
-          taskEditor.clipboardStringToReplacement(
+          editor.clipboardStringToReplacement(
             asHtml(removeWhitespace("""
              a<i>b</i>c
              <ul>
@@ -163,34 +163,34 @@ object TaskEditorTest extends TestSuite {
               replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
         }
         "with baseFormatting" - {
-          taskEditor
+          editor
             .clipboardStringToReplacement(asHtml("abc"), baseFormatting = Formatting(italic = true)) ==>
             replacement(italic("abc"))
         }
       }
       "plainText input" - {
         "newline" - {
-          taskEditor.clipboardStringToReplacement(asText("abc\ndef"), baseFormatting = Formatting.none) ==>
+          editor.clipboardStringToReplacement(asText("abc\ndef"), baseFormatting = Formatting.none) ==>
             replacement(TextWithMarkup("abc"), replacementPart("def"))
         }
         "with HTML tag" - {
-          taskEditor
+          editor
             .clipboardStringToReplacement(asText("abc<br/>def"), baseFormatting = Formatting.none) ==>
             replacement(TextWithMarkup("abc<br/>def"))
         }
         "with baseFormatting" - {
-          taskEditor
+          editor
             .clipboardStringToReplacement(asText("abc"), baseFormatting = Formatting(italic = true)) ==>
             replacement(italic("abc"))
         }
       }
     }
     "convertToClipboardData(clipboardStringToReplacement)" - {
-      def asHtml(s: String) = taskEditor.ClipboardData(htmlText = s, plainText = "")
+      def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
       def roundTrip(html: String): Unit = {
         val replacement =
-          taskEditor.clipboardStringToReplacement(asHtml(html), baseFormatting = Formatting.none)
-        val clipboardData = taskEditor.convertToClipboardData(
+          editor.clipboardStringToReplacement(asHtml(html), baseFormatting = Formatting.none)
+        val clipboardData = editor.convertToClipboardData(
           newDocument(
             replacement.parts.map(
               p =>
@@ -243,6 +243,6 @@ object TaskEditorTest extends TestSuite {
   private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
 
   private class Module extends app.common.testing.TestModule {
-    val taskEditor = new TaskEditor
+    val desktopTaskEditor = new DesktopTaskEditor
   }
 }

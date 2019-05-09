@@ -10,6 +10,38 @@ object TextWithMarkupTest extends TestSuite {
       val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
       textWithMarkup.contentString ==> "abcd"
     }
+    "isPlainText" - {
+      "empty" - {
+        "empty parts list" - {
+          TextWithMarkup.empty.isPlainText ==> true
+        }
+        "empty string" - {
+          TextWithMarkup("").isPlainText ==> true
+        }
+        "empty string with markup" - {
+          bold("").isPlainText ==> true
+        }
+      }
+      "non-empty" - {
+        "no markup" - {
+          TextWithMarkup("the apple is delicious").isPlainText ==> true
+        }
+        "markup" - {
+          (TextWithMarkup("A") + bold("B") + TextWithMarkup("C")).isPlainText ==> false
+        }
+      }
+    }
+    "containsLink" - {
+      "empty" - {
+        TextWithMarkup("").containsLink ==> false
+      }
+      "has no link" - {
+        TextWithMarkup("http is a protocol").containsLink ==> false
+      }
+      "has link" - {
+        TextWithMarkup("the apple can be purchased at http://www.apples.org/ for a fair price").containsLink ==> true
+      }
+    }
     "sub" - {
       val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d") + italic("efg")
 

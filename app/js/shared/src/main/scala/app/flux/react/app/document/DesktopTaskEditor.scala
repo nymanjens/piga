@@ -1,6 +1,8 @@
 package app.flux.react.app.document
 
-import app.flux.react.app.document.KeyCombination._
+import app.flux.react.app.document.DesktopKeyCombination._
+import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
+import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
@@ -36,10 +38,10 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.scalajs.js
 
-private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
-                                         i18n: I18n,
-                                         clock: Clock,
-                                         documentSelectionStore: DocumentSelectionStore)
+private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
+                                                i18n: I18n,
+                                                clock: Clock,
+                                                documentSelectionStore: DocumentSelectionStore)
     extends HydroReactComponent {
 
   // **************** API ****************//
@@ -112,7 +114,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       implicit val router = props.router
       <.div(
         ^.contentEditable := true,
-        ^.className := "task-editor",
+        ^.className := "desktop-task-editor",
         ^.spellCheck := false,
         VdomAttr("suppressContentEditableWarning") := true,
         ^.onKeyDown ==> handleKeyDown,
@@ -130,12 +132,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
         ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
-            case (task, taskIndex, maybeAmountCollapsed) =>
-              val nodeType = state.document.tasksOption(taskIndex + 1) match {
-                case _ if task.indentation == 0                                => "root"
-                case Some(nextTask) if nextTask.indentation > task.indentation => "node"
-                case _                                                         => "leaf"
-              }
+            case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
               val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
                 s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}""")
@@ -146,7 +143,10 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
                 ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
-                  Seq(nodeType) ++
+                  Seq() ++
+                    ifThenOption(isRoot)("root") ++
+                    ifThenOption(isLeaf)("leaf") ++
+                    ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
@@ -246,7 +246,7 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
 
           documentSelectionStore.setSelection(document, selection)
 
-          val keyCombination = KeyCombination.fromEvent(event)
+          val keyCombination = DesktopKeyCombination.fromEvent(event)
 
           //dom.console.log(s"keyCombination = $keyCombination")
 
@@ -1119,22 +1119,6 @@ private[document] final class TaskEditor(implicit entityAccess: EntityAccess,
       }
     }
     Replacement(partsBuilder.toVector)
-  }
-
-  private type Index = Int
-  private type AmountCollapsed = Int
-  private def applyCollapsedProperty(tasks: Seq[Task]): Stream[(Task, Index, Option[AmountCollapsed])] = {
-    def getAmountCollapsed(tasks: Stream[(Task, Index)], collapsedIndentation: Int): Int = {
-      tasks.takeWhile(_._1.indentation > collapsedIndentation).size
-    }
-    def inner(tasks: Stream[(Task, Index)]): Stream[(Task, Index, Option[AmountCollapsed])] = tasks match {
-      case (task, i) #:: rest if task.collapsed =>
-        val amountCollapsed = getAmountCollapsed(rest, task.indentation)
-        (task, i, Some(amountCollapsed)) #:: inner(rest.drop(amountCollapsed))
-      case (task, i) #:: rest => (task, i, /* maybeAmountCollapsed = */ None) #:: inner(rest)
-      case Stream.Empty       => Stream.Empty
-    }
-    inner(tasks.zipWithIndex.toStream)
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {

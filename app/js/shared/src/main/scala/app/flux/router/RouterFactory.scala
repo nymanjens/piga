@@ -1,5 +1,6 @@
 package app.flux.router
 
+import app.common.MobileUtils
 import hydro.common.I18n
 import app.flux.stores.document.AllDocumentsStore
 import hydro.common.LoggingUtils.LogExceptionsCallback
@@ -54,7 +55,7 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
           | staticRoute(RouterFactory.pathPrefix, StandardPages.Root)
             ~> redirectToPage(
               allDocumentsStore.state.allDocuments.headOption match {
-                case Some(firstDocument) => AppPages.DesktopTaskList(documentId = firstDocument.id)
+                case Some(firstDocument) => AppPages.TaskList(documentId = firstDocument.id)
                 case None                => AppPages.DocumentAdministration
               }
             )(Redirect.Replace)
@@ -65,8 +66,17 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
 
           | staticRuleFromPage(AppPages.DocumentAdministration, reactAppModule.documentAdministration.apply)
 
-          | dynamicRuleFromPage(_ / long.caseClass[AppPages.DesktopTaskList]) { (page, ctl) =>
-            reactAppModule.desktopTaskList(page.documentId, ctl)
+          | dynamicRuleFromPage(_ / long.caseClass[AppPages.TaskList]) { (page, ctl) =>
+            reactAppModule.taskList(
+              page.documentId,
+              mobileOrTabletVersion = MobileUtils.isMobileOrTablet,
+              router = ctl)
+          }
+          | dynamicRuleFromPage(_ / long.caseClass[AppPages.MobileTaskList]) { (page, ctl) =>
+            reactAppModule.taskList(
+              page.documentId,
+              mobileOrTabletVersion = true,
+              router = ctl)
           }
 
         // Fallback
