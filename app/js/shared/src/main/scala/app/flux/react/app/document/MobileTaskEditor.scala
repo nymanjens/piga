@@ -156,13 +156,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         // Create empty
         Bootstrap.Button(Variant.info)(
           ^.onClick --> creatEmptyTaskUnderHighlighted(),
-          Bootstrap.FontAwesomeIcon("calendar-o", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("calendar-o"),
         ),
         // Delete
         Bootstrap.Button(Variant.info)(
           ^.onClick --> removeHighlightedTask(),
           ^.disabled := state.document.tasks.size == 1,
-          Bootstrap.FontAwesomeIcon("trash-o", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("trash-o"),
         ),
       ),
       Bootstrap.ButtonGroup(
@@ -170,24 +170,24 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         Bootstrap.Button(Variant.info)(
           ^.onClick --> moveHighlightedTask(direction = -1),
           ^.disabled := state.highlightedTaskIndex == 0,
-          Bootstrap.FontAwesomeIcon("chevron-up", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("chevron-up"),
         ),
         // Move down
         Bootstrap.Button(Variant.info)(
           ^.onClick --> moveHighlightedTask(direction = +1),
           ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
-          Bootstrap.FontAwesomeIcon("chevron-down", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("chevron-down"),
         ),
         // Dedent
         Bootstrap.Button(Variant.info)(
           ^.onClick --> indentHighlightedTask(indentIncrease = -1),
           ^.disabled := state.highlightedTask.indentation == 0,
-          Bootstrap.FontAwesomeIcon("dedent", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("dedent"),
         ),
         // Indent
         Bootstrap.Button(Variant.info)(
           ^.onClick --> indentHighlightedTask(indentIncrease = +1),
-          Bootstrap.FontAwesomeIcon("indent", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("indent"),
         ),
         // Expand/collapse
         Bootstrap.Button(Variant.info)(
@@ -201,13 +201,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         Bootstrap.Button(Variant.info)(
           ^.onClick --> applyHistoryEdit(editHistory.undo()),
           ^.disabled := !editHistory.canUndo,
-          Bootstrap.FontAwesomeIcon("rotate-left", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("rotate-left"),
         ),
         // Redo
         Bootstrap.Button(Variant.info)(
           ^.onClick --> applyHistoryEdit(editHistory.redo()),
           ^.disabled := !editHistory.canRedo,
-          Bootstrap.FontAwesomeIcon("rotate-right", fixedWidth = true),
+          Bootstrap.FontAwesomeIcon("rotate-right"),
         ),
       ),
     )
