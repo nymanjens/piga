@@ -139,7 +139,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
-                ^.key := s"li-$taskIndex",
+                ^.key := s"li-${task.id}",
                 ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
