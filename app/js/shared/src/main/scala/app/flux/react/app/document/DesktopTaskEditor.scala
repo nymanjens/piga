@@ -25,6 +25,8 @@ import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
+import hydro.flux.react.uielements.Bootstrap
+import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
@@ -105,10 +107,11 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         case (tag, tagIndex) =>
           val tagId = s"tag-$seqIndex-$tagIndex"
           RenderedTag(
-            span = <.span(
-              ^^.classes("tag", "label", s"label-${Tags.getBootstrapClassSuffix(tag)}"),
+            span = Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+              ^.className := "tag",
               ^.key := tagId,
-              ^.id := tagId),
+              ^.id := tagId,
+            ),
             style = s"""#$tagId:after {content: "$tag";}"""
           )
       }
