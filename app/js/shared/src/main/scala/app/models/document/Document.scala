@@ -298,17 +298,23 @@ object Document {
     }
   }
   object IndexedSelection {
+
+    val nullInstance: IndexedSelection = IndexedSelection(IndexedCursor(0, 0), IndexedCursor(0, 0))
+
     def singleton(cursor: IndexedCursor): IndexedSelection = IndexedSelection(start = cursor, end = cursor)
     def atStartOfTask(index: Int): IndexedSelection =
       IndexedSelection.singleton(IndexedCursor.atStartOfTask(index))
 
-    def tupleFromSelection(selection: dom.raw.Selection): IndexedSelection = {
-      val anchor = cursorFromNode(selection.anchorNode, selection.anchorOffset)
-      val focus = cursorFromNode(selection.focusNode, selection.focusOffset)
-      if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
+    def tupleFromSelection(selection: dom.raw.Selection): Option[IndexedSelection] = {
+      for {
+        anchor <- cursorFromNode(selection.anchorNode, selection.anchorOffset)
+        focus <- cursorFromNode(selection.focusNode, selection.focusOffset)
+      } yield {
+        if (anchor < focus) IndexedSelection(anchor, focus) else IndexedSelection(focus, anchor)
+      }
     }
 
-    private def cursorFromNode(node: dom.raw.Node, offset: Int): IndexedCursor = {
+    private def cursorFromNode(node: dom.raw.Node, offset: Int): Option[IndexedCursor] = {
       try {
         val parentLi = parentLiElement(node)
         val offsetInTask = {
@@ -318,12 +324,12 @@ object Document {
           preCursorRange.toString.length
         }
 
-        IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask)
+        Some(IndexedCursor(seqIndex = parentLi.getAttribute("num").toInt, offsetInTask = offsetInTask))
       } catch {
         case e: NoParentLiException =>
           console.log("Could not find parent li of node", node, " (offset = ", offset, ")")
           e.printStackTrace()
-          IndexedCursor(0, 0) // Fallback
+          None
       }
     }
 

@@ -91,8 +91,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
     override def willUnmount(props: Props, state: State): Callback = {
       dom.window.removeEventListener("resize", resizeListener)
 
-      documentSelectionStore
-        .setSelection(state.document, IndexedSelection.tupleFromSelection(dom.window.getSelection()))
+      IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+        case Some(selection) => documentSelectionStore.setSelection(state.document, selection)
+        case None            =>
+      }
 
       Callback.empty
     }
@@ -183,7 +185,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
           modifyEventClipboardData(event)
 
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+            IndexedSelection.nullInstance
 
           documentSelectionStore.setSelection(state.document, selection)
 
@@ -192,7 +195,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       }
 
     private def modifyEventClipboardData(event: ReactEventFromInput)(implicit state: State): Unit = {
-      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+        IndexedSelection.nullInstance
       val document = state.document
 
       if (selection.start != selection.end) {
@@ -207,7 +211,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
@@ -227,14 +232,17 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       }
 
     private def updateCursor: Callback = {
-      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
-      $.modState(_.copy(highlightedTaskIndex = selection.end.seqIndex))
+      IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+        case Some(selection) => $.modState(_.copy(highlightedTaskIndex = selection.end.seqIndex))
+        case None            => Callback.empty
+      }
     }
 
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback =
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
