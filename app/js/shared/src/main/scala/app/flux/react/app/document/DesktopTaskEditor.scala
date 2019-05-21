@@ -214,8 +214,13 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) => s
+            case None =>
+              deleteLiToWorkAroundReactBug(state.highlightedTaskIndex)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          }
+
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
@@ -244,8 +249,12 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback =
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) => s
+            case None =>
+              deleteLiToWorkAroundReactBug(state.highlightedTaskIndex)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          }
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
@@ -950,6 +959,17 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
           setSelection(selectionAfterEdit)
         }
       )
+    }
+
+    /**
+      * React bug workaround: Sometimes, a <li> element is broken: The cursor still shows on the element but the
+      * selection is on the whole contenteditable div and the <li> contents are no longer updated by React.
+      *
+      * The fix is to force a React redraw by removing the element.
+      */
+    private def deleteLiToWorkAroundReactBug(seqIndex: Int): Unit = {
+      val elementToRemove = getTaskElement(IndexedCursor.atStartOfTask(seqIndex))
+      elementToRemove.parentNode.removeChild(elementToRemove)
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
