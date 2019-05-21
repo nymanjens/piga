@@ -1,5 +1,7 @@
 package app.flux.react.app.document
 
+import java.lang.Math.abs
+
 import app.flux.react.app.document.DesktopKeyCombination._
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
@@ -29,6 +31,7 @@ import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
+import hydro.models.modification.EntityModification
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
@@ -39,6 +42,7 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.scalajs.js
+import scala.util.Random
 
 private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
@@ -78,6 +82,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
     )
+    private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
+      mutable.Map().withDefault(identity)
 
     override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document)
@@ -144,7 +150,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
-                ^.key := s"li-${task.id}",
+                ^.key := s"li-${taskKeyRemapForReactBugWorkaround(task.id)}",
                 ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
@@ -217,7 +223,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
           val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
             case Some(s) => s
             case None =>
-              deleteLiToWorkAroundReactBug(state.highlightedTaskIndex)
+              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
               IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
           }
 
@@ -252,7 +258,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
           val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
             case Some(s) => s
             case None =>
-              deleteLiToWorkAroundReactBug(state.highlightedTaskIndex)
+              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
               IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
           }
           val IndexedSelection(start, end) = selection
@@ -965,11 +971,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       * React bug workaround: Sometimes, a <li> element is broken: The cursor still shows on the element but the
       * selection is on the whole contenteditable div and the <li> contents are no longer updated by React.
       *
-      * The fix is to force a React redraw by removing the element.
+      * The fix is to force a React redraw by remapping its key to a random number.
       */
-    private def deleteLiToWorkAroundReactBug(seqIndex: Int): Unit = {
-      val elementToRemove = getTaskElement(IndexedCursor.atStartOfTask(seqIndex))
-      elementToRemove.parentNode.removeChild(elementToRemove)
+    private def renameTaskKeyToWorkAroundReactBug(seqIndex: Int)(implicit state: State): Unit = {
+      taskKeyRemapForReactBugWorkaround.put(state.document.tasks(seqIndex).id, abs(Random.nextLong))
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
