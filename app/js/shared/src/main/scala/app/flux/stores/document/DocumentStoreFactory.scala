@@ -5,7 +5,7 @@ import app.models.document.DocumentEntity
 import hydro.models.modification.EntityModification
 import hydro.common.Listenable
 import hydro.common.Listenable.ListenableMap
-import hydro.common.LoggingUtils.logFailure
+import hydro.common.JsLoggingUtils.logFailure
 import hydro.common.time.Clock
 import hydro.models.access.JsEntityAccess
 

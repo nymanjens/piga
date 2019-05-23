@@ -1,6 +1,6 @@
 package app.common
 
-import hydro.common.LoggingUtils.logExceptions
+import hydro.common.JsLoggingUtils.logExceptions
 import org.scalajs.dom
 
 import scala.scalajs.js

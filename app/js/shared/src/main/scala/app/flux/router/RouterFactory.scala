@@ -3,8 +3,8 @@ package app.flux.router
 import app.common.MobileUtils
 import hydro.common.I18n
 import app.flux.stores.document.AllDocumentsStore
-import hydro.common.LoggingUtils.LogExceptionsCallback
-import hydro.common.LoggingUtils.logExceptions
+import hydro.common.JsLoggingUtils.LogExceptionsCallback
+import hydro.common.JsLoggingUtils.logExceptions
 import hydro.flux.action.Dispatcher
 import hydro.flux.action.StandardActions
 import hydro.flux.router.Page

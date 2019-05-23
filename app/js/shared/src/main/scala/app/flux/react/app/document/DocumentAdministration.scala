@@ -4,8 +4,8 @@ import app.flux.action.AppActions
 import app.flux.stores.document.AllDocumentsStore
 import app.models.document.DocumentEntity
 import hydro.common.I18n
-import hydro.common.LoggingUtils.LogExceptionsCallback
-import hydro.common.LoggingUtils.logExceptions
+import hydro.common.JsLoggingUtils.LogExceptionsCallback
+import hydro.common.JsLoggingUtils.logExceptions
 import hydro.common.OrderToken
 import hydro.flux.action.Dispatcher
 import hydro.flux.react.ReactVdomUtils.^^

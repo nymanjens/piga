@@ -11,7 +11,7 @@ import app.models.document.TaskEntity
 import app.models.modification.EntityTypes
 import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
-import hydro.common.LoggingUtils.logExceptions
+import hydro.common.JsLoggingUtils.logExceptions
 import hydro.common.time.Clock
 import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess

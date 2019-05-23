@@ -5,7 +5,7 @@ import java.time.Instant
 import hydro.common.I18n
 import app.flux.action.AppActions._
 import app.flux.stores.GlobalMessagesStore.Message
-import hydro.common.LoggingUtils.logExceptions
+import hydro.common.JsLoggingUtils.logExceptions
 import hydro.common.Unique
 import hydro.common.time.Clock
 import hydro.common.time.JavaTimeImplicits._
