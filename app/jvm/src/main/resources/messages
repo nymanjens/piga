@@ -109,6 +109,7 @@ app.sending-data-to-server-failed=Sending data to server failed
 app.add-new=add new
 app.loading=Loading
 app.offline=Offline
+app.local-database-has-been-loaded=Local database has been loaded
 app.is-admin=Is admin?
 app.document-administration=Document Administration
 app.document-administration.html=<u>D</u>ocument Administration
