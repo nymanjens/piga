@@ -90,10 +90,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         $.modState(
           _.copy(highlightedTaskIndex = taskIndex),
           Callback {
-            // Add timeout because scroll to view doesn't seem to work immediately after mount
-            js.timers.setTimeout(20.milliseconds) {
-              scrollIntoView(state.highlightedTaskIndex)
-            }
+            val taskToFocus = state.document.tasks(taskIndex)
+            taskIdToInputRef.get(taskToFocus.id)().focus()
           }
         )
       } else {
@@ -445,7 +443,6 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             val taskToFocus = newDocument.tasks(actualHighlightedTaskIndexAfterEdit)
             taskIdToInputRef.get(taskToFocus.id)().focus()
           }
-          scrollIntoView(actualHighlightedTaskIndexAfterEdit)
 
           documentSelectionStore.setSelection(
             document = oldState.document,
@@ -466,37 +463,11 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           $.modState(
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
-              scrollIntoView(newHighlightedTaskIndex)
-
               documentSelectionStore.setSelection(
                 document = state.document,
                 IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
             }
           )
-      }
-
-    private def scrollIntoView(taskIndex: Int): Unit = {
-      val element = getTaskElement(taskIndex)
-      if (!elementIsFullyInView(element)) {
-        element
-          .asInstanceOf[js.Dynamic]
-          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "center", inline = "nearest"))
-      }
-    }
-
-    private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
-      val rect = element.getBoundingClientRect
-
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <= dom.window.innerHeight &&
-      rect.right <= dom.window.innerWidth
-    }
-
-    private def getTaskElement(taskIndex: Int): dom.raw.Element =
-      Option(dom.document.getElementById(s"teli-$taskIndex")) match {
-        case Some(e) => e
-        case None    => throw new IllegalStateException(s"Could not find <li> task with taskIndex=$taskIndex")
       }
   }
 
