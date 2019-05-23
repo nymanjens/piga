@@ -1,10 +1,12 @@
 package app.flux.react.app.document
 
+import scala.concurrent.duration._
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.uielements.ResizingTextArea
 import app.flux.react.uielements.ResizingTextArea.Fixed
 import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
+import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
 import app.models.document.Document.IndexedCursor
@@ -41,7 +43,10 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock)
+private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess,
+                                               i18n: I18n,
+                                               clock: Clock,
+                                               documentSelectionStore: DocumentSelectionStore)
     extends HydroReactComponent {
 
   // **************** API ****************//
@@ -71,11 +76,34 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   }
 
-  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
+  protected class Backend($ : BackendScope[Props, State])
+      extends BackendBase($)
+      with WillMount
+      with DidMount {
 
     private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
       LoadingCache.fromLoader(_ => ResizingTextArea.ref())
     private val editHistory: EditHistory = new EditHistory()
+
+    override def willMount(props: Props, state: State): Callback = {
+      val selection = documentSelectionStore.getSelection(state.document)
+      val taskIndex = selection.start.seqIndex
+
+      if (state.document.tasksOption(taskIndex).isDefined) {
+        $.modState(_.copy(highlightedTaskIndex = taskIndex))
+      } else {
+        Callback.empty
+      }
+    }
+
+    override def didMount(props: Props, state: State): Callback = {
+      // Add timeout because scroll to view doesn't seem to work immediately after mount
+      js.timers.setTimeout(20.milliseconds) {
+        scrollIntoView(state.highlightedTaskIndex)
+      }
+
+      Callback.empty
+    }
 
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
@@ -236,11 +264,15 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       }
     }
 
-    private def selectTask(task: Task): Callback = {
+    private def selectTask(task: Task)(implicit state: State): Callback = {
       $.modState { state =>
         state.document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) match {
-          case None            => state
-          case Some(taskIndex) => state.copy(highlightedTaskIndex = taskIndex)
+          case None => state
+          case Some(taskIndex) =>
+            documentSelectionStore.setSelection(
+              document = state.document,
+              IndexedSelection.atStartOfTask(taskIndex))
+            state.copy(highlightedTaskIndex = taskIndex)
         }
       }
     }
@@ -418,11 +450,16 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             taskIdToInputRef.get(taskToFocus.id)().focus()
           }
           scrollIntoView(actualHighlightedTaskIndexAfterEdit)
+
+          documentSelectionStore.setSelection(
+            document = oldState.document,
+            IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit))
         }
       )
     }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props): Callback =
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props,
+                                                                      state: State): Callback =
       maybeEdit match {
         case None => Callback.empty
         case Some(edit) =>
@@ -434,6 +471,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
               scrollIntoView(newHighlightedTaskIndex)
+
+              documentSelectionStore.setSelection(
+                document = state.document,
+                IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
             }
           )
       }
