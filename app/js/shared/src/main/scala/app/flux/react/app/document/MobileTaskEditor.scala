@@ -76,33 +76,29 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   }
 
-  protected class Backend($ : BackendScope[Props, State])
-      extends BackendBase($)
-      with WillMount
-      with DidMount {
+  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) with DidMount {
 
     private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
       LoadingCache.fromLoader(_ => ResizingTextArea.ref())
     private val editHistory: EditHistory = new EditHistory()
 
-    override def willMount(props: Props, state: State): Callback = {
+    override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document)
       val taskIndex = selection.start.seqIndex
 
       if (state.document.tasksOption(taskIndex).isDefined) {
-        $.modState(_.copy(highlightedTaskIndex = taskIndex))
+        $.modState(
+          _.copy(highlightedTaskIndex = taskIndex),
+          Callback {
+            // Add timeout because scroll to view doesn't seem to work immediately after mount
+            js.timers.setTimeout(20.milliseconds) {
+              scrollIntoView(state.highlightedTaskIndex)
+            }
+          }
+        )
       } else {
         Callback.empty
       }
-    }
-
-    override def didMount(props: Props, state: State): Callback = {
-      // Add timeout because scroll to view doesn't seem to work immediately after mount
-      js.timers.setTimeout(20.milliseconds) {
-        scrollIntoView(state.highlightedTaskIndex)
-      }
-
-      Callback.empty
     }
 
     override def render(props: Props, state: State): VdomElement = {
