@@ -34,6 +34,7 @@ final class ClientAppModule(implicit getInitialDataResponse: GetInitialDataRespo
   implicit private val pageLoadingStateStore = fluxStoresModule.pageLoadingStateStore
   implicit private val pendingModificationsStore = fluxStoresModule.pendingModificationsStore
   implicit private val applicationIsOnlineStore = fluxStoresModule.applicationIsOnlineStore
+  implicit private val localDatabaseHasBeenLoadedStore = fluxStoresModule.localDatabaseHasBeenLoadedStore
   implicit private val userStore = fluxStoresModule.userStore
   implicit private val allDocumentsStore = fluxStoresModule.allDocumentsStore
   implicit private val documentStoreFactory = fluxStoresModule.documentStoreFactory
