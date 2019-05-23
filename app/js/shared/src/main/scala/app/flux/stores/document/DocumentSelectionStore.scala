@@ -16,7 +16,7 @@ final class DocumentSelectionStore {
 
   def getSelection(document: Document): IndexedSelection = {
     dom.window.localStorage.getItem(localStorageKey(document)) match {
-      case null => defaultSelection
+      case null => IndexedSelection.nullInstance
       case item => deserialize(item)
     }
   }
@@ -31,12 +31,10 @@ final class DocumentSelectionStore {
       IndexedSelection(
         IndexedCursor(startIndex.toInt, startOffset.toInt),
         IndexedCursor(endIndex.toInt, endOffset.toInt))
-    case _ => defaultSelection
+    case _ => IndexedSelection.nullInstance
   }
 
   private def localStorageKey(document: Document): String = {
     s"doc-sel-${document.id}"
   }
-
-  private def defaultSelection: IndexedSelection = IndexedSelection.singleton(IndexedCursor(0, 0))
 }

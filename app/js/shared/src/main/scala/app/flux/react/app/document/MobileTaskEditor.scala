@@ -1,10 +1,12 @@
 package app.flux.react.app.document
 
+import scala.concurrent.duration._
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.uielements.ResizingTextArea
 import app.flux.react.uielements.ResizingTextArea.Fixed
 import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
+import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.models.document.Document
 import app.models.document.Document.IndexedCursor
@@ -41,7 +43,10 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess, i18n: I18n, clock: Clock)
+private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess,
+                                               i18n: I18n,
+                                               clock: Clock,
+                                               documentSelectionStore: DocumentSelectionStore)
     extends HydroReactComponent {
 
   // **************** API ****************//
@@ -71,11 +76,28 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   }
 
-  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
+  protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) with DidMount {
 
     private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
       LoadingCache.fromLoader(_ => ResizingTextArea.ref())
     private val editHistory: EditHistory = new EditHistory()
+
+    override def didMount(props: Props, state: State): Callback = {
+      val selection = documentSelectionStore.getSelection(state.document)
+      val taskIndex = selection.start.seqIndex
+
+      if (state.document.tasksOption(taskIndex).isDefined) {
+        $.modState(
+          _.copy(highlightedTaskIndex = taskIndex),
+          Callback {
+            val taskToFocus = state.document.tasks(taskIndex)
+            taskIdToInputRef.get(taskToFocus.id)().focus()
+          }
+        )
+      } else {
+        Callback.empty
+      }
+    }
 
     override def render(props: Props, state: State): VdomElement = {
       implicit val router = props.router
@@ -236,11 +258,15 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       }
     }
 
-    private def selectTask(task: Task): Callback = {
+    private def selectTask(task: Task)(implicit state: State): Callback = {
       $.modState { state =>
         state.document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) match {
-          case None            => state
-          case Some(taskIndex) => state.copy(highlightedTaskIndex = taskIndex)
+          case None => state
+          case Some(taskIndex) =>
+            documentSelectionStore.setSelection(
+              document = state.document,
+              IndexedSelection.atStartOfTask(taskIndex))
+            state.copy(highlightedTaskIndex = taskIndex)
         }
       }
     }
@@ -417,12 +443,16 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             val taskToFocus = newDocument.tasks(actualHighlightedTaskIndexAfterEdit)
             taskIdToInputRef.get(taskToFocus.id)().focus()
           }
-          scrollIntoView(actualHighlightedTaskIndexAfterEdit)
+
+          documentSelectionStore.setSelection(
+            document = oldState.document,
+            IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit))
         }
       )
     }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props): Callback =
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props,
+                                                                      state: State): Callback =
       maybeEdit match {
         case None => Callback.empty
         case Some(edit) =>
@@ -433,33 +463,11 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           $.modState(
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
-              scrollIntoView(newHighlightedTaskIndex)
+              documentSelectionStore.setSelection(
+                document = state.document,
+                IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
             }
           )
-      }
-
-    private def scrollIntoView(taskIndex: Int): Unit = {
-      val element = getTaskElement(taskIndex)
-      if (!elementIsFullyInView(element)) {
-        element
-          .asInstanceOf[js.Dynamic]
-          .scrollIntoView(js.Dynamic.literal(behavior = "instant", block = "center", inline = "nearest"))
-      }
-    }
-
-    private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
-      val rect = element.getBoundingClientRect
-
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <= dom.window.innerHeight &&
-      rect.right <= dom.window.innerWidth
-    }
-
-    private def getTaskElement(taskIndex: Int): dom.raw.Element =
-      Option(dom.document.getElementById(s"teli-$taskIndex")) match {
-        case Some(e) => e
-        case None    => throw new IllegalStateException(s"Could not find <li> task with taskIndex=$taskIndex")
       }
   }
 
