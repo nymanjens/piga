@@ -6,10 +6,12 @@ import java.time.Instant
 import app.api.ScalaJsApi.EntityModificationPushPacket
 import app.api.ScalaJsApi.EntityModificationPushHeartbeat
 import app.api.ScalaJsApi.ModificationsWithToken
+import app.api.ScalaJsApi.VersionCheck
 import app.api.ScalaJsApi.UpdateToken
 import boopickle.Default.Unpickle
 import boopickle.Default._
 import app.api.Picklers._
+import app.AppVersion
 import hydro.common.Listenable
 import hydro.common.Listenable.WritableListenable
 import hydro.common.time.Clock
@@ -17,6 +19,7 @@ import hydro.common.websocket.BinaryWebsocketClient
 import org.scalajs.dom
 import org.scalajs.dom.raw.Event
 import hydro.common.time.JavaTimeImplicits._
+import org.scalajs
 
 import scala.async.Async.async
 import scala.async.Async.await
@@ -90,6 +93,11 @@ final class EntityModificationPushClientFactory(implicit clock: Clock) {
                 await(onMessageReceived(modificationsWithToken))
                 firstMessageWasProcessedPromise.trySuccess((): Unit)
               case EntityModificationPushHeartbeat => // Do nothing
+              case VersionCheck(versionString) =>
+                if (versionString != AppVersion.versionString) {
+                  println("  Detected that client version is outdated. Will reload page...")
+                  dom.window.location.reload(/* forcedReload = */ true)
+                }
             }
             _pushClientsAreOnline.set(true)
             lastPacketTime = clock.nowInstant
