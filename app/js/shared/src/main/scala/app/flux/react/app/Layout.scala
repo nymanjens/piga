@@ -14,8 +14,7 @@ final class Layout(implicit menu: Menu, sbadminLayout: SbadminLayout) {
       sbadminLayout(
         title = "Task Keeper",
         leftMenu = menu(),
-        pageContent =
-          <.span(children, <.hr(), <.span(^.dangerouslySetInnerHtml := "&copy;"), " 2018 Jens Nyman"))
+        pageContent = <.span(children))
     }
     .build
 
