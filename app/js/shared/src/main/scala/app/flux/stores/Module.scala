@@ -13,7 +13,7 @@ import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.LocalDatabaseHasBeenLoadedStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
-import hydro.models.access.EntityModificationPushClientFactory
+import hydro.models.access.HydroPushSocketClientFactory
 import hydro.models.access.JsEntityAccess
 
 final class Module(implicit i18n: I18n,
@@ -22,7 +22,7 @@ final class Module(implicit i18n: I18n,
                    dispatcher: Dispatcher,
                    clock: Clock,
                    scalaJsApiClient: ScalaJsApiClient,
-                   entityModificationPushClientFactory: EntityModificationPushClientFactory,
+                   hydroPushSocketClientFactory: HydroPushSocketClientFactory,
                    getInitialDataResponse: GetInitialDataResponse) {
 
   implicit val userStore = new UserStore
