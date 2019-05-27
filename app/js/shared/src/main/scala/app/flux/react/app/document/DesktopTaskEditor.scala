@@ -440,7 +440,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
             // Delete task
             case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
-              removeTasks(selection.includeChildren().seqIndices)
+              val currentTaskIsEmpty = selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty
+              removeTasks(
+                if (currentTaskIsEmpty) selection.seqIndices
+                else selection.includeChildren().seqIndices)
 
             // Duplicate task
             case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>

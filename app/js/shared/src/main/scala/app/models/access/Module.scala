@@ -6,7 +6,7 @@ import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
 import app.models.user.User
 import hydro.common.time.Clock
-import hydro.models.access.EntityModificationPushClientFactory
+import hydro.models.access.HydroPushSocketClientFactory
 import hydro.models.access.HybridRemoteDatabaseProxy
 import hydro.models.access.JsEntityAccess
 import hydro.models.access.JsEntityAccessImpl
@@ -22,8 +22,8 @@ final class Module(implicit user: User,
 
   implicit private val secondaryIndexFunction = Module.secondaryIndexFunction
 
-  implicit val entityModificationPushClientFactory: EntityModificationPushClientFactory =
-    new EntityModificationPushClientFactory()
+  implicit val hydroPushSocketClientFactory: HydroPushSocketClientFactory =
+    new HydroPushSocketClientFactory()
 
   implicit val entityAccess: JsEntityAccess = {
     val webWorkerModule = new hydro.models.access.webworker.Module()

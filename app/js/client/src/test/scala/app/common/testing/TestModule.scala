@@ -6,7 +6,7 @@ import hydro.common.testing.FakeI18n
 import hydro.common.testing.FakeJsEntityAccess
 import hydro.common.testing.FakeRouterContext
 import hydro.flux.action.Dispatcher
-import hydro.models.access.EntityModificationPushClientFactory
+import hydro.models.access.HydroPushSocketClientFactory
 
 class TestModule {
 
@@ -20,7 +20,7 @@ class TestModule {
   implicit lazy val fakeRouterContext = new FakeRouterContext
 
   // ******************* Non-fake implementations ******************* //
-  implicit lazy val entityModificationPushClientFactory: EntityModificationPushClientFactory =
-    new EntityModificationPushClientFactory
+  implicit lazy val hydroPushSocketClientFactory: HydroPushSocketClientFactory =
+    new HydroPushSocketClientFactory
   implicit lazy val documentSelectionStore: DocumentSelectionStore = new DocumentSelectionStore
 }
