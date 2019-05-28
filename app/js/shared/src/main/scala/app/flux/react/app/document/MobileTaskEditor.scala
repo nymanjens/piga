@@ -83,7 +83,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private val editHistory: EditHistory = new EditHistory()
 
     override def didMount(props: Props, state: State): Callback = {
-      val selection = documentSelectionStore.getSelection(state.document)
+      val selection = documentSelectionStore.getSelection(state.document.id)
       val taskIndex = selection.start.seqIndex
 
       if (state.document.tasksOption(taskIndex).isDefined) {
@@ -264,7 +264,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           case None => state
           case Some(taskIndex) =>
             documentSelectionStore.setSelection(
-              document = state.document,
+              documentId = state.document.id,
               IndexedSelection.atStartOfTask(taskIndex))
             state.copy(highlightedTaskIndex = taskIndex)
         }
@@ -445,7 +445,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           }
 
           documentSelectionStore.setSelection(
-            document = oldState.document,
+            documentId = oldState.document.id,
             IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit))
         }
       )
@@ -464,7 +464,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
               documentSelectionStore.setSelection(
-                document = state.document,
+                documentId = state.document.id,
                 IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
             }
           )
