@@ -133,7 +133,10 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
       val newPendingTaskIds = {
         val changedTaskIds = modifications.map(_.entityId).toSet
         val changedStillPendingTaskIds = pendingModificationTaskIds(entityAccess) intersect changedTaskIds
-        _state.pendingTaskIds -- (changedTaskIds -- changedStillPendingTaskIds)
+        val noLongerPendingTaskIds = changedTaskIds -- changedStillPendingTaskIds
+
+        // Add changedStillPendingTaskIds in case the pending tasks set needs to be extended because of this event
+        _state.pendingTaskIds -- noLongerPendingTaskIds ++ changedStillPendingTaskIds
       }
 
       if (_state.document != newDocument || _state.pendingTaskIds != newPendingTaskIds) {
