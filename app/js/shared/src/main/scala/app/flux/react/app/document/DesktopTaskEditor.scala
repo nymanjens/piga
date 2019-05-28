@@ -1,10 +1,15 @@
 package app.flux.react.app.document
 
+import scala.async.Async.async
+import scala.async.Async.await
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import app.flux.react.app.document.DesktopKeyCombination._
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
+import app.flux.router.AppPages
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
+import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.IndexedCursor
@@ -43,8 +48,10 @@ import scala.scalajs.js
 private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
                                                 clock: Clock,
-                                                documentSelectionStore: DocumentSelectionStore)
-    extends HydroReactComponent {
+                                                documentSelectionStore: DocumentSelectionStore,
+                                                documentStoreFactory: DocumentStoreFactory,
+                                                editHistory: EditHistory,
+) extends HydroReactComponent {
 
   // **************** API ****************//
   def apply(documentStore: DocumentStore)(implicit router: RouterContext): VdomElement = {
@@ -73,7 +80,6 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       with WillUnmount {
 
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
-    private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
@@ -490,10 +496,11 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         }
       }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props): Callback =
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props,
+                                                                      state: State): Callback =
       maybeEdit match {
         case None => Callback.empty
-        case Some(edit) =>
+        case Some(edit) if edit.documentId == state.document.id =>
           val documentStore = props.documentStore
           documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
           val newDocument = documentStore.state.document
@@ -501,6 +508,19 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
             _.copyFromStore(documentStore),
             Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument)))
           )
+        case Some(edit) if edit.documentId != state.document.id =>
+          Callback.future {
+            async {
+              val otherDocumentStore = await(documentStoreFactory.create(edit.documentId))
+              otherDocumentStore.applyEditWithoutCallingListeners(edit.documentEdit)
+              val newOtherDocument = otherDocumentStore.state.document
+              documentSelectionStore.setSelection(
+                edit.documentId,
+                edit.selectionAfterEdit.attachToDocument(newOtherDocument))
+              props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
+              Callback.empty
+            }
+          }
       }
 
     private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(
@@ -945,6 +965,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         _.copyFromStore(documentStore),
         Callback.empty.flatMap { _ =>
           editHistory.addEdit(
+            documentId = state.document.id,
             documentEdit = edit,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
             selectionAfterEdit = selectionAfterEdit.detach(newDocument),

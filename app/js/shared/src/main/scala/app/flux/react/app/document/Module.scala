@@ -19,6 +19,8 @@ final class Module(implicit i18n: I18n,
                    pageHeader: PageHeader,
 ) {
 
+  private implicit lazy val editHistory = new EditHistory
+
   private implicit lazy val desktopTaskEditor = new DesktopTaskEditor
   private implicit lazy val mobileTaskEditor = new MobileTaskEditor
 
