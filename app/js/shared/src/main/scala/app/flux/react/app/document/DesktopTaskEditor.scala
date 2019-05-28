@@ -50,6 +50,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
                                                 clock: Clock,
                                                 documentSelectionStore: DocumentSelectionStore,
                                                 documentStoreFactory: DocumentStoreFactory,
+                                                editHistory: EditHistory,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
@@ -79,7 +80,6 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       with WillUnmount {
 
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
-    private val editHistory: EditHistory = new EditHistory()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none

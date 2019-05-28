@@ -46,8 +46,9 @@ import scala.scalajs.js
 private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess,
                                                i18n: I18n,
                                                clock: Clock,
-                                               documentSelectionStore: DocumentSelectionStore)
-    extends HydroReactComponent {
+                                               documentSelectionStore: DocumentSelectionStore,
+                                               editHistory: EditHistory,
+) extends HydroReactComponent {
 
   // **************** API ****************//
   def apply(documentStore: DocumentStore)(implicit router: RouterContext): VdomElement = {
@@ -80,7 +81,6 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
       LoadingCache.fromLoader(_ => ResizingTextArea.ref())
-    private val editHistory: EditHistory = new EditHistory()
 
     override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document.id)
