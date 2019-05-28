@@ -965,6 +965,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         _.copyFromStore(documentStore),
         Callback.empty.flatMap { _ =>
           editHistory.addEdit(
+            documentId = state.document.id,
             documentEdit = edit,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
             selectionAfterEdit = selectionAfterEdit.detach(newDocument),

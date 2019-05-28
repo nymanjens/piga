@@ -24,11 +24,13 @@ private[document] final class EditHistory(implicit clock: Clock) {
   private var lastEditCanBeMerged: Boolean = false
 
   // **************** public API **************** //
-  def addEdit(documentEdit: DocumentEdit.Reversible,
+  def addEdit(documentId: Long,
+              documentEdit: DocumentEdit.Reversible,
               selectionBeforeEdit: DetachedSelection,
               selectionAfterEdit: DetachedSelection,
               replacementString: String): Unit = {
     val newEdit = Edit(
+      documentId = documentId,
       documentEdit = documentEdit,
       selectionBeforeEdit = selectionBeforeEdit,
       selectionAfterEdit = selectionAfterEdit,
@@ -115,6 +117,7 @@ private[document] final class EditHistory(implicit clock: Clock) {
   }
 
   private def shouldBeMerged(edit1: Edit, edit2: Edit): Boolean = {
+    def isSameDocument: Boolean = edit1.documentId == edit2.documentId
     def hasCollapsedMiddleSelection: Boolean =
       edit1.selectionAfterEdit == edit2.selectionBeforeEdit && edit1.selectionAfterEdit.isSingleton
     def sameLineIsEdited: Boolean =
@@ -130,13 +133,13 @@ private[document] final class EditHistory(implicit clock: Clock) {
       }
     }
 
-    hasCollapsedMiddleSelection && sameLineIsEdited && edit2.addsSingleCharOnSameLine && !tooMuchTimeBetween && isCombiningWord
+    isSameDocument && hasCollapsedMiddleSelection && sameLineIsEdited && edit2.addsSingleCharOnSameLine && !tooMuchTimeBetween && isCombiningWord
   }
 }
 
 private[document] object EditHistory {
 
-  private[document] case class Edit(documentId: Long = -111,
+  private[document] case class Edit(documentId: Long,
                                     documentEdit: DocumentEdit.Reversible,
                                     selectionBeforeEdit: DetachedSelection,
                                     selectionAfterEdit: DetachedSelection,
@@ -144,6 +147,7 @@ private[document] object EditHistory {
                                     private[EditHistory] val timestamp: Instant) {
     def reversed: Edit =
       Edit(
+        documentId = documentId,
         documentEdit = documentEdit.reversed,
         selectionBeforeEdit = selectionAfterEdit,
         selectionAfterEdit = selectionBeforeEdit,
@@ -152,7 +156,9 @@ private[document] object EditHistory {
       )
 
     private[EditHistory] def mergedWith(that: Edit): Edit = {
+      require(this.documentId == that.documentId)
       Edit(
+        documentId = this.documentId,
         documentEdit = this.documentEdit mergedWith that.documentEdit,
         selectionBeforeEdit = this.selectionBeforeEdit,
         selectionAfterEdit = that.selectionAfterEdit,

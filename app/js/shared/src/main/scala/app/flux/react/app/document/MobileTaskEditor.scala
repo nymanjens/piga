@@ -431,6 +431,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         _.copyFromStore(documentStore).copy(highlightedTaskIndex = actualHighlightedTaskIndexAfterEdit),
         Callback {
           editHistory.addEdit(
+            documentId = oldState.document.id,
             documentEdit = edit,
             selectionBeforeEdit =
               IndexedSelection.atStartOfTask(oldState.highlightedTaskIndex).detach(oldDocument),
