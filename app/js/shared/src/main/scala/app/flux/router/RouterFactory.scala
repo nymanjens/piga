@@ -73,10 +73,7 @@ private[router] final class RouterFactory(implicit reactAppModule: app.flux.reac
               router = ctl)
           }
           | dynamicRuleFromPage(_ / long.caseClass[AppPages.MobileTaskList]) { (page, ctl) =>
-            reactAppModule.taskList(
-              page.documentId,
-              mobileOrTabletVersion = true,
-              router = ctl)
+            reactAppModule.taskList(page.documentId, mobileOrTabletVersion = true, router = ctl)
           }
 
         // Fallback

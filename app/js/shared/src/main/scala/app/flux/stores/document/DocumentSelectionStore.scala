@@ -10,12 +10,12 @@ import scala.util.matching.Regex
 
 final class DocumentSelectionStore {
 
-  def setSelection(document: Document, indexedSelection: IndexedSelection): Unit = {
-    dom.window.localStorage.setItem(localStorageKey(document), serialize(indexedSelection))
+  def setSelection(documentId: Long, indexedSelection: IndexedSelection): Unit = {
+    dom.window.localStorage.setItem(localStorageKey(documentId), serialize(indexedSelection))
   }
 
-  def getSelection(document: Document): IndexedSelection = {
-    dom.window.localStorage.getItem(localStorageKey(document)) match {
+  def getSelection(documentId: Long): IndexedSelection = {
+    dom.window.localStorage.getItem(localStorageKey(documentId)) match {
       case null => IndexedSelection.nullInstance
       case item => deserialize(item)
     }
@@ -34,7 +34,7 @@ final class DocumentSelectionStore {
     case _ => IndexedSelection.nullInstance
   }
 
-  private def localStorageKey(document: Document): String = {
-    s"doc-sel-${document.id}"
+  private def localStorageKey(documentId: Long): String = {
+    s"doc-sel-${documentId}"
   }
 }

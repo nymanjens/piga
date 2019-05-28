@@ -1,13 +1,16 @@
 package app.flux.react.app.document
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.duration._
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.uielements.ResizingTextArea
 import app.flux.react.uielements.ResizingTextArea.Fixed
 import app.flux.react.uielements.ResizingTextArea.ScaleWithInput
+import app.flux.router.AppPages
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
+import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
@@ -39,6 +42,8 @@ import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
@@ -46,8 +51,10 @@ import scala.scalajs.js
 private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess,
                                                i18n: I18n,
                                                clock: Clock,
-                                               documentSelectionStore: DocumentSelectionStore)
-    extends HydroReactComponent {
+                                               documentSelectionStore: DocumentSelectionStore,
+                                               documentStoreFactory: DocumentStoreFactory,
+                                               editHistory: EditHistory,
+) extends HydroReactComponent {
 
   // **************** API ****************//
   def apply(documentStore: DocumentStore)(implicit router: RouterContext): VdomElement = {
@@ -80,10 +87,9 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
     private val taskIdToInputRef: LoadingCache[Long, ResizingTextArea.Reference] =
       LoadingCache.fromLoader(_ => ResizingTextArea.ref())
-    private val editHistory: EditHistory = new EditHistory()
 
     override def didMount(props: Props, state: State): Callback = {
-      val selection = documentSelectionStore.getSelection(state.document)
+      val selection = documentSelectionStore.getSelection(state.document.id)
       val taskIndex = selection.start.seqIndex
 
       if (state.document.tasksOption(taskIndex).isDefined) {
@@ -264,7 +270,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           case None => state
           case Some(taskIndex) =>
             documentSelectionStore.setSelection(
-              document = state.document,
+              documentId = state.document.id,
               IndexedSelection.atStartOfTask(taskIndex))
             state.copy(highlightedTaskIndex = taskIndex)
         }
@@ -431,6 +437,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         _.copyFromStore(documentStore).copy(highlightedTaskIndex = actualHighlightedTaskIndexAfterEdit),
         Callback {
           editHistory.addEdit(
+            documentId = oldState.document.id,
             documentEdit = edit,
             selectionBeforeEdit =
               IndexedSelection.atStartOfTask(oldState.highlightedTaskIndex).detach(oldDocument),
@@ -445,7 +452,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
           }
 
           documentSelectionStore.setSelection(
-            document = oldState.document,
+            documentId = oldState.document.id,
             IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit))
         }
       )
@@ -455,7 +462,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                                                                       state: State): Callback =
       maybeEdit match {
         case None => Callback.empty
-        case Some(edit) =>
+        case Some(edit) if edit.documentId == state.document.id =>
           val documentStore = props.documentStore
           documentStore.applyEditWithoutCallingListeners(edit.documentEdit)
           val newDocument = documentStore.state.document
@@ -464,10 +471,23 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
             _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
             Callback {
               documentSelectionStore.setSelection(
-                document = state.document,
+                documentId = state.document.id,
                 IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
             }
           )
+        case Some(edit) if edit.documentId != state.document.id =>
+          Callback.future {
+            async {
+              val otherDocumentStore = await(documentStoreFactory.create(edit.documentId))
+              otherDocumentStore.applyEditWithoutCallingListeners(edit.documentEdit)
+              val newOtherDocument = otherDocumentStore.state.document
+              documentSelectionStore.setSelection(
+                edit.documentId,
+                edit.selectionAfterEdit.attachToDocument(newOtherDocument))
+              props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
+              Callback.empty
+            }
+          }
       }
   }
 
