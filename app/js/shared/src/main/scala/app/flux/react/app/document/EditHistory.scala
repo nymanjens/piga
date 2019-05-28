@@ -136,7 +136,8 @@ private[document] final class EditHistory(implicit clock: Clock) {
 
 private[document] object EditHistory {
 
-  private[document] case class Edit(documentEdit: DocumentEdit.Reversible,
+  private[document] case class Edit(documentId: Long = -111,
+                                    documentEdit: DocumentEdit.Reversible,
                                     selectionBeforeEdit: DetachedSelection,
                                     selectionAfterEdit: DetachedSelection,
                                     private[EditHistory] val replacementString: String,
