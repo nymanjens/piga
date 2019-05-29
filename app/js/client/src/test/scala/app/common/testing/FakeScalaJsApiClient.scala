@@ -59,8 +59,6 @@ final class FakeScalaJsApiClient extends ScalaJsApiClient {
     upsertedUserPrototypes += userPrototype
   }
 
-  override def updateDocuments(documents: Seq[DocumentEntity]): Future[Unit] = ???
-
   // **************** Additional methods for tests ****************//
   def addEntities[E <: Entity: EntityType](entities: E*): Unit = {
     modificationsBuffer.addEntities(entities.toVector)

@@ -7,6 +7,7 @@ import app.flux.action.AppActions._
 import app.flux.stores.document.AllDocumentsStore.State
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
+import hydro.common.time.Clock
 import hydro.models.modification.EntityModification
 import hydro.flux.action.Dispatcher
 import hydro.flux.stores.AsyncEntityDerivedStateStore
@@ -20,10 +21,11 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 final class AllDocumentsStore(implicit dispatcher: Dispatcher,
+                              clock: Clock,
                               scalaJsApiClient: ScalaJsApiClient,
                               entityAccess: JsEntityAccess,
-                              getInitialDataResponse: GetInitialDataResponse)
-    extends StateStore[State] {
+                              getInitialDataResponse: GetInitialDataResponse,
+) extends StateStore[State] {
 
   dispatcher.registerPartialAsync {
     case AddEmptyDocument(name, orderToken) =>
@@ -44,7 +46,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
             tags = Seq()))
       )
     case UpdateDocuments(documents) =>
-      scalaJsApiClient.updateDocuments(documents)
+      entityAccess.persistModifications(documents.map(d => EntityModification.createUpdateAllFields(d)))
     case RemoveDocument(existingDocument) =>
       entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
   }

@@ -41,9 +41,6 @@ final class ScalaJsApiCallerImpl @Inject()(implicit scalaJsApiServerFactory: Sca
       case "upsertUser" =>
         val userPrototype = Unpickle[UserPrototype].fromBytes(argsMap("userPrototype"))
         Pickle.intoBytes(scalaJsApiServer.upsertUser(userPrototype))
-      case "updateDocuments" =>
-        val documents = Unpickle[Seq[DocumentEntity]].fromBytes(argsMap("documents"))
-        Pickle.intoBytes(scalaJsApiServer.updateDocuments(documents))
     }
   }
 }
