@@ -17,7 +17,7 @@ import hydro.common.time.JavaTimeImplicits._
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
-private[document] final class EditHistory(implicit clock: Clock) {
+final class EditHistory(implicit clock: Clock) {
 
   private val edits: mutable.Buffer[Edit] = mutable.Buffer()
   private var nextRedoEditIndex: Int = 0

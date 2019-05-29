@@ -115,6 +115,7 @@ object EditHistoryTest extends TestSuite {
     val taskUpdate =
       MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
     editHistory.addEdit(
+      documentId = 19191,
       documentEdit = DocumentEdit.Reversible(
         removedTasks = Seq(),
         addedTasks = Seq(),
@@ -134,6 +135,7 @@ object EditHistoryTest extends TestSuite {
     val anyTask = if (removedTask == null) addedTask else removedTask
 
     editHistory.addEdit(
+      documentId = 19191,
       documentEdit = DocumentEdit.Reversible(
         removedTasks = Seq() ++ Option(removedTask),
         addedTasks = Seq() ++ Option(addedTask),

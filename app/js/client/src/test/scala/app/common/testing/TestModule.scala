@@ -1,6 +1,8 @@
 package app.common.testing
 
+import app.flux.react.app.document.EditHistory
 import app.flux.stores.document.DocumentSelectionStore
+import app.flux.stores.document.DocumentStoreFactory
 import hydro.common.testing.FakeClock
 import hydro.common.testing.FakeI18n
 import hydro.common.testing.FakeJsEntityAccess
@@ -23,4 +25,6 @@ class TestModule {
   implicit lazy val hydroPushSocketClientFactory: HydroPushSocketClientFactory =
     new HydroPushSocketClientFactory
   implicit lazy val documentSelectionStore: DocumentSelectionStore = new DocumentSelectionStore
+  implicit lazy val documentStoreFactory: DocumentStoreFactory = new DocumentStoreFactory
+  implicit lazy val editHistory: EditHistory = new EditHistory
 }
