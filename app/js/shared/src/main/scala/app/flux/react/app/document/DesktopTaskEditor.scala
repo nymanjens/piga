@@ -1,5 +1,7 @@
 package app.flux.react.app.document
 
+import java.lang.Math.abs
+
 import scala.async.Async.async
 import scala.async.Async.await
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -34,6 +36,7 @@ import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
 import hydro.models.access.EntityAccess
+import hydro.models.modification.EntityModification
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
@@ -44,6 +47,7 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.scalajs.js
+import scala.util.Random
 
 private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
                                                 i18n: I18n,
@@ -84,6 +88,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none
     )
+    private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
+      mutable.Map().withDefault(identity)
 
     override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document.id)
@@ -150,7 +156,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
-                ^.key := s"li-${task.id}",
+                ^.key := s"li-${taskKeyRemapForReactBugWorkaround(task.id)}",
                 ^.id := s"teli-$taskIndex",
                 ^.style := js.Dictionary("marginLeft" -> s"${task.indentation * 50}px"),
                 ^^.classes(
@@ -220,8 +226,13 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) => s
+            case None =>
+              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          }
+
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
@@ -250,8 +261,12 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
     private def handleKeyDown(event: SyntheticKeyboardEvent[_]): Callback =
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) => s
+            case None =>
+              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+          }
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
           val formatting =
@@ -974,6 +989,16 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
           setSelection(selectionAfterEdit)
         }
       )
+    }
+
+    /**
+      * React bug workaround: Sometimes, a <li> element is broken: The cursor still shows on the element but the
+      * selection is on the whole contenteditable div and the <li> contents are no longer updated by React.
+      *
+      * The fix is to force a React redraw by remapping its key to a random number.
+      */
+    private def renameTaskKeyToWorkAroundReactBug(seqIndex: Int)(implicit state: State): Unit = {
+      taskKeyRemapForReactBugWorkaround.put(state.document.tasks(seqIndex).id, abs(Random.nextLong))
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
