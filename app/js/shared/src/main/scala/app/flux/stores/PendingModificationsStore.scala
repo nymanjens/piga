@@ -48,7 +48,7 @@ final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess,
   }
 
   // **************** Private inner types ****************//
-  object JsEntityAccessListener extends JsEntityAccess.Listener {
+  private object JsEntityAccessListener extends JsEntityAccess.Listener {
     override def modificationsAddedOrPendingStateChanged(modifications: Seq[EntityModification]): Unit =
       onAnyChange()
 
