@@ -244,10 +244,15 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
           documentSelectionStore.setSelection(document.id, selection)
 
+          val clipboardData = getAnyClipboardString(event)
           replaceSelection(
-            replacement =
-              clipboardStringToReplacement(getAnyClipboardString(event), baseFormatting = formatting),
-            selection)
+            replacement = if (formatting.code && clipboardData.plainText.nonEmpty) {
+              Replacement.fromString(clipboardData.plainText, formatting)
+            } else {
+              clipboardStringToReplacement(clipboardData, baseFormatting = formatting)
+            },
+            selection
+          )
         }
       }
 
