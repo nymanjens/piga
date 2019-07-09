@@ -1,9 +1,10 @@
 language: scala
 scala:
    - 2.12.2
+jdk:
+  - oraclejdk8
 
 install:
-  - jdk_switcher use oraclejdk8
   - . $HOME/.nvm/nvm.sh
   - nvm install 7
   - nvm use 7
