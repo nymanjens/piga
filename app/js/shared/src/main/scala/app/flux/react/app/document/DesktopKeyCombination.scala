@@ -29,7 +29,7 @@ private[document] object DesktopKeyCombination {
           case "Tab"       => Tab
           case "ArrowUp"   => ArrowUp
           case "ArrowDown" => ArrowDown
-          case _           => UnknownKeyType
+          case _           => UnknownKeyType(key)
         },
         ctrlOrMeta = ctrlOrMeta,
         shift = event.shiftKey,
@@ -57,5 +57,5 @@ private[document] object DesktopKeyCombination {
   case object Tab extends SpecialKeyType
   case object ArrowUp extends SpecialKeyType
   case object ArrowDown extends SpecialKeyType
-  case object UnknownKeyType extends SpecialKeyType
+  case class UnknownKeyType(key: String) extends SpecialKeyType
 }
