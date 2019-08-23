@@ -312,8 +312,13 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     private def removeHighlightedTask()(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
+      // Don't delete children if task is empty
+      val updateChildren = state.highlightedTask.content.nonEmpty
+
       val indicesToRemove =
-        IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren().seqIndices
+        if (updateChildren)
+          IndexedSelection.atStartOfTask(state.highlightedTaskIndex).includeChildren().seqIndices
+        else Seq(state.highlightedTaskIndex)
       val removedTasks = for (i <- indicesToRemove) yield oldDocument.tasks(i)
       val addedTasks =
         if (oldDocument.tasks.size > indicesToRemove.size) Seq()
