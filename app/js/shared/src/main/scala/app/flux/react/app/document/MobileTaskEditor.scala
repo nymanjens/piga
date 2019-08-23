@@ -26,7 +26,7 @@ import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
 import hydro.common.GuavaReplacement.LoadingCache
 import hydro.common.OrderToken
-import hydro.common.ScalaUtils.visibleForTesting
+import hydro.common.Annotations.visibleForTesting
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^

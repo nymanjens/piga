@@ -27,7 +27,7 @@ import hydro.common.GuavaReplacement.Splitter
 import hydro.common.I18n
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.ScalaUtils.visibleForTesting
+import hydro.common.Annotations.visibleForTesting
 import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.flux.react.HydroReactComponent
