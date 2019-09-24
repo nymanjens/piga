@@ -71,9 +71,11 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(documentStore: DocumentStore, router: RouterContext)
-  protected case class State(document: Document = Document.nullInstance,
-                             pendingTaskIds: Set[Long] = Set(),
-                             highlightedTaskIndex: Int = 0) {
+  protected case class State(
+      document: Document = Document.nullInstance,
+      pendingTaskIds: Set[Long] = Set(),
+      highlightedTaskIndex: Int = 0,
+  ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
   }
@@ -516,8 +518,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         }
       }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props,
-                                                                      state: State): Callback =
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(
+        implicit props: Props,
+        state: State,
+    ): Callback =
       maybeEdit match {
         case None => Callback.empty
         case Some(edit) if edit.documentId == state.document.id =>
@@ -545,7 +549,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
     private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(
         implicit state: State,
-        props: Props): Callback = {
+        props: Props,
+    ): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
       implicit val oldDocument = state.document
 
@@ -659,7 +664,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
     private def duplicateTasks(taskIndices: Range, selectionBeforeEdit: IndexedSelection)(
         implicit state: State,
-        props: Props): Callback = {
+        props: Props,
+    ): Callback = {
       implicit val oldDocument = state.document
 
       val newOrderTokens = {
@@ -708,7 +714,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
     private def updateCharactersInSelection(
         selection: IndexedSelection,
-        characterTransform: String => String)(implicit state: State, props: Props): Callback = {
+        characterTransform: String => String,
+    )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
       val taskUpdates = for (task <- oldDocument.tasksIn(selection))
@@ -728,8 +735,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       )
     }
 
-    private def editTagsInTasks(selection: IndexedSelection)(implicit state: State,
-                                                             props: Props): Callback = {
+    private def editTagsInTasks(selection: IndexedSelection)(
+        implicit state: State,
+        props: Props,
+    ): Callback = {
       implicit val document = state.document
 
       class CancelException extends Exception
@@ -742,9 +751,11 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         }
       }
 
-      def replaceTags(indexedSelection: IndexedSelection,
-                      tagsToRemove: Seq[String],
-                      tagsToAdd: Seq[String]): Callback = {
+      def replaceTags(
+          indexedSelection: IndexedSelection,
+          tagsToRemove: Seq[String],
+          tagsToAdd: Seq[String],
+      ): Callback = {
         val taskUpdates = for (task <- document.tasksIn(selection))
           yield
             MaskedTaskUpdate.fromFields(
@@ -773,7 +784,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
     private def toggleFormatting(
         updateFunc: (Formatting, Boolean) => Formatting,
         selection: IndexedSelection,
-        formattingAtStart: Formatting)(implicit state: State, props: Props): Callback = {
+        formattingAtStart: Formatting,
+    )(implicit state: State, props: Props): Callback = {
       implicit val document = state.document
       val IndexedSelection(start, end) = selection
 
@@ -821,8 +833,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       }
     }
 
-    private def editLink(originalSelection: IndexedSelection)(implicit state: State,
-                                                              props: Props): Callback = {
+    private def editLink(originalSelection: IndexedSelection)(
+        implicit state: State,
+        props: Props,
+    ): Callback = {
       implicit val oldDocument = state.document
 
       def expandSelection(selection: IndexedSelection): IndexedSelection = {
@@ -892,8 +906,10 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
       }
     }
 
-    private def moveTasksInSeq(selectionBeforeEdit: IndexedSelection,
-                               direction: Int)(implicit state: State, props: Props): Callback = {
+    private def moveTasksInSeq(
+        selectionBeforeEdit: IndexedSelection,
+        direction: Int,
+    )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val selectionWithChildren = selectionBeforeEdit.includeChildren()
       val IndexedSelection(start, end) = selectionWithChildren
@@ -976,7 +992,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
         edit: DocumentEdit.Reversible,
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
-        replacementString: String = "")(implicit state: State, props: Props): Callback = {
+        replacementString: String = "",
+    )(implicit state: State, props: Props): Callback = {
 
       val documentStore = props.documentStore
       val oldDocument = state.document
@@ -1059,10 +1076,12 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
     private def findNextOccurrenceOfSelectedString(selection: IndexedSelection, backwards: Boolean = false)(
         implicit state: State): Callback = {
-      def windowFind(string: String,
-                     caseSensitive: Boolean = false,
-                     backwards: Boolean = false,
-                     wrapAround: Boolean = false): Unit = {
+      def windowFind(
+          string: String,
+          caseSensitive: Boolean = false,
+          backwards: Boolean = false,
+          wrapAround: Boolean = false,
+      ): Unit = {
         dom.window.asInstanceOf[js.Dynamic].find(string, caseSensitive, backwards, wrapAround)
       }
 
@@ -1079,7 +1098,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
   // **************** Helper classes and methods **************** //
   @visibleForTesting private[document] def convertToClipboardData(
       document: Document,
-      selection: IndexedSelection): ClipboardData = {
+      selection: IndexedSelection,
+  ): ClipboardData = {
     case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
       def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
       def indentation: Int = task.indentation
@@ -1123,7 +1143,8 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
 
   @visibleForTesting private[document] def clipboardStringToReplacement(
       clipboardData: ClipboardData,
-      baseFormatting: Formatting): Replacement = {
+      baseFormatting: Formatting,
+  ): Replacement = {
     def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
         true

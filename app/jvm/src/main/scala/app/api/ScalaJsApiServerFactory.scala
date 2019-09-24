@@ -17,9 +17,11 @@ import hydro.models.access.DbQuery
 
 import scala.collection.immutable.Seq
 
-final class ScalaJsApiServerFactory @Inject()(implicit clock: Clock,
-                                              entityAccess: JvmEntityAccess,
-                                              i18n: PlayI18n) {
+final class ScalaJsApiServerFactory @Inject()(
+    implicit clock: Clock,
+    entityAccess: JvmEntityAccess,
+    i18n: PlayI18n,
+) {
 
   def create()(implicit user: User): ScalaJsApi = new ScalaJsApi() {
 

@@ -6,11 +6,13 @@ import scala.collection.immutable.Seq
 
 private[document] object TaskEditorUtils {
 
-  case class TaskInSeq(task: Task,
-                       index: Int,
-                       maybeAmountCollapsed: Option[Int],
-                       isRoot: Boolean,
-                       isLeaf: Boolean)
+  case class TaskInSeq(
+      task: Task,
+      index: Int,
+      maybeAmountCollapsed: Option[Int],
+      isRoot: Boolean,
+      isLeaf: Boolean,
+  )
 
   def applyCollapsedProperty(tasks: Seq[Task]): Stream[TaskInSeq] = {
     def getAmountCollapsed(tasksWithIndex: Stream[(Task, Int)], collapsedIndentation: Int): Int = {

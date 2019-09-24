@@ -18,9 +18,11 @@ import play.api.Mode
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
 
-final class ApplicationStartHook @Inject()(implicit app: Application,
-                                           entityAccess: JvmEntityAccess,
-                                           clock: Clock) {
+final class ApplicationStartHook @Inject()(
+    implicit app: Application,
+    entityAccess: JvmEntityAccess,
+    clock: Clock,
+) {
   onStart()
 
   private def onStart(): Unit = {

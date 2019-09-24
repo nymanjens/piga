@@ -64,10 +64,12 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
     val applyFormattingOption = new FormattingOption.Applier[VdomNode] {
 
-      override def apply[T](option: FormattingOption[T],
-                            value: T,
-                            children: VdomNode,
-                            childrenParts: Iterable[Part]): VdomNode = {
+      override def apply[T](
+          option: FormattingOption[T],
+          value: T,
+          children: VdomNode,
+          childrenParts: Iterable[Part],
+      ): VdomNode = {
         def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
         def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
 
@@ -88,9 +90,11 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
     def convertLinksToAnchors(string: String, insideLink: Boolean): VdomNode = {
       def inner(string: String): VdomNode = {
-        def recurseWithMatch(m: Match,
-                             prependHttp: Boolean = false,
-                             recurseFirstPart: Boolean = false): VdomNode = {
+        def recurseWithMatch(
+            m: Match,
+            prependHttp: Boolean = false,
+            recurseFirstPart: Boolean = false,
+        ): VdomNode = {
           val before = string.substring(0, m.start)
           val linkText = m.group(0)
           val after = string.substring(m.end)
@@ -123,10 +127,12 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
   def toHtml: String = {
     val applyFormattingOption = new FormattingOption.Applier[String] {
-      override def apply[T](option: FormattingOption[T],
-                            value: T,
-                            children: String,
-                            childrenParts: Iterable[Part]): String = {
+      override def apply[T](
+          option: FormattingOption[T],
+          value: T,
+          children: String,
+          childrenParts: Iterable[Part],
+      ): String = {
         def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
         def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
 
@@ -191,9 +197,11 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     }
   }
 
-  def withFormatting(beginOffset: Int,
-                     endOffset: Int,
-                     updateFunc: Formatting => Formatting): TextWithMarkup = {
+  def withFormatting(
+      beginOffset: Int,
+      endOffset: Int,
+      updateFunc: Formatting => Formatting,
+  ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
         textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
@@ -201,9 +209,11 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
 
-  def withTransformedCharacters(beginOffset: Int,
-                                endOffset: Int,
-                                characterTransform: String => String): TextWithMarkup = {
+  def withTransformedCharacters(
+      beginOffset: Int,
+      endOffset: Int,
+      characterTransform: String => String,
+  ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
         textWithMarkup.parts.map(part => part.copy(text = characterTransform(part.text))))
@@ -238,8 +248,10 @@ object TextWithMarkup {
     fromHtmlNodes(Seq(html))
   }
 
-  def fromHtmlNodes(nodes: Iterable[dom.raw.Node],
-                    baseFormatting: Formatting = Formatting.none): TextWithMarkup = {
+  def fromHtmlNodes(
+      nodes: Iterable[dom.raw.Node],
+      baseFormatting: Formatting = Formatting.none,
+  ): TextWithMarkup = {
     def ensureTrailingNewline(parts: Seq[Part]): Seq[Part] = parts match {
       case Seq()                                => Seq()
       case _ if !parts.last.text.endsWith("\n") => parts.updated(parts.size - 1, parts.last + "\n")
@@ -284,11 +296,13 @@ object TextWithMarkup {
     def +(thatText: String): Part = copy(text = this.text + thatText)
   }
 
-  case class Formatting(bold: Boolean = false,
-                        italic: Boolean = false,
-                        code: Boolean = false,
-                        strikethrough: Boolean = false,
-                        link: Option[String] = None)
+  case class Formatting(
+      bold: Boolean = false,
+      italic: Boolean = false,
+      code: Boolean = false,
+      strikethrough: Boolean = false,
+      link: Option[String] = None,
+  )
   object Formatting {
     val none = Formatting()
   }
@@ -333,13 +347,17 @@ object TextWithMarkup {
 
   private type InsideLink = Boolean
 
-  private def serializeToDom[R](parts: List[Part],
-                                applyFormattingOption: FormattingOption.Applier[R],
-                                liftString: (String, InsideLink) => R,
-                                mergeResults: Iterable[R] => R): R = {
-    def serializeToDomInner(parts: Seq[Part],
-                            formattingLeft: List[FormattingOption[_]],
-                            insideLink: InsideLink): R = {
+  private def serializeToDom[R](
+      parts: List[Part],
+      applyFormattingOption: FormattingOption.Applier[R],
+      liftString: (String, InsideLink) => R,
+      mergeResults: Iterable[R] => R,
+  ): R = {
+    def serializeToDomInner(
+        parts: Seq[Part],
+        formattingLeft: List[FormattingOption[_]],
+        insideLink: InsideLink,
+    ): R = {
       formattingLeft match {
         case Nil => liftString(parts.map(_.text).mkString, insideLink)
         case formattingOption :: otherFormattingOptions =>

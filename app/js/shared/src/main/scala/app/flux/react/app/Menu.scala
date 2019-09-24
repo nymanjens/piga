@@ -13,10 +13,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
 
-private[app] final class Menu(implicit i18n: I18n,
-                              allDocumentsStore: AllDocumentsStore,
-                              sbadminMenu: SbadminMenu)
-    extends HydroReactComponent {
+private[app] final class Menu(
+    implicit i18n: I18n,
+    allDocumentsStore: AllDocumentsStore,
+    sbadminMenu: SbadminMenu,
+) extends HydroReactComponent {
 
   // **************** API ****************//
   def apply()(implicit router: RouterContext): VdomElement = {

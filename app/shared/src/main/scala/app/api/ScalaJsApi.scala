@@ -37,13 +37,17 @@ object ScalaJsApi {
     * @param i18nMessages Maps key to the message with placeholders.
     * @param nextUpdateToken An update token for all changes since this call
     */
-  case class GetInitialDataResponse(user: User,
-                                    allAccessibleDocuments: Seq[DocumentEntity],
-                                    i18nMessages: Map[String, String],
-                                    nextUpdateToken: UpdateToken)
+  case class GetInitialDataResponse(
+      user: User,
+      allAccessibleDocuments: Seq[DocumentEntity],
+      i18nMessages: Map[String, String],
+      nextUpdateToken: UpdateToken,
+  )
 
-  case class GetAllEntitiesResponse(entitiesMap: Map[EntityType.any, Seq[Entity]],
-                                    nextUpdateToken: UpdateToken) {
+  case class GetAllEntitiesResponse(
+      entitiesMap: Map[EntityType.any, Seq[Entity]],
+      nextUpdateToken: UpdateToken,
+  ) {
     def entityTypes: Iterable[EntityType.any] = entitiesMap.keys
     def entities[E <: Entity](entityType: EntityType[E]): Seq[E] = {
       entitiesMap(entityType).asInstanceOf[Seq[E]]
@@ -52,9 +56,10 @@ object ScalaJsApi {
 
   sealed trait HydroPushSocketPacket
   object HydroPushSocketPacket {
-    case class EntityModificationsWithToken(modifications: Seq[EntityModification],
-                                            nextUpdateToken: UpdateToken)
-        extends HydroPushSocketPacket
+    case class EntityModificationsWithToken(
+        modifications: Seq[EntityModification],
+        nextUpdateToken: UpdateToken,
+    ) extends HydroPushSocketPacket
     object Heartbeat extends HydroPushSocketPacket
     case class VersionCheck(versionString: String) extends HydroPushSocketPacket
   }
@@ -67,17 +72,21 @@ object ScalaJsApi {
     * @param plainTextPassword Required for add.
     * @param name Required for add.
     */
-  case class UserPrototype(id: Option[Long] = None,
-                           loginName: Option[String] = None,
-                           plainTextPassword: Option[String] = None,
-                           name: Option[String] = None,
-                           isAdmin: Option[Boolean] = None)
+  case class UserPrototype(
+      id: Option[Long] = None,
+      loginName: Option[String] = None,
+      plainTextPassword: Option[String] = None,
+      name: Option[String] = None,
+      isAdmin: Option[Boolean] = None,
+  )
   object UserPrototype {
-    def create(id: java.lang.Long = null,
-               loginName: String = null,
-               plainTextPassword: String = null,
-               name: String = null,
-               isAdmin: java.lang.Boolean = null): UserPrototype =
+    def create(
+        id: java.lang.Long = null,
+        loginName: String = null,
+        plainTextPassword: String = null,
+        name: String = null,
+        isAdmin: java.lang.Boolean = null,
+    ): UserPrototype =
       UserPrototype(
         id = if (id == null) None else Some(id),
         loginName = Option(loginName),

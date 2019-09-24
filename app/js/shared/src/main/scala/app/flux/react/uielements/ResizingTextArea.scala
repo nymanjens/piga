@@ -65,10 +65,12 @@ object ResizingTextArea extends HydroReactComponent {
       textArea(props.tagMods: _*).withRef(theInput)
     }
 
-    override def didUpdate(prevProps: Props,
-                           currentProps: Props,
-                           prevState: State,
-                           currentState: State): Callback = {
+    override def didUpdate(
+        prevProps: Props,
+        currentProps: Props,
+        prevState: State,
+        currentState: State,
+    ): Callback = {
       theInput.get.flatMap { input =>
         if (currentState.scrollHeight == input.scrollHeight) {
           Callback.empty

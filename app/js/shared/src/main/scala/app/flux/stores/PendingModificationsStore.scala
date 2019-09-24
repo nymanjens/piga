@@ -12,9 +12,10 @@ import hydro.models.access.JsEntityAccess
 
 import scala.collection.immutable.Seq
 
-final class PendingModificationsStore(implicit jsEntityAccess: JsEntityAccess,
-                                      documentStoreFactory: DocumentStoreFactory)
-    extends StateStore[State] {
+final class PendingModificationsStore(
+    implicit jsEntityAccess: JsEntityAccess,
+    documentStoreFactory: DocumentStoreFactory,
+) extends StateStore[State] {
   jsEntityAccess.registerListener(JsEntityAccessListener)
   documentStoreFactory.unsyncedNumberOfTasks.registerListener(UnsyncedNumberOfDocumentTasksListener)
 

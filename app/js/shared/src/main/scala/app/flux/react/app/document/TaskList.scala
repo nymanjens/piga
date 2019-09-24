@@ -39,9 +39,11 @@ private[app] final class TaskList(implicit entityAccess: EntityAccess,
     }
 
   // **************** Implementation of HydroReactComponent types ****************//
-  protected case class Props(documentStore: DocumentStore,
-                             mobileOrTabletVersion: Boolean,
-                             router: RouterContext)
+  protected case class Props(
+      documentStore: DocumentStore,
+      mobileOrTabletVersion: Boolean,
+      router: RouterContext,
+  )
   protected case class State(document: Document = Document.nullInstance)
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {

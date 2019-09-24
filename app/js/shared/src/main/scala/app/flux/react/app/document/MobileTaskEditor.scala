@@ -70,9 +70,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
 
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(documentStore: DocumentStore, router: RouterContext)
-  protected case class State(document: Document = Document.nullInstance,
-                             pendingTaskIds: Set[Long] = Set(),
-                             highlightedTaskIndex: Int = 0,
+  protected case class State(
+      document: Document = Document.nullInstance,
+      pendingTaskIds: Set[Long] = Set(),
+      highlightedTaskIndex: Int = 0,
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
@@ -241,8 +242,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       ),
     )
 
-    private def onPlainTextChange(newContent: String, originalTask: Task)(implicit state: State,
-                                                                          props: Props): Callback = {
+    private def onPlainTextChange(newContent: String, originalTask: Task)(
+        implicit state: State,
+        props: Props,
+    ): Callback = {
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
           taskUpdates = Seq(
@@ -253,8 +256,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
     }
 
     // Intercept newline to add a new task
-    private def handleKeyDown(event: SyntheticKeyboardEvent[_])(implicit state: State,
-                                                                props: Props): Callback = {
+    private def handleKeyDown(event: SyntheticKeyboardEvent[_])(
+        implicit state: State,
+        props: Props,
+    ): Callback = {
       event.key match {
         case "Enter" =>
           event.preventDefault()
@@ -428,7 +433,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         edit: DocumentEdit.Reversible,
         highlightedTaskIndexAfterEdit: Int = -1,
         focusHighlightedTaskAfterEdit: Boolean = false,
-        replacementString: String = "")(implicit oldState: State, props: Props): Callback = {
+        replacementString: String = "",
+    )(implicit oldState: State, props: Props): Callback = {
 
       val actualHighlightedTaskIndexAfterEdit =
         if (highlightedTaskIndexAfterEdit == -1) oldState.highlightedTaskIndex
@@ -463,8 +469,10 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )
     }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit props: Props,
-                                                                      state: State): Callback =
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(
+        implicit props: Props,
+        state: State,
+    ): Callback =
       maybeEdit match {
         case None => Callback.empty
         case Some(edit) if edit.documentId == state.document.id =>

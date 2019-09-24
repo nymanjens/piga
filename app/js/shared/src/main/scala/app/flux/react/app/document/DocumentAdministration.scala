@@ -43,8 +43,10 @@ private[app] final class DocumentAdministration(implicit entityAccess: EntityAcc
 
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(router: RouterContext)
-  protected case class State(allDocuments: Seq[DocumentEntity] = Seq(),
-                             documentIdToNameInput: Map[Long, String] = Map()) {
+  protected case class State(
+      allDocuments: Seq[DocumentEntity] = Seq(),
+      documentIdToNameInput: Map[Long, String] = Map(),
+  ) {
     def nameInput(documentEntity: DocumentEntity): String = {
       if (documentIdToNameInput contains documentEntity.id) {
         documentIdToNameInput(documentEntity.id)

@@ -38,17 +38,19 @@ private[document] object DesktopKeyCombination {
     }
   }
 
-  private[document] case class CharacterKey(character: Char,
-                                            override val ctrlOrMeta: Boolean,
-                                            override val shift: Boolean,
-                                            override val alt: Boolean)
-      extends DesktopKeyCombination
+  private[document] case class CharacterKey(
+      character: Char,
+      override val ctrlOrMeta: Boolean,
+      override val shift: Boolean,
+      override val alt: Boolean,
+  ) extends DesktopKeyCombination
 
-  private[document] case class SpecialKey(specialKeyType: SpecialKeyType,
-                                          override val ctrlOrMeta: Boolean,
-                                          override val shift: Boolean,
-                                          override val alt: Boolean)
-      extends DesktopKeyCombination
+  private[document] case class SpecialKey(
+      specialKeyType: SpecialKeyType,
+      override val ctrlOrMeta: Boolean,
+      override val shift: Boolean,
+      override val alt: Boolean,
+  ) extends DesktopKeyCombination
 
   sealed trait SpecialKeyType
   case object Enter extends SpecialKeyType

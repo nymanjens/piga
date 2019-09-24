@@ -9,9 +9,11 @@ import hydro.models.modification.EntityModification
 import scala.collection.immutable.Seq
 
 object DocumentEdit {
-  case class Reversible(removedTasks: Seq[Task] = Seq(),
-                        addedTasks: Seq[Task] = Seq(),
-                        taskUpdates: Seq[MaskedTaskUpdate] = Seq()) {
+  case class Reversible(
+      removedTasks: Seq[Task] = Seq(),
+      addedTasks: Seq[Task] = Seq(),
+      taskUpdates: Seq[MaskedTaskUpdate] = Seq(),
+  ) {
 
     def reversed: DocumentEdit.Reversible = DocumentEdit.Reversible(
       removedTasks = addedTasks,
@@ -51,9 +53,11 @@ object DocumentEdit {
     }
   }
 
-  case class WithUpdateTimes private (removedTasksIds: Set[Long],
-                                      addedTasks: Seq[Task],
-                                      taskUpdatesById: Map[Long, Task]) {
+  case class WithUpdateTimes private (
+      removedTasksIds: Set[Long],
+      addedTasks: Seq[Task],
+      taskUpdatesById: Map[Long, Task],
+  ) {
 
     def taskUpdates: Iterable[Task] = taskUpdatesById.values
 
@@ -80,8 +84,10 @@ object DocumentEdit {
     val empty =
       DocumentEdit.WithUpdateTimes(removedTasksIds = Set(), addedTasks = Seq(), taskUpdatesById = Map())
 
-    def fromReversible(edit: DocumentEdit.Reversible)(implicit clock: Clock,
-                                                      document: Document): DocumentEdit.WithUpdateTimes =
+    def fromReversible(edit: DocumentEdit.Reversible)(
+        implicit clock: Clock,
+        document: Document,
+    ): DocumentEdit.WithUpdateTimes =
       create(
         removedTasksIds = edit.removedTasks.map(_.id),
         addedTasks = edit.addedTasks,
@@ -93,9 +99,11 @@ object DocumentEdit {
         } yield document.tasks(taskIndex).withAppliedUpdateAndNewUpdateTime(update),
       )
 
-    def create(removedTasksIds: Iterable[Long],
-               addedTasks: Iterable[Task],
-               taskUpdates: Iterable[Task]): DocumentEdit.WithUpdateTimes =
+    def create(
+        removedTasksIds: Iterable[Long],
+        addedTasks: Iterable[Task],
+        taskUpdates: Iterable[Task],
+    ): DocumentEdit.WithUpdateTimes =
       WithUpdateTimes(
         removedTasksIds = removedTasksIds.toSet,
         addedTasks = addedTasks.toVector,
@@ -127,8 +135,10 @@ object DocumentEdit {
     def isNoOp: Boolean = this.reversed == this
 
     def mergedWith(that: MaskedTaskUpdate): MaskedTaskUpdate = {
-      def mergeFieldUpdates[V](thisFieldUpdate: Option[FieldUpdate[V]],
-                               thatFieldUpdate: Option[FieldUpdate[V]]): Option[FieldUpdate[V]] =
+      def mergeFieldUpdates[V](
+          thisFieldUpdate: Option[FieldUpdate[V]],
+          thatFieldUpdate: Option[FieldUpdate[V]],
+      ): Option[FieldUpdate[V]] =
         (thisFieldUpdate, thatFieldUpdate) match {
           case (None, None)    => None
           case (Some(u), None) => Some(u)

@@ -63,8 +63,10 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     var taskWithUpdatedFields = jsTaskEntity
     val fieldMask = mutable.Buffer[ModelField[_, FakeJsTaskEntity]]()
 
-    def applyUpdate[V](fieldUpdate: Option[FieldUpdate[V]],
-                       modelField: ModelField[V, FakeJsTaskEntity]): Unit = {
+    def applyUpdate[V](
+        fieldUpdate: Option[FieldUpdate[V]],
+        modelField: ModelField[V, FakeJsTaskEntity],
+    ): Unit = {
       if (fieldUpdate.isDefined) {
         taskWithUpdatedFields = modelField.set(taskWithUpdatedFields, fieldUpdate.get.newValue)
         fieldMask.append(modelField)
@@ -135,12 +137,14 @@ object Task {
       lastUpdateTime = LastUpdateTime.neverUpdated,
     ))
 
-  def withRandomId(content: TextWithMarkup,
-                   orderToken: OrderToken,
-                   indentation: Int,
-                   collapsed: Boolean,
-                   delayedUntil: Option[LocalDateTime],
-                   tags: Seq[String])(implicit document: Document): Task =
+  def withRandomId(
+      content: TextWithMarkup,
+      orderToken: OrderToken,
+      indentation: Int,
+      collapsed: Boolean,
+      delayedUntil: Option[LocalDateTime],
+      tags: Seq[String],
+  )(implicit document: Document): Task =
     new Task(
       Task.FakeJsTaskEntity(
         documentId = document.id,

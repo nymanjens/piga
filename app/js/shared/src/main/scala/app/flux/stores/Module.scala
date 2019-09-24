@@ -16,14 +16,16 @@ import hydro.flux.stores.UserStore
 import hydro.models.access.HydroPushSocketClientFactory
 import hydro.models.access.JsEntityAccess
 
-final class Module(implicit i18n: I18n,
-                   user: User,
-                   entityAccess: JsEntityAccess,
-                   dispatcher: Dispatcher,
-                   clock: Clock,
-                   scalaJsApiClient: ScalaJsApiClient,
-                   hydroPushSocketClientFactory: HydroPushSocketClientFactory,
-                   getInitialDataResponse: GetInitialDataResponse) {
+final class Module(
+    implicit i18n: I18n,
+    user: User,
+    entityAccess: JsEntityAccess,
+    dispatcher: Dispatcher,
+    clock: Clock,
+    scalaJsApiClient: ScalaJsApiClient,
+    hydroPushSocketClientFactory: HydroPushSocketClientFactory,
+    getInitialDataResponse: GetInitialDataResponse,
+) {
 
   implicit val userStore = new UserStore
   implicit val allDocumentsStore = new AllDocumentsStore

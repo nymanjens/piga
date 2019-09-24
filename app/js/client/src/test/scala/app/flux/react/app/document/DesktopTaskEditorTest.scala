@@ -197,7 +197,8 @@ object DesktopTaskEditorTest extends TestSuite {
                 newTask(
                   content = p.content,
                   orderToken = orderTokenA,
-                  indentation = 10 + p.indentationRelativeToCurrent)): _*),
+                  indentation = 10 + p.indentationRelativeToCurrent,
+              )): _*),
           IndexedSelection(
             start = IndexedCursor(0, 0),
             end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.contentString.length))

@@ -150,10 +150,12 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
 object DocumentStore {
   case class State(document: Document, pendingTaskIds: Set[Long])
 
-  private class SyncerWithReplenishingDelay[T](delay: FiniteDuration,
-                                               emptyValue: T,
-                                               merge: (T, T) => T,
-                                               sync: T => Future[_]) {
+  private class SyncerWithReplenishingDelay[T](
+      delay: FiniteDuration,
+      emptyValue: T,
+      merge: (T, T) => T,
+      sync: T => Future[_],
+  ) {
     private val currentValue: WritableListenable[T] = WritableListenable(emptyValue)
     private var timeoutHandle: SetTimeoutHandle = _
 

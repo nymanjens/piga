@@ -265,8 +265,10 @@ object DocumentTest extends TestSuite {
         selection.detach.attachToDocument ==> selection
       }
       "includeChildren" - {
-        def assertNoChange(collapsedOnly: Boolean,
-                           selection: IndexedSelection)(implicit document: Document): Unit = {
+        def assertNoChange(
+            collapsedOnly: Boolean,
+            selection: IndexedSelection,
+        )(implicit document: Document): Unit = {
           selection.includeChildren(collapsedOnly = collapsedOnly) ==> selection
         }
 

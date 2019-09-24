@@ -65,8 +65,10 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
       State(allDocuments = allDocuments.sorted)
     }
 
-    override protected def modificationImpactsState(entityModification: EntityModification,
-                                                    state: State): Boolean =
+    override protected def modificationImpactsState(
+        entityModification: EntityModification,
+        state: State,
+    ): Boolean =
       entityModification.entityType == DocumentEntity.Type
   }
 }

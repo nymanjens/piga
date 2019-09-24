@@ -24,11 +24,13 @@ final class EditHistory(implicit clock: Clock) {
   private var lastEditCanBeMerged: Boolean = false
 
   // **************** public API **************** //
-  def addEdit(documentId: Long,
-              documentEdit: DocumentEdit.Reversible,
-              selectionBeforeEdit: DetachedSelection,
-              selectionAfterEdit: DetachedSelection,
-              replacementString: String): Unit = {
+  def addEdit(
+      documentId: Long,
+      documentEdit: DocumentEdit.Reversible,
+      selectionBeforeEdit: DetachedSelection,
+      selectionAfterEdit: DetachedSelection,
+      replacementString: String,
+  ): Unit = {
     val newEdit = Edit(
       documentId = documentId,
       documentEdit = documentEdit,
@@ -139,12 +141,14 @@ final class EditHistory(implicit clock: Clock) {
 
 private[document] object EditHistory {
 
-  private[document] case class Edit(documentId: Long,
-                                    documentEdit: DocumentEdit.Reversible,
-                                    selectionBeforeEdit: DetachedSelection,
-                                    selectionAfterEdit: DetachedSelection,
-                                    private[EditHistory] val replacementString: String,
-                                    private[EditHistory] val timestamp: Instant) {
+  private[document] case class Edit(
+      documentId: Long,
+      documentEdit: DocumentEdit.Reversible,
+      selectionBeforeEdit: DetachedSelection,
+      selectionAfterEdit: DetachedSelection,
+      private[EditHistory] val replacementString: String,
+      private[EditHistory] val timestamp: Instant,
+  ) {
     def reversed: Edit =
       Edit(
         documentId = documentId,

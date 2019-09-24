@@ -159,9 +159,11 @@ object EditHistoryTest extends TestSuite {
     assert(edit.get.selectionAfterEdit.start.taskId == taskUpdate.taskId)
   }
 
-  private def assertEdit(edit: Option[Edit],
-                         removedTask: Task = null,
-                         addedTaskWithNewId: Task = null): Task = {
+  private def assertEdit(
+      edit: Option[Edit],
+      removedTask: Task = null,
+      addedTaskWithNewId: Task = null,
+  ): Task = {
     if (removedTask != null) {
       assert(edit.get.documentEdit.removedTasks == Seq(removedTask))
 
