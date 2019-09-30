@@ -1,4 +1,4 @@
-package app.common
+package hydro.common
 
 import hydro.common.JsLoggingUtils.logExceptions
 import org.scalajs.dom

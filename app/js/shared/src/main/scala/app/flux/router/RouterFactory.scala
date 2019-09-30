@@ -1,6 +1,6 @@
 package app.flux.router
 
-import app.common.MobileUtils
+import hydro.common.MobileUtils
 import hydro.common.I18n
 import app.flux.stores.document.AllDocumentsStore
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
