@@ -25,11 +25,12 @@ import org.scalajs.dom
 
 import scala.collection.immutable.Seq
 
-private[app] final class DocumentAdministration(implicit entityAccess: EntityAccess,
-                                                i18n: I18n,
-                                                allDocumentsStore: AllDocumentsStore,
-                                                dispatcher: Dispatcher,
-                                                pageHeader: PageHeader,
+private[app] final class DocumentAdministration(
+    implicit entityAccess: EntityAccess,
+    i18n: I18n,
+    allDocumentsStore: AllDocumentsStore,
+    dispatcher: Dispatcher,
+    pageHeader: PageHeader,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
