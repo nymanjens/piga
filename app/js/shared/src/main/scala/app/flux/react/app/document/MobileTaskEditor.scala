@@ -115,7 +115,8 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
-              val isReadOnly = !task.content.isPlainText || task.content.containsLink
+              val isHighlighted = state.highlightedTaskIndex == taskIndex
+              val isReadOnly = !task.content.isPlainText || task.content.containsLink || !isHighlighted
 
               <.li(
                 ^.key := s"li-${task.id}",
@@ -127,7 +128,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
-                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
+                    ifThenOption(isHighlighted)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(isReadOnly)("read-only")),
                 ^.onClick --> selectTask(task),
@@ -165,7 +166,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
       )(
         ^.value := task.contentString,
         ^.spellCheck := false,
-        ^.onFocus --> selectTask(task),
+        ^.autoFocus := true,
         ^.onChange ==> { (event: ReactEventFromInput) =>
           onPlainTextChange(newContent = event.target.value, originalTask = task)
         },
