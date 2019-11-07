@@ -164,6 +164,7 @@ private[document] final class MobileTaskEditor(implicit entityAccess: EntityAcce
         resizeStrategy = if (state.highlightedTask == task) ScaleWithInput else Fixed(numberOfRows = 1),
         ref = taskIdToInputRef.get(task.id)
       )(
+        ^.key := task.id,
         ^.value := task.contentString,
         ^.spellCheck := false,
         ^.autoFocus := true,
