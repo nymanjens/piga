@@ -27,34 +27,36 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
                               getInitialDataResponse: GetInitialDataResponse,
 ) extends StateStore[State] {
 
-  dispatcher.registerPartialAsync {
-    case AddEmptyDocument(name, orderToken) =>
-      val document = DocumentEntity(
-        name = name,
-        orderToken = orderToken,
-        idOption = Some(EntityModification.generateRandomId()))
-      entityAccess.persistModifications(
-        EntityModification.Add(document),
-        EntityModification.createAddWithRandomId(
-          TaskEntity(
-            documentId = document.id,
-            contentHtml = "",
-            orderToken = OrderToken.middle,
-            indentation = 0,
-            collapsed = false,
-            delayedUntil = None,
-            tags = Seq()))
-      )
-    case UpdateDocuments(documents) =>
-      entityAccess.persistModifications(documents.map(d => EntityModification.createUpdateAllFields(d)))
-    case RemoveDocument(existingDocument) =>
-      entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
-  }
+  // TODO(feat-sharing): Re-enable this
+//  dispatcher.registerPartialAsync {
+//    case AddEmptyDocument(name, orderToken) =>
+//      val document = DocumentEntity(
+//        name = name,
+//        orderToken = orderToken,
+//        idOption = Some(EntityModification.generateRandomId()))
+//      entityAccess.persistModifications(
+//        EntityModification.Add(document),
+//        EntityModification.createAddWithRandomId(
+//          TaskEntity(
+//            documentId = document.id,
+//            contentHtml = "",
+//            orderToken = OrderToken.middle,
+//            indentation = 0,
+//            collapsed = false,
+//            delayedUntil = None,
+//            tags = Seq()))
+//      )
+//    case UpdateDocuments(documents) =>
+//      entityAccess.persistModifications(documents.map(d => EntityModification.createUpdateAllFields(d)))
+//    case RemoveDocument(existingDocument) =>
+//      entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
+//  }
 
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
 
   override def state: State = StateOptionStore.state match {
-    case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments.sorted)
+    case None =>
+      State(allDocuments = getInitialDataResponse.allAccessibleDocuments) // TODO(feat-sharing): Make sure this is sorted
     case Some(s) => s
   }
 
@@ -62,7 +64,7 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
 
     override protected def calculateState(): Future[State] = async {
       val allDocuments = await(entityAccess.newQuery[DocumentEntity]().data())
-      State(allDocuments = allDocuments.sorted)
+      State(allDocuments = allDocuments) // TODO(feat-sharing): Make sure this is sorted
     }
 
     override protected def modificationImpactsState(
