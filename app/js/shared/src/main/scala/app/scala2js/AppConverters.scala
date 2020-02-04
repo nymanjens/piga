@@ -61,6 +61,7 @@ object AppConverters {
       ModelFields.TaskEntity.collapsed,
       ModelFields.TaskEntity.delayedUntil,
       ModelFields.TaskEntity.tags,
+      ModelFields.TaskEntity.lastContentModifierUserId,
     ),
     toScalaWithoutId = dict =>
       TaskEntity(
@@ -70,7 +71,8 @@ object AppConverters {
         indentation = dict.getRequired(ModelFields.TaskEntity.indentation),
         collapsed = dict.getRequired(ModelFields.TaskEntity.collapsed),
         delayedUntil = dict.getRequired(ModelFields.TaskEntity.delayedUntil),
-        tags = dict.getRequired(ModelFields.TaskEntity.tags)
+        tags = dict.getRequired(ModelFields.TaskEntity.tags),
+        lastContentModifierUserId = dict.getRequired(ModelFields.TaskEntity.lastContentModifierUserId),
     )
   )
 }
