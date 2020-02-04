@@ -6,10 +6,11 @@ import hydro.models.Entity
 import hydro.models.UpdatableEntity
 import hydro.models.UpdatableEntity.LastUpdateTime
 
-case class DocumentEntity(name: String,
-                          orderToken: OrderToken,
-                          override val idOption: Option[Long] = None,
-                          override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
+case class DocumentEntity(
+    name: String,
+    orderToken: OrderToken,
+    override val idOption: Option[Long] = None,
+    override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
 ) extends UpdatableEntity
     with Ordered[DocumentEntity] {
 
