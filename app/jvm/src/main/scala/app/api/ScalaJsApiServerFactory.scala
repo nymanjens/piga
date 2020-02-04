@@ -1,6 +1,7 @@
 package app.api
 
 import app.api.ScalaJsApi._
+import app.common.document.UserDocument
 import hydro.common.UpdateTokens.toUpdateToken
 import hydro.common.PlayI18n
 import app.models.access.JvmEntityAccess
@@ -16,6 +17,8 @@ import hydro.models.Entity
 import hydro.models.access.DbQuery
 
 import scala.collection.immutable.Seq
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 final class ScalaJsApiServerFactory @Inject()(
     implicit clock: Clock,
@@ -28,7 +31,7 @@ final class ScalaJsApiServerFactory @Inject()(
     override def getInitialData() =
       GetInitialDataResponse(
         user = user,
-        allAccessibleDocuments = entityAccess.newQuerySync[DocumentEntity]().data(),
+        allAccessibleDocuments = Await.result(UserDocument.fetchAllForUser(), Duration.Inf),
         i18nMessages = i18n.allI18nMessages,
         nextUpdateToken = toUpdateToken(clock.nowInstant)
       )

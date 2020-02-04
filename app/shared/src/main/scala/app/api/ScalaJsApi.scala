@@ -1,6 +1,7 @@
 package app.api
 
 import app.api.ScalaJsApi._
+import app.common.document.UserDocument
 import app.models.document.DocumentEntity
 import hydro.models.modification.EntityModification
 import hydro.models.modification.EntityType
@@ -39,7 +40,7 @@ object ScalaJsApi {
     */
   case class GetInitialDataResponse(
       user: User,
-      allAccessibleDocuments: Seq[DocumentEntity],
+      allAccessibleDocuments: Seq[UserDocument],
       i18nMessages: Map[String, String],
       nextUpdateToken: UpdateToken,
   )

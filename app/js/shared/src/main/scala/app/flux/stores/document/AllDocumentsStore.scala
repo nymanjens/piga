@@ -56,7 +56,9 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
 
   override def state: State = StateOptionStore.state match {
     case None =>
-      State(allDocuments = getInitialDataResponse.allAccessibleDocuments) // TODO(feat-sharing): Make sure this is sorted
+      null
+    // TODO(feat-sharing): Re-enable this
+//      State(allDocuments = getInitialDataResponse.allAccessibleDocuments) // TODO(feat-sharing): Make sure this is sorted
     case Some(s) => s
   }
 

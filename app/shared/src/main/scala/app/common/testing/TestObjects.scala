@@ -5,6 +5,7 @@ import java.time.Month._
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApi.UpdateToken
 import app.api.ScalaJsApi.UserPrototype
+import app.common.document.UserDocument
 import hydro.common.OrderToken
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
@@ -76,6 +77,11 @@ object TestObjects {
       orderToken = orderTokenA,
       idOption = Some(129830),
       lastUpdateTime = testLastUpdateTime)
+  def testUserDocument: UserDocument = UserDocument(
+    documentId = testDocumentEntity.id,
+    name = testDocumentEntity.name,
+    orderToken = orderTokenA,
+  )
   def testTaskEntity: TaskEntity = TaskEntity(
     documentId = testDocumentEntity.id,
     contentHtml = "abc<b>def</b>",
@@ -96,7 +102,7 @@ object TestObjects {
 
   def testGetInitialDataResponse: GetInitialDataResponse = GetInitialDataResponse(
     user = testUserRedacted,
-    allAccessibleDocuments = Seq(testDocumentEntity),
+    allAccessibleDocuments = Seq(testUserDocument),
     i18nMessages = Map("abc" -> "def"),
     nextUpdateToken = testUpdateToken
   )

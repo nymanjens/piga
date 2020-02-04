@@ -1,5 +1,7 @@
 package app.common.document
 
+import scala.collection.immutable.Seq
+
 import app.models.access.ModelFields
 import app.models.document.DocumentEntity
 
@@ -42,14 +44,17 @@ object UserDocument {
           .data())
     val documentEntityMap = uniqueIndex(documentEntities)(_.id)
 
-    for (permissionAndPlacement <- permissionAndPlacements) yield {
-      val documentEntity = documentEntityMap(permissionAndPlacement.documentId)
-      UserDocument(
-        documentId = documentEntity.id,
-        name = documentEntity.name,
-        orderToken = permissionAndPlacement.orderToken,
-      )
-    }
+    val unsortedResult =
+      for (permissionAndPlacement <- permissionAndPlacements) yield {
+        val documentEntity = documentEntityMap(permissionAndPlacement.documentId)
+        UserDocument(
+          documentId = documentEntity.id,
+          name = documentEntity.name,
+          orderToken = permissionAndPlacement.orderToken,
+        )
+      }
+
+    unsortedResult.sorted
   }
 
   private def uniqueIndex[K, V](iterable: Iterable[V])(keyMapper: V => K): Map[K, V] = {
