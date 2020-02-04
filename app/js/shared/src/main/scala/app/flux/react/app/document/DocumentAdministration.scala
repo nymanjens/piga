@@ -174,10 +174,10 @@ private[app] final class DocumentAdministration(
     }
 
     private def doAdd()(implicit state: State): Callback = LogExceptionsCallback {
-      dispatcher.dispatch(
-        AppActions.AddEmptyDocument(
-          name = i18n("app.untitled-document"),
-          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
+//      dispatcher.dispatch(
+//        AppActions.AddEmptyDocument(
+//          name = i18n("app.untitled-document"),
+//          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
     private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
@@ -186,7 +186,7 @@ private[app] final class DocumentAdministration(
 
     private def doUpdateOrderToken(document: DocumentEntity, newOrderToken: OrderToken): Callback =
       LogExceptionsCallback {
-        dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
+//        dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
       }
 
     private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
@@ -200,7 +200,8 @@ private[app] final class DocumentAdministration(
         if (index < 0 || index >= state.allDocuments.size) {
           None
         } else {
-          Some(state.allDocuments(index).orderToken)
+          None
+//          Some(state.allDocuments(index).orderToken)
         }
       }
       OrderToken.middleBetween(getOption(index1), getOption(index2))
