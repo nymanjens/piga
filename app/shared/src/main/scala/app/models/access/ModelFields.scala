@@ -1,6 +1,7 @@
 package app.models.access
 
 import app.models.document.DocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import app.models.user.User
 import hydro.common.GuavaReplacement.ImmutableBiMap
@@ -20,7 +21,9 @@ object ModelFields {
   def id[E <: Entity](implicit entityType: EntityType[E]): ModelField[Long, E] = entityType match {
     case app.models.user.User.Type               => User.id.asInstanceOf[ModelField[Long, E]]
     case app.models.document.DocumentEntity.Type => DocumentEntity.id.asInstanceOf[ModelField[Long, E]]
-    case app.models.document.TaskEntity.Type     => TaskEntity.id.asInstanceOf[ModelField[Long, E]]
+    case app.models.document.DocumentPermissionAndPlacement.Type =>
+      DocumentPermissionAndPlacement.id.asInstanceOf[ModelField[Long, E]]
+    case app.models.document.TaskEntity.Type => TaskEntity.id.asInstanceOf[ModelField[Long, E]]
   }
 
   // **************** Enumeration of all fields **************** //
@@ -40,6 +43,15 @@ object ModelFields {
 
     case object id extends IdModelField[E]
     case object name extends ModelField[String, E]("name", _.name, v => _.copy(name = v))
+  }
+
+  object DocumentPermissionAndPlacement {
+    private type E = DocumentPermissionAndPlacement
+
+    case object id extends IdModelField[E]
+    case object documentId
+        extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
+    case object userId extends ModelField[Long, E]("userId", _.userId, v => _.copy(userId = v))
     case object orderToken
         extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
   }
@@ -78,7 +90,10 @@ object ModelFields {
         User.isAdmin,
         DocumentEntity.id,
         DocumentEntity.name,
-        DocumentEntity.orderToken,
+        DocumentPermissionAndPlacement.id,
+        DocumentPermissionAndPlacement.documentId,
+        DocumentPermissionAndPlacement.userId,
+        DocumentPermissionAndPlacement.orderToken,
         TaskEntity.id,
         TaskEntity.documentId,
         TaskEntity.contentHtml,

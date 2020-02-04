@@ -4,6 +4,7 @@ import hydro.common.OrderToken
 import hydro.models.Entity
 import hydro.models.UpdatableEntity
 import hydro.models.UpdatableEntity.LastUpdateTime
+import hydro.models.modification.EntityType
 
 /**
   * Combines a user and a document. The existence of this combination implies a permission. The extra data
@@ -25,4 +26,9 @@ case class DocumentPermissionAndPlacement(
   override def compare(that: DocumentPermissionAndPlacement): Int = {
     this.orderToken compare that.orderToken
   }
+}
+object DocumentPermissionAndPlacement {
+  implicit val Type: EntityType[DocumentPermissionAndPlacement] = EntityType()
+
+  def tupled = (this.apply _).tupled
 }
