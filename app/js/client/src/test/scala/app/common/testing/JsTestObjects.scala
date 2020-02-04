@@ -49,5 +49,5 @@ object JsTestObjects {
   }
 
   def newDocument(tasks: Task*): Document =
-    new Document(id = 12873, name = "test document", orderToken = orderTokenA, tasks = Seq(tasks: _*))
+    new Document(id = 12873, name = "test document", tasks = Seq(tasks: _*))
 }
