@@ -7,6 +7,7 @@ import app.api.ScalaJsApi.UpdateToken
 import app.api.ScalaJsApi.UserPrototype
 import hydro.common.OrderToken
 import app.models.document.DocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityModification
 import app.models.user.User
@@ -67,8 +68,11 @@ object TestObjects {
       isAdmin = testUser.isAdmin)
 
   def testDocumentEntity: DocumentEntity =
-    DocumentEntity(
-      name = "Some test document",
+    DocumentEntity(name = "Some test document", idOption = Some(129830), lastUpdateTime = testLastUpdateTime)
+  def testDocumentPermissionAndPlacement: DocumentPermissionAndPlacement =
+    DocumentPermissionAndPlacement(
+      documentId = testDocumentEntity.id,
+      userId = testUser.id,
       orderToken = orderTokenA,
       idOption = Some(129830),
       lastUpdateTime = testLastUpdateTime)
@@ -81,7 +85,8 @@ object TestObjects {
     delayedUntil = Some(testDate),
     tags = Seq("tag"),
     idOption = Some(821379),
-    lastUpdateTime = testLastUpdateTime
+    lastUpdateTime = testLastUpdateTime,
+    lastContentModifierUserId = testUser.id,
   )
 
   def testModificationA: EntityModification = EntityModification.Add(testTaskEntity)

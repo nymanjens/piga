@@ -75,6 +75,11 @@ object ModelFields {
           _.delayedUntil,
           v => _.copy(delayedUntil = v))
     case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
+    case object lastContentModifierUserId
+        extends ModelField[Long, E](
+          "lastContentModifierUserId",
+          _.lastContentModifierUserId,
+          v => _.copy(lastContentModifierUserId = v))
   }
 
   // **************** Field numbers **************** //
@@ -102,6 +107,7 @@ object ModelFields {
         TaskEntity.collapsed,
         TaskEntity.delayedUntil,
         TaskEntity.tags,
+        TaskEntity.lastContentModifierUserId,
       )
     )
   def toNumber(field: ModelField.any): Int = fieldToNumberMap.get(field)
