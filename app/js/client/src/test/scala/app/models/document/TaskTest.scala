@@ -55,9 +55,10 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
+          lastContentModifierUserId = testUser.id,
           idOption = Some(123),
           lastUpdateTime =
-            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA)
+            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA),
         ))
       val task2 = Task.fromTaskEntity(
         TaskEntity(
@@ -68,9 +69,10 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
+          lastContentModifierUserId = testUser.id,
           idOption = Some(123),
           lastUpdateTime =
-            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.contentHtml), testInstantB)
+            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.contentHtml), testInstantB),
         ))
 
       (task1 mergedWith task2) ==> Task.fromTaskEntity(
@@ -82,12 +84,13 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
+          lastContentModifierUserId = testUser.id,
           idOption = Some(123),
           lastUpdateTime = LastUpdateTime(
             timePerField = Map(
               ModelFields.TaskEntity.indentation -> testInstantA,
               ModelFields.TaskEntity.contentHtml -> testInstantB),
-            otherFieldsTime = None)
+            otherFieldsTime = None),
         ))
     }
     "withAppliedUpdateAndNewUpdateTime" - {
@@ -100,9 +103,10 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
+          lastContentModifierUserId = testUser.id,
           idOption = Some(123),
           lastUpdateTime =
-            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA)
+            LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA),
         ))
 
       val taskAfterUpdate = Task.fromTaskEntity(
@@ -114,12 +118,13 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
+          lastContentModifierUserId = testUser.id,
           idOption = Some(123),
           lastUpdateTime = LastUpdateTime(
             timePerField = Map(
               ModelFields.TaskEntity.indentation -> testInstantA,
               ModelFields.TaskEntity.contentHtml -> testInstantB),
-            otherFieldsTime = None)
+            otherFieldsTime = None),
         ))
 
       "with matching baseline" - {
@@ -141,13 +146,14 @@ object TaskTest extends TestSuite {
               collapsed = true,
               delayedUntil = Some(testDate),
               tags = Seq("B"),
+              lastContentModifierUserId = testUser.id,
               idOption = Some(123),
               lastUpdateTime = LastUpdateTime(
                 timePerField = Map(
                   ModelFields.TaskEntity.indentation -> testInstantA,
                   ModelFields.TaskEntity.tags -> testInstantC),
                 otherFieldsTime = None
-              )
+              ),
             ))
       }
     }
@@ -158,7 +164,8 @@ object TaskTest extends TestSuite {
         indentation = 1,
         collapsed = true,
         delayedUntil = Some(testDate),
-        tags = Seq("a"))
+        tags = Seq("a"),
+      )
       val task1B = Task.fromTaskEntity(
         TaskEntity(
           documentId = document.id,
@@ -168,7 +175,8 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
-          idOption = Some(task1A.id)
+          lastContentModifierUserId = testUser.id,
+          idOption = Some(task1A.id),
         ))
       val task1WithNewIndentation = Task.fromTaskEntity(
         TaskEntity(
@@ -179,7 +187,8 @@ object TaskTest extends TestSuite {
           collapsed = true,
           delayedUntil = Some(testDate),
           tags = Seq("a"),
-          idOption = Some(task1A.id)
+          lastContentModifierUserId = testUser.id,
+          idOption = Some(task1A.id),
         ))
       val task2 = Task.withRandomId(
         content = TextWithMarkup("a"),

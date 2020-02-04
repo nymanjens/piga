@@ -120,18 +120,21 @@ final class ApplicationStartHook @Inject()(
           documentId = documentIdA,
           userId = ApplicationStartHook.userIdAlice,
           orderToken = OrderToken.middle,
+          idOption = Some(5551),
         )),
       EntityModification.Add(
         DocumentPermissionAndPlacement(
           documentId = documentIdB,
           userId = ApplicationStartHook.userIdAlice,
           orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
+          idOption = Some(5552),
         )),
       EntityModification.Add(
         DocumentPermissionAndPlacement(
           documentId = documentIdA,
           userId = ApplicationStartHook.userIdBob,
           orderToken = OrderToken.middle,
+          idOption = Some(5553),
         )),
       EntityModification.Add(
         TaskEntity(
