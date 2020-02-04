@@ -55,6 +55,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
         for ((fakeField, time) <- jsTaskEntity.lastUpdateTime.timePerField)
           yield FakeJsTaskEntity.fakeToEntityFieldBiMap.get(fakeField) -> time
       }.toMap),
+      lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
     )
 
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
@@ -103,6 +104,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
         collapsed = toScala(Option(collapsed) getOrElse this.collapsed),
         delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
         tags = Option(tags) getOrElse this.tags,
+        lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
         idValue = this.id,
         lastUpdateTime = this.jsTaskEntity.lastUpdateTime,
       ))
@@ -133,6 +135,7 @@ object Task {
       collapsed = false,
       delayedUntil = None,
       tags = Seq(),
+      lastContentModifierUserId = -1,
       idValue = -1,
       lastUpdateTime = LastUpdateTime.neverUpdated,
     ))
@@ -154,6 +157,7 @@ object Task {
         collapsed = collapsed,
         delayedUntil = delayedUntil,
         tags = tags,
+        lastContentModifierUserId = -1, // TODO(feat-sharing): Fix this
         idValue = EntityModification.generateRandomId(),
         lastUpdateTime = LastUpdateTime.neverUpdated,
       ))
@@ -168,6 +172,7 @@ object Task {
         collapsed = taskEntity.collapsed,
         delayedUntil = taskEntity.delayedUntil,
         tags = taskEntity.tags,
+        lastContentModifierUserId = taskEntity.lastContentModifierUserId,
         idValue = taskEntity.id,
         lastUpdateTime = taskEntity.lastUpdateTime.copy(timePerField = {
           for ((entityField, time) <- taskEntity.lastUpdateTime.timePerField)
@@ -187,6 +192,7 @@ object Task {
       collapsed: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
+      lastContentModifierUserId: Long,
       idValue: Long,
       override val lastUpdateTime: LastUpdateTime,
   ) extends UpdatableEntity {
