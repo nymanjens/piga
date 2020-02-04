@@ -3,7 +3,7 @@ package app.models.access
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import app.models.document.DocumentEntity
-import app.models.document.AccessibleDocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import app.models.modification.EntityTypes
 import app.models.user.User
@@ -45,9 +45,9 @@ final class Module(
 }
 object Module {
   val secondaryIndexFunction: SecondaryIndexFunction = SecondaryIndexFunction({
-    case User.Type                     => Seq()
-    case DocumentEntity.Type           => Seq()
-    case AccessibleDocumentEntity.Type => Seq()
-    case TaskEntity.Type               => Seq(ModelFields.TaskEntity.documentId)
+    case User.Type                           => Seq()
+    case DocumentEntity.Type                 => Seq()
+    case DocumentPermissionAndPlacement.Type => Seq()
+    case TaskEntity.Type                     => Seq(ModelFields.TaskEntity.documentId)
   })
 }
