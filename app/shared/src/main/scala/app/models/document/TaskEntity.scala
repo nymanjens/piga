@@ -9,15 +9,16 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 
 import scala.collection.immutable.Seq
 
-case class TaskEntity(documentId: Long,
-                      contentHtml: String,
-                      orderToken: OrderToken,
-                      indentation: Int,
-                      collapsed: Boolean,
-                      delayedUntil: Option[LocalDateTime],
-                      tags: Seq[String],
-                      override val idOption: Option[Long] = None,
-                      override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
+case class TaskEntity(
+    documentId: Long,
+    contentHtml: String,
+    orderToken: OrderToken,
+    indentation: Int,
+    collapsed: Boolean,
+    delayedUntil: Option[LocalDateTime],
+    tags: Seq[String],
+    override val idOption: Option[Long] = None,
+    override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
 ) extends UpdatableEntity {
 
   override def withId(id: Long) = copy(idOption = Some(id))

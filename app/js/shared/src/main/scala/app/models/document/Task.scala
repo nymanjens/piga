@@ -179,15 +179,16 @@ object Task {
     * Fake entity that provides a way to re-use UpdatableEntity logic without converting `TextWithMarkup` into
     * `String`.
     */
-  private case class FakeJsTaskEntity(documentId: Long,
-                                      content: TextWithMarkup,
-                                      orderToken: OrderToken,
-                                      indentation: Int,
-                                      collapsed: Boolean,
-                                      delayedUntil: Option[LocalDateTime],
-                                      tags: Seq[String],
-                                      idValue: Long,
-                                      override val lastUpdateTime: LastUpdateTime,
+  private case class FakeJsTaskEntity(
+      documentId: Long,
+      content: TextWithMarkup,
+      orderToken: OrderToken,
+      indentation: Int,
+      collapsed: Boolean,
+      delayedUntil: Option[LocalDateTime],
+      tags: Seq[String],
+      idValue: Long,
+      override val lastUpdateTime: LastUpdateTime,
   ) extends UpdatableEntity {
     override def idOption: Option[Long] = Some(idValue)
     override def withId(id: Long) = copy(idValue = id)
