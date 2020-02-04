@@ -7,6 +7,7 @@ import hydro.common.OrderToken
 import hydro.common.ResourceFiles
 import app.models.access.JvmEntityAccess
 import app.models.document.DocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import hydro.models.modification.EntityModification
 import app.models.user.Users
@@ -85,12 +86,16 @@ final class ApplicationStartHook @Inject()(
     entityAccess.persistEntityModifications(
       EntityModification
         .createAddWithId(
-          1111,
+          ApplicationStartHook.userIdAdmin,
           Users.createUser(loginName = "admin", password = "a", name = "Admin", isAdmin = true)),
       EntityModification
-        .createAddWithId(2222, Users.createUser(loginName = "alice", password = "a", name = "Alice")),
+        .createAddWithId(
+          ApplicationStartHook.userIdAlice,
+          Users.createUser(loginName = "alice", password = "a", name = "Alice")),
       EntityModification
-        .createAddWithId(3333, Users.createUser(loginName = "bob", password = "b", name = "Bob"))
+        .createAddWithId(
+          ApplicationStartHook.userIdBob,
+          Users.createUser(loginName = "bob", password = "b", name = "Bob"))
     )
   }
 
@@ -102,14 +107,32 @@ final class ApplicationStartHook @Inject()(
     entityAccess.persistEntityModifications(
       EntityModification.Add(
         DocumentEntity(
-          name = "Test document A",
-          orderToken = OrderToken.middle,
-          idOption = Some(documentIdA))),
+          name = "Test document A (shared)",
+          idOption = Some(documentIdA),
+        )),
       EntityModification.Add(
         DocumentEntity(
           name = "Test document B",
+          idOption = Some(documentIdB),
+        )),
+      EntityModification.Add(
+        DocumentPermissionAndPlacement(
+          documentId = documentIdA,
+          userId = ApplicationStartHook.userIdAlice,
+          orderToken = OrderToken.middle,
+        )),
+      EntityModification.Add(
+        DocumentPermissionAndPlacement(
+          documentId = documentIdB,
+          userId = ApplicationStartHook.userIdAlice,
           orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
-          idOption = Some(documentIdB))),
+        )),
+      EntityModification.Add(
+        DocumentPermissionAndPlacement(
+          documentId = documentIdA,
+          userId = ApplicationStartHook.userIdBob,
+          orderToken = OrderToken.middle,
+        )),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,
@@ -119,7 +142,8 @@ final class ApplicationStartHook @Inject()(
           collapsed = true,
           delayedUntil = None,
           tags = Seq(),
-          idOption = Some(11)
+          lastContentModifierUserId = ApplicationStartHook.userIdBob,
+          idOption = Some(11),
         )),
       EntityModification.Add(
         TaskEntity(
@@ -130,7 +154,8 @@ final class ApplicationStartHook @Inject()(
           collapsed = false,
           delayedUntil = None,
           tags = Seq("indented"),
-          idOption = Some(22)
+          lastContentModifierUserId = ApplicationStartHook.userIdAlice,
+          idOption = Some(22),
         )),
       EntityModification.Add(
         TaskEntity(
@@ -141,7 +166,8 @@ final class ApplicationStartHook @Inject()(
           collapsed = false,
           delayedUntil = None,
           tags = Seq(),
-          idOption = Some(33)
+          lastContentModifierUserId = ApplicationStartHook.userIdBob,
+          idOption = Some(33),
         )),
       EntityModification.Add(
         TaskEntity(
@@ -152,7 +178,8 @@ final class ApplicationStartHook @Inject()(
           collapsed = false,
           delayedUntil = None,
           tags = Seq(),
-          idOption = Some(44)
+          lastContentModifierUserId = ApplicationStartHook.userIdAlice,
+          idOption = Some(44),
         ))
     )
   }
@@ -190,4 +217,9 @@ final class ApplicationStartHook @Inject()(
       Paths.get(app.configuration.get[String](cfgPath))
     }
   }
+}
+object ApplicationStartHook {
+  private val userIdAdmin = 1111
+  private val userIdAlice = 2222
+  private val userIdBob = 3333
 }
