@@ -16,16 +16,10 @@ case class DocumentPermissionAndPlacement(
     orderToken: OrderToken,
     override val idOption: Option[Long] = None,
     override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
-) extends UpdatableEntity
-    with Ordered[DocumentPermissionAndPlacement] {
+) extends UpdatableEntity {
 
   override def withId(id: Long) = copy(idOption = Some(id))
   override def withLastUpdateTime(time: LastUpdateTime): Entity = copy(lastUpdateTime = time)
-
-  // **************** Ordered methods **************** //
-  override def compare(that: DocumentPermissionAndPlacement): Int = {
-    this.orderToken compare that.orderToken
-  }
 }
 object DocumentPermissionAndPlacement {
   implicit val Type: EntityType[DocumentPermissionAndPlacement] = EntityType()
