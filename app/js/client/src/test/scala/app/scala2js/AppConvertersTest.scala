@@ -4,6 +4,7 @@ import java.time.Month.MARCH
 
 import app.common.testing.TestObjects._
 import app.models.document.DocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import app.models.user.User
 import app.scala2js.AppConverters._
@@ -25,6 +26,9 @@ object AppConvertersTest extends TestSuite {
     }
     "DocumentEntityConverter: testToJsAndBack" - {
       testToJsAndBack[DocumentEntity](testDocumentEntity)
+    }
+    "DocumentPermissionAndPlacementConverter: testToJsAndBack" - {
+      testToJsAndBack[DocumentPermissionAndPlacement](testDocumentPermissionAndPlacement)
     }
     "TaskEntityConverter: testToJsAndBack" - {
       testToJsAndBack[TaskEntity](testTaskEntity)
