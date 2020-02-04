@@ -1,6 +1,7 @@
 package app.models.slick
 
 import app.models.document.DocumentEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
 import app.models.user.User
 import hydro.common.OrderToken
@@ -20,8 +21,13 @@ import scala.collection.immutable.Seq
 
 object SlickEntityTableDefs {
 
-  val all: Seq[SlickEntityTableDef[_]] =
-    Seq(UserDef, DocumentEntityDef, TaskEntityDef, EntityModificationEntityDef)
+  val all: Seq[SlickEntityTableDef[_]] = Seq(
+    UserDef,
+    DocumentEntityDef,
+    DocumentPermissionAndPlacementDef,
+    TaskEntityDef,
+    EntityModificationEntityDef,
+  )
 
   implicit object UserDef extends SlickEntityTableDef[User] {
 
@@ -49,11 +55,33 @@ object SlickEntityTableDefs {
     /* override */
     final class Table(tag: SlickTag) extends EntityTable[DocumentEntity](tag, tableName) {
       def name = column[String]("name")
+      def lastUpdateTime = column[LastUpdateTime]("lastUpdateTime")
+
+      override def * =
+        (name, id.?, lastUpdateTime) <> (DocumentEntity.tupled, DocumentEntity.unapply)
+    }
+  }
+  implicit object DocumentPermissionAndPlacementDef
+      extends SlickEntityTableDef[DocumentPermissionAndPlacement] {
+
+    override val tableName: String = "DOCUMENT_PERMISSION_AND_PLACEMENTS"
+    override def table(tag: SlickTag): Table = new Table(tag)
+
+    /* override */
+    final class Table(tag: SlickTag) extends EntityTable[DocumentPermissionAndPlacement](tag, tableName) {
+      def documentId = column[Long]("documentId")
+      def userId = column[Long]("userId")
       def orderToken = column[OrderToken]("orderToken")
       def lastUpdateTime = column[LastUpdateTime]("lastUpdateTime")
 
       override def * =
-        (name, orderToken, id.?, lastUpdateTime) <> (DocumentEntity.tupled, DocumentEntity.unapply)
+        (
+          documentId,
+          userId,
+          orderToken,
+          id.?,
+          lastUpdateTime,
+        ) <> (DocumentPermissionAndPlacement.tupled, DocumentPermissionAndPlacement.unapply)
     }
   }
 
@@ -75,6 +103,7 @@ object SlickEntityTableDefs {
       def collapsed = column[Boolean]("collapsed")
       def delayedUntil = column[Option[LocalDateTime]]("delayedUntil")
       def tags = column[Seq[String]]("tagsString")(tagsSeqToStringMapper)
+      def lastContentModifierUserId = column[Long]("lastContentModifierUserId")
       def lastUpdateTime = column[LastUpdateTime]("lastUpdateTime")
 
       override def * =
@@ -86,8 +115,10 @@ object SlickEntityTableDefs {
           collapsed,
           delayedUntil,
           tags,
+          lastContentModifierUserId,
           id.?,
-          lastUpdateTime) <> (TaskEntity.tupled, TaskEntity.unapply)
+          lastUpdateTime,
+        ) <> (TaskEntity.tupled, TaskEntity.unapply)
     }
   }
 }
