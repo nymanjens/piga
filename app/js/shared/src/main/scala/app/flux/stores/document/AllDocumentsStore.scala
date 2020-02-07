@@ -5,6 +5,7 @@ import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import app.common.document.UserDocument
 import app.flux.action.AppActions.AddEmptyDocument
+import app.flux.action.AppActions.RemoveDocument
 import app.flux.action.AppActions.UpdateDocuments
 import app.flux.stores.document.AllDocumentsStore.State
 import app.models.access.ModelFields
@@ -79,10 +80,7 @@ final class AllDocumentsStore(
                 }
 
                 val permissionAndPlacementUpdate = {
-                  val permissionAndPlacement = await(entityAccess
-                    .newQuery[DocumentPermissionAndPlacement]()
-                    .filter(ModelFields.DocumentPermissionAndPlacement.documentId === userDocument.documentId)
-                    .findOne(ModelFields.DocumentPermissionAndPlacement.userId === user.id)).get
+                  val permissionAndPlacement = await(fetchPermissionAndPlacement(userDocument))
                   val newPermissionAndPlacement =
                     permissionAndPlacement.copy(orderToken = userDocument.orderToken)
                   if (permissionAndPlacement == newPermissionAndPlacement) {
@@ -100,8 +98,18 @@ final class AllDocumentsStore(
         entityAccess.persistModifications(updates)
       }
 
-//    case RemoveDocument(existingDocument) =>
-//      entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
+    case RemoveDocument(existingDocument) =>
+      async {
+        // Don't delete DocumentEntity / TaskEntities, so that:
+        // - Shared documents don't get deleted
+        // - There is a way to restore accidentally deleted documents
+        //
+        // From the above, it follows that we should only delete this user's permission for this
+        // document, not the other users' permissions
+        val permissionAndPlacement = await(fetchPermissionAndPlacement(existingDocument))
+
+        entityAccess.persistModifications(EntityModification.createRemove(permissionAndPlacement))
+      }
   }
 
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
@@ -109,6 +117,15 @@ final class AllDocumentsStore(
   override def state: State = StateOptionStore.state match {
     case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments)
     case Some(s) => s
+  }
+
+  private def fetchPermissionAndPlacement(
+      userDocument: UserDocument): Future[DocumentPermissionAndPlacement] = async {
+    await(
+      entityAccess
+        .newQuery[DocumentPermissionAndPlacement]()
+        .filter(ModelFields.DocumentPermissionAndPlacement.documentId === userDocument.documentId)
+        .findOne(ModelFields.DocumentPermissionAndPlacement.userId === user.id)).get
   }
 
   private object StateOptionStore extends AsyncEntityDerivedStateStore[State] {

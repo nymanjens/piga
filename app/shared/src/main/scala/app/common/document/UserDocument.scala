@@ -22,6 +22,7 @@ case class UserDocument(
 )
 
 object UserDocument {
+
   def fetchAllForUser()(implicit user: User, entityAccess: EntityAccess): Future[Seq[UserDocument]] = async {
     val permissionAndPlacements = await(
       entityAccess
