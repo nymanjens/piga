@@ -36,7 +36,6 @@ final class AllDocumentsStore(
     getInitialDataResponse: GetInitialDataResponse,
 ) extends StateStore[State] {
 
-  // TODO(feat-sharing): Re-enable this
   dispatcher.registerPartialAsync {
     case AddEmptyDocument(name, orderToken) =>
       val document = DocumentEntity(name = name, idOption = Some(EntityModification.generateRandomId()))
