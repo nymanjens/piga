@@ -14,6 +14,7 @@ import scala.collection.immutable.Seq
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+// Note: The user is assumed to be the implicit user
 case class UserDocument(
     documentId: Long,
     name: String,

@@ -1,10 +1,13 @@
 package app.flux.stores.document
 
+import hydro.models.access.DbQueryImplicits._
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
 import app.common.document.UserDocument
 import app.flux.action.AppActions.AddEmptyDocument
+import app.flux.action.AppActions.UpdateDocuments
 import app.flux.stores.document.AllDocumentsStore.State
+import app.models.access.ModelFields
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
@@ -56,8 +59,47 @@ final class AllDocumentsStore(
             lastContentModifierUserId = user.id
           ))
       )
-//    case UpdateDocuments(documents) =>
-//      entityAccess.persistModifications(documents.map(d => EntityModification.createUpdateAllFields(d)))
+    case UpdateDocuments(userDocuments) =>
+      async {
+
+        val updateFutures =
+          for (userDocument <- userDocuments)
+            yield
+              async {
+                val documentEntityUpdate = {
+                  val documentEntity =
+                    await(entityAccess.newQuery[DocumentEntity]().findById(userDocument.documentId))
+                  val newDocumentEntity =
+                    documentEntity.copy(name = userDocument.name)
+                  if (documentEntity == newDocumentEntity) {
+                    None
+                  } else {
+                    Some(EntityModification.createUpdateAllFields(newDocumentEntity))
+                  }
+                }
+
+                val permissionAndPlacementUpdate = {
+                  val permissionAndPlacement = await(entityAccess
+                    .newQuery[DocumentPermissionAndPlacement]()
+                    .filter(ModelFields.DocumentPermissionAndPlacement.documentId === userDocument.documentId)
+                    .findOne(ModelFields.DocumentPermissionAndPlacement.userId === user.id)).get
+                  val newPermissionAndPlacement =
+                    permissionAndPlacement.copy(orderToken = userDocument.orderToken)
+                  if (permissionAndPlacement == newPermissionAndPlacement) {
+                    None
+                  } else {
+                    Some(EntityModification.createUpdateAllFields(newPermissionAndPlacement))
+                  }
+                }
+
+                Seq() ++ documentEntityUpdate ++ permissionAndPlacementUpdate
+              }
+
+        val updates = await(Future.sequence(updateFutures)).flatten
+
+        entityAccess.persistModifications(updates)
+      }
+
 //    case RemoveDocument(existingDocument) =>
 //      entityAccess.persistModifications(EntityModification.createRemove(existingDocument))
   }
