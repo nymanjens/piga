@@ -21,6 +21,7 @@ import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
+import app.models.user.User
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
 import hydro.common.GuavaReplacement.Splitter
@@ -49,12 +50,14 @@ import scala.concurrent.duration._
 import scala.scalajs.js
 import scala.util.Random
 
-private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAccess,
-                                                i18n: I18n,
-                                                clock: Clock,
-                                                documentSelectionStore: DocumentSelectionStore,
-                                                documentStoreFactory: DocumentStoreFactory,
-                                                editHistory: EditHistory,
+private[document] final class DesktopTaskEditor(
+    implicit entityAccess: EntityAccess,
+    user: User,
+    i18n: I18n,
+    clock: Clock,
+    documentSelectionStore: DocumentSelectionStore,
+    documentStoreFactory: DocumentStoreFactory,
+    editHistory: EditHistory,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
@@ -646,7 +649,7 @@ private[document] final class DesktopTaskEditor(implicit entityAccess: EntityAcc
               indentation = 0,
               collapsed = false,
               delayedUntil = None,
-              tags = Seq()
+              tags = Seq(),
             ))
 
       replaceWithHistory(

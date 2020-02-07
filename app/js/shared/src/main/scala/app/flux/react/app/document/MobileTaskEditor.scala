@@ -18,6 +18,7 @@ import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
+import app.models.user.User
 import hydro.common.I18n
 import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
@@ -48,12 +49,14 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[document] final class MobileTaskEditor(implicit entityAccess: EntityAccess,
-                                               i18n: I18n,
-                                               clock: Clock,
-                                               documentSelectionStore: DocumentSelectionStore,
-                                               documentStoreFactory: DocumentStoreFactory,
-                                               editHistory: EditHistory,
+private[document] final class MobileTaskEditor(
+    implicit entityAccess: EntityAccess,
+    user: User,
+    i18n: I18n,
+    clock: Clock,
+    documentSelectionStore: DocumentSelectionStore,
+    documentStoreFactory: DocumentStoreFactory,
+    editHistory: EditHistory,
 ) extends HydroReactComponent {
 
   // **************** API ****************//

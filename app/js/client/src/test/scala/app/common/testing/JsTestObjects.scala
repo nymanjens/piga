@@ -37,6 +37,7 @@ object JsTestObjects {
   ): Task = {
     require(content != null || contentString != null)
     implicit val document = newDocument()
+    implicit val user = TestObjects.testUser
 
     Task.withRandomId(
       content = Option(content) getOrElse TextWithMarkup(contentString),
@@ -44,7 +45,7 @@ object JsTestObjects {
       indentation = indentation,
       collapsed = collapsed,
       delayedUntil = delayedUntil,
-      tags = tags
+      tags = tags,
     )
   }
 

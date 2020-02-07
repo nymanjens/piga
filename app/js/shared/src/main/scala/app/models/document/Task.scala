@@ -4,6 +4,7 @@ import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import app.models.document.Task.FakeJsTaskEntity
+import app.models.user.User
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
@@ -147,7 +148,7 @@ object Task {
       collapsed: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
-  )(implicit document: Document): Task =
+  )(implicit document: Document, user: User): Task =
     new Task(
       Task.FakeJsTaskEntity(
         documentId = document.id,
@@ -157,7 +158,7 @@ object Task {
         collapsed = collapsed,
         delayedUntil = delayedUntil,
         tags = tags,
-        lastContentModifierUserId = -1, // TODO(feat-sharing): Fix this
+        lastContentModifierUserId = user.id,
         idValue = EntityModification.generateRandomId(),
         lastUpdateTime = LastUpdateTime.neverUpdated,
       ))

@@ -13,6 +13,7 @@ import scala.collection.immutable.Seq
 object TaskTest extends TestSuite {
 
   implicit private val clock = new TestModule().fakeClock
+  implicit private val user = new TestModule().testUser
 
   implicit private val document = newDocument()
 
