@@ -174,15 +174,14 @@ private[app] final class DocumentAdministration(
     }
 
     private def doAdd()(implicit state: State): Callback = LogExceptionsCallback {
-      // TODO(feat-sharing): Re-enable this
-//      dispatcher.dispatch(
-//        AppActions.AddEmptyDocument(
-//          name = i18n("app.untitled-document"),
-//          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
+      dispatcher.dispatch(
+        AppActions.AddEmptyDocument(
+          name = i18n("app.untitled-document"),
+          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
     private def doUpdateName(document: UserDocument, newName: String): Callback = LogExceptionsCallback {
-        // TODO(feat-sharing): Re-enable this
+      // TODO(feat-sharing): Re-enable this
 //      dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(name = newName))))
     }
 
