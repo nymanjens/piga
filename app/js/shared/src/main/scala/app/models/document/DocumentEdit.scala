@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
+import app.models.user.User
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
@@ -120,6 +121,7 @@ object DocumentEdit {
       collapsed: Option[FieldUpdate[Boolean]],
       delayedUntil: Option[FieldUpdate[Option[LocalDateTime]]],
       tags: Option[FieldUpdate[Seq[String]]],
+      lastContentModifierUserId: Option[FieldUpdate[Long]],
   ) {
     def reversed: MaskedTaskUpdate = MaskedTaskUpdate(
       taskId = taskId,
@@ -130,6 +132,7 @@ object DocumentEdit {
       collapsed = collapsed.map(_.reversed),
       delayedUntil = delayedUntil.map(_.reversed),
       tags = tags.map(_.reversed),
+      lastContentModifierUserId = lastContentModifierUserId.map(_.reversed),
     )
 
     def isNoOp: Boolean = this.reversed == this
@@ -158,6 +161,8 @@ object DocumentEdit {
         collapsed = mergeFieldUpdates(this.collapsed, that.collapsed),
         delayedUntil = mergeFieldUpdates(this.delayedUntil, that.delayedUntil),
         tags = mergeFieldUpdates(this.tags, that.tags),
+        lastContentModifierUserId =
+          mergeFieldUpdates(this.lastContentModifierUserId, that.lastContentModifierUserId)
       )
     }
   }
@@ -170,21 +175,25 @@ object DocumentEdit {
         collapsed: java.lang.Boolean = null,
         delayedUntil: Option[LocalDateTime] = null,
         tags: Seq[String] = null,
-    ): MaskedTaskUpdate = {
+    )(implicit user: User): MaskedTaskUpdate = {
       def ifUpdate[V](value: Any, currentValue: V): Option[FieldUpdate[V]] = value match {
         case null | -1      => None
         case `currentValue` => None
         case _              => Some(FieldUpdate(oldValue = currentValue, newValue = value.asInstanceOf[V]))
       }
+      val contentUpdate = ifUpdate(content, originalTask.content)
       MaskedTaskUpdate(
         taskId = originalTask.id,
         originalOrderToken = originalTask.orderToken,
-        content = ifUpdate(content, originalTask.content),
+        content = contentUpdate,
         orderToken = ifUpdate(orderToken, originalTask.orderToken),
         indentation = ifUpdate(indentation, originalTask.indentation),
         collapsed = ifUpdate(collapsed, originalTask.collapsed),
         delayedUntil = ifUpdate(delayedUntil, originalTask.delayedUntil),
         tags = ifUpdate(tags, originalTask.tags),
+        lastContentModifierUserId =
+          if (contentUpdate.isDefined) ifUpdate(user.id, originalTask.lastContentModifierUserId)
+          else None,
       )
     }
 

@@ -17,7 +17,8 @@ import scala.collection.immutable.Seq
 
 object DocumentEditTest extends TestSuite {
 
-  implicit private val clock = new TestModule().fakeClock
+  implicit private val fakeClock = new TestModule().fakeClock
+  implicit private val testUser = new TestModule().testUser
 
   private val taskF = newTask("Task F")
   private val taskG = newTask("Task G")
@@ -113,7 +114,7 @@ object DocumentEditTest extends TestSuite {
         DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit) ==> edit
       }
       "mergedWith" - {
-        clock.setNowInstant(FakeClock.defaultInstant.plusSeconds(60))
+        fakeClock.setNowInstant(FakeClock.defaultInstant.plusSeconds(60))
         val taskDAfterUpdate2 =
           taskD.withAppliedUpdateAndNewUpdateTime(
             MaskedTaskUpdate
@@ -157,6 +158,7 @@ object DocumentEditTest extends TestSuite {
           collapsed = None,
           delayedUntil = None,
           tags = None,
+          lastContentModifierUserId = None,
         )
       }
     }

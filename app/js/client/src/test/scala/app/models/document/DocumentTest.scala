@@ -16,7 +16,8 @@ import scala.collection.immutable.Seq
 
 object DocumentTest extends TestSuite {
 
-  implicit private val clock = new TestModule().fakeClock
+  implicit private val fakeClock = new TestModule().fakeClock
+  implicit private val testUser = new TestModule().testUser
 
   val taskBB = newTask("Task BB", orderToken = orderTokenB)
   val taskEE = newTask("Task EE", orderToken = orderTokenE)

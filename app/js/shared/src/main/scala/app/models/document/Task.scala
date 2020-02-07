@@ -30,6 +30,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   def collapsed: Boolean = jsTaskEntity.collapsed
   def delayedUntil: Option[LocalDateTime] = jsTaskEntity.delayedUntil
   def tags: Seq[String] = jsTaskEntity.tags
+  def lastContentModifierUserId: Long = jsTaskEntity.lastContentModifierUserId
 
   def contentString: String = content.contentString
 
@@ -39,7 +40,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     this.indentation == that.indentation &&
     this.collapsed == that.collapsed &&
     this.delayedUntil == that.delayedUntil &&
-    this.tags == that.tags
+    this.tags == that.tags &&
+    this.lastContentModifierUserId == that.lastContentModifierUserId
   }
 
   def toTaskEntity: TaskEntity =
@@ -51,12 +53,12 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       collapsed = jsTaskEntity.collapsed,
       delayedUntil = jsTaskEntity.delayedUntil,
       tags = jsTaskEntity.tags,
+      lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
       idOption = jsTaskEntity.idOption,
       lastUpdateTime = jsTaskEntity.lastUpdateTime.copy(timePerField = {
         for ((fakeField, time) <- jsTaskEntity.lastUpdateTime.timePerField)
           yield FakeJsTaskEntity.fakeToEntityFieldBiMap.get(fakeField) -> time
       }.toMap),
-      lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
     )
 
   def mergedWith(that: Task): Task = new Task(UpdatableEntity.merge(this.jsTaskEntity, that.jsTaskEntity))
@@ -80,6 +82,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     applyUpdate(maskedTaskUpdate.collapsed, FakeJsTaskEntity.Fields.collapsed)
     applyUpdate(maskedTaskUpdate.delayedUntil, FakeJsTaskEntity.Fields.delayedUntil)
     applyUpdate(maskedTaskUpdate.tags, FakeJsTaskEntity.Fields.tags)
+    applyUpdate(maskedTaskUpdate.lastContentModifierUserId, FakeJsTaskEntity.Fields.lastContentModifierUserId)
 
     require(fieldMask.nonEmpty, s"Empty fieldMask for maskedTaskUpdate: $maskedTaskUpdate")
     val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask.toVector)
@@ -215,6 +218,7 @@ object Task {
         .put(Fields.collapsed, ModelFields.TaskEntity.collapsed)
         .put(Fields.delayedUntil, ModelFields.TaskEntity.delayedUntil)
         .put(Fields.tags, ModelFields.TaskEntity.tags)
+        .put(Fields.lastContentModifierUserId, ModelFields.TaskEntity.lastContentModifierUserId)
         .build()
 
     object Fields {
@@ -238,6 +242,11 @@ object Task {
             _.delayedUntil,
             v => _.copy(delayedUntil = v))
       case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
+      case object lastContentModifierUserId
+          extends ModelField[Long, E](
+            "lastContentModifierUserId",
+            _.lastContentModifierUserId,
+            v => _.copy(lastContentModifierUserId = v))
     }
   }
 }
