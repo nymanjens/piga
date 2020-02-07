@@ -171,7 +171,8 @@ private[document] final class DesktopTaskEditor(
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
-                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")),
+                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
+                    ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user")),
                 VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
                 task.content.toVdomNode

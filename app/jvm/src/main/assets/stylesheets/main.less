@@ -124,8 +124,14 @@ ul.task-editor-base {
       background-color: #efeeee;
     }
 
+    &.modified-by-other-user {
+      color: #008000; // Green
+    }
     &.modification-pending {
       color: grey;
+      &.modified-by-other-user {
+        color: #00b000;
+      }
     }
 
     .tag {
