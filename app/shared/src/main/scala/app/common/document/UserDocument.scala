@@ -1,32 +1,24 @@
 package app.common.document
 
-import scala.collection.immutable.Seq
-
 import app.models.access.ModelFields
 import app.models.document.DocumentEntity
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.async.Async.async
-import scala.async.Async.await
-import hydro.models.access.DbQueryImplicits._
 import app.models.document.DocumentPermissionAndPlacement
 import app.models.user.User
-import hydro.common.GuavaReplacement
 import hydro.common.OrderToken
+import hydro.models.access.DbQueryImplicits._
 import hydro.models.access.EntityAccess
 
+import scala.async.Async.async
+import scala.async.Async.await
+import scala.collection.immutable.Seq
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 case class UserDocument(
     documentId: Long,
     name: String,
     orderToken: OrderToken,
-) extends Ordered[UserDocument] {
-
-  override def compare(that: UserDocument): Int = {
-    this.orderToken compare that.orderToken
-  }
-}
+)
 
 object UserDocument {
   def fetchAllForUser()(implicit user: User, entityAccess: EntityAccess): Future[Seq[UserDocument]] = async {
@@ -54,7 +46,7 @@ object UserDocument {
         )
       }
 
-    unsortedResult.sorted
+    unsortedResult.sortBy(_.orderToken)
   }
 
   private def uniqueIndex[K, V](iterable: Iterable[V])(keyMapper: V => K): Map[K, V] = {
