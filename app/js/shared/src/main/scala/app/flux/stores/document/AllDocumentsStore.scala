@@ -2,17 +2,17 @@ package app.flux.stores.document
 
 import app.api.ScalaJsApi.GetInitialDataResponse
 import app.api.ScalaJsApiClient
-import hydro.common.OrderToken
-import app.flux.action.AppActions._
+import app.common.document.UserDocument
 import app.flux.stores.document.AllDocumentsStore.State
 import app.models.document.DocumentEntity
-import app.models.document.TaskEntity
+import app.models.document.DocumentPermissionAndPlacement
+import app.models.user.User
 import hydro.common.time.Clock
-import hydro.models.modification.EntityModification
 import hydro.flux.action.Dispatcher
 import hydro.flux.stores.AsyncEntityDerivedStateStore
 import hydro.flux.stores.StateStore
 import hydro.models.access.JsEntityAccess
+import hydro.models.modification.EntityModification
 
 import scala.async.Async.async
 import scala.async.Async.await
@@ -20,11 +20,13 @@ import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class AllDocumentsStore(implicit dispatcher: Dispatcher,
-                              clock: Clock,
-                              scalaJsApiClient: ScalaJsApiClient,
-                              entityAccess: JsEntityAccess,
-                              getInitialDataResponse: GetInitialDataResponse,
+final class AllDocumentsStore(
+    implicit dispatcher: Dispatcher,
+    user: User,
+    clock: Clock,
+    scalaJsApiClient: ScalaJsApiClient,
+    entityAccess: JsEntityAccess,
+    getInitialDataResponse: GetInitialDataResponse,
 ) extends StateStore[State] {
 
   // TODO(feat-sharing): Re-enable this
@@ -55,28 +57,26 @@ final class AllDocumentsStore(implicit dispatcher: Dispatcher,
   StateOptionStore.register(() => AllDocumentsStore.this.invokeStateUpdateListeners())
 
   override def state: State = StateOptionStore.state match {
-    case None =>
-      null
-    // TODO(feat-sharing): Re-enable this
-//      State(allDocuments = getInitialDataResponse.allAccessibleDocuments) // TODO(feat-sharing): Make sure this is sorted
+    case None    => State(allDocuments = getInitialDataResponse.allAccessibleDocuments)
     case Some(s) => s
   }
 
   private object StateOptionStore extends AsyncEntityDerivedStateStore[State] {
 
     override protected def calculateState(): Future[State] = async {
-      val allDocuments = await(entityAccess.newQuery[DocumentEntity]().data())
-      State(allDocuments = allDocuments) // TODO(feat-sharing): Make sure this is sorted
+      val allDocuments = await(UserDocument.fetchAllForUser())
+      State(allDocuments = allDocuments)
     }
 
     override protected def modificationImpactsState(
         entityModification: EntityModification,
         state: State,
     ): Boolean =
-      entityModification.entityType == DocumentEntity.Type
+      entityModification.entityType == DocumentEntity.Type || entityModification.entityType == DocumentPermissionAndPlacement.Type
+
   }
 }
 
 object AllDocumentsStore {
-  case class State(allDocuments: Seq[DocumentEntity])
+  case class State(allDocuments: Seq[UserDocument])
 }

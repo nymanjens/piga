@@ -1,5 +1,6 @@
 package app.flux.react.app
 
+import app.common.document.UserDocument
 import app.flux.router.AppPages
 import app.flux.stores.document.AllDocumentsStore
 import app.models.document.DocumentEntity
@@ -30,7 +31,7 @@ private[app] final class Menu(
 
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(router: RouterContext)
-  protected case class State(allDocuments: Seq[DocumentEntity] = allDocumentsStore.state.allDocuments)
+  protected case class State(allDocuments: Seq[UserDocument] = allDocumentsStore.state.allDocuments)
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
@@ -38,7 +39,7 @@ private[app] final class Menu(
       sbadminMenu(
         menuItems = Seq(
           for (document <- state.allDocuments)
-            yield MenuItem(document.name, AppPages.TaskList(document.id)),
+            yield MenuItem(document.name, AppPages.TaskList(document.documentId)),
           Seq(
             MenuItem(
               i18n("app.document-administration.html"),
