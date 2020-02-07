@@ -181,20 +181,17 @@ private[app] final class DocumentAdministration(
     }
 
     private def doUpdateName(document: UserDocument, newName: String): Callback = LogExceptionsCallback {
-      // TODO(feat-sharing): Re-enable this
-//      dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(name = newName))))
+      dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(name = newName))))
     }
 
     private def doUpdateOrderToken(document: UserDocument, newOrderToken: OrderToken): Callback =
       LogExceptionsCallback {
-        // TODO(feat-sharing): Re-enable this
-//        dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
+        dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
       }
 
     private def doDelete(document: UserDocument): Callback = LogExceptionsCallback {
       if (dom.window.confirm(s"Are you sure you want to delete '${document.name}'")) {
-        // TODO(feat-sharing): Re-enable this
-//        dispatcher.dispatch(AppActions.RemoveDocument(document))
+        dispatcher.dispatch(AppActions.RemoveDocument(document))
       }
     }
 
@@ -204,8 +201,7 @@ private[app] final class DocumentAdministration(
           None
         } else {
           None
-          // TODO(feat-sharing): Re-enable this
-//          Some(state.allDocuments(index).orderToken)
+          Some(state.allDocuments(index).orderToken)
         }
       }
       OrderToken.middleBetween(getOption(index1), getOption(index2))
