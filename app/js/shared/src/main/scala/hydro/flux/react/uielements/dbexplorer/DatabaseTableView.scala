@@ -26,7 +26,7 @@ private[dbexplorer] final class DatabaseTableView(
   protected final class Backend(val $ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State) = logExceptions {
-      <.h2(props.entityType.toString)
+      <.h3(props.entityType.entityClass.getSimpleName)
     }
   }
 }

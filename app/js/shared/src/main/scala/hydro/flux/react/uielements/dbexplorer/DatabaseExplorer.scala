@@ -1,5 +1,6 @@
 package hydro.flux.react.uielements.dbexplorer
 
+import app.models.modification.EntityTypes
 import hydro.models.access.JsEntityAccess
 import hydro.common.I18n
 import hydro.flux.react.uielements.Bootstrap
@@ -32,7 +33,11 @@ final class DatabaseExplorer(
 
       <.span(
         pageHeader(router.currentPage),
-        Bootstrap.Row("Hello world")
+        (
+          for (entityType <- EntityTypes.all) yield {
+            Bootstrap.Row(databaseTableView(entityType))
+          }
+        ).toVdomArray
       )
     }
   }
