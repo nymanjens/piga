@@ -1,18 +1,19 @@
 package hydro.flux.react.uielements.dbexplorer
 
+import hydro.models.access.JsEntityAccess
 import hydro.common.I18n
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.PageHeader
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.collection.immutable.Seq
-
-final class DatabaseExplorer(implicit i18n: I18n, pageHeader: PageHeader)
-    extends HydroReactComponent.Stateless {
+final class DatabaseExplorer(
+    implicit i18n: I18n,
+    pageHeader: PageHeader,
+    databaseTableView: DatabaseTableView,
+) extends HydroReactComponent.Stateless {
 
   // **************** API ****************//
   def apply(router: RouterContext): VdomElement = {
