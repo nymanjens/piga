@@ -91,7 +91,7 @@ final class ApplicationStartHook @Inject()(
       EntityModification
         .createAddWithId(
           ApplicationStartHook.userIdAlice,
-          Users.createUser(loginName = "alice", password = "a", name = "Alice")),
+          Users.createUser(loginName = "alice", password = "a", name = "Alice", isAdmin = true)),
       EntityModification
         .createAddWithId(
           ApplicationStartHook.userIdBob,
