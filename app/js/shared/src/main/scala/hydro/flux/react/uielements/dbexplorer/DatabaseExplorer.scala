@@ -35,7 +35,10 @@ final class DatabaseExplorer(
         pageHeader(router.currentPage),
         (
           for (entityType <- EntityTypes.all) yield {
-            Bootstrap.Row(databaseTableView(entityType))
+            Bootstrap.Row(
+              ^.key := entityType.toString,
+              databaseTableView(entityType),
+            )
           }
         ).toVdomArray
       )
