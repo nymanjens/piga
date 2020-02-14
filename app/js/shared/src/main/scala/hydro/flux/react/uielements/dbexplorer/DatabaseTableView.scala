@@ -27,6 +27,7 @@ private[dbexplorer] final class DatabaseTableView(
 
     override def render(props: Props, state: State) = logExceptions {
       <.h3(props.entityType.entityClass.getSimpleName)
+      // Maybe use Table here
     }
   }
 }
