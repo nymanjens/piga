@@ -2,6 +2,7 @@ package hydro.flux.react.uielements.dbexplorer
 
 import hydro.common.JsLoggingUtils.logExceptions
 import hydro.flux.react.HydroReactComponent
+import hydro.flux.stores.DatabaseExplorerStoreFactory
 import hydro.models.access.JsEntityAccess
 import hydro.models.modification.EntityType
 import japgolly.scalajs.react._
@@ -9,6 +10,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 private[dbexplorer] final class DatabaseTableView(
     implicit jsEntityAccess: JsEntityAccess,
+    databaseExplorerStoreFactory: DatabaseExplorerStoreFactory,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
