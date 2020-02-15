@@ -75,36 +75,38 @@ object ModelFields {
       v => _.copy(lastContentModifierUserId = v))
   }
 
-  // **************** Field numbers **************** //
+  // **************** Field-related methods **************** //
+  private val allFields: Seq[ModelField.any] = Seq(
+    User.id,
+    User.loginName,
+    User.passwordHash,
+    User.name,
+    User.isAdmin,
+    DocumentEntity.id,
+    DocumentEntity.name,
+    DocumentPermissionAndPlacement.id,
+    DocumentPermissionAndPlacement.documentId,
+    DocumentPermissionAndPlacement.userId,
+    DocumentPermissionAndPlacement.orderToken,
+    TaskEntity.id,
+    TaskEntity.documentId,
+    TaskEntity.contentHtml,
+    TaskEntity.orderToken,
+    TaskEntity.indentation,
+    TaskEntity.collapsed,
+    TaskEntity.delayedUntil,
+    TaskEntity.tags,
+    TaskEntity.lastContentModifierUserId,
+  )
   private val fieldToNumberMap: ImmutableBiMap[ModelField.any, Int] =
     CollectionUtils.toBiMapWithStableIntKeys(
-      stableNameMapper = field => s"${field.entityType.entityClass.getSimpleName}$$${field.name}$$" ,
-      values = Seq(
-        User.id,
-        User.loginName,
-        User.passwordHash,
-        User.name,
-        User.isAdmin,
-        DocumentEntity.id,
-        DocumentEntity.name,
-        DocumentPermissionAndPlacement.id,
-        DocumentPermissionAndPlacement.documentId,
-        DocumentPermissionAndPlacement.userId,
-        DocumentPermissionAndPlacement.orderToken,
-        TaskEntity.id,
-        TaskEntity.documentId,
-        TaskEntity.contentHtml,
-        TaskEntity.orderToken,
-        TaskEntity.indentation,
-        TaskEntity.collapsed,
-        TaskEntity.delayedUntil,
-        TaskEntity.tags,
-        TaskEntity.lastContentModifierUserId,
-      )
+      stableNameMapper = field => s"${field.entityType.entityClass.getSimpleName}$$${field.name}$$",
+      values = allFields
     )
+
+  def allFieldsOfEntity(entityType: EntityType.any): Seq[ModelField.any] = {
+    allFields.filter(_.entityType == entityType).toVector
+  }
   def toNumber(field: ModelField.any): Int = fieldToNumberMap.get(field)
   def fromNumber(number: Int): ModelField.any = fieldToNumberMap.inverse().get(number)
-  def allFieldsOfEntity(entityType: EntityType.any): Seq[ModelField.any] = {
-    fieldToNumberMap.keySet.filter(_.entityType == entityType).toVector
-  }
 }
