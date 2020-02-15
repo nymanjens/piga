@@ -11,6 +11,7 @@ import hydro.models.modification.EntityType
 import app.models.user.User
 import app.models.user.Users
 import com.google.inject._
+import hydro.api.EntityPermissions
 import hydro.api.PicklableDbQuery
 import hydro.common.time.Clock
 import hydro.models.Entity
@@ -24,6 +25,7 @@ final class ScalaJsApiServerFactory @Inject()(
     implicit clock: Clock,
     entityAccess: JvmEntityAccess,
     i18n: PlayI18n,
+    entityPermissions: EntityPermissions,
 ) {
 
   def create()(implicit user: User): ScalaJsApi = new ScalaJsApi() {
@@ -41,8 +43,12 @@ final class ScalaJsApiServerFactory @Inject()(
       val nextUpdateToken: UpdateToken = toUpdateToken(clock.nowInstant)
       val entitiesMap: Map[EntityType.any, Seq[Entity]] = {
         types
-          .map(entityType => {
-            entityType -> entityAccess.newQuerySync()(entityType).data()
+          .map(entityType =>
+            entityType -> {
+              val allEntities = entityAccess.newQuerySync()(entityType).data()
+
+              // apply permissions filter
+              allEntities.filter(entityPermissions.isAllowedToRead)
           })
           .toMap
       }
@@ -53,7 +59,7 @@ final class ScalaJsApiServerFactory @Inject()(
     override def persistEntityModifications(modifications: Seq[EntityModification]): Unit = {
       // check permissions
       for (modification <- modifications) {
-        require(modification.entityType != User.Type, "Please modify users by calling upsertUser() instead")
+        entityPermissions.checkAllowedForWrite(modification)
       }
 
       entityAccess.persistEntityModificationsAsync(modifications) // Don't wait for it to finish
@@ -63,7 +69,10 @@ final class ScalaJsApiServerFactory @Inject()(
       def internal[E <: Entity] = {
         val query = dbQuery.toRegular.asInstanceOf[DbQuery[E]]
         implicit val entityType = query.entityType.asInstanceOf[EntityType[E]]
-        entityAccess.queryExecutor[E].data(query)
+        val allData = entityAccess.queryExecutor[E].data(query)
+
+        // apply permissions filter
+        allData.filter(entityPermissions.isAllowedToRead)
       }
       internal
     }
@@ -73,6 +82,8 @@ final class ScalaJsApiServerFactory @Inject()(
         val query = dbQuery.toRegular.asInstanceOf[DbQuery[E]]
         implicit val entityType = query.entityType.asInstanceOf[EntityType[E]]
         entityAccess.queryExecutor[E].count(query)
+
+        // Don't apply permissions filter, since only metadata is leaked
       }
       internal
     }
