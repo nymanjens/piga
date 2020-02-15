@@ -206,7 +206,8 @@ object Task {
   private object FakeJsTaskEntity {
     implicit val Type: EntityType[FakeJsTaskEntity] = EntityType()
 
-    val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
+    // This field is lazy because it depends on static values initialized later below
+    lazy val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
       ImmutableBiMap
         .builder[ModelField.any, ModelField.any]()
         .put(Fields.id, ModelFields.TaskEntity.id)
