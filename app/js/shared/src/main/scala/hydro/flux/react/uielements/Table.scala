@@ -23,7 +23,7 @@ object Table extends HydroReactComponent.Stateless {
       onToggleCollapsedExpanded: Option[() => Unit] = None,
       expandNumEntriesCallback: Option[Callback] = None,
       tableTitleExtra: VdomNode = null,
-      tableHeaders: Seq[VdomNode],
+      tableHeaders: Seq[VdomElement],
       tableRowDatas: Seq[TableRowData],
   )(implicit i18n: I18n): VdomElement = {
     component(
@@ -50,7 +50,7 @@ object Table extends HydroReactComponent.Stateless {
       onToggleCollapsedExpanded: Option[() => Unit],
       expandNumEntriesCallback: Option[Callback],
       tableTitleExtra: Option[VdomNode],
-      tableHeaders: Seq[VdomNode],
+      tableHeaders: Seq[VdomElement],
       tableRowDatas: Seq[TableRowData],
   )(implicit val i18n: I18n) {
     def colSpan: Int = tableHeaders.size
@@ -126,5 +126,5 @@ object Table extends HydroReactComponent.Stateless {
   }
 
   // **************** Public inner types ****************//
-  case class TableRowData(cells: Seq[VdomNode], deemphasize: Boolean = false)
+  case class TableRowData(cells: Seq[VdomElement], deemphasize: Boolean = false)
 }

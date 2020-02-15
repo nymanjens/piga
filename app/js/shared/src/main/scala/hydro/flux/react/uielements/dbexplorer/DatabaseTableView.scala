@@ -1,5 +1,6 @@
 package hydro.flux.react.uielements.dbexplorer
 
+import app.models.access.ModelFields
 import hydro.common.I18n
 import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.react.ReactVdomUtils.^^
@@ -43,6 +44,8 @@ private[dbexplorer] final class DatabaseTableView(
   protected final class Backend(val $ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State) = logExceptions {
+      implicit val _ = props
+      implicit val __ = state
       Table(
         title = props.entityType.entityClass.getSimpleName,
         tableClasses = Seq(),
@@ -56,7 +59,12 @@ private[dbexplorer] final class DatabaseTableView(
       )
     }
 
-    private def tableHeaders(): Seq[VdomNode] = Seq()
-    private def tableRowDatas(): Seq[TableRowData] = Seq()
+    private def tableHeaders()(implicit props: Props): Seq[VdomElement] = {
+      ModelFields.allFieldsOfEntity(props.entityType).map(field => <.th(field.name) : VdomElement)
+    }
+
+    private def tableRowDatas()(implicit props: Props, state: State): Seq[TableRowData] = {
+      Seq()
+    }
   }
 }
