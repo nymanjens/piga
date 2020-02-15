@@ -15,6 +15,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
+import scala.scalajs.js
 
 private[dbexplorer] final class DatabaseTableView(
     implicit jsEntityAccess: JsEntityAccess,
@@ -60,11 +61,28 @@ private[dbexplorer] final class DatabaseTableView(
     }
 
     private def tableHeaders()(implicit props: Props): Seq[VdomElement] = {
-      ModelFields.allFieldsOfEntity(props.entityType).map(field => <.th(field.name) : VdomElement)
+      ModelFields.allFieldsOfEntity(props.entityType).map(field => <.th(field.name): VdomElement)
     }
 
     private def tableRowDatas()(implicit props: Props, state: State): Seq[TableRowData] = {
-      Seq()
+      state.maybeStoreState match {
+        case Some(storeState) =>
+          for (entity <- storeState.allEntities) yield {
+            TableRowData(
+              cells = for (modelField <- ModelFields.allFieldsOfEntity(props.entityType)) yield {
+                <.td(modelField.getUnsafe(entity).toString): VdomElement
+              },
+              deemphasize = false,
+            )
+          }
+        case None =>
+          for (_ <- 0 until 10) yield {
+            TableRowData(
+              cells = Seq[VdomElement](
+                <.td(^.colSpan := tableHeaders().size, ^.style := js.Dictionary("color" -> "white"), "...")),
+              deemphasize = false)
+          }
+      }
     }
   }
 }

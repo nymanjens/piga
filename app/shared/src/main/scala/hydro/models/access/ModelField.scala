@@ -25,6 +25,7 @@ case class ModelField[V, E] private (
     fieldType: FieldType[V],
 ) {
   def get(entity: E): V = accessor(entity)
+  def getUnsafe(entity: Entity): V = get(entity.asInstanceOf[E])
   def set(entity: E, value: V): E = setter(value)(entity)
 }
 
@@ -48,6 +49,7 @@ object ModelField {
   }
 
   def forId[E <: Entity: EntityType](): ModelField[Long, E] = {
+    implicit val fieldType: FieldType[Long] = FieldType.LongType
     ModelField(
       name = "id",
       accessor = _.idOption getOrElse -1,
