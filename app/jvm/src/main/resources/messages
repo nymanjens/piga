@@ -77,6 +77,7 @@ app.error.invalid-username-or-password=Invalid username or password
 
 app.user-profile=User Profile
 app.user-administration=User Administration
+app.database-explorer=Database Explorer
 app.update-logs=Update Logs
 app.logout=Logout
 app.no-longer-logged-in=You are no longer logged in. Please refresh this page.

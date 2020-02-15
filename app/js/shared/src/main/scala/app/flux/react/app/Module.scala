@@ -12,6 +12,7 @@ import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.LocalDatabaseHasBeenLoadedStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
+import hydro.flux.stores.DatabaseExplorerStoreFactory
 import hydro.models.access.JsEntityAccess
 
 final class Module(implicit i18n: I18n,
@@ -23,6 +24,7 @@ final class Module(implicit i18n: I18n,
                    applicationIsOnlineStore: ApplicationIsOnlineStore,
                    localDatabaseHasBeenLoadedStore: LocalDatabaseHasBeenLoadedStore,
                    userStore: UserStore,
+                   databaseExplorerStoreFactory: DatabaseExplorerStoreFactory,
                    allDocumentsStore: AllDocumentsStore,
                    documentStoreFactory: DocumentStoreFactory,
                    documentSelectionStore: DocumentSelectionStore,
@@ -37,6 +39,7 @@ final class Module(implicit i18n: I18n,
   implicit private lazy val sbadminLayout = hydroUielementsModule.sbadminLayout
 
   private val userManagementModule = new hydro.flux.react.uielements.usermanagement.Module
+  private val databaseExplorerModule = new hydro.flux.react.uielements.dbexplorer.Module
   private val documentModule = new app.flux.react.app.document.Module
 
   implicit private lazy val menu: Menu = new Menu
@@ -45,6 +48,7 @@ final class Module(implicit i18n: I18n,
 
   implicit lazy val userProfile = userManagementModule.userProfile
   implicit lazy val userAdministration = userManagementModule.userAdministration
+  implicit lazy val databaseExplorer = databaseExplorerModule.databaseExplorer
 
   implicit lazy val taskList = documentModule.taskList
   implicit lazy val documentAdministration = documentModule.documentAdministration

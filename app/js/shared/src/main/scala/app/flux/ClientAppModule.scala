@@ -38,6 +38,7 @@ final class ClientAppModule(
   implicit private val applicationIsOnlineStore = fluxStoresModule.applicationIsOnlineStore
   implicit private val localDatabaseHasBeenLoadedStore = fluxStoresModule.localDatabaseHasBeenLoadedStore
   implicit private val userStore = fluxStoresModule.userStore
+  implicit private val databaseExplorerStoreFactory = fluxStoresModule.databaseExplorerStoreFactory
   implicit private val allDocumentsStore = fluxStoresModule.allDocumentsStore
   implicit private val documentStoreFactory = fluxStoresModule.documentStoreFactory
   implicit private val documentSelectionStore = fluxStoresModule.documentSelectionStore

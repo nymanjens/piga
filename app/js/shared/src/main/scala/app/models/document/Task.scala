@@ -15,7 +15,6 @@ import hydro.models.access.ModelField
 import hydro.models.Entity
 import hydro.models.UpdatableEntity
 import hydro.models.access.ModelField.FieldType
-import hydro.models.access.ModelField.IdModelField
 import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
@@ -207,7 +206,8 @@ object Task {
   private object FakeJsTaskEntity {
     implicit val Type: EntityType[FakeJsTaskEntity] = EntityType()
 
-    val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
+    // This field is lazy because it depends on static values initialized later below
+    lazy val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
       ImmutableBiMap
         .builder[ModelField.any, ModelField.any]()
         .put(Fields.id, ModelFields.TaskEntity.id)
@@ -225,28 +225,22 @@ object Task {
       private type E = FakeJsTaskEntity
       implicit private val textWithMarkupFieldType: FieldType[TextWithMarkup] = null
 
-      case object id extends IdModelField[E]
-      case object documentId
-          extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
-      case object content
-          extends ModelField[TextWithMarkup, E]("content", _.content, v => _.copy(content = v))
-      case object orderToken
-          extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
-      case object indentation
-          extends ModelField[Int, E]("indentation", _.indentation, v => _.copy(indentation = v))
-      case object collapsed
-          extends ModelField[Boolean, E]("collapsed", _.collapsed, v => _.copy(collapsed = v))
-      case object delayedUntil
-          extends ModelField[Option[LocalDateTime], E](
-            "delayedUntil",
-            _.delayedUntil,
-            v => _.copy(delayedUntil = v))
-      case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
-      case object lastContentModifierUserId
-          extends ModelField[Long, E](
-            "lastContentModifierUserId",
-            _.lastContentModifierUserId,
-            v => _.copy(lastContentModifierUserId = v))
+      val id = ModelField.forId[E]()
+      val documentId: ModelField[Long, E] =
+        ModelField("documentId", _.documentId, v => _.copy(documentId = v))
+      val content: ModelField[TextWithMarkup, E] = ModelField("content", _.content, v => _.copy(content = v))
+      val orderToken: ModelField[OrderToken, E] =
+        ModelField("orderToken", _.orderToken, v => _.copy(orderToken = v))
+      val indentation: ModelField[Int, E] =
+        ModelField("indentation", _.indentation, v => _.copy(indentation = v))
+      val collapsed: ModelField[Boolean, E] = ModelField("collapsed", _.collapsed, v => _.copy(collapsed = v))
+      val delayedUntil: ModelField[Option[LocalDateTime], E] =
+        ModelField("delayedUntil", _.delayedUntil, v => _.copy(delayedUntil = v))
+      val tags: ModelField[Seq[String], E] = ModelField("tags", _.tags, v => _.copy(tags = v))
+      val lastContentModifierUserId: ModelField[Long, E] = ModelField(
+        "lastContentModifierUserId",
+        _.lastContentModifierUserId,
+        v => _.copy(lastContentModifierUserId = v))
     }
   }
 }

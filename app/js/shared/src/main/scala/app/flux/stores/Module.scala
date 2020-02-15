@@ -13,6 +13,7 @@ import hydro.flux.stores.ApplicationIsOnlineStore
 import hydro.flux.stores.LocalDatabaseHasBeenLoadedStore
 import hydro.flux.stores.PageLoadingStateStore
 import hydro.flux.stores.UserStore
+import hydro.flux.stores.DatabaseExplorerStoreFactory
 import hydro.models.access.HydroPushSocketClientFactory
 import hydro.models.access.JsEntityAccess
 
@@ -28,6 +29,7 @@ final class Module(
 ) {
 
   implicit val userStore = new UserStore
+  implicit val databaseExplorerStoreFactory = new DatabaseExplorerStoreFactory
   implicit val allDocumentsStore = new AllDocumentsStore
   implicit val documentStoreFactory = new DocumentStoreFactory
   implicit val documentSelectionStore = new DocumentSelectionStore

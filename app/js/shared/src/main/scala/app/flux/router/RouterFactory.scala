@@ -66,6 +66,8 @@ private[router] final class RouterFactory(
 
           | staticRuleFromPage(StandardPages.UserAdministration, reactAppModule.userAdministration.apply)
 
+          | staticRuleFromPage(StandardPages.DatabaseExplorer, reactAppModule.databaseExplorer.apply)
+
           | staticRuleFromPage(AppPages.DocumentAdministration, reactAppModule.documentAdministration.apply)
 
           | dynamicRuleFromPage(_ / long.caseClass[AppPages.TaskList]) { (page, ctl) =>

@@ -12,7 +12,6 @@ import hydro.common.ScalaUtils
 import hydro.models.modification.EntityType
 import hydro.models.Entity
 import hydro.models.access.ModelField
-import hydro.models.access.ModelField.IdModelField
 
 import scala.collection.immutable.Seq
 
@@ -30,86 +29,84 @@ object ModelFields {
   object User {
     private type E = User
 
-    case object id extends IdModelField[E]
-    case object loginName extends ModelField[String, E]("loginName", _.loginName, v => _.copy(loginName = v))
-    case object passwordHash
-        extends ModelField[String, E]("passwordHash", _.passwordHash, v => _.copy(passwordHash = v))
-    case object name extends ModelField[String, E]("name", _.name, v => _.copy(name = v))
-    case object isAdmin extends ModelField[Boolean, E]("isAdmin", _.isAdmin, v => _.copy(isAdmin = v))
+    val id = ModelField.forId[E]()
+    val loginName: ModelField[String, E] = ModelField("loginName", _.loginName, v => _.copy(loginName = v))
+    val passwordHash: ModelField[String, E] =
+      ModelField("passwordHash", _.passwordHash, v => _.copy(passwordHash = v))
+    val name: ModelField[String, E] = ModelField("name", _.name, v => _.copy(name = v))
+    val isAdmin: ModelField[Boolean, E] = ModelField("isAdmin", _.isAdmin, v => _.copy(isAdmin = v))
   }
 
   object DocumentEntity {
     private type E = DocumentEntity
 
-    case object id extends IdModelField[E]
-    case object name extends ModelField[String, E]("name", _.name, v => _.copy(name = v))
+    val id = ModelField.forId[E]()
+    val name: ModelField[String, E] = ModelField("name", _.name, v => _.copy(name = v))
   }
 
   object DocumentPermissionAndPlacement {
     private type E = DocumentPermissionAndPlacement
 
-    case object id extends IdModelField[E]
-    case object documentId
-        extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
-    case object userId extends ModelField[Long, E]("userId", _.userId, v => _.copy(userId = v))
-    case object orderToken
-        extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
+    val id = ModelField.forId[E]()
+    val documentId: ModelField[Long, E] = ModelField("documentId", _.documentId, v => _.copy(documentId = v))
+    val userId: ModelField[Long, E] = ModelField("userId", _.userId, v => _.copy(userId = v))
+    val orderToken: ModelField[OrderToken, E] =
+      ModelField("orderToken", _.orderToken, v => _.copy(orderToken = v))
   }
 
   object TaskEntity {
     private type E = TaskEntity
 
-    case object id extends IdModelField[E]
-    case object documentId
-        extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
-    case object contentHtml
-        extends ModelField[String, E]("contentHtml", _.contentHtml, v => _.copy(contentHtml = v))
-    case object orderToken
-        extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
-    case object indentation
-        extends ModelField[Int, E]("indentation", _.indentation, v => _.copy(indentation = v))
-    case object collapsed extends ModelField[Boolean, E]("collapsed", _.collapsed, v => _.copy(collapsed = v))
-    case object delayedUntil
-        extends ModelField[Option[LocalDateTime], E](
-          "delayedUntil",
-          _.delayedUntil,
-          v => _.copy(delayedUntil = v))
-    case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
-    case object lastContentModifierUserId
-        extends ModelField[Long, E](
-          "lastContentModifierUserId",
-          _.lastContentModifierUserId,
-          v => _.copy(lastContentModifierUserId = v))
+    val id = ModelField.forId[E]()
+    val documentId: ModelField[Long, E] = ModelField("documentId", _.documentId, v => _.copy(documentId = v))
+    val contentHtml: ModelField[String, E] =
+      ModelField("contentHtml", _.contentHtml, v => _.copy(contentHtml = v))
+    val orderToken: ModelField[OrderToken, E] =
+      ModelField("orderToken", _.orderToken, v => _.copy(orderToken = v))
+    val indentation: ModelField[Int, E] =
+      ModelField("indentation", _.indentation, v => _.copy(indentation = v))
+    val collapsed: ModelField[Boolean, E] = ModelField("collapsed", _.collapsed, v => _.copy(collapsed = v))
+    val delayedUntil: ModelField[Option[LocalDateTime], E] =
+      ModelField("delayedUntil", _.delayedUntil, v => _.copy(delayedUntil = v))
+    val tags: ModelField[Seq[String], E] = ModelField("tags", _.tags, v => _.copy(tags = v))
+    val lastContentModifierUserId: ModelField[Long, E] = ModelField(
+      "lastContentModifierUserId",
+      _.lastContentModifierUserId,
+      v => _.copy(lastContentModifierUserId = v))
   }
 
-  // **************** Field numbers **************** //
+  // **************** Field-related methods **************** //
+  private val allFields: Seq[ModelField.any] = Seq(
+    User.id,
+    User.loginName,
+    User.passwordHash,
+    User.name,
+    User.isAdmin,
+    DocumentEntity.id,
+    DocumentEntity.name,
+    DocumentPermissionAndPlacement.id,
+    DocumentPermissionAndPlacement.documentId,
+    DocumentPermissionAndPlacement.userId,
+    DocumentPermissionAndPlacement.orderToken,
+    TaskEntity.id,
+    TaskEntity.documentId,
+    TaskEntity.contentHtml,
+    TaskEntity.orderToken,
+    TaskEntity.indentation,
+    TaskEntity.collapsed,
+    TaskEntity.delayedUntil,
+    TaskEntity.tags,
+    TaskEntity.lastContentModifierUserId,
+  )
   private val fieldToNumberMap: ImmutableBiMap[ModelField.any, Int] =
     CollectionUtils.toBiMapWithStableIntKeys(
-      stableNameMapper = field =>
-        ScalaUtils.stripRequiredPrefix(field.getClass.getName, prefix = ModelFields.getClass.getName),
-      values = Seq(
-        User.id,
-        User.loginName,
-        User.passwordHash,
-        User.name,
-        User.isAdmin,
-        DocumentEntity.id,
-        DocumentEntity.name,
-        DocumentPermissionAndPlacement.id,
-        DocumentPermissionAndPlacement.documentId,
-        DocumentPermissionAndPlacement.userId,
-        DocumentPermissionAndPlacement.orderToken,
-        TaskEntity.id,
-        TaskEntity.documentId,
-        TaskEntity.contentHtml,
-        TaskEntity.orderToken,
-        TaskEntity.indentation,
-        TaskEntity.collapsed,
-        TaskEntity.delayedUntil,
-        TaskEntity.tags,
-        TaskEntity.lastContentModifierUserId,
-      )
+      stableNameMapper = field => s"${field.entityType.entityClass.getSimpleName}$$${field.name}$$",
+      values = allFields
     )
+
+  def allFieldsOfEntity(entityType: EntityType.any): Seq[ModelField.any] = {
+    allFields.filter(_.entityType == entityType).toVector
+  }
   def toNumber(field: ModelField.any): Int = fieldToNumberMap.get(field)
   def fromNumber(number: Int): ModelField.any = fieldToNumberMap.inverse().get(number)
 }
