@@ -36,6 +36,6 @@ object Picklers extends StandardPicklers {
   override implicit val entityPickler: Pickler[Entity] = compositePickler[Entity]
     .addConcreteType[User]
     .addConcreteType[DocumentEntity]
-    .addConcreteType[DocumentPermissionAndPlacement]
     .addConcreteType[TaskEntity]
+    .addConcreteType[DocumentPermissionAndPlacement]
 }
