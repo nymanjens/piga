@@ -287,15 +287,6 @@ object TextWithMarkup {
   }
 
   // **************** public inner types **************** //
-  private case class Part(text: String, formatting: Formatting = Formatting.none) {
-
-    def sub(beginOffset: Int, endOffset: Int = -1): Part =
-      copy(
-        text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset))
-
-    def +(thatText: String): Part = copy(text = this.text + thatText)
-  }
-
   case class Formatting(
       bold: Boolean = false,
       italic: Boolean = false,
@@ -308,6 +299,15 @@ object TextWithMarkup {
   }
 
   // **************** private inner types **************** //
+  private case class Part(text: String, formatting: Formatting = Formatting.none) {
+
+    def sub(beginOffset: Int, endOffset: Int = -1): Part =
+      copy(
+        text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset))
+
+    def +(thatText: String): Part = copy(text = this.text + thatText)
+  }
+
   private[TextWithMarkup] abstract class FormattingOption[T] {
     def getValue(part: Part): T
     override def toString: String = getClass.getSimpleName
