@@ -1210,7 +1210,7 @@ private[document] final class DesktopTaskEditor(
             indentationRelativeToCurrent = 0))
       }
     }
-    Replacement(partsBuilder.toVector)
+    if (partsBuilder.nonEmpty) Replacement(partsBuilder.toVector) else Replacement.empty
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
