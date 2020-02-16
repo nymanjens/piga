@@ -21,6 +21,7 @@ class PicklersTest extends HookedSpecification {
   "EntityModification" in {
     testPickleAndUnpickle[EntityModification](EntityModification.Add(testTaskEntity))
     testPickleAndUnpickle[EntityModification](EntityModification.Add(testDocumentEntity))
+    testPickleAndUnpickle[EntityModification](EntityModification.Add(testDocumentPermissionAndPlacement))
   }
 
   "GetInitialDataResponse" in {

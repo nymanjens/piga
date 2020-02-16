@@ -2,6 +2,7 @@ package app.api
 
 import app.models.document.DocumentEntity
 import app.models.document.TaskEntity
+import app.models.document.DocumentPermissionAndPlacement
 import app.models.user.User
 import boopickle.Default._
 import hydro.api.StandardPicklers
@@ -35,5 +36,6 @@ object Picklers extends StandardPicklers {
   override implicit val entityPickler: Pickler[Entity] = compositePickler[Entity]
     .addConcreteType[User]
     .addConcreteType[DocumentEntity]
+    .addConcreteType[DocumentPermissionAndPlacement]
     .addConcreteType[TaskEntity]
 }

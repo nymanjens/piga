@@ -1,8 +1,8 @@
 package app.flux.react.app.document
 
+import app.common.document.UserDocument
 import app.flux.action.AppActions
 import app.flux.stores.document.AllDocumentsStore
-import app.models.document.DocumentEntity
 import hydro.common.I18n
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
 import hydro.common.JsLoggingUtils.logExceptions
@@ -45,22 +45,22 @@ private[app] final class DocumentAdministration(
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(router: RouterContext)
   protected case class State(
-      allDocuments: Seq[DocumentEntity] = Seq(),
+      allDocuments: Seq[UserDocument] = Seq(),
       documentIdToNameInput: Map[Long, String] = Map(),
   ) {
-    def nameInput(documentEntity: DocumentEntity): String = {
-      if (documentIdToNameInput contains documentEntity.id) {
-        documentIdToNameInput(documentEntity.id)
+    def nameInput(documentEntity: UserDocument): String = {
+      if (documentIdToNameInput contains documentEntity.documentId) {
+        documentIdToNameInput(documentEntity.documentId)
       } else {
         documentEntity.name
       }
     }
 
-    def isFirst(document: DocumentEntity): Boolean = allDocuments.headOption == Some(document)
-    def isLast(document: DocumentEntity): Boolean = allDocuments.lastOption == Some(document)
+    def isFirst(document: UserDocument): Boolean = allDocuments.headOption == Some(document)
+    def isLast(document: UserDocument): Boolean = allDocuments.lastOption == Some(document)
 
-    def withNameInput(document: DocumentEntity, newNameInputValue: String): State = {
-      copy(documentIdToNameInput = documentIdToNameInput + (document.id -> newNameInputValue))
+    def withNameInput(document: UserDocument, newNameInputValue: String): State = {
+      copy(documentIdToNameInput = documentIdToNameInput + (document.documentId -> newNameInputValue))
     }
   }
 
@@ -97,7 +97,7 @@ private[app] final class DocumentAdministration(
               <.form(
                 <.input(
                   ^.tpe := "text",
-                  ^.name := s"document-name-${document.id}",
+                  ^.name := s"document-name-${document.documentId}",
                   ^.value := state.nameInput(document),
                   ^^.ifThen(state.nameInput(document) != document.name) {
                     ^.className := "value-has-changed"
@@ -132,7 +132,7 @@ private[app] final class DocumentAdministration(
       )
     }
 
-    private def updateNameButton(document: DocumentEntity)(implicit state: State): VdomNode = {
+    private def updateNameButton(document: UserDocument)(implicit state: State): VdomNode = {
       Bootstrap.Button(Variant.info, Size.xs, tpe = "submit")(
         ^.disabled := state.nameInput(document) == document.name || state.nameInput(document).isEmpty,
         Bootstrap.FontAwesomeIcon("pencil"),
@@ -142,7 +142,7 @@ private[app] final class DocumentAdministration(
         }
       )
     }
-    private def upDownButtons(document: DocumentEntity)(implicit state: State): VdomNode = {
+    private def upDownButtons(document: UserDocument)(implicit state: State): VdomNode = {
       <.span(
         Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
           ^.disabled := state.isFirst(document),
@@ -166,7 +166,7 @@ private[app] final class DocumentAdministration(
       )
     }
 
-    private def deleteButton(document: DocumentEntity)(implicit state: State): VdomNode = {
+    private def deleteButton(document: UserDocument)(implicit state: State): VdomNode = {
       Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
         Bootstrap.FontAwesomeIcon("times"),
         ^.onClick --> doDelete(document)
@@ -180,16 +180,16 @@ private[app] final class DocumentAdministration(
           orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
     }
 
-    private def doUpdateName(document: DocumentEntity, newName: String): Callback = LogExceptionsCallback {
+    private def doUpdateName(document: UserDocument, newName: String): Callback = LogExceptionsCallback {
       dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(name = newName))))
     }
 
-    private def doUpdateOrderToken(document: DocumentEntity, newOrderToken: OrderToken): Callback =
+    private def doUpdateOrderToken(document: UserDocument, newOrderToken: OrderToken): Callback =
       LogExceptionsCallback {
         dispatcher.dispatch(AppActions.UpdateDocuments(Seq(document.copy(orderToken = newOrderToken))))
       }
 
-    private def doDelete(document: DocumentEntity): Callback = LogExceptionsCallback {
+    private def doDelete(document: UserDocument): Callback = LogExceptionsCallback {
       if (dom.window.confirm(s"Are you sure you want to delete '${document.name}'")) {
         dispatcher.dispatch(AppActions.RemoveDocument(document))
       }
@@ -200,6 +200,7 @@ private[app] final class DocumentAdministration(
         if (index < 0 || index >= state.allDocuments.size) {
           None
         } else {
+          None
           Some(state.allDocuments(index).orderToken)
         }
       }

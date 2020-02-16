@@ -57,7 +57,7 @@ private[router] final class RouterFactory(
           | staticRoute(RouterFactory.pathPrefix, StandardPages.Root)
             ~> redirectToPage(
               allDocumentsStore.state.allDocuments.headOption match {
-                case Some(firstDocument) => AppPages.TaskList(documentId = firstDocument.id)
+                case Some(firstDocument) => AppPages.TaskList(documentId = firstDocument.documentId)
                 case None                => AppPages.DocumentAdministration
               }
             )(Redirect.Replace)
@@ -65,6 +65,8 @@ private[router] final class RouterFactory(
           | staticRuleFromPage(StandardPages.UserProfile, reactAppModule.userProfile.apply)
 
           | staticRuleFromPage(StandardPages.UserAdministration, reactAppModule.userAdministration.apply)
+
+          | staticRuleFromPage(StandardPages.DatabaseExplorer, reactAppModule.databaseExplorer.apply)
 
           | staticRuleFromPage(AppPages.DocumentAdministration, reactAppModule.documentAdministration.apply)
 

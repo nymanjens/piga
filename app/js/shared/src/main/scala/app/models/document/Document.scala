@@ -20,13 +20,12 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class Document(val id: Long, val name: String, val orderToken: OrderToken, val tasks: Seq[Task]) {
+final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
 
   def withAppliedEdit(edit: DocumentEdit.WithUpdateTimes): Document =
     new Document(
       id,
       name,
-      orderToken,
       tasks = {
         def quickUpdate(taskIndex: Int, taskUpdate: Task) = {
           // Optimization
@@ -74,7 +73,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 
   def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
     require(id == documentEntity.id)
-    new Document(id = id, name = documentEntity.name, orderToken = documentEntity.orderToken, tasks = tasks)
+    new Document(id = id, name = documentEntity.name, tasks = tasks)
   }
 
   def maybeIndexOf(taskId: Long, orderTokenHint: OrderToken = null): Option[Int] = {
@@ -123,7 +122,7 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
 
   def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
-  def toDocumentEntity: DocumentEntity = DocumentEntity(name, orderToken = orderToken, idOption = Some(id))
+  def toDocumentEntity: DocumentEntity = DocumentEntity(name, idOption = Some(id))
 
   case class FamilyTreeRange(parentSeqIndex: Int, lastChildSeqIndex: Int) {
     def numberOfTasks: Int = lastChildSeqIndex - parentSeqIndex + 1
@@ -162,26 +161,22 @@ final class Document(val id: Long, val name: String, val orderToken: OrderToken,
   override def equals(o: scala.Any): Boolean = {
     o match {
       case that: Document =>
-        this.id == that.id && this.name == that.name && this.orderToken == that.orderToken && this.tasks == that.tasks
+        this.id == that.id && this.name == that.name && this.tasks == that.tasks
       case _ => false
     }
   }
-  override def hashCode: Int = Objects.hash(id.asInstanceOf[java.lang.Long], name, orderToken, tasks)
+  override def hashCode: Int = Objects.hash(id.asInstanceOf[java.lang.Long], name, tasks)
   override def toString: String = s"Document($id, $name, $tasks)"
 }
 object Document {
 
-  val nullInstance: Document = new Document(id = -1, name = "", orderToken = OrderToken.middle, tasks = Seq())
+  val nullInstance: Document = new Document(id = -1, name = "", tasks = Seq())
 
   def fromDocumentEntity(entity: DocumentEntity)(implicit entityAccess: JsEntityAccess): Future[Document] =
     async {
       val tasks = await(
         entityAccess.newQuery[TaskEntity]().filter(ModelFields.TaskEntity.documentId === entity.id).data())
-      new Document(
-        id = entity.id,
-        name = entity.name,
-        orderToken = entity.orderToken,
-        tasks = tasks.map(Task.fromTaskEntity).sorted)
+      new Document(id = entity.id, name = entity.name, tasks = tasks.map(Task.fromTaskEntity).sorted)
     }
 
   case class IndexedCursor(seqIndex: Int, offsetInTask: Int) extends Ordered[IndexedCursor] {

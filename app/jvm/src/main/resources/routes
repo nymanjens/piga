@@ -19,6 +19,7 @@ GET  /websocket/hydropush/:updateToken/  hydro.controllers.InternalApi.hydroPush
 
 # External API
 GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthCheck
+GET  /externalapi/dbschema/:appSecret/  hydro.controllers.StandardActions.databaseSchema(appSecret)
 
 # Auth
 GET  /login/                           hydro.controllers.Auth.login(returnTo ?= "/")

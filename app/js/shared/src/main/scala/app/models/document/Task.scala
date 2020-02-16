@@ -4,6 +4,7 @@ import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
 import app.models.document.Task.FakeJsTaskEntity
+import app.models.user.User
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
@@ -14,7 +15,6 @@ import hydro.models.access.ModelField
 import hydro.models.Entity
 import hydro.models.UpdatableEntity
 import hydro.models.access.ModelField.FieldType
-import hydro.models.access.ModelField.IdModelField
 import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
@@ -29,6 +29,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   def collapsed: Boolean = jsTaskEntity.collapsed
   def delayedUntil: Option[LocalDateTime] = jsTaskEntity.delayedUntil
   def tags: Seq[String] = jsTaskEntity.tags
+  def lastContentModifierUserId: Long = jsTaskEntity.lastContentModifierUserId
 
   def contentString: String = content.contentString
 
@@ -38,7 +39,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     this.indentation == that.indentation &&
     this.collapsed == that.collapsed &&
     this.delayedUntil == that.delayedUntil &&
-    this.tags == that.tags
+    this.tags == that.tags &&
+    this.lastContentModifierUserId == that.lastContentModifierUserId
   }
 
   def toTaskEntity: TaskEntity =
@@ -50,6 +52,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       collapsed = jsTaskEntity.collapsed,
       delayedUntil = jsTaskEntity.delayedUntil,
       tags = jsTaskEntity.tags,
+      lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
       idOption = jsTaskEntity.idOption,
       lastUpdateTime = jsTaskEntity.lastUpdateTime.copy(timePerField = {
         for ((fakeField, time) <- jsTaskEntity.lastUpdateTime.timePerField)
@@ -78,6 +81,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     applyUpdate(maskedTaskUpdate.collapsed, FakeJsTaskEntity.Fields.collapsed)
     applyUpdate(maskedTaskUpdate.delayedUntil, FakeJsTaskEntity.Fields.delayedUntil)
     applyUpdate(maskedTaskUpdate.tags, FakeJsTaskEntity.Fields.tags)
+    applyUpdate(maskedTaskUpdate.lastContentModifierUserId, FakeJsTaskEntity.Fields.lastContentModifierUserId)
 
     require(fieldMask.nonEmpty, s"Empty fieldMask for maskedTaskUpdate: $maskedTaskUpdate")
     val modification = EntityModification.createUpdate(taskWithUpdatedFields, fieldMask.toVector)
@@ -103,6 +107,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
         collapsed = toScala(Option(collapsed) getOrElse this.collapsed),
         delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
         tags = Option(tags) getOrElse this.tags,
+        lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
         idValue = this.id,
         lastUpdateTime = this.jsTaskEntity.lastUpdateTime,
       ))
@@ -133,6 +138,7 @@ object Task {
       collapsed = false,
       delayedUntil = None,
       tags = Seq(),
+      lastContentModifierUserId = -1,
       idValue = -1,
       lastUpdateTime = LastUpdateTime.neverUpdated,
     ))
@@ -144,7 +150,7 @@ object Task {
       collapsed: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
-  )(implicit document: Document): Task =
+  )(implicit document: Document, user: User): Task =
     new Task(
       Task.FakeJsTaskEntity(
         documentId = document.id,
@@ -154,6 +160,7 @@ object Task {
         collapsed = collapsed,
         delayedUntil = delayedUntil,
         tags = tags,
+        lastContentModifierUserId = user.id,
         idValue = EntityModification.generateRandomId(),
         lastUpdateTime = LastUpdateTime.neverUpdated,
       ))
@@ -168,6 +175,7 @@ object Task {
         collapsed = taskEntity.collapsed,
         delayedUntil = taskEntity.delayedUntil,
         tags = taskEntity.tags,
+        lastContentModifierUserId = taskEntity.lastContentModifierUserId,
         idValue = taskEntity.id,
         lastUpdateTime = taskEntity.lastUpdateTime.copy(timePerField = {
           for ((entityField, time) <- taskEntity.lastUpdateTime.timePerField)
@@ -187,6 +195,7 @@ object Task {
       collapsed: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
+      lastContentModifierUserId: Long,
       idValue: Long,
       override val lastUpdateTime: LastUpdateTime,
   ) extends UpdatableEntity {
@@ -197,7 +206,8 @@ object Task {
   private object FakeJsTaskEntity {
     implicit val Type: EntityType[FakeJsTaskEntity] = EntityType()
 
-    val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
+    // This field is lazy because it depends on static values initialized later below
+    lazy val fakeToEntityFieldBiMap: ImmutableBiMap[ModelField.any, ModelField.any] =
       ImmutableBiMap
         .builder[ModelField.any, ModelField.any]()
         .put(Fields.id, ModelFields.TaskEntity.id)
@@ -208,29 +218,29 @@ object Task {
         .put(Fields.collapsed, ModelFields.TaskEntity.collapsed)
         .put(Fields.delayedUntil, ModelFields.TaskEntity.delayedUntil)
         .put(Fields.tags, ModelFields.TaskEntity.tags)
+        .put(Fields.lastContentModifierUserId, ModelFields.TaskEntity.lastContentModifierUserId)
         .build()
 
     object Fields {
       private type E = FakeJsTaskEntity
       implicit private val textWithMarkupFieldType: FieldType[TextWithMarkup] = null
 
-      case object id extends IdModelField[E]
-      case object documentId
-          extends ModelField[Long, E]("documentId", _.documentId, v => _.copy(documentId = v))
-      case object content
-          extends ModelField[TextWithMarkup, E]("content", _.content, v => _.copy(content = v))
-      case object orderToken
-          extends ModelField[OrderToken, E]("orderToken", _.orderToken, v => _.copy(orderToken = v))
-      case object indentation
-          extends ModelField[Int, E]("indentation", _.indentation, v => _.copy(indentation = v))
-      case object collapsed
-          extends ModelField[Boolean, E]("collapsed", _.collapsed, v => _.copy(collapsed = v))
-      case object delayedUntil
-          extends ModelField[Option[LocalDateTime], E](
-            "delayedUntil",
-            _.delayedUntil,
-            v => _.copy(delayedUntil = v))
-      case object tags extends ModelField[Seq[String], E]("tags", _.tags, v => _.copy(tags = v))
+      val id = ModelField.forId[E]()
+      val documentId: ModelField[Long, E] =
+        ModelField("documentId", _.documentId, v => _.copy(documentId = v))
+      val content: ModelField[TextWithMarkup, E] = ModelField("content", _.content, v => _.copy(content = v))
+      val orderToken: ModelField[OrderToken, E] =
+        ModelField("orderToken", _.orderToken, v => _.copy(orderToken = v))
+      val indentation: ModelField[Int, E] =
+        ModelField("indentation", _.indentation, v => _.copy(indentation = v))
+      val collapsed: ModelField[Boolean, E] = ModelField("collapsed", _.collapsed, v => _.copy(collapsed = v))
+      val delayedUntil: ModelField[Option[LocalDateTime], E] =
+        ModelField("delayedUntil", _.delayedUntil, v => _.copy(delayedUntil = v))
+      val tags: ModelField[Seq[String], E] = ModelField("tags", _.tags, v => _.copy(tags = v))
+      val lastContentModifierUserId: ModelField[Long, E] = ModelField(
+        "lastContentModifierUserId",
+        _.lastContentModifierUserId,
+        v => _.copy(lastContentModifierUserId = v))
     }
   }
 }

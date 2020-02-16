@@ -28,12 +28,13 @@
     cursor: pointer;
   }
   .primary-title {
-    min-width: 246px;
+    min-width: 324px;
     float: left;
   }
   .secondary-title {
     font-weight: normal;
     padding-left: 20px;
+    color: #999;
   }
 }
 
@@ -124,8 +125,14 @@ ul.task-editor-base {
       background-color: #efeeee;
     }
 
+    &.modified-by-other-user {
+      color: #008000; // Green
+    }
     &.modification-pending {
       color: grey;
+      &.modified-by-other-user {
+        color: #00b000;
+      }
     }
 
     .tag {

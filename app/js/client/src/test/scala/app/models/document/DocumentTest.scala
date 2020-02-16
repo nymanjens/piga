@@ -16,7 +16,8 @@ import scala.collection.immutable.Seq
 
 object DocumentTest extends TestSuite {
 
-  implicit private val clock = new TestModule().fakeClock
+  implicit private val fakeClock = new TestModule().fakeClock
+  implicit private val testUser = new TestModule().testUser
 
   val taskBB = newTask("Task BB", orderToken = orderTokenB)
   val taskEE = newTask("Task EE", orderToken = orderTokenE)
@@ -122,17 +123,15 @@ object DocumentTest extends TestSuite {
     }
     "equals and hashCode" - {
       val documentA: AnyRef =
-        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskA))
+        new Document(id = 12873, name = "test document", tasks = Seq(taskA))
       val documentA2: AnyRef =
-        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskA))
+        new Document(id = 12873, name = "test document", tasks = Seq(taskA))
       val documentB: AnyRef =
-        new Document(id = 12873, name = "test document", orderTokenA, tasks = Seq(taskB))
+        new Document(id = 12873, name = "test document", tasks = Seq(taskB))
       val documentC: AnyRef =
-        new Document(id = 12873, name = "CCCCCCCCCCCCC", orderTokenA, tasks = Seq(taskA))
+        new Document(id = 12873, name = "CCCCCCCCCCCCC", tasks = Seq(taskA))
       val documentD: AnyRef =
-        new Document(id = 11111, name = "test document", orderTokenA, tasks = Seq(taskA))
-      val documentE: AnyRef =
-        new Document(id = 12873, name = "test document", orderTokenB, tasks = Seq(taskA))
+        new Document(id = 11111, name = "test document", tasks = Seq(taskA))
 
       documentA.hashCode() == documentA.asInstanceOf[Document].hashCode ==> true
       documentA == documentA2 ==> true
@@ -146,9 +145,6 @@ object DocumentTest extends TestSuite {
 
       documentA == documentD ==> false
       documentA.hashCode() == documentD.hashCode() ==> false
-
-      documentA == documentE ==> false
-      documentA.hashCode() == documentE.hashCode() ==> false
     }
     "maybeIndexOf" - {
       val document = newDocument(taskA, taskB, taskBB, taskC, taskD, taskE, taskEE)

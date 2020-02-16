@@ -17,6 +17,7 @@ case class TaskEntity(
     collapsed: Boolean,
     delayedUntil: Option[LocalDateTime],
     tags: Seq[String],
+    lastContentModifierUserId: Long,
     override val idOption: Option[Long] = None,
     override val lastUpdateTime: LastUpdateTime = LastUpdateTime.neverUpdated,
 ) extends UpdatableEntity {

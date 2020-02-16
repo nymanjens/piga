@@ -37,6 +37,7 @@ object JsTestObjects {
   ): Task = {
     require(content != null || contentString != null)
     implicit val document = newDocument()
+    implicit val user = TestObjects.testUser
 
     Task.withRandomId(
       content = Option(content) getOrElse TextWithMarkup(contentString),
@@ -44,10 +45,10 @@ object JsTestObjects {
       indentation = indentation,
       collapsed = collapsed,
       delayedUntil = delayedUntil,
-      tags = tags
+      tags = tags,
     )
   }
 
   def newDocument(tasks: Task*): Document =
-    new Document(id = 12873, name = "test document", orderToken = orderTokenA, tasks = Seq(tasks: _*))
+    new Document(id = 12873, name = "test document", tasks = Seq(tasks: _*))
 }

@@ -10,6 +10,7 @@ import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
+import app.models.user.User
 import hydro.common.OrderToken
 import utest._
 
@@ -18,7 +19,8 @@ import scala.collection.immutable.Seq
 object EditHistoryTest extends TestSuite {
 
   override def tests = TestSuite {
-    implicit val clock = new TestModule().fakeClock
+    implicit val fakeClock = new TestModule().fakeClock
+    implicit val testUser = new TestModule().testUser
     implicit val editHistory = new EditHistory
 
     "Only updates (non-mergable)" - {
@@ -110,8 +112,14 @@ object EditHistoryTest extends TestSuite {
     }
   }
 
-  private def addSameLineUpdateEdit(originalTask: Task, newContent: String, replacementString: String = "")(
-      implicit editHistory: EditHistory): DocumentEdit.MaskedTaskUpdate = {
+  private def addSameLineUpdateEdit(
+      originalTask: Task,
+      newContent: String,
+      replacementString: String = "",
+  )(
+      implicit editHistory: EditHistory,
+      user: User,
+  ): DocumentEdit.MaskedTaskUpdate = {
     val taskUpdate =
       MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
     editHistory.addEdit(
