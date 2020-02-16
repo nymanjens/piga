@@ -32,18 +32,25 @@ final class AppEntityPermissions @Inject()(
         modification.maybeEntity[TaskEntity] match {
           case Some(e) =>
             require(
-              documentToOwners.containsEntry(e.documentId, user.id),
-              s"$user is trying to edit a document (id = ${e.documentId}) that they don't own")
+              documentToOwners.containsEntry(e.documentId, user.id) ||
+                // The very first task in a document is created simultaneously with the document itself, so if there
+                // are no owners, allow an edit to happen
+                documentToOwners.get(e.documentId).isEmpty,
+              s"$user is trying to edit a document (id = ${e.documentId}) that they don't own"
+            )
           case None => // Removal by ID is expensive to check and requires the ID, which is very hard to guess
         }
 
       case DocumentEntity.Type =>
-        modification.maybeEntity[DocumentEntity] match {
-          case Some(e) =>
+        modification match {
+          case EntityModification.Add(_) => // Adding a document is fine
+          case EntityModification.Update(uncastEntity) =>
+            val e = uncastEntity.asInstanceOf[DocumentEntity]
             require(
               documentToOwners.containsEntry(e.id, user.id),
               s"$user is trying to edit a document (id = ${e.id}) that they don't own")
-          case None => // Removal by ID is expensive to check and requires the ID, which is very hard to guess
+          case EntityModification.Remove(_) =>
+          // Removal by ID is expensive to check and requires the ID, which is very hard to guess
         }
 
       case DocumentPermissionAndPlacement.Type =>
