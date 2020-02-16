@@ -20,7 +20,8 @@ final class AppEntityPermissions @Inject()(
     entityAccess: JvmEntityAccess,
 ) extends EntityPermissions {
 
-  @volatile private var documentToOwners: ImmutableMultimap[Long, Long] = recalculateDocumentToOwners()
+  // Initialize documentToOwners lazily, mainly to avoid test startup issues
+  @volatile private var _documentToOwners: ImmutableMultimap[Long, Long] = _
 
   entityAccess.entityModificationPublisher.subscribe(EntityModificationSubscriber)
 
@@ -99,14 +100,21 @@ final class AppEntityPermissions @Inject()(
     EntityPermissions.DefaultImpl.isAllowedToRead(entity) && isDocumentAccesssible
   }
 
-  private def recalculateDocumentToOwners(): ImmutableMultimap[Long, Long] = {
+  private def documentToOwners: ImmutableMultimap[Long, Long] = {
+    if (_documentToOwners == null) {
+      recalculateDocumentToOwners()
+    }
+    _documentToOwners
+  }
+
+  private def recalculateDocumentToOwners(): Unit = {
     val resultBuilder = ImmutableMultimap.builder[Long, Long]()
 
     for (permission <- entityAccess.newQuerySync[DocumentPermissionAndPlacement]().data()) {
       resultBuilder.put(permission.documentId, permission.userId)
     }
 
-    resultBuilder.build
+    _documentToOwners = resultBuilder.build
   }
 
   private object EntityModificationSubscriber extends Subscriber[EntityModificationsWithToken] {
@@ -116,9 +124,8 @@ final class AppEntityPermissions @Inject()(
     override def onNext(t: EntityModificationsWithToken): Unit = {
       for (modification <- t.modifications) {
         modification.entityType match {
-          case DocumentPermissionAndPlacement.Type =>
-            documentToOwners = recalculateDocumentToOwners()
-          case _ => // Do nothing
+          case DocumentPermissionAndPlacement.Type => recalculateDocumentToOwners()
+          case _                                   => // Do nothing
         }
       }
     }
