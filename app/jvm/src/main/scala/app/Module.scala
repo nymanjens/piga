@@ -1,4 +1,4 @@
-import app.api.ScalaJsApiModule
+import app.api.ApiModule
 import app.common.CommonModule
 import app.controllers.ControllersModule
 import app.models.ModelsModule
@@ -12,6 +12,6 @@ final class Module extends AbstractModule {
     install(new CommonModule)
     install(new ControllersModule)
     install(new ModelsModule)
-    install(new ScalaJsApiModule)
+    install(new ApiModule)
   }
 }
