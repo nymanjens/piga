@@ -1,9 +1,11 @@
 package app.common.testing
 
 import app.api.ApiModule
+import app.api.ScalaJsApiServerFactory
 import app.models.ModelsModule
 import app.models.access.JvmEntityAccess
 import com.google.inject._
+import hydro.api.EntityPermissions
 import hydro.common.testing.FakeClock
 import hydro.common.time._
 import hydro.common.PlayI18n
@@ -16,7 +18,8 @@ final class TestModule extends AbstractModule {
 
   override def configure() = {
     install(new ModelsModule)
-    install(new ApiModule)
+    bind(classOf[ScalaJsApiServerFactory])
+    bind(classOf[EntityPermissions]).toInstance(EntityPermissions.DefaultImpl)
     bindSingleton(classOf[Clock], classOf[FakeClock])
     bindSingleton(classOf[PlayI18n], classOf[FakePlayI18n])
     bind(classOf[I18n]).to(classOf[PlayI18n])
