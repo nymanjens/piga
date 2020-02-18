@@ -5,7 +5,8 @@ import java.lang.Math.abs
 import scala.async.Async.async
 import scala.async.Async.await
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import app.flux.react.app.document.DesktopKeyCombination._
+import hydro.common.DesktopKeyCombination._
+import hydro.common.DesktopKeyCombination
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.router.AppPages

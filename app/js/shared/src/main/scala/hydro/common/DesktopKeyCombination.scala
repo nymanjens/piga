@@ -1,14 +1,14 @@
-package app.flux.react.app.document
+package hydro.common
 
 import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 
-private[document] sealed trait DesktopKeyCombination {
+sealed trait DesktopKeyCombination {
   def ctrlOrMeta: Boolean
   def shift: Boolean
   def alt: Boolean
 }
-private[document] object DesktopKeyCombination {
+object DesktopKeyCombination {
 
   def fromEvent(event: SyntheticKeyboardEvent[_]): DesktopKeyCombination = {
     val ctrlOrMeta = event.ctrlKey || event.metaKey // TODO: Use the one or the other based on OS X / not OS X
@@ -38,14 +38,14 @@ private[document] object DesktopKeyCombination {
     }
   }
 
-  private[document] case class CharacterKey(
+  case class CharacterKey(
       character: Char,
       override val ctrlOrMeta: Boolean,
       override val shift: Boolean,
       override val alt: Boolean,
   ) extends DesktopKeyCombination
 
-  private[document] case class SpecialKey(
+  case class SpecialKey(
       specialKeyType: SpecialKeyType,
       override val ctrlOrMeta: Boolean,
       override val shift: Boolean,
