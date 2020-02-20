@@ -132,7 +132,7 @@ private[document] final class MobileTaskEditor(
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(isHighlighted)("highlighted") ++
-                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending")++
+                    ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user") ++
                     ifThenOption(isReadOnly)("read-only")),
                 ^.onClick --> selectTask(task),
