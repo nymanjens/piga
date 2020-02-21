@@ -120,6 +120,23 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     case _                      => Some(tasks(index))
   }
 
+  /**
+    * Returns the task at the given index, only if it exists and is not the child of a collapsed task.
+    *
+    * @param minExpandedIndentation The minimum indentation of which the caller is certain that it is not collapsed
+    */
+  def visibleTaskOption(index: Int, minExpandedIndentation: Int = -1): Option[Task] = {
+    tasksOption(index) filter { task =>
+      val ancestors =
+        for {
+          indentation <- ((task.indentation - 1) to (minExpandedIndentation + 1) by -1).toStream
+          parentIndex <- findRootParentIndex(index, rootParentIndentation = indentation)
+        } yield tasks(parentIndex)
+
+      ancestors.forall(!_.collapsed)
+    }
+  }
+
   def tasksIn(selection: IndexedSelection): Seq[Task] = for (i <- selection.seqIndices) yield tasks(i)
 
   def toDocumentEntity: DocumentEntity = DocumentEntity(name, idOption = Some(id))
@@ -128,17 +145,6 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     def numberOfTasks: Int = lastChildSeqIndex - parentSeqIndex + 1
   }
   def familyTreeRange(anyMemberSeqIndex: Int, rootParentIndentation: Int): Option[FamilyTreeRange] = {
-    def findRootParentIndex(seqIndex: Int): Option[Int] = {
-      var result = seqIndex
-      while (result >= 0 && tasks(result).indentation > rootParentIndentation) {
-        result -= 1
-      }
-      result match {
-        case -1                                                         => None
-        case index if tasks(index).indentation == rootParentIndentation => Some(index)
-        case _                                                          => None
-      }
-    }
     def findLastChildIndex(seqIndex: Int, parentIndentation: Int): Int = {
       var lastChildIndex = seqIndex
       while (tasksOption(lastChildIndex + 1).isDefined &&
@@ -150,11 +156,23 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
 
     for {
       task <- tasksOption(anyMemberSeqIndex)
-      parentIndex <- findRootParentIndex(anyMemberSeqIndex)
+      parentIndex <- findRootParentIndex(anyMemberSeqIndex, rootParentIndentation = rootParentIndentation)
     } yield
       FamilyTreeRange(
         parentIndex,
         findLastChildIndex(anyMemberSeqIndex, parentIndentation = tasks(parentIndex).indentation))
+  }
+
+  private def findRootParentIndex(seqIndex: Int, rootParentIndentation: Int): Option[Int] = {
+    var result = seqIndex
+    while (result >= 0 && tasks(result).indentation > rootParentIndentation) {
+      result -= 1
+    }
+    result match {
+      case -1                                                         => None
+      case index if tasks(index).indentation == rootParentIndentation => Some(index)
+      case _                                                          => None
+    }
   }
 
   // **************** Object methods **************** //
@@ -210,7 +228,7 @@ object Document {
           }
         case offset if offset > tasks(c.seqIndex).contentString.length =>
           if (c.seqIndex == tasks.length - 1) {
-            IndexedCursor(tasks.length - 1, tasks(tasks.length - 1).contentString.length)
+            IndexedCursor(tasks.length - 1, tasks.last.contentString.length)
           } else {
             fixOffset(IndexedCursor(c.seqIndex + 1, offset - tasks(c.seqIndex).contentString.length - 1))
           }
