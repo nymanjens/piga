@@ -159,6 +159,58 @@ object DocumentTest extends TestSuite {
       document.maybeIndexOf(taskEE.id, orderTokenHint) ==> Some(6)
       document.maybeIndexOf(taskF.id, orderTokenHint) ==> None
     }
+    "visibleTaskOption" - {
+      "Flat list" - {
+        val document = newDocument(
+          indentation(1, collapsed(taskA)),
+          indentation(1, taskB),
+          indentation(1, collapsed(taskC)),
+          indentation(1, taskD),
+          indentation(1, collapsed(taskE)))
+
+        for (minExpandedIndentation <- -1 to 3) {
+          document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
+          document.visibleTaskOption(1, minExpandedIndentation) ==> Some(document.tasks(1))
+          document.visibleTaskOption(2, minExpandedIndentation) ==> Some(document.tasks(2))
+          document.visibleTaskOption(3, minExpandedIndentation) ==> Some(document.tasks(3))
+          document.visibleTaskOption(4, minExpandedIndentation) ==> Some(document.tasks(4))
+        }
+      }
+      "Tree without bumps" - {
+        val document = newDocument(
+          indentation(0, taskA),
+          indentation(1, collapsed(taskB)),
+          indentation(2, taskC),
+          indentation(3, taskD),
+          indentation(0, collapsed(taskE)))
+
+        for (minExpandedIndentation <- -1 to 3) {
+          document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
+          document.visibleTaskOption(1, minExpandedIndentation) ==> Some(document.tasks(1))
+          document.visibleTaskOption(4, minExpandedIndentation) ==> Some(document.tasks(4))
+        }
+        for (minExpandedIndentation <- -1 to 0) {
+          document.visibleTaskOption(2, minExpandedIndentation) ==> None
+          document.visibleTaskOption(3, minExpandedIndentation) ==> None
+        }
+      }
+      "Tree with bump" - {
+        val document = newDocument(
+          indentation(0, collapsed(taskA)),
+          indentation(2, taskB),
+          indentation(1, taskC),
+          indentation(0, taskD),
+          indentation(1, taskE))
+
+        for (minExpandedIndentation <- -1 to 3) {
+          document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
+          document.visibleTaskOption(3, minExpandedIndentation) ==> Some(document.tasks(3))
+          document.visibleTaskOption(4, minExpandedIndentation) ==> Some(document.tasks(4))
+        }
+        document.visibleTaskOption(1, minExpandedIndentation = -1) ==> None
+        document.visibleTaskOption(2, minExpandedIndentation = -1) ==> None
+      }
+    }
     "familyTreeRange" - {
       "Flat list" - {
         val document = newDocument(
