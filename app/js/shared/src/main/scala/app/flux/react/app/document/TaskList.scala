@@ -14,12 +14,13 @@ import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-private[app] final class TaskList(implicit entityAccess: EntityAccess,
-                                  documentStoreFactory: DocumentStoreFactory,
-                                  i18n: I18n,
-                                  desktopTaskEditor: DesktopTaskEditor,
-                                  mobileTaskEditor: MobileTaskEditor,
-                                  pageHeader: PageHeader,
+private[app] final class TaskList(
+    implicit entityAccess: EntityAccess,
+    documentStoreFactory: DocumentStoreFactory,
+    i18n: I18n,
+    desktopTaskEditor: DesktopTaskEditor,
+    mobileTaskEditor: MobileTaskEditor,
+    pageHeader: PageHeader,
 ) extends HydroReactComponent {
 
   private val waitForFuture = new WaitForFuture[DocumentStore]
