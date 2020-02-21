@@ -1,6 +1,6 @@
 package app.flux.router
 
-import hydro.common.MobileUtils
+import hydro.common.BrowserUtils
 import hydro.common.I18n
 import app.flux.stores.document.AllDocumentsStore
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
@@ -73,7 +73,7 @@ private[router] final class RouterFactory(
           | dynamicRuleFromPage(_ / long.caseClass[AppPages.TaskList]) { (page, ctl) =>
             reactAppModule.taskList(
               page.documentId,
-              mobileOrTabletVersion = MobileUtils.isMobileOrTablet,
+              mobileOrTabletVersion = BrowserUtils.isMobileOrTablet,
               router = ctl)
           }
           | dynamicRuleFromPage(_ / long.caseClass[AppPages.MobileTaskList]) { (page, ctl) =>
