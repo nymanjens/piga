@@ -32,6 +32,7 @@ import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Annotations.visibleForTesting
 import hydro.common.Tags
 import hydro.common.time.Clock
+import hydro.common.BrowserUtils
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
@@ -356,6 +357,18 @@ private[document] final class DesktopTaskEditor(
             case SpecialKey(Delete, /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) => // Delete rest of line
               event.preventDefault()
               replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.toEndOfTask))
+
+            // Move cursor up/down
+            // Note: This is re-implementation of the default behavior only for Firefox because it behaves weirdly with
+            // indented tasks (as of early 2020)
+            case SpecialKey(ArrowDown, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ false)
+                if BrowserUtils.isFirefox =>
+              event.preventDefault()
+              moveCursorVertically(selection, direction = +1)
+            case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ false)
+                if BrowserUtils.isFirefox =>
+              event.preventDefault()
+              moveCursorVertically(selection, direction = -1)
 
             case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
               event.preventDefault()
@@ -908,6 +921,34 @@ private[document] final class DesktopTaskEditor(
           } catch {
             case _: CancelException => Callback.empty
           }
+      }
+    }
+
+    private def moveCursorVertically(
+        selectionBeforeEdit: IndexedSelection,
+        direction: Int,
+    )(implicit state: State): Callback = {
+      implicit val document = state.document
+      val selectionWithChildren = selectionBeforeEdit
+      val IndexedSelection(start, end) = selectionWithChildren
+
+      val newTaskIndex = {
+        val currentEdgeIndex = if (direction < 0) start.seqIndex else end.seqIndex
+        var indexCandidate = currentEdgeIndex + direction
+        def indexIsVisible(i: Int) =
+          document
+            .visibleTaskOption(i, minExpandedIndentation = document.tasks(currentEdgeIndex).indentation - 1)
+            .isDefined
+        while ((document.tasks.indices contains indexCandidate) && !indexIsVisible(indexCandidate)) {
+          indexCandidate += direction
+        }
+        indexCandidate
+      }
+
+      if (document.tasks.indices contains newTaskIndex) {
+        setSelection(IndexedSelection.atStartOfTask(newTaskIndex))
+      } else {
+        Callback.empty
       }
     }
 
