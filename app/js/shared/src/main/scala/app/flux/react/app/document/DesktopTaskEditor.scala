@@ -924,6 +924,8 @@ private[document] final class DesktopTaskEditor(
       }
     }
 
+    // TODO: Handle multi-line tasks. Note that it should work for the current task, but also the previous task
+    // TODO: Preserve horizontal positioning (use heuristic: 5 chars per indentation)
     private def moveCursorVertically(
         selectionBeforeEdit: IndexedSelection,
         direction: Int,
