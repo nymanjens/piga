@@ -1021,7 +1021,7 @@ private[document] final class DesktopTaskEditor(
           val currentChar = if (step > 0) taskContent.charAt(offsetInTask) else taskContent.charAt(nextOffset)
           currentChar match {
             case ' ' | '\f' | '\n' | '\r' | '\t' | '\u00A0' | '\u2028' | '\u2029' | '$' | '(' | ')' | '\'' |
-                '"' =>
+                '"' | '`' =>
               offsetInTask
             case _ => moveOffset(nextOffset, step)
           }
