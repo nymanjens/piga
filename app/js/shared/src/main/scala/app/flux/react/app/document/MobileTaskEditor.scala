@@ -326,21 +326,27 @@ private[document] final class MobileTaskEditor(
           .end
           .seqIndex
 
-      replaceWithHistory(
-        edit = DocumentEdit.Reversible(
-          addedTasks = Seq(Task.withRandomId(
-            content = TextWithMarkup.empty,
-            orderToken = OrderToken.middleBetween(
-              oldDocument.tasksOption(insertIndex).map(_.orderToken),
-              oldDocument.tasksOption(insertIndex + 1).map(_.orderToken)),
-            indentation = state.highlightedTask.indentation,
-            collapsed = false,
-            delayedUntil = None,
-            tags = Seq()
-          ))),
-        highlightedTaskIndexAfterEdit = insertIndex + 1,
-        focusHighlightedTaskAfterEdit = true,
-      )
+      for {
+        // Force edit mode
+        _ <- $.modState(state => state.copy(inEditMode = true))
+
+        __ <- replaceWithHistory(
+          edit = DocumentEdit.Reversible(
+            addedTasks = Seq(Task.withRandomId(
+              content = TextWithMarkup.empty,
+              orderToken = OrderToken.middleBetween(
+                oldDocument.tasksOption(insertIndex).map(_.orderToken),
+                oldDocument.tasksOption(insertIndex + 1).map(_.orderToken)),
+              indentation = state.highlightedTask.indentation,
+              collapsed = false,
+              delayedUntil = None,
+              tags = Seq()
+            ))),
+          highlightedTaskIndexAfterEdit = insertIndex + 1,
+          focusHighlightedTaskAfterEdit = true,
+        )
+      } yield (): Unit
+
     }
 
     private def toggleInEditMode(): Callback = {
