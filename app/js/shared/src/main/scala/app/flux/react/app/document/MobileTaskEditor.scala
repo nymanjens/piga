@@ -200,12 +200,12 @@ private[document] final class MobileTaskEditor(
       <.span(
         ^.className := "edit-mode-toggle",
         if (state.inEditMode) {
-          Bootstrap.Button(Variant.primary, Size.xs)(
+          Bootstrap.Button(Variant.default, Size.xs)(
             ^.onClick --> toggleInEditMode(),
             Bootstrap.FontAwesomeIcon("check"),
           )
         } else {
-          Bootstrap.Button(Variant.primary, Size.xs)(
+          Bootstrap.Button(Variant.default, Size.xs)(
             ^.onClick --> toggleInEditMode(),
             ^.disabled := !canBeEdited,
             Bootstrap.FontAwesomeIcon("pencil"),
