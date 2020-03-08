@@ -74,6 +74,7 @@ private[document] final class MobileTaskEditor(
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class Props(documentStore: DocumentStore, router: RouterContext)
   protected case class State(
+      inEditMode: Boolean = false,
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
       highlightedTaskIndex: Int = 0,
@@ -119,7 +120,13 @@ private[document] final class MobileTaskEditor(
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
               val isHighlighted = state.highlightedTaskIndex == taskIndex
-              val isReadOnly = !task.content.isPlainText || task.content.containsLink || !isHighlighted
+              val canBeEdited = task.content.isPlainText && !task.content.containsLink
+              val isReadOnly =
+                if (state.inEditMode) {
+                  !(canBeEdited && isHighlighted)
+                } else {
+                  true
+                }
 
               <.li(
                 ^.key := s"li-${task.id}",
@@ -149,6 +156,9 @@ private[document] final class MobileTaskEditor(
                 }.toVdomArray, {
                   if (isReadOnly) readonlyTask(task)
                   else plainTextInput(task)
+                },
+                <<.ifThen(isHighlighted) {
+                  editModeToggleButton(canBeEdited)
                 },
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
                   <.div(
@@ -183,6 +193,24 @@ private[document] final class MobileTaskEditor(
       <.span(
         ^.className := "readonly-task",
         task.content.toVdomNode,
+      )
+    }
+
+    private def editModeToggleButton(canBeEdited: Boolean)(implicit state: State): VdomNode = {
+      <.span(
+        ^.className := "edit-mode-toggle",
+        if (state.inEditMode) {
+          Bootstrap.Button(Variant.primary, Size.xs)(
+            ^.onClick --> toggleInEditMode(),
+            Bootstrap.FontAwesomeIcon("check"),
+          )
+        } else {
+          Bootstrap.Button(Variant.primary, Size.xs)(
+            ^.onClick --> toggleInEditMode(),
+            ^.disabled := !canBeEdited,
+            Bootstrap.FontAwesomeIcon("pencil"),
+          )
+        },
       )
     }
 
@@ -288,11 +316,6 @@ private[document] final class MobileTaskEditor(
       }
     }
 
-    private def preventDefault(event: SyntheticEvent[_]): Callback = {
-      event.preventDefault()
-      Callback.empty
-    }
-
     private def creatEmptyTaskUnderHighlighted()(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
@@ -318,6 +341,10 @@ private[document] final class MobileTaskEditor(
         highlightedTaskIndexAfterEdit = insertIndex + 1,
         focusHighlightedTaskAfterEdit = true,
       )
+    }
+
+    private def toggleInEditMode(): Callback = {
+      $.modState(state => state.copy(inEditMode = !state.inEditMode))
     }
 
     private def removeHighlightedTask()(implicit state: State, props: Props): Callback = {

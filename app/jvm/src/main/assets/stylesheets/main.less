@@ -208,14 +208,14 @@ ul.task-editor-base {
       &.read-only {
         .tag-holder { display: inline; }
         .readonly-task { padding-left: 3px; } // To allign with textarea padding
-        .collapsed-suffix { float: right; }
+        .collapsed-suffix, .edit-mode-toggle { float: right; }
       }
 
       &:not(.read-only) {
         display: flex;
 
         .tag-holder { display: block; }
-        .collapsed-suffix { display: block; }
+        .collapsed-suffix, .edit-mode-toggle { display: block; }
         textarea {
           flex-grow: 100;
           display: block;
