@@ -294,6 +294,10 @@ object Document {
     def endOffsetInTask(task: Task)(implicit document: Document): Int =
       if (task == document.tasks(end.seqIndex)) end.offsetInTask else task.contentString.length
 
+    def includeFullTasks()(implicit document: Document): IndexedSelection = {
+      IndexedSelection(start = start.toStartOfTask, end = end.toEndOfTask)
+    }
+
     def includeChildren(collapsedOnly: Boolean = false)(implicit document: Document): IndexedSelection = {
       val task = document.tasks(end.seqIndex)
 

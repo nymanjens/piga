@@ -198,7 +198,11 @@ private[document] final class DesktopTaskEditor(
     private def handleCopy(event: ReactEventFromInput): Callback = $.state.map[Unit] { implicit state =>
       event.preventDefault()
 
-      modifyEventClipboardData(event)
+      setEventClipboardData(
+        event,
+        selection =
+          IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+            IndexedSelection.nullInstance)
     }
 
     private def handleCut(event: ReactEventFromInput): Callback =
@@ -206,10 +210,10 @@ private[document] final class DesktopTaskEditor(
         $.props flatMap { implicit props =>
           event.preventDefault()
 
-          modifyEventClipboardData(event)
-
           val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
             IndexedSelection.nullInstance
+
+          setEventClipboardData(event, selection = selection)
 
           documentSelectionStore.setSelection(state.document.id, selection)
 
@@ -217,9 +221,8 @@ private[document] final class DesktopTaskEditor(
         }
       }
 
-    private def modifyEventClipboardData(event: ReactEventFromInput)(implicit state: State): Unit = {
-      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-        IndexedSelection.nullInstance
+    private def setEventClipboardData(event: ReactEventFromInput, selection: IndexedSelection)(
+        implicit state: State): Unit = {
       val document = state.document
 
       if (selection.start != selection.end) {
@@ -227,6 +230,17 @@ private[document] final class DesktopTaskEditor(
 
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/html", htmlText)
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.setData("text/plain", plainText)
+      }
+    }
+
+    private def setNavigatorClipboardData(selection: IndexedSelection)(implicit state: State): Unit = {
+      val document = state.document
+
+      if (selection.start != selection.end) {
+        val ClipboardData(htmlText, plainText) = convertToClipboardData(document, selection)
+
+        // TODO: Write htmlText
+        dom.window.navigator.asInstanceOf[js.Dynamic].clipboard.writeText(plainText)
       }
     }
 
@@ -381,6 +395,12 @@ private[document] final class DesktopTaskEditor(
                   indentation = zeroIfNegative(task.indentation + indentIncrease))
               }
 
+            // Copy whole task and its children (shift-copy)
+            case CharacterKey('C', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+              event.preventDefault()
+              setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
+              Callback.empty
+
             // Italic
             case CharacterKey('i', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
@@ -398,8 +418,7 @@ private[document] final class DesktopTaskEditor(
                 formattingAtStart = formatting)
 
             // Code font
-            case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) |
-                CharacterKey('C', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(code = value),
