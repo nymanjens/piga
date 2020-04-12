@@ -96,6 +96,7 @@ object BuildSettings {
     "react" -> "16.2.0",
     "react-dom" -> "16.2.0",
     "escape-html" -> "1.0.3",
+    "clipboard-polyfill" -> "2.8.6",
     "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/shared/src/main/npm-packages/global-mousetrap"}"
   )
 }

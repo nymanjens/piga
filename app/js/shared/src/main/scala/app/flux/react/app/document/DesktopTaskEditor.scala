@@ -2,11 +2,6 @@ package app.flux.react.app.document
 
 import java.lang.Math.abs
 
-import scala.async.Async.async
-import scala.async.Async.await
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import hydro.common.DesktopKeyCombination._
-import hydro.common.DesktopKeyCombination
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.router.AppPages
@@ -23,13 +18,15 @@ import app.models.document.Task
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import app.models.user.User
+import hydro.common.Annotations.visibleForTesting
+import hydro.common.DesktopKeyCombination
+import hydro.common.DesktopKeyCombination._
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
 import hydro.common.GuavaReplacement.Splitter
 import hydro.common.I18n
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.Annotations.visibleForTesting
 import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.BrowserUtils
@@ -38,17 +35,20 @@ import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
+import hydro.jsfacades.ClipboardPolyfill
 import hydro.models.access.EntityAccess
-import hydro.models.modification.EntityModification
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 
+import scala.async.Async.async
+import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.Random
 
@@ -239,8 +239,10 @@ private[document] final class DesktopTaskEditor(
       if (selection.start != selection.end) {
         val ClipboardData(htmlText, plainText) = convertToClipboardData(document, selection)
 
-        // TODO: Write htmlText
-        dom.window.navigator.asInstanceOf[js.Dynamic].clipboard.writeText(plainText)
+        val dt = new ClipboardPolyfill.DT()
+        dt.setData("text/html", htmlText)
+        dt.setData("text/plain", plainText)
+        ClipboardPolyfill.write(dt)
       }
     }
 
