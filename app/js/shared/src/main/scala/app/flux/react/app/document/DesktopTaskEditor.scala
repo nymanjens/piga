@@ -24,6 +24,7 @@ import hydro.common.DesktopKeyCombination._
 import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils._
 import hydro.common.GuavaReplacement.Splitter
+import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import hydro.common.I18n
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.ifThenOption
@@ -1183,36 +1184,41 @@ private[document] final class DesktopTaskEditor(
     }
 
     val IndexedSelection(start, end) = selection
-    val subtasks = document.tasks.zipWithIndex
-      .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
-      .map {
-        case (task, index) =>
-          Subtask(
-            task,
-            startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
-            endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length)
-      }
+    val subtasks: Seq[Subtask] =
+      document.tasks.zipWithIndex
+        .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
+        .map {
+          case (task, index) =>
+            Subtask(
+              task,
+              startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
+              endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length)
+        }
     ClipboardData(
       htmlText = {
-        val resultBuilder = StringBuilder.newBuilder
-        val baseIndentation = subtasks.map(_.indentation).min - 1
-        var lastIndentation = baseIndentation
-        for (subtask <- subtasks) {
-          for (i <- lastIndentation until subtask.indentation) {
-            resultBuilder.append("<ul>")
+        if (subtasks.size == 1) {
+          getOnlyElement(subtasks).content.toHtml
+        } else {
+          val resultBuilder = StringBuilder.newBuilder
+          val baseIndentation = subtasks.map(_.indentation).min - 1
+          var lastIndentation = baseIndentation
+          for (subtask <- subtasks) {
+            for (i <- lastIndentation until subtask.indentation) {
+              resultBuilder.append("<ul>")
+            }
+            for (i <- subtask.task.indentation until lastIndentation) {
+              resultBuilder.append("</ul>")
+            }
+            resultBuilder.append("<li>")
+            resultBuilder.append(subtask.content.toHtml)
+            resultBuilder.append("</li>")
+            lastIndentation = subtask.indentation
           }
-          for (i <- subtask.task.indentation until lastIndentation) {
+          for (i <- baseIndentation until lastIndentation) {
             resultBuilder.append("</ul>")
           }
-          resultBuilder.append("<li>")
-          resultBuilder.append(subtask.content.toHtml)
-          resultBuilder.append("</li>")
-          lastIndentation = subtask.indentation
+          resultBuilder.toString
         }
-        for (i <- baseIndentation until lastIndentation) {
-          resultBuilder.append("</ul>")
-        }
-        resultBuilder.toString
       },
       plainText = subtasks.map(_.content.contentString).mkString("\n")
     )
