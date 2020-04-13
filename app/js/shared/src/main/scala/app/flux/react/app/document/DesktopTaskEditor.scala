@@ -403,6 +403,14 @@ private[document] final class DesktopTaskEditor(
               setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
               Callback.empty
 
+            // Cut whole task and its children (shift-cut)
+            case CharacterKey('X', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+              event.preventDefault()
+
+              val fullSelection = selection.includeChildren().includeFullTasks()
+              setNavigatorClipboardData(selection = fullSelection)
+              removeTasks(fullSelection.seqIndices)
+
             // Italic
             case CharacterKey('i', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
