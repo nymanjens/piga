@@ -1,9 +1,6 @@
 package hydro.jsfacades
 
-import org.scalajs.dom.raw.Navigator
-
 import scala.scalajs.js
-import scala.scalajs.js.Promise
 import scala.scalajs.js.annotation.JSImport
 
 @JSImport("clipboard-polyfill", JSImport.Namespace)
@@ -11,7 +8,6 @@ import scala.scalajs.js.annotation.JSImport
 object ClipboardPolyfill extends js.Object {
   def write(dataTransfer: DT): Unit = js.native
   def writeText(text: String): Unit = js.native
-
 
   @js.native
   class DT extends js.Object {
