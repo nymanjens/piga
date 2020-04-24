@@ -638,6 +638,7 @@ private[document] final class DesktopTaskEditor(
 
       for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
         yield {
+          val replacesWholeTask = start.offsetInTask == 0 && end == end.toEndOfTask
           def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
             if (i == index) tags else TextWithMarkup.empty
           val newContent = ifIndexOrEmpty(0)(firstTask.content.sub(0, start.offsetInTask)) +
@@ -651,16 +652,20 @@ private[document] final class DesktopTaskEditor(
                 taskToUpdate,
                 content = newContent,
                 orderToken = newOrderToken,
-                indentation = newIndentation))
+                indentation = newIndentation,
+                collapsed =
+                  if (replacesWholeTask) taskToUpdate.collapsed && replacementPart.collapsed else null,
+                tags = if (replacesWholeTask) (taskToUpdate.tags ++ replacementPart.tags).distinct else null,
+              ))
           } else {
             addedTasks.append(
               Task.withRandomId(
                 content = newContent,
                 orderToken = newOrderToken,
                 indentation = newIndentation,
-                collapsed = false,
+                collapsed = replacementPart.collapsed,
                 delayedUntil = None,
-                tags = Seq(),
+                tags = replacementPart.tags,
               ))
           }
         }
