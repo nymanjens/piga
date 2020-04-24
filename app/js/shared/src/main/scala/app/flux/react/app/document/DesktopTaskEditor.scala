@@ -1266,11 +1266,11 @@ private[document] final class DesktopTaskEditor(
         false
       }
     }
-    def containsNodeWithPigaAttribute(nodes: Seq[dom.raw.Node]): Boolean = {
-      if (nodes.exists(hasPigaAttribute)) {
+    def containsNodeWithPigaAttribute(node: dom.raw.Node): Boolean = {
+      if (hasPigaAttribute(node)) {
         true
       } else {
-        nodes.exists(n => containsNodeWithPigaAttribute(children(n)))
+        children(node).exists(containsNodeWithPigaAttribute)
       }
     }
     def containsListItem(node: dom.raw.Node): Boolean = {
@@ -1283,8 +1283,8 @@ private[document] final class DesktopTaskEditor(
 
     val partsBuilder = mutable.Buffer[Replacement.Part]()
 
-    def addPastedText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
-      if (containsNodeWithPigaAttribute(nodes)) {
+    def addPastedText(rootNode: dom.raw.Node): Unit = {
+      def addPastedPigaText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
         if (nodes.exists(containsListItem)) { // Multiple tasks in potentially nested <ul>
           for (node <- nodes) {
             if (containsListItem(node)) {
@@ -1294,7 +1294,7 @@ private[document] final class DesktopTaskEditor(
                     TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
                     zeroIfNegative(nextRelativeIndentation)))
               } else {
-                addPastedText(
+                addPastedPigaText(
                   children(node),
                   nextRelativeIndentation =
                     if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
@@ -1307,13 +1307,20 @@ private[document] final class DesktopTaskEditor(
               TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
               zeroIfNegative(nextRelativeIndentation)))
         }
-      } else { // Not pasted from Piga
+      }
+      def addPastedNonPigaText(nodes: Seq[dom.raw.Node],
+                               nextRelativeIndentation: Int,
+                               insideListItem: Boolean): Unit = {
         val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
         def pushChildNodesWithoutLi(): Unit = {
           if (childNodesWithoutLi.nonEmpty) {
             val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting)
-            for (line <- parsedText.splitByNewlines()) {
-              partsBuilder.append(Replacement.Part(line, zeroIfNegative(nextRelativeIndentation)))
+            if (insideListItem) {
+              partsBuilder.append(Replacement.Part(parsedText, zeroIfNegative(nextRelativeIndentation)))
+            } else {
+              for (line <- parsedText.splitByNewlines()) {
+                partsBuilder.append(Replacement.Part(line, zeroIfNegative(nextRelativeIndentation)))
+              }
             }
             childNodesWithoutLi.clear()
           }
@@ -1322,24 +1329,23 @@ private[document] final class DesktopTaskEditor(
         for (node <- nodes) {
           if (containsListItem(node)) {
             pushChildNodesWithoutLi()
-            if (nodeIsLi(node)) {
-              partsBuilder.append(
-                Replacement.Part(
-                  TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
-                  zeroIfNegative(nextRelativeIndentation)))
-            } else {
-              addPastedText(
-                children(node),
-                nextRelativeIndentation =
-                  if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
-
-            }
+            addPastedNonPigaText(
+              children(node),
+              nextRelativeIndentation =
+                if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
+              insideListItem = true)
           } else {
             childNodesWithoutLi.append(node)
           }
         }
 
         pushChildNodesWithoutLi()
+      }
+
+      if (containsNodeWithPigaAttribute(rootNode)) {
+        addPastedPigaText(Seq(rootNode), nextRelativeIndentation = -1)
+      } else {
+        addPastedNonPigaText(Seq(rootNode), nextRelativeIndentation = -1, insideListItem = false)
       }
     }
 
@@ -1349,7 +1355,7 @@ private[document] final class DesktopTaskEditor(
         resultHolder.innerHTML = clipboardData.htmlText
         resultHolder
       }
-      addPastedText(Seq(htmlElement), nextRelativeIndentation = -1)
+      addPastedText(htmlElement)
     } else {
       Splitter.on('\n').split(clipboardData.plainText).foreach { line =>
         partsBuilder.append(

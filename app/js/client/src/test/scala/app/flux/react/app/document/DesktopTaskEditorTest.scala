@@ -203,17 +203,45 @@ object DesktopTaskEditorTest extends TestSuite {
           "single level" - {
             editor.clipboardStringToReplacement(
               asHtml(removeFormattingWhitespace("""
-             <ul>
-               <li>
-                 <p>a<br />b</p>
-                 <div>c</div>
-               </li>
-               <li>xyz</li>
-             </ul>
-            """)),
+                <ul>
+                  <li>
+                    <p>a<br />b</p>
+                    <div>c</div>
+                  </li>
+                  <li>xy<i>z</i></li>
+                </ul>
+              """)),
               baseFormatting = Formatting.none
             ) ==>
-              replacement(TextWithMarkup("a\nb\nc"), replacementPart("xyz"))
+              replacement(
+                TextWithMarkup("a\nb\nc"),
+                editor.Replacement.Part(TextWithMarkup("xy") + italic("z"), indentationRelativeToCurrent = 0),
+              )
+          }
+          "nested level" - {
+            editor.clipboardStringToReplacement(
+              asHtml(removeFormattingWhitespace("""
+                <ul>
+                  <li>abc</li>
+                  <ul>
+                    <li>def</li>
+                    <li>
+                      ghi
+                      <ul>
+                        <li>klm</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </ul>
+              """)),
+              baseFormatting = Formatting.none
+            ) ==>
+              replacement(
+                TextWithMarkup("abc"),
+                replacementPart("def", indentation = 1),
+                replacementPart("ghi", indentation = 1),
+                replacementPart("klm", indentation = 2),
+              )
           }
         }
         "inside and outside list tags" - {
