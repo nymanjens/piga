@@ -1178,9 +1178,17 @@ private[document] final class DesktopTaskEditor(
       document: Document,
       selection: IndexedSelection,
   ): ClipboardData = {
-    case class Subtask(task: Task, startOffset: Int, endOffset: Int) {
+    case class Subtask(private val task: Task, private val startOffset: Int, private val endOffset: Int) {
       def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
       def indentation: Int = task.indentation
+      def collapsed: Boolean = task.collapsed
+      def tagsString: String = {
+        if (startOffset == 0) {
+          task.tags.mkString(",")
+        } else {
+          ""
+        }
+      }
     }
 
     val IndexedSelection(start, end) = selection
@@ -1194,10 +1202,27 @@ private[document] final class DesktopTaskEditor(
               startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
               endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length)
         }
+    def tagsAttribute(subtask: Subtask): String = {
+      if (subtask.tagsString.nonEmpty) {
+        s""" piga-tags="${subtask.tagsString}""""
+      } else {
+        ""
+      }
+    }
+    def collapsedAttribute(subtask: Subtask): String = {
+      if (subtask.collapsed) {
+        s""" piga-collapsed="true""""
+      } else {
+        ""
+      }
+    }
+
     ClipboardData(
       htmlText = {
         if (subtasks.size == 1) {
-          getOnlyElement(subtasks).content.toHtml
+          val task = getOnlyElement(subtasks)
+          val innerHtml = task.content.toHtml
+          s"""<span piga="true"${tagsAttribute(task)}>$innerHtml</span>"""
         } else {
           val resultBuilder = StringBuilder.newBuilder
           val baseIndentation = subtasks.map(_.indentation).min - 1
@@ -1206,10 +1231,11 @@ private[document] final class DesktopTaskEditor(
             for (i <- lastIndentation until subtask.indentation) {
               resultBuilder.append("<ul>")
             }
-            for (i <- subtask.task.indentation until lastIndentation) {
+            for (i <- subtask.indentation until lastIndentation) {
               resultBuilder.append("</ul>")
             }
-            resultBuilder.append("<li>")
+            resultBuilder.append(
+              s"""<li piga="true"${collapsedAttribute(subtask)}${tagsAttribute(subtask)}>""")
             resultBuilder.append(subtask.content.toHtml)
             resultBuilder.append("</li>")
             lastIndentation = subtask.indentation
@@ -1228,6 +1254,21 @@ private[document] final class DesktopTaskEditor(
       clipboardData: ClipboardData,
       baseFormatting: Formatting,
   ): Replacement = {
+    def hasPigaAttribute(node: dom.raw.Node): Boolean = {
+      if (!js.isUndefined(node.asInstanceOf[js.Dynamic].hasAttributes) && node.hasAttributes()) {
+        val attribute = node.attributes.getNamedItem("piga")
+        attribute != null && attribute.value == "true"
+      } else {
+        false
+      }
+    }
+    def containsNodeWithPigaAttribute(nodes: Seq[dom.raw.Node]): Boolean = {
+      if (nodes.exists(hasPigaAttribute)) {
+        true
+      } else {
+        nodes.exists(n => containsNodeWithPigaAttribute(children(n)))
+      }
+    }
     def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
         true
@@ -1239,39 +1280,65 @@ private[document] final class DesktopTaskEditor(
     val partsBuilder = mutable.Buffer[Replacement.Part]()
 
     def addPastedText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
-      val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
-      def pushChildNodesWithoutLi(): Unit = {
-        if (childNodesWithoutLi.nonEmpty) {
-          val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi)
-          for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
-            partsBuilder.append(
-              Replacement.Part(TextWithMarkup(line, baseFormatting), zeroIfNegative(nextRelativeIndentation)))
+      if (containsNodeWithPigaAttribute(nodes)) {
+        if (nodes.exists(containsListItem)) { // Multiple tasks in potentially nested <ul>
+          for (node <- nodes) {
+            if (containsListItem(node)) {
+              if (nodeIsLi(node)) {
+                partsBuilder.append(
+                  Replacement.Part(
+                    TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
+                    zeroIfNegative(nextRelativeIndentation)))
+              } else {
+                addPastedText(
+                  children(node),
+                  nextRelativeIndentation =
+                    if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
+              }
+            }
           }
-          childNodesWithoutLi.clear()
+        } else { // this is a single line
+          partsBuilder.append(
+            Replacement.Part(
+              TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
+              zeroIfNegative(nextRelativeIndentation)))
         }
-      }
+      } else { // Not pasted from Piga
+        val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
+        def pushChildNodesWithoutLi(): Unit = {
+          if (childNodesWithoutLi.nonEmpty) {
+            val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi)
+            for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
+              partsBuilder.append(
+                Replacement
+                  .Part(TextWithMarkup(line, baseFormatting), zeroIfNegative(nextRelativeIndentation)))
+            }
+            childNodesWithoutLi.clear()
+          }
+        }
 
-      for (node <- nodes) {
-        if (containsListItem(node)) {
-          pushChildNodesWithoutLi()
-          if (nodeIsLi(node)) {
-            partsBuilder.append(
-              Replacement.Part(
-                TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
-                zeroIfNegative(nextRelativeIndentation)))
+        for (node <- nodes) {
+          if (containsListItem(node)) {
+            pushChildNodesWithoutLi()
+            if (nodeIsLi(node)) {
+              partsBuilder.append(
+                Replacement.Part(
+                  TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
+                  zeroIfNegative(nextRelativeIndentation)))
+            } else {
+              addPastedText(
+                children(node),
+                nextRelativeIndentation =
+                  if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
+
+            }
           } else {
-            addPastedText(
-              children(node),
-              nextRelativeIndentation =
-                if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
-
+            childNodesWithoutLi.append(node)
           }
-        } else {
-          childNodesWithoutLi.append(node)
         }
-      }
 
-      pushChildNodesWithoutLi()
+        pushChildNodesWithoutLi()
+      }
     }
 
     if (clipboardData.htmlText.nonEmpty) {

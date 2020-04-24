@@ -1,5 +1,6 @@
 package app.flux.react.app.document
 
+import scala.collection.immutable.Seq
 import app.common.testing.JsTestObjects._
 import app.common.testing.TestObjects._
 import app.models.document.Document.IndexedCursor
@@ -16,51 +17,90 @@ object DesktopTaskEditorTest extends TestSuite {
     "convertToClipboardData" - {
       "covers multiple lines" - {
         editor.convertToClipboardData(
-          newDocument(newTask("abc"), newTask("defg"), newTask("hij")),
-          IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))) ==>
+          newDocument(
+            newTask("abc", tags = Seq()),
+            newTask("defg", tags = Seq()),
+            newTask("hij", tags = Seq()),
+          ),
+          IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))
+        ) ==>
           editor.ClipboardData(
-            htmlText = "<ul><li>bc</li><li>defg</li><li>hi</li></ul>",
-            plainText = "bc\ndefg\nhi")
+            htmlText = removeFormattingWhitespace("""
+              <ul>
+                <li piga="true">bc</li>
+                <li piga="true">defg</li>
+                <li piga="true">hi</li>
+              </ul>
+            """),
+            plainText = "bc\ndefg\nhi",
+          )
       }
       "with formatting" - {
         editor.convertToClipboardData(
-          newDocument(newTask(content = TextWithMarkup("a") + italic("b"))),
+          newDocument(
+            newTask(content = TextWithMarkup("a") + italic("b"), tags = Seq()),
+          ),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
-          editor.ClipboardData(htmlText = "a<i>b</i>", plainText = "ab")
+          editor.ClipboardData(
+            htmlText = removeFormattingWhitespace("""
+              <span piga="true">
+                a<i>b</i>
+              </span>
+            """),
+            plainText = "ab",
+          )
       }
       "escapes html" - {
         editor.convertToClipboardData(
-          newDocument(newTask("a<b>cd")),
+          newDocument(
+            newTask("a<b>cd", tags = Seq()),
+          ),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
-          editor.ClipboardData(htmlText = "a&lt;b&gt;c", plainText = "a<b>c")
+          editor.ClipboardData(
+            htmlText = removeFormattingWhitespace("""
+              <span piga="true">
+                a&lt;b&gt;c
+              </span>
+            """),
+            plainText = "a<b>c",
+          )
       }
       "converts newline to <br>" - {
         editor.convertToClipboardData(
-          newDocument(newTask("a\nb")),
+          newDocument(
+            newTask("a\nb", tags = Seq()),
+          ),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
-          editor.ClipboardData(htmlText = "a<br />b", plainText = "a\nb")
+          editor.ClipboardData(
+            htmlText = removeFormattingWhitespace("""
+              <span piga="true">
+                a<br />b
+              </span>
+            """),
+            plainText = "a\nb",
+          )
       }
       "handles indentation" - {
         editor.convertToClipboardData(
           newDocument(
-            newTask("a", indentation = 2),
-            newTask("b", indentation = 4),
-            newTask("c", indentation = 1)),
+            newTask("a", indentation = 2, tags = Seq()),
+            newTask("b", indentation = 4, tags = Seq()),
+            newTask("c", indentation = 1, tags = Seq())),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
         ) ==>
           editor.ClipboardData(
-            htmlText = removeWhitespace("""
+            htmlText = removeFormattingWhitespace("""
               <ul>
                 <ul>
-                  <li>a</li>
+                  <li piga="true">a</li>
                   <ul>
                     <ul>
-                      <li>b</li>
+                      <li piga="true">b</li>
                     </ul>
                   </ul>
                 </ul>
-                <li>c</li>
+                <li piga="true">c</li>
               </ul>
             """),
             plainText = "a\nb\nc"
@@ -81,12 +121,13 @@ object DesktopTaskEditorTest extends TestSuite {
         "without list tags" - {
           "p and div" - {
             editor.clipboardStringToReplacement(
-              asHtml(removeWhitespace("""
+              asHtml(removeFormattingWhitespace("""
               <p>a<br />b</p>
               <div>c</div>
               d
             """)),
-              baseFormatting = Formatting.none) ==>
+              baseFormatting = Formatting.none
+            ) ==>
               replacement(
                 TextWithMarkup("a"),
                 replacementPart("b"),
@@ -132,7 +173,7 @@ object DesktopTaskEditorTest extends TestSuite {
         "with list tags" - {
           "single level" - {
             editor.clipboardStringToReplacement(
-              asHtml(removeWhitespace("""
+              asHtml(removeFormattingWhitespace("""
              <ul>
                <li>
                  <p>a<br />b</p>
@@ -148,7 +189,7 @@ object DesktopTaskEditorTest extends TestSuite {
         }
         "inside and outside list tags" - {
           editor.clipboardStringToReplacement(
-            asHtml(removeWhitespace("""
+            asHtml(removeFormattingWhitespace("""
              a<i>b</i>c
              <ul>
                <li>
@@ -198,6 +239,8 @@ object DesktopTaskEditorTest extends TestSuite {
                   content = p.content,
                   orderToken = orderTokenA,
                   indentation = 10 + p.indentationRelativeToCurrent,
+                  collapsed = false,
+                  tags = Seq(),
               )): _*),
           IndexedSelection(
             start = IndexedCursor(0, 0),
@@ -206,42 +249,62 @@ object DesktopTaskEditorTest extends TestSuite {
         clipboardData.htmlText ==> html
       }
       "covers multiple lines" - {
-        roundTrip("<ul><li>bc</li><li>defg</li><li>hi</li></ul>")
+        roundTrip(removeFormattingWhitespace("""
+          <ul>
+            <li piga="true">bc</li>
+            <li piga="true">defg</li>
+            <li piga="true">hi</li>
+          </ul>
+        """))
       }
       "with formatting" - {
-        roundTrip("<ul><li><b>this is bold</b></li></ul>")
-        roundTrip("<ul><li><i>this is italic</i></li></ul>")
-        roundTrip("<ul><li><code>this is code</code></li></ul>")
-        roundTrip("<ul><li><s>striked through</s></li></ul>")
-        roundTrip("""<ul><li><a href="http://example.com">this is a link</a></li></ul>""")
+        roundTrip(removeFormattingWhitespace("""
+          <span piga="true">
+            <b>this is bold</b>
+            <i>this is italic</i>
+            <code>this is code</code>
+            <s>striked through</s>
+            <a href="http://example.com">this is a link</a>
+          </span>
+        """))
       }
       "escapes html" - {
-        roundTrip("<ul><li>a&lt;b&gt;c</li></ul>")
+        roundTrip(removeFormattingWhitespace("""
+          <span piga="true">
+            a&lt;b&gt;c
+          </span>
+        """))
       }
       "converts newline to <br>" - {
-        roundTrip("<ul><li>a<br />b</li></ul>")
+        roundTrip(removeFormattingWhitespace("""
+          <span piga="true">
+            a<br />b
+          </span>
+        """))
       }
       "handles indentation" - {
-        roundTrip("""
+        roundTrip(removeFormattingWhitespace("""
+          <ul>
+            <ul>
+              <li piga="true">a</li>
               <ul>
                 <ul>
-                  <li>a</li>
-                  <ul>
-                    <ul>
-                      <li>b</li>
-                    </ul>
-                  </ul>
+                  <li piga="true">b</li>
                 </ul>
-                <li>c</li>
               </ul>
-            """.replace(" ", "").replace("\n", ""))
+            </ul>
+            <li piga="true">c</li>
+          </ul>
+        """))
       }
     }
   }
 
   private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
 
-  private def removeWhitespace(s: String): String = s.replace(" ", "").replace("\n", "")
+  private def removeFormattingWhitespace(s: String): String = {
+    s.split('\n').map(_.trim).mkString("")
+  }
 
   private class Module extends app.common.testing.TestModule {
     val desktopTaskEditor = new DesktopTaskEditor
