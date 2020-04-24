@@ -1429,7 +1429,12 @@ private[document] final class DesktopTaskEditor(
         Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
     def empty: Replacement = Replacement.create(TextWithMarkup.empty)
 
-    case class Part(content: TextWithMarkup, indentationRelativeToCurrent: Int) {
+    case class Part(
+        content: TextWithMarkup,
+        indentationRelativeToCurrent: Int,
+        collapsed: Boolean = false,
+        tags: Seq[String] = Seq(),
+    ) {
       def contentString: String = content.contentString
     }
   }
