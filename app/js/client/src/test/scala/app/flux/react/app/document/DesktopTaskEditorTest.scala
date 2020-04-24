@@ -117,7 +117,47 @@ object DesktopTaskEditorTest extends TestSuite {
       def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
       def asText(s: String) = editor.ClipboardData(htmlText = "", plainText = s)
 
-      "htmlText input" - {
+      "htmlText input from piga" - {
+        "without list tags" - {
+          "br" - {
+            editor.clipboardStringToReplacement(
+              asHtml(removeFormattingWhitespace("""
+                <span piga="true">
+                  abc<br />def
+                </span>
+              """)),
+              baseFormatting = Formatting.none,
+            ) ==>
+              replacement(TextWithMarkup("abc\ndef"))
+          }
+          "applies formatting" - {
+            editor.clipboardStringToReplacement(
+              asHtml(removeFormattingWhitespace("""
+                <span piga="true">
+                  a<i>b</i>c
+                </span>
+              """)),
+              baseFormatting = Formatting.none,
+            ) ==>
+              replacement(TextWithMarkup("a") + italic("b") + TextWithMarkup("c"))
+          }
+        }
+        "with list tags" - {
+          editor.clipboardStringToReplacement(
+            asHtml(removeFormattingWhitespace("""
+           <ul>
+             <li piga="true">
+               a<br />b
+             </li>
+             <li piga="true">xyz</li>
+           </ul>
+          """)),
+            baseFormatting = Formatting.none
+          ) ==>
+            replacement(TextWithMarkup("a\nb"), replacementPart("xyz"))
+        }
+      }
+      "htmlText input from outside piga" - {
         "without list tags" - {
           "p and div" - {
             editor.clipboardStringToReplacement(
@@ -135,38 +175,27 @@ object DesktopTaskEditorTest extends TestSuite {
                 replacementPart("d"))
           }
           "br" - {
-            editor
-              .clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
+            editor.clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"), replacementPart("def"))
           }
           "newline" - {
             editor.clipboardStringToReplacement(asHtml("abc\ndef"), baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"), replacementPart("def"))
           }
-          "ignores formatting" - {
-            editor
-              .clipboardStringToReplacement(asHtml("<b>abc</b>"), baseFormatting = Formatting.none) ==>
-              replacement(TextWithMarkup("abc"))
-          }
-          "plain text" - {
-            editor.clipboardStringToReplacement(
-              asHtml("""
-              |x
-              |y
-            """.stripMargin.trim),
-              baseFormatting = Formatting.none) ==>
-              replacement(TextWithMarkup("x"), replacementPart("y"))
+          "applies formatting" - {
+            editor.clipboardStringToReplacement(asHtml("a<i>b</i>c"), baseFormatting = Formatting.none) ==>
+              replacement(TextWithMarkup("a") + italic("b") + TextWithMarkup("c"))
           }
           "ignores html comments" - {
-            editor
-              .clipboardStringToReplacement(asHtml("<!-- comment -->abc"), baseFormatting = Formatting.none) ==>
+            editor.clipboardStringToReplacement(
+              asHtml("<!-- comment -->abc"),
+              baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"))
           }
           "ignores style tags" - {
-            editor
-              .clipboardStringToReplacement(
-                asHtml("""<style type="text/css">STYLE</style>abc"""),
-                baseFormatting = Formatting.none) ==>
+            editor.clipboardStringToReplacement(
+              asHtml("""<style type="text/css">STYLE</style>abc"""),
+              baseFormatting = Formatting.none) ==>
               replacement(TextWithMarkup("abc"))
           }
         }
@@ -200,7 +229,7 @@ object DesktopTaskEditorTest extends TestSuite {
             baseFormatting = Formatting.none
           ) ==>
             replacement(
-              TextWithMarkup("abc"),
+              TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
               replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
         }
         "with baseFormatting" - {

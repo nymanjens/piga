@@ -1307,11 +1307,9 @@ private[document] final class DesktopTaskEditor(
         val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
         def pushChildNodesWithoutLi(): Unit = {
           if (childNodesWithoutLi.nonEmpty) {
-            val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi)
-            for (line <- Splitter.on('\n').omitEmptyStrings().trimResults().split(parsedText.contentString)) {
-              partsBuilder.append(
-                Replacement
-                  .Part(TextWithMarkup(line, baseFormatting), zeroIfNegative(nextRelativeIndentation)))
+            val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting)
+            for (line <- parsedText.splitByNewlines()) {
+              partsBuilder.append(Replacement.Part(line, zeroIfNegative(nextRelativeIndentation)))
             }
             childNodesWithoutLi.clear()
           }

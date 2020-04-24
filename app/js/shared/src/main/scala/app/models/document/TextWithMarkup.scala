@@ -197,6 +197,15 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     }
   }
 
+  def splitByNewlines(): List[TextWithMarkup] = {
+    val newlineIndex = contentString.indexOf('\n')
+    if (newlineIndex >= 0) {
+      this.sub(0, newlineIndex) :: this.sub(newlineIndex + 1).splitByNewlines()
+    } else {
+      this :: Nil
+    }
+  }
+
   def withFormatting(
       beginOffset: Int,
       endOffset: Int,
