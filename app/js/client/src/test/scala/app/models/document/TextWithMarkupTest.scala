@@ -55,6 +55,12 @@ object TextWithMarkupTest extends TestSuite {
       textWithMarkup.sub(5, 6) ==> italic("f")
       textWithMarkup.sub(5, 7) ==> italic("fg")
     }
+    "splitByNewlines" - {
+      TextWithMarkup("a\nb").splitByNewlines() ==> Seq(TextWithMarkup("a"), TextWithMarkup("b"))
+      TextWithMarkup("\n\nb")
+        .splitByNewlines() ==> Seq(TextWithMarkup(""), TextWithMarkup(""), TextWithMarkup("b"))
+      (TextWithMarkup("ab") + bold("\nc")).splitByNewlines() ==> Seq(TextWithMarkup("ab"), bold("c"))
+    }
     "withFormatting" - {
       val textWithMarkup = TextWithMarkup("abc") + italic("def")
 
