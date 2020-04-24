@@ -25,6 +25,7 @@ final class AppEntityPermissions @Inject()(
 
   entityAccess.entityModificationPublisher.subscribe(EntityModificationSubscriber)
 
+  // **************** Implementation of EntityPermissions API **************** //
   override def checkAllowedForWrite(modification: EntityModification)(implicit user: User): Unit = {
     EntityPermissions.DefaultImpl.checkAllowedForWrite(modification)
 
@@ -100,6 +101,7 @@ final class AppEntityPermissions @Inject()(
     EntityPermissions.DefaultImpl.isAllowedToRead(entity) && isDocumentAccesssible
   }
 
+  // **************** Private helper methods **************** //
   private def documentToOwners: ImmutableMultimap[Long, Long] = {
     if (_documentToOwners == null) {
       recalculateDocumentToOwners()
