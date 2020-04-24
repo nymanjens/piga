@@ -137,8 +137,9 @@ final class AllDocumentsStore(
     override protected def modificationImpactsState(
         entityModification: EntityModification,
         state: State,
-    ): Boolean =
+    ): Boolean = {
       entityModification.entityType == DocumentEntity.Type || entityModification.entityType == DocumentPermissionAndPlacement.Type
+    }
 
   }
 }

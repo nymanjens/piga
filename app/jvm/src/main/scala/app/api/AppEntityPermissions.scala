@@ -11,10 +11,11 @@ import com.google.inject.Inject
 import hydro.api.EntityPermissions
 import hydro.models.modification.EntityModification
 import hydro.models.Entity
-import hydro.models.modification.EntityType
+import javax.inject.Singleton
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 
+@Singleton
 final class AppEntityPermissions @Inject()(
     implicit
     entityAccess: JvmEntityAccess,
