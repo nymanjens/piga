@@ -1183,11 +1183,15 @@ private[document] final class DesktopTaskEditor(
       def indentation: Int = task.indentation
       def collapsed: Boolean = task.collapsed
       def tagsString: String = {
-        if (startOffset == 0) {
+        if (isFullTask) {
           task.tags.mkString(",")
         } else {
           ""
         }
+      }
+
+      private def isFullTask: Boolean = {
+        startOffset == 0 && endOffset == task.contentString.length
       }
     }
 
