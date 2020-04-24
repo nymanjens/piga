@@ -27,19 +27,19 @@ object DesktopTaskEditorTest extends TestSuite {
           newDocument(newTask(content = TextWithMarkup("a") + italic("b"))),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
         ) ==>
-          editor.ClipboardData(htmlText = "<ul><li>a<i>b</i></li></ul>", plainText = "ab")
+          editor.ClipboardData(htmlText = "a<i>b</i>", plainText = "ab")
       }
       "escapes html" - {
         editor.convertToClipboardData(
           newDocument(newTask("a<b>cd")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
-          editor.ClipboardData(htmlText = "<ul><li>a&lt;b&gt;c</li></ul>", plainText = "a<b>c")
+          editor.ClipboardData(htmlText = "a&lt;b&gt;c", plainText = "a<b>c")
       }
       "converts newline to <br>" - {
         editor.convertToClipboardData(
           newDocument(newTask("a\nb")),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
-          editor.ClipboardData(htmlText = "<ul><li>a<br />b</li></ul>", plainText = "a\nb")
+          editor.ClipboardData(htmlText = "a<br />b", plainText = "a\nb")
       }
       "handles indentation" - {
         editor.convertToClipboardData(
