@@ -1109,21 +1109,15 @@ private[document] final class DesktopTaskEditor(
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>
-      val document = state.document
+      implicit val document = state.document
       def mapToNonCollapsedCursor(cursor: IndexedCursor): IndexedCursor = {
         if (maybeGetTaskElement(cursor).isDefined) {
           cursor
         } else {
-          ((cursor.seqIndex + 1) until document.tasks.size)
-            .map(IndexedCursor(_, 0))
-            .find(maybeGetTaskElement(_).isDefined) match {
-            case Some(c) => c
-            case None =>
-              (0 until cursor.seqIndex).reverse
-                .map(IndexedCursor(_, 0))
-                .find(maybeGetTaskElement(_).isDefined)
-                .get
-          }
+          (0 until cursor.seqIndex).reverse
+            .map(IndexedCursor.atEndOfTask)
+            .find(maybeGetTaskElement(_).isDefined)
+            .get
         }
       }
 
