@@ -654,7 +654,7 @@ private[document] final class DesktopTaskEditor(
                 orderToken = newOrderToken,
                 indentation = newIndentation,
                 collapsed =
-                  if (replacesWholeTask) taskToUpdate.collapsed && replacementPart.collapsed else null,
+                  if (replacesWholeTask) taskToUpdate.collapsed || replacementPart.collapsed else null,
                 tags = if (replacesWholeTask) (taskToUpdate.tags ++ replacementPart.tags).distinct else null,
               ))
           } else {
