@@ -51,6 +51,72 @@ object DesktopTaskEditorTest extends TestSuite {
             plainText = "ab",
           )
       }
+      "collapsed and with tasks" - {
+        "single task" - {
+          "whole task is selected" - {
+            editor.convertToClipboardData(
+              newDocument(
+                newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
+              ),
+              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))
+            ) ==>
+              editor.ClipboardData(
+                htmlText = removeFormattingWhitespace("""
+                    <span piga="true" piga-tags="XX,YY">
+                      ABC
+                    </span>
+                  """),
+                plainText = "ABC",
+              )
+          }
+        }
+        "multiple tasks" - {
+          "whole tasks are selected" - {
+            editor.convertToClipboardData(
+              newDocument(
+                newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
+                newTask("DEF", collapsed = true, tags = Seq()),
+              ),
+              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(1, 3))
+            ) ==>
+              editor.ClipboardData(
+                htmlText = removeFormattingWhitespace("""
+                    <ul>
+                      <li piga="true" piga-collapsed="true" piga-tags="XX,YY">
+                        ABC
+                      </li>
+                      <li piga="true" piga-collapsed="true">
+                        DEF
+                      </li>
+                    </ul>
+                  """),
+                plainText = "ABC\nDEF",
+              )
+          }
+          "tasks are partially selected" - {
+            editor.convertToClipboardData(
+              newDocument(
+                newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
+                newTask("DEF", collapsed = true, tags = Seq()),
+              ),
+              IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(1, 2))
+            ) ==>
+              editor.ClipboardData(
+                htmlText = removeFormattingWhitespace("""
+                    <ul>
+                      <li piga="true" piga-collapsed="true">
+                        BC
+                      </li>
+                      <li piga="true" piga-collapsed="true">
+                        DE
+                      </li>
+                    </ul>
+                  """),
+                plainText = "BC\nDE",
+              )
+          }
+        }
+      }
       "escapes html" - {
         editor.convertToClipboardData(
           newDocument(
@@ -110,10 +176,21 @@ object DesktopTaskEditorTest extends TestSuite {
     "clipboardStringToReplacement" - {
       def replacement(firstPartContent: TextWithMarkup, parts: editor.Replacement.Part*) =
         editor.Replacement.create(firstPartContent, parts: _*)
-      def replacementPart(content: String, indentation: Int = 0) =
-        editor.Replacement.Part(TextWithMarkup(content), indentation)
-      def replacementPartFormatted(content: TextWithMarkup, indentation: Int = 0) =
-        editor.Replacement.Part(content, indentation)
+      def replacementFromParts(parts: editor.Replacement.Part*) = editor.Replacement(parts.toList)
+      def replacementPart(
+          content: String,
+          indentation: Int = 0,
+          collapsed: Boolean = false,
+          tags: Seq[String] = Seq(),
+      ) =
+        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, tags)
+      def replacementPartFormatted(
+          content: TextWithMarkup,
+          indentation: Int = 0,
+          collapsed: Boolean = false,
+          tags: Seq[String] = Seq(),
+      ) =
+        editor.Replacement.Part(content, indentation, collapsed, tags)
       def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
       def asText(s: String) = editor.ClipboardData(htmlText = "", plainText = s)
 
@@ -141,6 +218,22 @@ object DesktopTaskEditorTest extends TestSuite {
             ) ==>
               replacement(TextWithMarkup("a") + italic("b") + TextWithMarkup("c"))
           }
+          "with tags and collapsed" - {
+            editor.clipboardStringToReplacement(
+              asHtml(removeFormattingWhitespace("""
+                <span piga="true" piga-collapsed="true" piga-tags="XX,YY">
+                  a<i>b</i>c
+                </span>
+              """)),
+              baseFormatting = Formatting.none,
+            ) ==>
+              replacementFromParts(
+                replacementPartFormatted(
+                  TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
+                  collapsed = true,
+                  tags = Seq("XX", "YY"),
+                ))
+          }
         }
         "with list tags" - {
           editor.clipboardStringToReplacement(
@@ -149,12 +242,17 @@ object DesktopTaskEditorTest extends TestSuite {
              <li piga="true">
                a<br />b
              </li>
-             <li piga="true">xyz</li>
+             <li piga="true" piga-collapsed="true" piga-tags="XX,YY">
+               xyz
+             </li>
            </ul>
           """)),
             baseFormatting = Formatting.none
           ) ==>
-            replacement(TextWithMarkup("a\nb"), replacementPart("xyz"))
+            replacement(
+              TextWithMarkup("a\nb"),
+              replacementPart("xyz", collapsed = true, tags = Seq("XX", "YY")),
+            )
         }
       }
       "htmlText input from outside piga" - {
@@ -215,7 +313,7 @@ object DesktopTaskEditorTest extends TestSuite {
             ) ==>
               replacement(
                 TextWithMarkup("a\nb\nc"),
-                editor.Replacement.Part(TextWithMarkup("xy") + italic("z"), indentationRelativeToCurrent = 0),
+                replacementPartFormatted(TextWithMarkup("xy") + italic("z"), indentation = 0),
               )
           }
           "nested level" - {
@@ -296,8 +394,8 @@ object DesktopTaskEditorTest extends TestSuite {
                   content = p.content,
                   orderToken = orderTokenA,
                   indentation = 10 + p.indentationRelativeToCurrent,
-                  collapsed = false,
-                  tags = Seq(),
+                  collapsed = p.collapsed,
+                  tags = p.tags,
               )): _*),
           IndexedSelection(
             start = IndexedCursor(0, 0),
@@ -314,9 +412,9 @@ object DesktopTaskEditorTest extends TestSuite {
           </ul>
         """))
       }
-      "with formatting" - {
+      "with formatting and tags" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true">
+          <span piga="true" piga-tags="XX,YY">
             <b>this is bold</b>
             <i>this is italic</i>
             <code>this is code</code>
@@ -339,11 +437,11 @@ object DesktopTaskEditorTest extends TestSuite {
           </span>
         """))
       }
-      "handles indentation" - {
+      "handles indentation, collapsed and tags" - {
         roundTrip(removeFormattingWhitespace("""
           <ul>
             <ul>
-              <li piga="true">a</li>
+              <li piga="true" piga-collapsed="true" piga-tags="XX,YY">a</li>
               <ul>
                 <ul>
                   <li piga="true">b</li>

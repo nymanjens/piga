@@ -1263,16 +1263,29 @@ private[document] final class DesktopTaskEditor(
       clipboardData: ClipboardData,
       baseFormatting: Formatting,
   ): Replacement = {
-    def hasPigaAttribute(node: dom.raw.Node): Boolean = {
+    case class PigaAttributes(tags: Seq[String], collapsed: Boolean)
+    def getNodeAttributeOrEmpty(node: dom.raw.Node, name: String): String = {
       if (!js.isUndefined(node.asInstanceOf[js.Dynamic].hasAttributes) && node.hasAttributes()) {
-        val attribute = node.attributes.getNamedItem("piga")
-        attribute != null && attribute.value == "true"
+        val attribute = node.attributes.getNamedItem(name)
+        if (attribute != null) attribute.value else ""
       } else {
-        false
+        ""
+      }
+    }
+    def getPigaAttributes(nodes: Seq[dom.raw.Node]): PigaAttributes = {
+      nodes.find(node => getNodeAttributeOrEmpty(node, "piga") == "true") match {
+        case Some(node) =>
+          PigaAttributes(
+            tags = Splitter.on(',').omitEmptyStrings().split(getNodeAttributeOrEmpty(node, "piga-tags")),
+            collapsed = getNodeAttributeOrEmpty(node, "piga-collapsed") == "true",
+          )
+        case None =>
+          println("  Warning: Could not find a node with the piga attribute")
+          PigaAttributes(tags = Seq(), collapsed = false)
       }
     }
     def containsNodeWithPigaAttribute(node: dom.raw.Node): Boolean = {
-      if (hasPigaAttribute(node)) {
+      if (getNodeAttributeOrEmpty(node, "piga") == "true") {
         true
       } else {
         children(node).exists(containsNodeWithPigaAttribute)
@@ -1294,10 +1307,14 @@ private[document] final class DesktopTaskEditor(
           for (node <- nodes) {
             if (containsListItem(node)) {
               if (nodeIsLi(node)) {
+                val attributes = getPigaAttributes(Seq(node))
                 partsBuilder.append(
                   Replacement.Part(
                     TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
-                    zeroIfNegative(nextRelativeIndentation)))
+                    zeroIfNegative(nextRelativeIndentation),
+                    collapsed = attributes.collapsed,
+                    tags = attributes.tags,
+                  ))
               } else {
                 addPastedPigaText(
                   children(node),
@@ -1307,15 +1324,21 @@ private[document] final class DesktopTaskEditor(
             }
           }
         } else { // this is a single line
+          val attributes = getPigaAttributes(nodes ++ nodes.flatMap(children))
           partsBuilder.append(
             Replacement.Part(
               TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
-              zeroIfNegative(nextRelativeIndentation)))
+              zeroIfNegative(nextRelativeIndentation),
+              collapsed = attributes.collapsed,
+              tags = attributes.tags,
+            ))
         }
       }
-      def addPastedNonPigaText(nodes: Seq[dom.raw.Node],
-                               nextRelativeIndentation: Int,
-                               insideListItem: Boolean): Unit = {
+      def addPastedNonPigaText(
+          nodes: Seq[dom.raw.Node],
+          nextRelativeIndentation: Int,
+          insideListItem: Boolean,
+      ): Unit = {
         val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
         def pushChildNodesWithoutLi(): Unit = {
           if (childNodesWithoutLi.nonEmpty) {
