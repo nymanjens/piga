@@ -34,22 +34,11 @@ Example use cases:
 
 ## Installation
 
-- Clone this repository or download the files
+- Download the [latest release](https://github.com/nymanjens/piga/releases)
+- Unpack the archive and open a terminal in the unpacked folder
 - Run following commands to get the app running:
 
     ```
-    # refresh application secret
-    sbt playUpdateSecret
-
-    # Build application
-    sbt dist
-
-    # Deploy files
-    cd /somewhere/you/want/the/files
-    unzip .../target/universal/piga-1.0-SNAPSHOT.zip
-    mv piga-1.0-SNAPSHOT/* .
-    rm -d piga-1.0-SNAPSHOT/
-
     # Create database tables
     bin/server -DdropAndCreateNewDb
     rm RUNNING_PID
@@ -61,6 +50,8 @@ Example use cases:
     # Run application
     bin/server
     ```
+
+- Browse to http://localhost:9000
 
 ## Configuration
 - `conf/application.conf`:<br>
