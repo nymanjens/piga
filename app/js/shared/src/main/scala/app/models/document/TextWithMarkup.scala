@@ -20,7 +20,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
   private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s]*".r
   private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,})|" +
-    raw"((go|bit\.ly)\/[a-zA-Z0-9-_:]{4,})").r
+    raw"((go|bit\.ly)\/[a-zA-Z0-9-_:]{3,})").r
 
   lazy val contentString: String = parts.map(_.text).mkString
 
