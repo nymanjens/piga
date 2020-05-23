@@ -429,7 +429,7 @@ private[document] final class DesktopTaskEditor(
                 formattingAtStart = formatting)
 
             // Code font
-            case CharacterKey('C', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+            case CharacterKey('`', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(code = value),
