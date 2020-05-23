@@ -805,15 +805,16 @@ private[document] final class DesktopTaskEditor(
       }
 
       def replaceTags(
-          indexedSelection: IndexedSelection,
+          relevantTasks: Seq[Task],
           tagsToRemove: Seq[String],
           tagsToAdd: Seq[String],
       ): Callback = {
-        val taskUpdates = for (task <- document.tasksIn(selection))
-          yield
-            MaskedTaskUpdate.fromFields(
-              originalTask = task,
-              tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+        val taskUpdates =
+          for (task <- relevantTasks)
+            yield
+              MaskedTaskUpdate.fromFields(
+                originalTask = task,
+                tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
         replaceWithHistory(
           edit = DocumentEdit.Reversible(taskUpdates = taskUpdates.filter(!_.isNoOp)),
           selectionBeforeEdit = selection,
@@ -821,14 +822,17 @@ private[document] final class DesktopTaskEditor(
         )
       }
 
-      val currentTags: Seq[String] = {
-        val tasks = for (i <- selection.seqIndices) yield document.tasks(i)
-        tasks.map(_.tags).reduce(_ intersect _)
-      }
+      val relevantTasks: Seq[Task] =
+        for {
+          i <- selection.seqIndices
+          task <- document.visibleTaskOption(i)
+        } yield task
+
+      val currentTags: Seq[String] = relevantTasks.map(_.tags).reduce(_ intersect _)
 
       try {
         val newTags = tagsDialog(currentTags)
-        replaceTags(selection, currentTags, newTags)
+        replaceTags(relevantTasks, currentTags, newTags)
       } catch {
         case _: CancelException => Callback.empty
       }
