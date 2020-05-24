@@ -240,6 +240,12 @@ private[document] final class DesktopTaskEditor(
       if (selection.start != selection.end) {
         val ClipboardData(htmlText, plainText) = convertToClipboardData(document, selection)
 
+        setNavigatorClipboardData(htmlText, plainText)
+      }
+    }
+
+    private def setNavigatorClipboardData(htmlText: String, plainText: String): Unit = {
+      if (htmlText.nonEmpty || plainText.nonEmpty) {
         val dt = new ClipboardPolyfill.DT()
         dt.setData("text/html", htmlText)
         dt.setData("text/plain", plainText)
@@ -411,6 +417,14 @@ private[document] final class DesktopTaskEditor(
               val fullSelection = selection.includeChildren().includeFullTasks()
               setNavigatorClipboardData(selection = fullSelection)
               removeTasks(fullSelection.seqIndices)
+
+            // Copy whole task and its children as Markdown (shift+alt+M)
+            case CharacterKey('M', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+              event.preventDefault()
+              val markdown =
+                convertToMarkdown(document.tasksIn(selection.includeChildren().includeFullTasks()))
+              setNavigatorClipboardData(htmlText = markdown, plainText = markdown)
+              Callback.empty
 
             // Italic
             case CharacterKey('i', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
@@ -1177,6 +1191,23 @@ private[document] final class DesktopTaskEditor(
   }
 
   // **************** Helper classes and methods **************** //
+  @visibleForTesting private[document] def convertToMarkdown(tasks: Seq[Task]): String = {
+    if (tasks.size == 1) {
+      getOnlyElement(tasks).content.toMarkdown
+    } else {
+      val resultBuilder = StringBuilder.newBuilder
+      val minimalIndentation = tasks.map(_.indentation).min
+      for (task <- tasks) {
+        val indentation = " " * ((task.indentation - minimalIndentation) * 2)
+        resultBuilder.append(indentation)
+        resultBuilder.append("- ")
+        resultBuilder.append(task.content.toMarkdown.replace("\n", s"\n$indentation  "))
+        resultBuilder.append("\n")
+      }
+      resultBuilder.toString
+    }
+  }
+
   @visibleForTesting private[document] def convertToClipboardData(
       document: Document,
       selection: IndexedSelection,

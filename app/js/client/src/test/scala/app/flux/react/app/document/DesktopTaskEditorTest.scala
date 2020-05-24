@@ -14,6 +14,52 @@ object DesktopTaskEditorTest extends TestSuite {
   override def tests = TestSuite {
     val editor = (new Module).desktopTaskEditor
 
+    "convertToMarkdown" - {
+      "single task" - {
+        "with formatting" - {
+          editor.convertToMarkdown(Seq(newTask(content = TextWithMarkup("a") + italic("b")))) ==>
+            "a*b*"
+        }
+      }
+      "multiple tasks" - {
+        "with formatting" - {
+          editor.convertToMarkdown(
+            Seq(
+              newTask(content = TextWithMarkup("a") + italic("b")),
+              newTask(content = TextWithMarkup("a") + italic("b")),
+            )) ==>
+            """- a*b*
+              |- a*b*
+              |""".stripMargin
+        }
+        "Handles newline in task" - {
+          editor.convertToMarkdown(
+            Seq(
+              newTask("a\nb"),
+              newTask("c\nd"),
+            )) ==>
+            s"""- a${"  " /* Suffix via code to avoid triming whitespace*/}
+               |  b
+               |- c${"  " /* Suffix via code to avoid triming whitespace*/}
+               |  d
+               |""".stripMargin
+        }
+        "handles indentation" - {
+          editor.convertToMarkdown(
+            Seq(
+              newTask("a", indentation = 2),
+              newTask("b\nB", indentation = 4),
+              newTask("c", indentation = 1),
+            )) ==>
+            s"""  - a
+               |      - b${"  " /* Suffix via code to avoid triming whitespace*/}
+               |        B
+               |- c
+               |""".stripMargin
+        }
+      }
+    }
+
     "convertToClipboardData" - {
       "covers multiple lines" - {
         editor.convertToClipboardData(
