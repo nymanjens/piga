@@ -154,6 +154,49 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       mergeResults = _.mkString)
   }
 
+  def toMarkdown: String = {
+    val applyFormattingOption = new FormattingOption.Applier[String] {
+      override def apply[T](
+          option: FormattingOption[T],
+          value: T,
+          children: String,
+          childrenParts: Iterable[Part],
+      ): String = {
+        def asBoolean(t: T): Boolean = t.asInstanceOf[Boolean]
+        def asOption(t: T): Option[String] = t.asInstanceOf[Option[String]]
+        def countSpacesInFront(s: String): Int = {
+          if (s.startsWith(" ")) 1 + countSpacesInFront(s.substring(1)) else 0
+        }
+        def trimmedTransform(s: String, transform: String => String): String = {
+          val spacesInFront = countSpacesInFront(s)
+          val spacesAtEnd = countSpacesInFront(s.reverse)
+          " " * spacesInFront + transform(s.substring(spacesInFront, s.length - spacesAtEnd)) + " " * spacesAtEnd
+        }
+
+        option match {
+          case FormattingOption.Bold =>
+            if (asBoolean(value)) trimmedTransform(children, c => s"**$c**") else children
+          case FormattingOption.Italic =>
+            if (asBoolean(value)) trimmedTransform(children, c => s"*$c*") else children
+          case FormattingOption.Code =>
+            if (asBoolean(value)) trimmedTransform(children, c => s"`$c`") else children
+          case FormattingOption.Strikethrough =>
+            if (asBoolean(value)) trimmedTransform(children, c => s"~$c~") else children
+          case FormattingOption.Link =>
+            if (asOption(value).isDefined) trimmedTransform(children, c => s"[$c](${asOption(value).get})")
+            else children
+        }
+      }
+    }
+
+    TextWithMarkup.serializeToDom[String](
+      parts,
+      applyFormattingOption = applyFormattingOption,
+      liftString = (s, insideLink) => s.replace("\n", "  \n"), // Two spaces to force line break
+      mergeResults = _.mkString
+    )
+  }
+
   def +(that: TextWithMarkup): TextWithMarkup = TextWithMarkup.createCanonical(this.parts ++ that.parts)
 
   def formattingAtCursor(offset: Int): Formatting = {

@@ -132,6 +132,35 @@ object TextWithMarkupTest extends TestSuite {
         TextWithMarkup("AäB").toHtml ==> "AäB"
       }
     }
+    "toMarkdown" - {
+      "newline" - {
+        TextWithMarkup("A\n\nB").toMarkdown ==> "A  \n  \nB"
+      }
+      "b" - {
+        (TextWithMarkup("A") + bold(" B ") + TextWithMarkup("C")).toMarkdown ==> "A **B** C"
+      }
+      "i" - {
+        italic("ABC").toMarkdown ==> "*ABC*"
+      }
+      "code" - {
+        (TextWithMarkup("X") + TextWithMarkup("  ABC  ", Formatting(code = true))).toMarkdown ==> "X  `ABC`  "
+      }
+      "strikethrough" - {
+        TextWithMarkup("ABC \n", Formatting(strikethrough = true)).toMarkdown ==> "~ABC   \n~"
+      }
+      "link" - {
+        TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toMarkdown ==> "[ABC](example.com)"
+      }
+      "link and b" - {
+        val textWithMarkup =
+          (TextWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
+            .withFormatting(2, 4, _.copy(bold = true))
+        textWithMarkup.toMarkdown ==> "[AB**C**](example.com)**D**"
+      }
+      "non-ascii" - {
+        TextWithMarkup("AäB").toMarkdown ==> "AäB"
+      }
+    }
     "fromHtml" - {
       "p" - {
         TextWithMarkup.fromHtml("<p>A</p>") ==> TextWithMarkup("A")
