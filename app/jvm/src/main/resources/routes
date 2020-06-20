@@ -21,6 +21,7 @@ GET  /websocket/hydropush/:updateToken/  hydro.controllers.InternalApi.hydroPush
 GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthCheck
 GET  /externalapi/dbschema/:appSecret/  hydro.controllers.StandardActions.databaseSchema(appSecret)
 GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalApi.shareDocument(docId, loginName, appSecret)
+GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
 
 # Auth
 GET  /login/                           hydro.controllers.Auth.login(returnTo ?= "/")

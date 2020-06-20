@@ -1,10 +1,13 @@
 package app.controllers
 
+import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
+import app.models.access.ModelFields.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
+import app.models.document.TaskEntity
 import app.models.user.User
 import app.models.user.Users
 import com.google.inject.Inject
@@ -56,6 +59,52 @@ final class ExternalApi @Inject()(
       )
 
       Ok(s"OK\n")
+  }
+
+  def regenerateOrderTokens(dryOrWetRun: String, applicationSecret: String) = Action { implicit request =>
+    validateApplicationSecret(applicationSecret)
+
+    val allDocuments = entityAccess.newQuerySync[DocumentEntity]().data()
+
+    val resultString = new StringBuilder()
+    for (document <- allDocuments) {
+      resultString.append(s"Processing docuemnt ${document.id}: ${document.name}\n")
+      val allTasksInDocument = entityAccess
+        .newQuerySync[TaskEntity]()
+        .filter(ModelFields.TaskEntity.documentId === document.id)
+        .data()
+        .sortBy(_.orderToken)
+
+      val orderTokens = allTasksInDocument.map(_.orderToken)
+
+      resultString.append(s"  Found ${orderTokens.size} tasks\n")
+      if (orderTokens.distinct != orderTokens) {
+        resultString.append(
+          s"  !! Found ${orderTokens.size - orderTokens.distinct.size} tasks with duplicate order tokens\n")
+      }
+
+
+      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(allTasksInDocument.size, lowerExclusive = None, higherExclusive = None)
+      val taskUpdates =
+      for {
+        (task, newOrderToken) <- allTasksInDocument zip newOrderTokens
+        if task.orderToken != newOrderToken
+      } yield
+        EntityModification.createUpdate(task.copy(orderToken = newOrderToken),  Seq(ModelFields.TaskEntity.orderToken))
+
+      dryOrWetRun match {
+        case "dry" =>
+          resultString.append(s"  Would apply ${taskUpdates.size} updates in wet run\n")
+        case "wet" =>
+          entityAccess.persistEntityModifications(taskUpdates)(Users.getOrCreateRobotUser())
+          resultString.append(s"  Applied ${taskUpdates.size} updates\n")
+      }
+
+      resultString.append("  Done\n")
+      resultString.append("\n")
+    }
+
+    Ok(s"OK\n\n$resultString")
   }
 
   // ********** private helper methods ********** //
