@@ -36,6 +36,7 @@ import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
+import hydro.jsfacades.Bootbox
 import hydro.jsfacades.ClipboardPolyfill
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
@@ -49,6 +50,7 @@ import scala.async.Async.await
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.Random
@@ -808,14 +810,10 @@ private[document] final class DesktopTaskEditor(
     ): Callback = {
       implicit val document = state.document
 
-      class CancelException extends Exception
-      def tagsDialog(defaultTags: Seq[String]): Seq[String] = {
+      def tagsDialog(defaultTags: Seq[String]): Future[Option[Seq[String]]] = async {
         val title = if (defaultTags.isEmpty) "Add tags" else "Edit tags"
-        val result = dom.window.prompt(title, defaultTags.mkString(", "))
-        result match {
-          case null => throw new CancelException
-          case s    => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag)
-        }
+        val result = await(Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false))
+        result.map(s => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag))
       }
 
       def replaceTags(
@@ -844,11 +842,11 @@ private[document] final class DesktopTaskEditor(
 
       val currentTags: Seq[String] = relevantTasks.map(_.tags).reduce(_ intersect _)
 
-      try {
-        val newTags = tagsDialog(currentTags)
-        replaceTags(relevantTasks, currentTags, newTags)
-      } catch {
-        case _: CancelException => Callback.empty
+      Callback.future {
+        tagsDialog(currentTags) map {
+            case Some(newTags) => replaceTags(relevantTasks, currentTags, newTags)
+            case None          => setSelection(selection)
+        }
       }
     }
 
