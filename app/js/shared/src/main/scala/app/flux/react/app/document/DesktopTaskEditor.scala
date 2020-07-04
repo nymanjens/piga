@@ -812,7 +812,8 @@ private[document] final class DesktopTaskEditor(
 
       def tagsDialog(defaultTags: Seq[String]): Future[Option[Seq[String]]] = async {
         val title = if (defaultTags.isEmpty) "Add tags" else "Edit tags"
-        val result = await(Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false))
+        val result = await(
+          Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false, selectValue = true))
         result.map(s => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag))
       }
 
@@ -844,8 +845,8 @@ private[document] final class DesktopTaskEditor(
 
       Callback.future {
         tagsDialog(currentTags) map {
-            case Some(newTags) => replaceTags(relevantTasks, currentTags, newTags)
-            case None          => setSelection(selection)
+          case Some(newTags) => replaceTags(relevantTasks, currentTags, newTags)
+          case None          => setSelection(selection)
         }
       }
     }
