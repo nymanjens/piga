@@ -934,14 +934,9 @@ private[document] final class DesktopTaskEditor(
         }
       }
 
-      class CancelException extends Exception
-      def newLinkFromDialog(defaultValue: Option[String]): Option[String] = {
-        val result = dom.window.prompt("Edit link", defaultValue getOrElse "")
-        result match {
-          case null => throw new CancelException
-          case ""   => None
-          case s    => Some(s)
-        }
+      def newLinkFromDialog(defaultValue: Option[String]): Future[Option[String]] = {
+        val title = if (defaultValue.isEmpty) "Add link" else "Edit link"
+        Bootbox.prompt(title, value = defaultValue getOrElse "", animate = false, selectValue = true)
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
@@ -967,11 +962,12 @@ private[document] final class DesktopTaskEditor(
       expandSelection(originalSelection) match {
         case s if s.isSingleton => Callback.empty
         case expandedSelection =>
-          try {
-            val newLink = newLinkFromDialog(getAnyLinkInSelection(originalSelection))
-            editLinkInternal(expandedSelection, newLink)
-          } catch {
-            case _: CancelException => Callback.empty
+          Callback.future {
+            newLinkFromDialog(getAnyLinkInSelection(originalSelection)) map {
+              case None          => setSelection(originalSelection)
+              case Some("")      => editLinkInternal(expandedSelection, None)
+              case Some(newLink) => editLinkInternal(expandedSelection, Some(newLink))
+            }
           }
       }
     }
