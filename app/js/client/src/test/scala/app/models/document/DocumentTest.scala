@@ -54,7 +54,8 @@ object DocumentTest extends TestSuite {
 
         "single update" - {
           val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
-            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited")))
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited"))
+          )
           val edit = DocumentEdit.WithUpdateTimes
             .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
 
@@ -63,7 +64,8 @@ object DocumentTest extends TestSuite {
         "single update with changing orderToken" - {
           val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
             MaskedTaskUpdate
-              .fromFields(originalTask = taskB, content = TextWithMarkup("edited"), orderToken = orderTokenE))
+              .fromFields(originalTask = taskB, content = TextWithMarkup("edited"), orderToken = orderTokenE)
+          )
           val edit = DocumentEdit.WithUpdateTimes
             .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
 
@@ -71,20 +73,24 @@ object DocumentTest extends TestSuite {
         }
         "multiple updates" - {
           val taskAAfterUpdate = taskA.withAppliedUpdateAndNewUpdateTime(
-            MaskedTaskUpdate.fromFields(originalTask = taskA, content = TextWithMarkup("edited A")))
+            MaskedTaskUpdate.fromFields(originalTask = taskA, content = TextWithMarkup("edited A"))
+          )
           val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
-            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited B")))
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited B"))
+          )
           val edit = DocumentEdit.WithUpdateTimes
             .create(
               removedTasksIds = Seq(),
               addedTasks = Seq(),
-              taskUpdates = Seq(taskAAfterUpdate, taskBAfterUpdate))
+              taskUpdates = Seq(taskAAfterUpdate, taskBAfterUpdate),
+            )
 
           document.withAppliedEdit(edit) ==> newDocument(taskAAfterUpdate, taskBAfterUpdate, taskC)
         }
         "is idempotent" - {
           val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
-            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited")))
+            MaskedTaskUpdate.fromFields(originalTask = taskB, content = TextWithMarkup("edited"))
+          )
           val edit = DocumentEdit.WithUpdateTimes
             .create(removedTasksIds = Seq(), addedTasks = Seq(), taskUpdates = Seq(taskBAfterUpdate))
 
@@ -96,7 +102,9 @@ object DocumentTest extends TestSuite {
         val taskBAfterUpdate = taskB.withAppliedUpdateAndNewUpdateTime(
           MaskedTaskUpdate.fromFields(
             originalTask = taskB,
-            orderToken = OrderToken.middleBetween(Some(taskC.orderToken), Some(taskD.orderToken))))
+            orderToken = OrderToken.middleBetween(Some(taskC.orderToken), Some(taskD.orderToken)),
+          )
+        )
         val edit = DocumentEdit.WithUpdateTimes
           .create(removedTasksIds = Seq(), addedTasks = Seq(taskB), taskUpdates = Seq(taskBAfterUpdate))
 
@@ -109,7 +117,8 @@ object DocumentTest extends TestSuite {
             removedTasksIds = Seq(),
             addedTasks =
               Seq(taskB.copyForTests(orderToken = OrderToken.middleBetween(None, Some(taskA.orderToken)))),
-            taskUpdates = Seq())
+            taskUpdates = Seq(),
+          )
 
         document.withAppliedEdit(edit) ==> newDocument(taskA, taskB, taskC)
       }
@@ -166,7 +175,8 @@ object DocumentTest extends TestSuite {
           indentation(1, taskB),
           indentation(1, collapsed(taskC)),
           indentation(1, taskD),
-          indentation(1, collapsed(taskE)))
+          indentation(1, collapsed(taskE)),
+        )
 
         for (minExpandedIndentation <- -1 to 3) {
           document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
@@ -182,7 +192,8 @@ object DocumentTest extends TestSuite {
           indentation(1, collapsed(taskB)),
           indentation(2, taskC),
           indentation(3, taskD),
-          indentation(0, collapsed(taskE)))
+          indentation(0, collapsed(taskE)),
+        )
 
         for (minExpandedIndentation <- -1 to 3) {
           document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
@@ -200,7 +211,8 @@ object DocumentTest extends TestSuite {
           indentation(2, taskB),
           indentation(1, taskC),
           indentation(0, taskD),
-          indentation(1, taskE))
+          indentation(1, taskE),
+        )
 
         for (minExpandedIndentation <- -1 to 3) {
           document.visibleTaskOption(0, minExpandedIndentation) ==> Some(document.tasks(0))
@@ -218,7 +230,8 @@ object DocumentTest extends TestSuite {
           indentation(1, taskB),
           indentation(1, taskC),
           indentation(1, taskD),
-          indentation(1, taskE))
+          indentation(1, taskE),
+        )
 
         document.familyTreeRange(0, rootParentIndentation = 0) ==> None
         document.familyTreeRange(1, rootParentIndentation = 0) ==> None
@@ -244,7 +257,8 @@ object DocumentTest extends TestSuite {
           indentation(1, taskB),
           indentation(2, collapsed(taskC)),
           indentation(1, taskD),
-          indentation(0, taskE))
+          indentation(0, taskE),
+        )
 
         document.familyTreeRange(0, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
         document.familyTreeRange(1, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 3))
@@ -270,7 +284,8 @@ object DocumentTest extends TestSuite {
           indentation(2, taskB),
           indentation(1, taskC),
           indentation(0, taskD),
-          indentation(1, taskE))
+          indentation(1, taskE),
+        )
 
         document.familyTreeRange(0, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 2))
         document.familyTreeRange(1, rootParentIndentation = 0) ==> Some(document.FamilyTreeRange(0, 2))
@@ -334,7 +349,8 @@ object DocumentTest extends TestSuite {
             indentation(1, taskB),
             indentation(2, collapsed(taskC)),
             indentation(1, taskD),
-            indentation(0, taskE))
+            indentation(0, taskE),
+          )
 
           assertNoChange(collapsedOnly = false, IndexedSelection(IndexedCursor(0, 1), IndexedCursor(2, 5)))
           assertNoChange(collapsedOnly = false, IndexedSelection.singleton(IndexedCursor(2, 5)))
@@ -350,7 +366,8 @@ object DocumentTest extends TestSuite {
             indentation(1, taskB),
             indentation(2, collapsed(taskC)),
             indentation(1, taskD),
-            indentation(0, taskE))
+            indentation(0, taskE),
+          )
 
           assertNoChange(collapsedOnly = true, IndexedSelection.singleton(IndexedCursor(0, 0)))
           assertNoChange(collapsedOnly = true, IndexedSelection.singleton(IndexedCursor(1, 0)))
@@ -363,7 +380,8 @@ object DocumentTest extends TestSuite {
             indentation(1, collapsed(taskB)),
             indentation(2, taskC),
             indentation(2, taskD),
-            indentation(1, taskE))
+            indentation(1, taskE),
+          )
 
           for (collapsedOnly <- Seq(false, true)) {
             IndexedSelection(IndexedCursor(0, 1), IndexedCursor(1, 5))

@@ -14,6 +14,6 @@ object EntityTypes {
     User.Type,
     DocumentEntity.Type,
     DocumentPermissionAndPlacement.Type,
-    TaskEntity.Type
+    TaskEntity.Type,
   )
 }

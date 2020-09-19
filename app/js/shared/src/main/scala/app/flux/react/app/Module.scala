@@ -15,21 +15,22 @@ import hydro.flux.stores.UserStore
 import hydro.flux.stores.DatabaseExplorerStoreFactory
 import hydro.models.access.JsEntityAccess
 
-final class Module(implicit i18n: I18n,
-                   user: User,
-                   entityAccess: JsEntityAccess,
-                   globalMessagesStore: GlobalMessagesStore,
-                   pageLoadingStateStore: PageLoadingStateStore,
-                   pendingModificationsStore: PendingModificationsStore,
-                   applicationIsOnlineStore: ApplicationIsOnlineStore,
-                   localDatabaseHasBeenLoadedStore: LocalDatabaseHasBeenLoadedStore,
-                   userStore: UserStore,
-                   databaseExplorerStoreFactory: DatabaseExplorerStoreFactory,
-                   allDocumentsStore: AllDocumentsStore,
-                   documentStoreFactory: DocumentStoreFactory,
-                   documentSelectionStore: DocumentSelectionStore,
-                   dispatcher: Dispatcher,
-                   clock: Clock,
+final class Module(implicit
+    i18n: I18n,
+    user: User,
+    entityAccess: JsEntityAccess,
+    globalMessagesStore: GlobalMessagesStore,
+    pageLoadingStateStore: PageLoadingStateStore,
+    pendingModificationsStore: PendingModificationsStore,
+    applicationIsOnlineStore: ApplicationIsOnlineStore,
+    localDatabaseHasBeenLoadedStore: LocalDatabaseHasBeenLoadedStore,
+    userStore: UserStore,
+    databaseExplorerStoreFactory: DatabaseExplorerStoreFactory,
+    allDocumentsStore: AllDocumentsStore,
+    documentStoreFactory: DocumentStoreFactory,
+    documentSelectionStore: DocumentSelectionStore,
+    dispatcher: Dispatcher,
+    clock: Clock,
 ) {
 
   // Configuration of submodules

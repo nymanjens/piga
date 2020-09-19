@@ -28,7 +28,7 @@ object Picklers extends StandardPicklers {
         name = state.unpickle[String],
         isAdmin = state.unpickle[Boolean],
         idOption = state.unpickle[Option[Long]],
-        lastUpdateTime = state.unpickle[LastUpdateTime]
+        lastUpdateTime = state.unpickle[LastUpdateTime],
       )
     }
   }

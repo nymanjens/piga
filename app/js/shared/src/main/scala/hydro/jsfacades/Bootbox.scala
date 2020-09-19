@@ -26,7 +26,8 @@ object Bootbox {
         value = value,
         callback = callback,
         animate = animate,
-      ))
+      )
+    )
 
     if (selectValue && value.nonEmpty) {
       val promptInput =

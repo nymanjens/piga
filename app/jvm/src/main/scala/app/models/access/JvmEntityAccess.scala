@@ -11,7 +11,7 @@ import hydro.models.access.JvmEntityAccessBase
 import hydro.models.modification.EntityType
 import hydro.models.slick.SlickEntityTableDef
 
-final class JvmEntityAccess @Inject()(implicit clock: Clock) extends JvmEntityAccessBase {
+final class JvmEntityAccess @Inject() (implicit clock: Clock) extends JvmEntityAccessBase {
 
   protected def getEntityTableDef(entityType: EntityType.any): SlickEntityTableDef[entityType.get] = {
     val tableDef = entityType match {

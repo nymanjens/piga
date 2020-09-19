@@ -43,7 +43,8 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
           val addedTasksMap = mutable.Map(
             edit.addedTasks
               .filterNot(task => edit.removedTasksIds contains task.id)
-              .map(task => task.id -> maybeApplyUpdate(task)): _*)
+              .map(task => task.id -> maybeApplyUpdate(task)): _*
+          )
           val newTasks = mutable.Buffer[Task]()
 
           for {
@@ -68,7 +69,7 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
         } else {
           comprehensiveUpdate(edit)
         }
-      }
+      },
     )
 
   def updateFromDocumentEntity(documentEntity: DocumentEntity): Document = {
@@ -147,8 +148,10 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
   def familyTreeRange(anyMemberSeqIndex: Int, rootParentIndentation: Int): Option[FamilyTreeRange] = {
     def findLastChildIndex(seqIndex: Int, parentIndentation: Int): Int = {
       var lastChildIndex = seqIndex
-      while (tasksOption(lastChildIndex + 1).isDefined &&
-             tasks(lastChildIndex + 1).indentation > parentIndentation) {
+      while (
+        tasksOption(lastChildIndex + 1).isDefined &&
+        tasks(lastChildIndex + 1).indentation > parentIndentation
+      ) {
         lastChildIndex += 1
       }
       lastChildIndex
@@ -157,10 +160,10 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     for {
       task <- tasksOption(anyMemberSeqIndex)
       parentIndex <- findRootParentIndex(anyMemberSeqIndex, rootParentIndentation = rootParentIndentation)
-    } yield
-      FamilyTreeRange(
-        parentIndex,
-        findLastChildIndex(anyMemberSeqIndex, parentIndentation = tasks(parentIndex).indentation))
+    } yield FamilyTreeRange(
+      parentIndex,
+      findLastChildIndex(anyMemberSeqIndex, parentIndentation = tasks(parentIndex).indentation),
+    )
   }
 
   private def findRootParentIndex(seqIndex: Int, rootParentIndentation: Int): Option[Int] = {
@@ -193,7 +196,8 @@ object Document {
   def fromDocumentEntity(entity: DocumentEntity)(implicit entityAccess: JsEntityAccess): Future[Document] =
     async {
       val tasks = await(
-        entityAccess.newQuery[TaskEntity]().filter(ModelFields.TaskEntity.documentId === entity.id).data())
+        entityAccess.newQuery[TaskEntity]().filter(ModelFields.TaskEntity.documentId === entity.id).data()
+      )
       new Document(id = entity.id, name = entity.name, tasks = tasks.map(Task.fromTaskEntity).sorted)
     }
 
@@ -303,14 +307,16 @@ object Document {
 
       var index = end.seqIndex
       if (!collapsedOnly || task.collapsed) {
-        while (document.tasksOption(index + 1).isDefined &&
-               document.tasks(index + 1).indentation > task.indentation) {
+        while (
+          document.tasksOption(index + 1).isDefined &&
+          document.tasks(index + 1).indentation > task.indentation
+        ) {
           index += 1
         }
       }
       IndexedSelection(
         start = start,
-        end = if (index == end.seqIndex) end else IndexedCursor(index, 0)
+        end = if (index == end.seqIndex) end else IndexedCursor(index, 0),
       )
     }
   }
@@ -370,7 +376,7 @@ object Document {
           println(s"  Warning: Could not find task in document: taskId = $taskId")
           0
         },
-        offsetInTask = offsetInTask
+        offsetInTask = offsetInTask,
       )
   }
   object DetachedCursor {

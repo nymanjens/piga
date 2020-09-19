@@ -15,7 +15,7 @@ object Users {
       loginName = loginName,
       passwordHash = hash(password),
       name = name,
-      isAdmin = isAdmin
+      isAdmin = isAdmin,
     )
 
   def copyUserWithPassword(user: User, password: String): User = {
@@ -33,8 +33,9 @@ object Users {
           createUser(
             loginName = loginName,
             password = hash(clock.now.toString),
-            name = "Robot"
-          ))
+            name = "Robot",
+          )
+        )
         val userWithId = userAddition.entity
         entityAccess.persistEntityModifications(userAddition)(user = userWithId)
         userWithId

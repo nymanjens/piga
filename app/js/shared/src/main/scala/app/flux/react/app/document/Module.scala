@@ -10,8 +10,8 @@ import hydro.flux.action.Dispatcher
 import hydro.flux.react.uielements.PageHeader
 import hydro.models.access.JsEntityAccess
 
-final class Module(
-    implicit i18n: I18n,
+final class Module(implicit
+    i18n: I18n,
     user: User,
     dispatcher: Dispatcher,
     clock: Clock,

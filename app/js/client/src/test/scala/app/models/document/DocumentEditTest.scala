@@ -44,7 +44,9 @@ object DocumentEditTest extends TestSuite {
               .fromFields(
                 originalTask = taskDAfterUpdate,
                 content = taskD.content,
-                orderToken = taskD.orderToken)),
+                orderToken = taskD.orderToken,
+              )
+          ),
         )
       }
       "mergedWith" - {
@@ -55,7 +57,8 @@ object DocumentEditTest extends TestSuite {
             MaskedTaskUpdate.fromFields(
               originalTask = taskDAfterUpdate,
               content = TextWithMarkup("edited2"),
-              indentation = 96),
+              indentation = 96,
+            ),
             MaskedTaskUpdate.fromFields(originalTask = taskC, tags = Seq("xioq")),
           ),
         )
@@ -69,7 +72,8 @@ object DocumentEditTest extends TestSuite {
             originalTask = taskD,
             content = TextWithMarkup("edited2"),
             orderToken = orderTokenE,
-            indentation = 96),
+            indentation = 96,
+          ),
           MaskedTaskUpdate.fromFields(originalTask = taskC, tags = Seq("xioq")),
         )
       }
@@ -81,7 +85,8 @@ object DocumentEditTest extends TestSuite {
           assertNotANoOp(edit)
           assertNotANoOp(DocumentEdit.Reversible(removedTasks = Seq(taskB), addedTasks = Seq(taskA, taskB)))
           assertNotANoOp(
-            DocumentEdit.Reversible(removedTasks = Seq(taskA, taskB), addedTasks = Seq(taskB, taskC)))
+            DocumentEdit.Reversible(removedTasks = Seq(taskA, taskB), addedTasks = Seq(taskB, taskC))
+          )
         }
         "Is no-op" - {
           "empty edit" - {
@@ -89,15 +94,20 @@ object DocumentEditTest extends TestSuite {
           }
           "removed == added" - {
             assertNoOp(
-              DocumentEdit.Reversible(removedTasks = Seq(taskA, taskB), addedTasks = Seq(taskA, taskB)))
+              DocumentEdit.Reversible(removedTasks = Seq(taskA, taskB), addedTasks = Seq(taskA, taskB))
+            )
           }
           "empty updates" - {
             assertNoOp(
               DocumentEdit.Reversible(
-                taskUpdates = Seq(MaskedTaskUpdate.fromFields(taskA, content = taskA.content))))
+                taskUpdates = Seq(MaskedTaskUpdate.fromFields(taskA, content = taskA.content))
+              )
+            )
             assertNoOp(
               DocumentEdit.Reversible(
-                taskUpdates = Seq(MaskedTaskUpdate.fromFields(taskA, indentation = taskA.indentation))))
+                taskUpdates = Seq(MaskedTaskUpdate.fromFields(taskA, indentation = taskA.indentation))
+              )
+            )
           }
         }
       }
@@ -107,7 +117,8 @@ object DocumentEditTest extends TestSuite {
         .create(
           removedTasksIds = Set(taskA.id, taskB.id),
           addedTasks = Seq(taskC, taskE),
-          taskUpdates = Seq(taskDAfterUpdate))
+          taskUpdates = Seq(taskDAfterUpdate),
+        )
 
       "fromReversible" - {
         implicit val document = newDocument(taskD)
@@ -118,7 +129,8 @@ object DocumentEditTest extends TestSuite {
         val taskDAfterUpdate2 =
           taskD.withAppliedUpdateAndNewUpdateTime(
             MaskedTaskUpdate
-              .fromFields(taskD, content = TextWithMarkup("edited2"), indentation = 96))
+              .fromFields(taskD, content = TextWithMarkup("edited2"), indentation = 96)
+          )
         val taskCAfterUpdate =
           taskC.withAppliedUpdateAndNewUpdateTime(MaskedTaskUpdate.fromFields(taskC, tags = Seq("xioq")))
         val otherEdit = DocumentEdit.WithUpdateTimes.create(

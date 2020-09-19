@@ -35,11 +35,11 @@ final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess, clock: C
     cache.flatMap { cacheMap =>
       val listenableInts: Iterable[Listenable[Int]] =
         for (storeFuture <- cacheMap.values)
-          yield
-            Listenable
-              .fromFuture(storeFuture)
-              .flatMap(storeOption =>
-                if (storeOption.isDefined) storeOption.get.unsyncedNumberOfTasks else Listenable.fixed(0))
+          yield Listenable
+            .fromFuture(storeFuture)
+            .flatMap(storeOption =>
+              if (storeOption.isDefined) storeOption.get.unsyncedNumberOfTasks else Listenable.fixed(0)
+            )
       listenableInts.toVector.reduceOption(Listenable.mergeWith[Int](_ + _)) getOrElse Listenable.fixed(0)
     }
   }
@@ -61,7 +61,8 @@ final class DocumentStoreFactory(implicit entityAccess: JsEntityAccess, clock: C
 
       if (modificationsDuringCalculation.nonEmpty) {
         store.JsEntityAccessListener.modificationsAddedOrPendingStateChanged(
-          modificationsDuringCalculation.toVector)
+          modificationsDuringCalculation.toVector
+        )
       }
       entityAccess.deregisterListener(entityModificationListener)
       store

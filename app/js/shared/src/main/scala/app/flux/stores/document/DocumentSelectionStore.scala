@@ -30,7 +30,8 @@ final class DocumentSelectionStore {
     case deserializeRegex(startIndex, startOffset, endIndex, endOffset) =>
       IndexedSelection(
         IndexedCursor(startIndex.toInt, startOffset.toInt),
-        IndexedCursor(endIndex.toInt, endOffset.toInt))
+        IndexedCursor(endIndex.toInt, endOffset.toInt),
+      )
     case _ => IndexedSelection.nullInstance
   }
 

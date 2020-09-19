@@ -26,21 +26,24 @@ object TaskTest extends TestSuite {
         indentation = 1,
         collapsed = true,
         delayedUntil = Some(testDate),
-        tags = Seq("a"))
+        tags = Seq("a"),
+      )
       val taskA2 = Task.withRandomId(
         content = TextWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
         delayedUntil = Some(testDate),
-        tags = Seq("a"))
+        tags = Seq("a"),
+      )
       val taskB = Task.withRandomId(
         content = TextWithMarkup("b"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
         delayedUntil = Some(testDate),
-        tags = Seq("a"))
+        tags = Seq("a"),
+      )
 
       (taskA1 equalsIgnoringMetadata taskA2) ==> true
       (taskA1 equalsIgnoringMetadata taskB) ==> false
@@ -60,7 +63,8 @@ object TaskTest extends TestSuite {
           idOption = Some(123),
           lastUpdateTime =
             LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA),
-        ))
+        )
+      )
       val task2 = Task.fromTaskEntity(
         TaskEntity(
           documentId = document.id,
@@ -74,7 +78,8 @@ object TaskTest extends TestSuite {
           idOption = Some(123),
           lastUpdateTime =
             LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.contentHtml), testInstantB),
-        ))
+        )
+      )
 
       (task1 mergedWith task2) ==> Task.fromTaskEntity(
         TaskEntity(
@@ -90,9 +95,12 @@ object TaskTest extends TestSuite {
           lastUpdateTime = LastUpdateTime(
             timePerField = Map(
               ModelFields.TaskEntity.indentation -> testInstantA,
-              ModelFields.TaskEntity.contentHtml -> testInstantB),
-            otherFieldsTime = None),
-        ))
+              ModelFields.TaskEntity.contentHtml -> testInstantB,
+            ),
+            otherFieldsTime = None,
+          ),
+        )
+      )
     }
     "withAppliedUpdateAndNewUpdateTime" - {
       val task = Task.fromTaskEntity(
@@ -108,7 +116,8 @@ object TaskTest extends TestSuite {
           idOption = Some(123),
           lastUpdateTime =
             LastUpdateTime.someFieldsUpdated(Seq(ModelFields.TaskEntity.indentation), testInstantA),
-        ))
+        )
+      )
 
       val taskAfterUpdate = Task.fromTaskEntity(
         TaskEntity(
@@ -124,20 +133,25 @@ object TaskTest extends TestSuite {
           lastUpdateTime = LastUpdateTime(
             timePerField = Map(
               ModelFields.TaskEntity.indentation -> testInstantA,
-              ModelFields.TaskEntity.contentHtml -> testInstantB),
-            otherFieldsTime = None),
-        ))
+              ModelFields.TaskEntity.contentHtml -> testInstantB,
+            ),
+            otherFieldsTime = None,
+          ),
+        )
+      )
 
       "with matching baseline" - {
         clock.setNowInstant(testInstantB)
         task.withAppliedUpdateAndNewUpdateTime(
-          MaskedTaskUpdate.fromFields(originalTask = task, content = TextWithMarkup("B"))) ==>
+          MaskedTaskUpdate.fromFields(originalTask = task, content = TextWithMarkup("B"))
+        ) ==>
           taskAfterUpdate
       }
       "with different baseline" - {
         clock.setNowInstant(testInstantC)
         task.withAppliedUpdateAndNewUpdateTime(
-          MaskedTaskUpdate.fromFields(originalTask = taskAfterUpdate, tags = Seq("B"))) ==>
+          MaskedTaskUpdate.fromFields(originalTask = taskAfterUpdate, tags = Seq("B"))
+        ) ==>
           Task.fromTaskEntity(
             TaskEntity(
               documentId = document.id,
@@ -152,10 +166,12 @@ object TaskTest extends TestSuite {
               lastUpdateTime = LastUpdateTime(
                 timePerField = Map(
                   ModelFields.TaskEntity.indentation -> testInstantA,
-                  ModelFields.TaskEntity.tags -> testInstantC),
-                otherFieldsTime = None
+                  ModelFields.TaskEntity.tags -> testInstantC,
+                ),
+                otherFieldsTime = None,
               ),
-            ))
+            )
+          )
       }
     }
 
@@ -179,7 +195,8 @@ object TaskTest extends TestSuite {
           tags = Seq("a"),
           lastContentModifierUserId = testUser.id,
           idOption = Some(task1A.id),
-        ))
+        )
+      )
       val task1WithNewIndentation = Task.fromTaskEntity(
         TaskEntity(
           documentId = document.id,
@@ -191,14 +208,16 @@ object TaskTest extends TestSuite {
           tags = Seq("a"),
           lastContentModifierUserId = testUser.id,
           idOption = Some(task1A.id),
-        ))
+        )
+      )
       val task2 = Task.withRandomId(
         content = TextWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
         delayedUntil = Some(testDate),
-        tags = Seq("a"))
+        tags = Seq("a"),
+      )
 
       task1A == task1B ==> true
       task1A == task1WithNewIndentation ==> false

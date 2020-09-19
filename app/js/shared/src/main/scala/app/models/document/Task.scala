@@ -90,12 +90,13 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
 
   def copyWithId(newId: Long): Task = new Task(jsTaskEntity.copy(idValue = newId))
 
-  def copyForTests(content: TextWithMarkup = null,
-                   orderToken: OrderToken = null,
-                   indentation: Int = -1,
-                   collapsed: java.lang.Boolean = null,
-                   delayedUntil: Option[LocalDateTime] = null,
-                   tags: Seq[String] = null,
+  def copyForTests(
+      content: TextWithMarkup = null,
+      orderToken: OrderToken = null,
+      indentation: Int = -1,
+      collapsed: java.lang.Boolean = null,
+      delayedUntil: Option[LocalDateTime] = null,
+      tags: Seq[String] = null,
   ): Task = {
     def toScala(bool: java.lang.Boolean): Boolean = bool
     new Task(
@@ -110,7 +111,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
         lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
         idValue = this.id,
         lastUpdateTime = this.jsTaskEntity.lastUpdateTime,
-      ))
+      )
+    )
   }
 
   // **************** Ordered methods **************** //
@@ -141,7 +143,8 @@ object Task {
       lastContentModifierUserId = -1,
       idValue = -1,
       lastUpdateTime = LastUpdateTime.neverUpdated,
-    ))
+    )
+  )
 
   def withRandomId(
       content: TextWithMarkup,
@@ -163,7 +166,8 @@ object Task {
         lastContentModifierUserId = user.id,
         idValue = EntityModification.generateRandomId(),
         lastUpdateTime = LastUpdateTime.neverUpdated,
-      ))
+      )
+    )
 
   def fromTaskEntity(taskEntity: TaskEntity): Task =
     new Task(
@@ -181,7 +185,8 @@ object Task {
           for ((entityField, time) <- taskEntity.lastUpdateTime.timePerField)
             yield FakeJsTaskEntity.fakeToEntityFieldBiMap.inverse().get(entityField) -> time
         }.toMap),
-      ))
+      )
+    )
 
   /**
     * Fake entity that provides a way to re-use UpdatableEntity logic without converting `TextWithMarkup` into
@@ -240,7 +245,8 @@ object Task {
       val lastContentModifierUserId: ModelField[Long, E] = ModelField(
         "lastContentModifierUserId",
         _.lastContentModifierUserId,
-        v => _.copy(lastContentModifierUserId = v))
+        v => _.copy(lastContentModifierUserId = v),
+      )
     }
   }
 }

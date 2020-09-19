@@ -25,8 +25,8 @@ import org.scalajs.dom
 
 import scala.collection.immutable.Seq
 
-private[app] final class DocumentAdministration(
-    implicit entityAccess: EntityAccess,
+private[app] final class DocumentAdministration(implicit
+    entityAccess: EntityAccess,
     i18n: I18n,
     allDocumentsStore: AllDocumentsStore,
     dispatcher: Dispatcher,
@@ -78,14 +78,14 @@ private[app] final class DocumentAdministration(
                 tableClasses = Seq("table-documents"),
                 tableHeaders = Seq(
                   <.th(i18n("app.name")),
-                  <.th()
+                  <.th(),
                 ),
-                tableRowDatas = tableRowDatas(state)
+                tableRowDatas = tableRowDatas(state),
               ),
-              addButton(state)
+              addButton(state),
             )
           }
-        )
+        ),
       )
     }
 
@@ -108,18 +108,19 @@ private[app] final class DocumentAdministration(
                       val newString = e.target.value
                       $.modState(_.withNameInput(document, newString))
                     }
-                  }
+                  },
                 ),
                 " ",
-                updateNameButton(document)
+                updateNameButton(document),
               )
             ),
             <.td(
               upDownButtons(document),
               " ",
-              deleteButton(document)
-            )
-          ))
+              deleteButton(document),
+            ),
+          )
+        )
       }
     }
 
@@ -128,7 +129,7 @@ private[app] final class DocumentAdministration(
         Bootstrap.FontAwesomeIcon("plus"),
         " ",
         i18n("app.create-new-document"),
-        ^.onClick --> doAdd()
+        ^.onClick --> doAdd(),
       )
     }
 
@@ -139,7 +140,7 @@ private[app] final class DocumentAdministration(
         ^.onClick ==> { (e: ReactEventFromInput) =>
           e.preventDefault()
           doUpdateName(document, state.nameInput(document))
-        }
+        },
       )
     }
     private def upDownButtons(document: UserDocument)(implicit state: State): VdomNode = {
@@ -151,7 +152,9 @@ private[app] final class DocumentAdministration(
             document,
             orderTokenBetweenIndices(
               state.allDocuments.indexOf(document) - 2,
-              state.allDocuments.indexOf(document) - 1))
+              state.allDocuments.indexOf(document) - 1,
+            ),
+          ),
         ),
         " ",
         Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
@@ -161,15 +164,17 @@ private[app] final class DocumentAdministration(
             document,
             orderTokenBetweenIndices(
               state.allDocuments.indexOf(document) + 1,
-              state.allDocuments.indexOf(document) + 2))
-        )
+              state.allDocuments.indexOf(document) + 2,
+            ),
+          ),
+        ),
       )
     }
 
     private def deleteButton(document: UserDocument)(implicit state: State): VdomNode = {
       Bootstrap.Button(Variant.info, Size.xs, tag = <.a)(
         Bootstrap.FontAwesomeIcon("times"),
-        ^.onClick --> doDelete(document)
+        ^.onClick --> doDelete(document),
       )
     }
 
@@ -177,7 +182,9 @@ private[app] final class DocumentAdministration(
       dispatcher.dispatch(
         AppActions.AddEmptyDocument(
           name = i18n("app.untitled-document"),
-          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None)))
+          orderToken = OrderToken.middleBetween(state.allDocuments.lastOption.map(_.orderToken), None),
+        )
+      )
     }
 
     private def doUpdateName(document: UserDocument, newName: String): Callback = LogExceptionsCallback {

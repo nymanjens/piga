@@ -21,8 +21,8 @@ import scala.collection.immutable.Seq
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-final class ScalaJsApiServerFactory @Inject()(
-    implicit clock: Clock,
+final class ScalaJsApiServerFactory @Inject() (implicit
+    clock: Clock,
     entityAccess: JvmEntityAccess,
     i18n: PlayI18n,
     entityPermissions: EntityPermissions,
@@ -35,7 +35,7 @@ final class ScalaJsApiServerFactory @Inject()(
         user = user,
         allAccessibleDocuments = Await.result(UserDocument.fetchAllForUser(), Duration.Inf),
         i18nMessages = i18n.allI18nMessages,
-        nextUpdateToken = toUpdateToken(clock.nowInstant)
+        nextUpdateToken = toUpdateToken(clock.nowInstant),
       )
 
     override def getAllEntities(types: Seq[EntityType.any]) = {
@@ -49,7 +49,8 @@ final class ScalaJsApiServerFactory @Inject()(
 
               // apply permissions filter
               allEntities.filter(entityPermissions.isAllowedToRead)
-          })
+            }
+          )
           .toMap
       }
 
@@ -120,8 +121,10 @@ final class ScalaJsApiServerFactory @Inject()(
                 loginName = userProto.loginName.get,
                 password = userProto.plainTextPassword.get,
                 name = userProto.name.get,
-                isAdmin = userProto.isAdmin getOrElse false
-              )))
+                isAdmin = userProto.isAdmin getOrElse false,
+              )
+            )
+          )
 
         case Some(id) => // Update user
           requireNonEmptyIfSet(userProto.loginName)
@@ -136,7 +139,7 @@ final class ScalaJsApiServerFactory @Inject()(
             var result = existingUser.copy(
               loginName = userProto.loginName getOrElse existingUser.loginName,
               name = userProto.name getOrElse existingUser.name,
-              isAdmin = userProto.isAdmin getOrElse existingUser.isAdmin
+              isAdmin = userProto.isAdmin getOrElse existingUser.isAdmin,
             )
             if (userProto.plainTextPassword.isDefined) {
               result = Users.copyUserWithPassword(result, userProto.plainTextPassword.get)

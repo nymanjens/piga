@@ -55,8 +55,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.Random
 
-private[document] final class DesktopTaskEditor(
-    implicit entityAccess: EntityAccess,
+private[document] final class DesktopTaskEditor(implicit
+    entityAccess: EntityAccess,
     user: User,
     i18n: I18n,
     clock: Clock,
@@ -96,7 +96,7 @@ private[document] final class DesktopTaskEditor(
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
-      formatting = Formatting.none
+      formatting = Formatting.none,
     )
     private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
       mutable.Map().withDefault(identity)
@@ -134,7 +134,7 @@ private[document] final class DesktopTaskEditor(
               ^.key := tagId,
               ^.id := tagId,
             ),
-            style = s"""#$tagId:after {content: "$tag";}"""
+            style = s"""#$tagId:after {content: "$tag";}""",
           )
       }
 
@@ -162,7 +162,8 @@ private[document] final class DesktopTaskEditor(
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
               val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
-                s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}""")
+                s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}"""
+              )
               val styleStrings = renderedTags.map(_.style) ++ collapsedSuffixStyle
 
               (<.li(
@@ -177,10 +178,11 @@ private[document] final class DesktopTaskEditor(
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
-                    ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user")),
+                    ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user")
+                ),
                 VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
-                task.content.toVdomNode
+                task.content.toVdomNode,
               ) +: {
                 if (styleStrings.nonEmpty) {
                   Seq(<.styleTag(^.key := s"listyle-$taskIndex", styleStrings.mkString("\n")))
@@ -189,7 +191,7 @@ private[document] final class DesktopTaskEditor(
                 }
               }).toVdomArray
           }.toVdomArray
-        )
+        ),
       )
     }
 
@@ -203,9 +205,9 @@ private[document] final class DesktopTaskEditor(
 
       setEventClipboardData(
         event,
-        selection =
-          IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.nullInstance)
+        selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+          IndexedSelection.nullInstance,
+      )
     }
 
     private def handleCut(event: ReactEventFromInput): Callback =
@@ -224,8 +226,9 @@ private[document] final class DesktopTaskEditor(
         }
       }
 
-    private def setEventClipboardData(event: ReactEventFromInput, selection: IndexedSelection)(
-        implicit state: State): Unit = {
+    private def setEventClipboardData(event: ReactEventFromInput, selection: IndexedSelection)(implicit
+        state: State
+    ): Unit = {
       val document = state.document
 
       if (selection.start != selection.end) {
@@ -284,7 +287,7 @@ private[document] final class DesktopTaskEditor(
             } else {
               clipboardStringToReplacement(clipboardData, baseFormatting = formatting)
             },
-            selection
+            selection,
           )
         }
       }
@@ -325,26 +328,30 @@ private[document] final class DesktopTaskEditor(
               event.preventDefault()
               replaceSelection(
                 replacement = Replacement.fromString(character.toString, formatting),
-                IndexedSelection(start, end))
+                IndexedSelection(start, end),
+              )
 
             case SpecialKey(Enter, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
               event.preventDefault()
               if (keyCombination.shift) {
                 replaceSelection(
                   replacement = Replacement.fromString("\n", formatting),
-                  IndexedSelection(start, end))
+                  IndexedSelection(start, end),
+                )
               } else {
-                if (selection.isSingleton &&
-                    document.tasks(start.seqIndex).collapsed &&
-                    start == start.toEndOfTask) {
+                if (
+                  selection.isSingleton &&
+                  document.tasks(start.seqIndex).collapsed &&
+                  start == start.toEndOfTask
+                ) {
                   // Pressing enter at the end of a collapsed task --> skip the children
                   val lastCollapsedIndex = selection.includeChildren(collapsedOnly = true).end.seqIndex
                   replaceSelection(
                     replacement = Replacement.newEmptyTask(
-                      indentationRelativeToCurrent =
-                        document.tasks(start.seqIndex).indentation
-                          - document.tasks(lastCollapsedIndex).indentation),
-                    IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex))
+                      indentationRelativeToCurrent = document.tasks(start.seqIndex).indentation
+                        - document.tasks(lastCollapsedIndex).indentation
+                    ),
+                    IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex)),
                   )
                 } else {
                   replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
@@ -359,7 +366,8 @@ private[document] final class DesktopTaskEditor(
                 } else {
                   replaceSelection(
                     replacement = Replacement.empty,
-                    IndexedSelection(start minusOffsetInSeq 1, end))
+                    IndexedSelection(start minusOffsetInSeq 1, end),
+                  )
                 }
               } else {
                 replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
@@ -373,13 +381,16 @@ private[document] final class DesktopTaskEditor(
                 } else {
                   replaceSelection(
                     replacement = Replacement.empty,
-                    IndexedSelection(start, end plusOffsetInSeq 1))
+                    IndexedSelection(start, end plusOffsetInSeq 1),
+                  )
                 }
               } else {
                 replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
               }
 
-            case SpecialKey(Delete, /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) => // Delete rest of line
+            case SpecialKey(
+                  Delete, /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false,
+                ) => // Delete rest of line
               event.preventDefault()
               replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.toEndOfTask))
 
@@ -403,7 +414,8 @@ private[document] final class DesktopTaskEditor(
               updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
                 MaskedTaskUpdate.fromFields(
                   task,
-                  indentation = zeroIfNegative(task.indentation + indentIncrease))
+                  indentation = zeroIfNegative(task.indentation + indentIncrease),
+                )
               }
 
             // Copy whole task and its children (shift-copy)
@@ -434,7 +446,8 @@ private[document] final class DesktopTaskEditor(
               toggleFormatting(
                 (form, value) => form.copy(italic = value),
                 selection,
-                formattingAtStart = formatting)
+                formattingAtStart = formatting,
+              )
 
             // Bold
             case CharacterKey('b', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
@@ -442,7 +455,8 @@ private[document] final class DesktopTaskEditor(
               toggleFormatting(
                 (form, value) => form.copy(bold = value),
                 selection,
-                formattingAtStart = formatting)
+                formattingAtStart = formatting,
+              )
 
             // Code font
             case CharacterKey('`', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
@@ -450,7 +464,8 @@ private[document] final class DesktopTaskEditor(
               toggleFormatting(
                 (form, value) => form.copy(code = value),
                 selection,
-                formattingAtStart = formatting)
+                formattingAtStart = formatting,
+              )
 
             // Strikethrough (Alt + Shift + 5)
             case CharacterKey(_, /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true)
@@ -459,7 +474,8 @@ private[document] final class DesktopTaskEditor(
               toggleFormatting(
                 (form, value) => form.copy(strikethrough = value),
                 selection,
-                formattingAtStart = formatting)
+                formattingAtStart = formatting,
+              )
 
             // Clear formatting
             case CharacterKey('\\', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
@@ -520,14 +536,16 @@ private[document] final class DesktopTaskEditor(
               val currentTaskIsEmpty = selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty
               removeTasks(
                 if (currentTaskIsEmpty) selection.seqIndices
-                else selection.includeChildren().seqIndices)
+                else selection.includeChildren().seqIndices
+              )
 
             // Duplicate task
             case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
               event.preventDefault()
               duplicateTasks(
                 selection.includeChildren(collapsedOnly = true).seqIndices,
-                selectionBeforeEdit = selection)
+                selectionBeforeEdit = selection,
+              )
 
             // Move tasks up
             case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
@@ -582,8 +600,8 @@ private[document] final class DesktopTaskEditor(
         }
       }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(
-        implicit props: Props,
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit
+        props: Props,
         state: State,
     ): Callback =
       maybeEdit match {
@@ -594,7 +612,7 @@ private[document] final class DesktopTaskEditor(
           val newDocument = documentStore.state.document
           $.modState(
             _.copyFromStore(documentStore),
-            Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument)))
+            Callback.empty.flatMap(_ => setSelection(edit.selectionAfterEdit.attachToDocument(newDocument))),
           )
         case Some(edit) if edit.documentId != state.document.id =>
           Callback.future {
@@ -604,15 +622,16 @@ private[document] final class DesktopTaskEditor(
               val newOtherDocument = otherDocumentStore.state.document
               documentSelectionStore.setSelection(
                 edit.documentId,
-                edit.selectionAfterEdit.attachToDocument(newOtherDocument))
+                edit.selectionAfterEdit.attachToDocument(newOtherDocument),
+              )
               props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
               Callback.empty
             }
           }
       }
 
-    private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(
-        implicit state: State,
+    private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(implicit
+        state: State,
         props: Props,
     ): Callback = {
       val IndexedSelection(start, end) = selectionBeforeEdit
@@ -624,7 +643,7 @@ private[document] final class DesktopTaskEditor(
         OrderToken.evenlyDistributedValuesBetween(
           numValues = replacement.parts.length,
           lowerExclusive = previousTask.map(_.orderToken),
-          higherExclusive = nextTask.map(_.orderToken)
+          higherExclusive = nextTask.map(_.orderToken),
         )
       }
 
@@ -634,17 +653,21 @@ private[document] final class DesktopTaskEditor(
         // (via delete or backspace), the non-empty lines' properties (collapsed, tags, ...) should remain.
         val secondTask =
           if (start.seqIndex < end.seqIndex) Some(oldDocument.tasks(start.seqIndex + 1)) else None
-        if (firstTask.contentString.isEmpty
-            && secondTask.isDefined
-            && secondTask.get.contentString.nonEmpty
-            && replacement.parts.size <= 1) {
+        if (
+          firstTask.contentString.isEmpty
+          && secondTask.isDefined
+          && secondTask.get.contentString.nonEmpty
+          && replacement.parts.size <= 1
+        ) {
           secondTask.get
         } else {
           firstTask
         }
       }
       val replacementIndexMatchedToTaskToUpdate = {
-        if (replacement.parts.size > 1 && replacement.parts.head.contentString.isEmpty && start.offsetInTask == 0)
+        if (
+          replacement.parts.size > 1 && replacement.parts.head.contentString.isEmpty && start.offsetInTask == 0
+        )
           1
         else 0
       }
@@ -660,7 +683,8 @@ private[document] final class DesktopTaskEditor(
           val newContent = ifIndexOrEmpty(0)(firstTask.content.sub(0, start.offsetInTask)) +
             replacementPart.content +
             ifIndexOrEmpty(replacement.parts.length - 1)(
-              oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask))
+              oldDocument.tasks(end.seqIndex).content.sub(end.offsetInTask)
+            )
           val newIndentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent
           if (i == replacementIndexMatchedToTaskToUpdate) {
             taskUpdates.append(
@@ -672,7 +696,8 @@ private[document] final class DesktopTaskEditor(
                 collapsed =
                   if (replacesWholeTask) taskToUpdate.collapsed || replacementPart.collapsed else null,
                 tags = if (replacesWholeTask) (taskToUpdate.tags ++ replacementPart.tags).distinct else null,
-              ))
+              )
+            )
           } else {
             addedTasks.append(
               Task.withRandomId(
@@ -682,7 +707,8 @@ private[document] final class DesktopTaskEditor(
                 collapsed = replacementPart.collapsed,
                 delayedUntil = None,
                 tags = replacementPart.tags,
-              ))
+              )
+            )
           }
         }
       val removedTasks = oldDocument
@@ -693,11 +719,13 @@ private[document] final class DesktopTaskEditor(
         edit = DocumentEdit.Reversible(
           removedTasks = removedTasks,
           addedTasks = addedTasks.toVector,
-          taskUpdates = taskUpdates.toVector),
+          taskUpdates = taskUpdates.toVector,
+        ),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection.singleton(
-          (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length),
-        replacementString = replacement.contentString
+          (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length
+        ),
+        replacementString = replacement.contentString,
       )
     }
 
@@ -716,23 +744,27 @@ private[document] final class DesktopTaskEditor(
               collapsed = false,
               delayedUntil = None,
               tags = Seq(),
-            ))
+            )
+          )
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
         selectionBeforeEdit = IndexedSelection(
           IndexedCursor.atStartOfTask(taskIndices.head),
-          IndexedCursor.atEndOfTask(taskIndices.last)),
+          IndexedCursor.atEndOfTask(taskIndices.last),
+        ),
         selectionAfterEdit = IndexedSelection.singleton(
           IndexedCursor.atStartOfTask(
             if (oldDocument.tasks.size > taskIndices.head + taskIndices.size) taskIndices.head
             else if (taskIndices.head == 0) 0
-            else taskIndices.head - 1))
+            else taskIndices.head - 1
+          )
+        ),
       )
     }
 
-    private def duplicateTasks(taskIndices: Range, selectionBeforeEdit: IndexedSelection)(
-        implicit state: State,
+    private def duplicateTasks(taskIndices: Range, selectionBeforeEdit: IndexedSelection)(implicit
+        state: State,
         props: Props,
     ): Callback = {
       implicit val oldDocument = state.document
@@ -743,33 +775,36 @@ private[document] final class DesktopTaskEditor(
         OrderToken.evenlyDistributedValuesBetween(
           numValues = taskIndices.size,
           lowerExclusive = taskBefore.map(_.orderToken),
-          higherExclusive = taskAfter.map(_.orderToken)
+          higherExclusive = taskAfter.map(_.orderToken),
         )
       }
-      val addedTasks = for ((i, orderToken) <- taskIndices zip newOrderTokens)
-        yield {
-          val taskToCopy = oldDocument.tasks(i)
-          Task.withRandomId(
-            content = taskToCopy.content,
-            orderToken = orderToken,
-            indentation = taskToCopy.indentation,
-            collapsed = taskToCopy.collapsed,
-            delayedUntil = taskToCopy.delayedUntil,
-            tags = taskToCopy.tags,
-          )
-        }
+      val addedTasks =
+        for ((i, orderToken) <- taskIndices zip newOrderTokens)
+          yield {
+            val taskToCopy = oldDocument.tasks(i)
+            Task.withRandomId(
+              content = taskToCopy.content,
+              orderToken = orderToken,
+              indentation = taskToCopy.indentation,
+              collapsed = taskToCopy.collapsed,
+              delayedUntil = taskToCopy.delayedUntil,
+              tags = taskToCopy.tags,
+            )
+          }
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(addedTasks = addedTasks),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEdit = IndexedSelection(
           selectionBeforeEdit.start.plusTasks(taskIndices.size),
-          selectionBeforeEdit.end.plusTasks(taskIndices.size))
+          selectionBeforeEdit.end.plusTasks(taskIndices.size),
+        ),
       )
     }
 
     private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
-        taskUpdate: Task => MaskedTaskUpdate)(implicit state: State, props: Props): Callback = {
+        taskUpdate: Task => MaskedTaskUpdate
+    )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val updateSelection = if (updateChildren) selection.includeChildren() else selection
       val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
@@ -777,7 +812,7 @@ private[document] final class DesktopTaskEditor(
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
-        selectionAfterEdit = selection
+        selectionAfterEdit = selection,
       )
     }
 
@@ -787,25 +822,25 @@ private[document] final class DesktopTaskEditor(
     )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
-      val taskUpdates = for (task <- oldDocument.tasksIn(selection))
-        yield
-          MaskedTaskUpdate.fromFields(
+      val taskUpdates =
+        for (task <- oldDocument.tasksIn(selection))
+          yield MaskedTaskUpdate.fromFields(
             originalTask = task,
             content = task.content.withTransformedCharacters(
               beginOffset = selection.startOffsetInTask(task),
               endOffset = selection.endOffsetInTask(task),
-              characterTransform = characterTransform
-            )
+              characterTransform = characterTransform,
+            ),
           )
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
-        selectionAfterEdit = selection
+        selectionAfterEdit = selection,
       )
     }
 
-    private def editTagsInTasks(selection: IndexedSelection)(
-        implicit state: State,
+    private def editTagsInTasks(selection: IndexedSelection)(implicit
+        state: State,
         props: Props,
     ): Callback = {
       implicit val document = state.document
@@ -813,7 +848,8 @@ private[document] final class DesktopTaskEditor(
       def tagsDialog(defaultTags: Seq[String]): Future[Option[Seq[String]]] = async {
         val title = if (defaultTags.isEmpty) "Add tags" else "Edit tags"
         val result = await(
-          Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false, selectValue = true))
+          Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false, selectValue = true)
+        )
         result.map(s => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag))
       }
 
@@ -824,14 +860,14 @@ private[document] final class DesktopTaskEditor(
       ): Callback = {
         val taskUpdates =
           for (task <- relevantTasks)
-            yield
-              MaskedTaskUpdate.fromFields(
-                originalTask = task,
-                tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd)
+            yield MaskedTaskUpdate.fromFields(
+              originalTask = task,
+              tags = task.tags.filterNot(tagsToRemove contains _) ++ tagsToAdd,
+            )
         replaceWithHistory(
           edit = DocumentEdit.Reversible(taskUpdates = taskUpdates.filter(!_.isNoOp)),
           selectionBeforeEdit = selection,
-          selectionAfterEdit = selection
+          selectionAfterEdit = selection,
         )
       }
 
@@ -862,15 +898,14 @@ private[document] final class DesktopTaskEditor(
       def toggleFormattingInternal(start: IndexedCursor, end: IndexedCursor): Callback = {
         def setFormatting(tasks: Seq[Task], value: Boolean): Seq[MaskedTaskUpdate] =
           for (task <- tasks)
-            yield
-              MaskedTaskUpdate.fromFields(
-                originalTask = task,
-                content = task.content.withFormatting(
-                  beginOffset = if (task == tasks.head) start.offsetInTask else 0,
-                  endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
-                  formatting => updateFunc(formatting, value)
-                )
-              )
+            yield MaskedTaskUpdate.fromFields(
+              originalTask = task,
+              content = task.content.withFormatting(
+                beginOffset = if (task == tasks.head) start.offsetInTask else 0,
+                endOffset = if (task == tasks.last) end.offsetInTask else task.contentString.length,
+                formatting => updateFunc(formatting, value),
+              ),
+            )
 
         val oldDocument = state.document
 
@@ -886,7 +921,7 @@ private[document] final class DesktopTaskEditor(
         replaceWithHistory(
           edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = selection,
-          selectionAfterEdit = selection
+          selectionAfterEdit = selection,
         )
       }
 
@@ -895,7 +930,7 @@ private[document] final class DesktopTaskEditor(
           start.detach,
           formatting =
             if (updateFunc(formattingAtStart, true) == formattingAtStart) updateFunc(formattingAtStart, false)
-            else updateFunc(formattingAtStart, true)
+            else updateFunc(formattingAtStart, true),
         )
         Callback.empty
       } else {
@@ -903,8 +938,8 @@ private[document] final class DesktopTaskEditor(
       }
     }
 
-    private def editLink(originalSelection: IndexedSelection)(
-        implicit state: State,
+    private def editLink(originalSelection: IndexedSelection)(implicit
+        state: State,
         props: Props,
     ): Callback = {
       implicit val oldDocument = state.document
@@ -940,22 +975,22 @@ private[document] final class DesktopTaskEditor(
       }
 
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
-        val taskUpdates = for (task <- oldDocument.tasksIn(selection))
-          yield
-            MaskedTaskUpdate.fromFields(
+        val taskUpdates =
+          for (task <- oldDocument.tasksIn(selection))
+            yield MaskedTaskUpdate.fromFields(
               originalTask = task,
               content = task.content
                 .withFormatting(
                   beginOffset = selection.startOffsetInTask(task),
                   endOffset = selection.endOffsetInTask(task),
-                  updateFunc = _.copy(link = newLink)
-                )
+                  updateFunc = _.copy(link = newLink),
+                ),
             )
 
         replaceWithHistory(
           edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
           selectionBeforeEdit = originalSelection,
-          selectionAfterEdit = selection
+          selectionAfterEdit = selection,
         )
       }
 
@@ -1015,7 +1050,8 @@ private[document] final class DesktopTaskEditor(
         oldDocument.familyTreeRange(
           anyMemberSeqIndex = indexThatIsHoppedOver,
           rootParentIndentation =
-            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min) match {
+            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min,
+        ) match {
           case None                    => direction * 1
           case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
         }
@@ -1025,11 +1061,13 @@ private[document] final class DesktopTaskEditor(
         if (seqIndexMovement < 0)
           (
             oldDocument.tasksOption(start.seqIndex + seqIndexMovement - 1),
-            oldDocument.tasksOption(start.seqIndex + seqIndexMovement))
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement),
+          )
         else
           (
             oldDocument.tasksOption(end.seqIndex + seqIndexMovement),
-            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1))
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1),
+          )
 
       if (task1.isEmpty && task2.isEmpty) {
         Callback.empty
@@ -1038,7 +1076,7 @@ private[document] final class DesktopTaskEditor(
           OrderToken.evenlyDistributedValuesBetween(
             numValues = selectionWithChildren.seqIndices.length,
             lowerExclusive = task1.map(_.orderToken),
-            higherExclusive = task2.map(_.orderToken)
+            higherExclusive = task2.map(_.orderToken),
           )
         }
 
@@ -1051,8 +1089,8 @@ private[document] final class DesktopTaskEditor(
           selectionBeforeEdit = selectionBeforeEdit,
           selectionAfterEdit = IndexedSelection(
             selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
-            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement)
-          )
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+          ),
         )
       }
     }
@@ -1079,9 +1117,8 @@ private[document] final class DesktopTaskEditor(
       val newStartOffset = moveOffset(cursor.offsetInTask, step = -1)
       val newEndOffset = moveOffset(cursor.offsetInTask, step = +1)
       setSelection(
-        IndexedSelection(
-          cursor.copy(offsetInTask = newStartOffset),
-          cursor.copy(offsetInTask = newEndOffset)))
+        IndexedSelection(cursor.copy(offsetInTask = newStartOffset), cursor.copy(offsetInTask = newEndOffset))
+      )
     }
 
     private def replaceWithHistory(
@@ -1104,10 +1141,10 @@ private[document] final class DesktopTaskEditor(
             documentEdit = edit,
             selectionBeforeEdit = selectionBeforeEdit.detach(oldDocument),
             selectionAfterEdit = selectionAfterEdit.detach(newDocument),
-            replacementString = replacementString
+            replacementString = replacementString,
           )
           setSelection(selectionAfterEdit)
-        }
+        },
       )
     }
 
@@ -1165,7 +1202,8 @@ private[document] final class DesktopTaskEditor(
     }
 
     private def findNextOccurrenceOfSelectedString(selection: IndexedSelection, backwards: Boolean = false)(
-        implicit state: State): Callback = {
+        implicit state: State
+    ): Callback = {
       def windowFind(
           string: String,
           caseSensitive: Boolean = false,
@@ -1228,12 +1266,12 @@ private[document] final class DesktopTaskEditor(
     val subtasks: Seq[Subtask] =
       document.tasks.zipWithIndex
         .filter { case (task, index) => start.seqIndex <= index && index <= end.seqIndex }
-        .map {
-          case (task, index) =>
-            Subtask(
-              task,
-              startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
-              endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length)
+        .map { case (task, index) =>
+          Subtask(
+            task,
+            startOffset = if (index == start.seqIndex) start.offsetInTask else 0,
+            endOffset = if (index == end.seqIndex) end.offsetInTask else task.contentString.length,
+          )
         }
     def tagsAttribute(subtask: Subtask): String = {
       if (subtask.tagsString.nonEmpty) {
@@ -1267,8 +1305,9 @@ private[document] final class DesktopTaskEditor(
             for (i <- subtask.indentation until lastIndentation) {
               resultBuilder.append("</ul>")
             }
-            resultBuilder.append(
-              s"""<li piga="true"${collapsedAttribute(subtask)}${tagsAttribute(subtask)}>""")
+            resultBuilder.append(s"""<li piga="true"${collapsedAttribute(subtask)}${tagsAttribute(
+              subtask
+            )}>""")
             resultBuilder.append(subtask.content.toHtml)
             resultBuilder.append("</li>")
             lastIndentation = subtask.indentation
@@ -1279,7 +1318,7 @@ private[document] final class DesktopTaskEditor(
           resultBuilder.toString
         }
       },
-      plainText = subtasks.map(_.content.contentString).mkString("\n")
+      plainText = subtasks.map(_.content.contentString).mkString("\n"),
     )
   }
 
@@ -1338,12 +1377,14 @@ private[document] final class DesktopTaskEditor(
                     zeroIfNegative(nextRelativeIndentation),
                     collapsed = attributes.collapsed,
                     tags = attributes.tags,
-                  ))
+                  )
+                )
               } else {
                 addPastedPigaText(
                   children(node),
                   nextRelativeIndentation =
-                    if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation)
+                    if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
+                )
               }
             }
           }
@@ -1355,7 +1396,8 @@ private[document] final class DesktopTaskEditor(
               zeroIfNegative(nextRelativeIndentation),
               collapsed = attributes.collapsed,
               tags = attributes.tags,
-            ))
+            )
+          )
         }
       }
       def addPastedNonPigaText(
@@ -1385,7 +1427,8 @@ private[document] final class DesktopTaskEditor(
               children(node),
               nextRelativeIndentation =
                 if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
-              insideListItem = true)
+              insideListItem = true,
+            )
           } else {
             childNodesWithoutLi.append(node)
           }
@@ -1413,7 +1456,9 @@ private[document] final class DesktopTaskEditor(
         partsBuilder.append(
           Replacement.Part(
             content = TextWithMarkup(line, formatting = baseFormatting),
-            indentationRelativeToCurrent = 0))
+            indentationRelativeToCurrent = 0,
+          )
+        )
       }
     }
     if (partsBuilder.nonEmpty) Replacement(partsBuilder.toVector) else Replacement.empty
@@ -1443,14 +1488,14 @@ private[document] final class DesktopTaskEditor(
     case None    => throw new IllegalStateException(s"Could not find <li> task with seqIndex=${cursor.seqIndex}")
   }
 
-  private def getAnyLinkInSelection(selection: IndexedSelection)(
-      implicit document: Document): Option[String] = {
+  private def getAnyLinkInSelection(
+      selection: IndexedSelection
+  )(implicit document: Document): Option[String] = {
     val cursor = selection.end
     val taskElement = getTaskElement(selection.end)
     val nodeAtCursor: dom.raw.Node = walkDepthFirstPreOrder(taskElement)
-      .find {
-        case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-          offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd
+      .find { case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+        offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd
       }
       .get
       .node
@@ -1462,7 +1507,8 @@ private[document] final class DesktopTaskEditor(
     nodeAndParents(nodeAtCursor).collectFirst(node =>
       DomNodeUtils.parseNode(node) match {
         case ParsedNode.A(element) => element.getAttribute("href")
-    })
+      }
+    )
   }
 
   private def zeroIfNegative(i: Int): Int = if (i < 0) 0 else i
@@ -1478,7 +1524,8 @@ private[document] final class DesktopTaskEditor(
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
         TextWithMarkup.empty,
-        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent))
+        Part(content = TextWithMarkup.empty, indentationRelativeToCurrent = indentationRelativeToCurrent),
+      )
     def empty: Replacement = Replacement.create(TextWithMarkup.empty)
 
     case class Part(

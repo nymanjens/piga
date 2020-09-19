@@ -33,7 +33,7 @@ final class FakeScalaJsApiClient extends ScalaJsApiClient {
           entityType -> modificationsBuffer.getAllEntitiesOfType(entityType)
         }
       }.toMap,
-      nextUpdateToken = modificationsBuffer.nextUpdateToken
+      nextUpdateToken = modificationsBuffer.nextUpdateToken,
     )
   }
 
@@ -52,8 +52,9 @@ final class FakeScalaJsApiClient extends ScalaJsApiClient {
       queryExecutor(dbQuery.entityType).map(_.count(dbQuery))
     internal(dbQuery)
   }
-  private def queryExecutor[E <: Entity](
-      implicit entityType: EntityType[E]): Future[DbQueryExecutor.Sync[E]] = async {
+  private def queryExecutor[E <: Entity](implicit
+      entityType: EntityType[E]
+  ): Future[DbQueryExecutor.Sync[E]] = async {
     val entities = await(getAllEntities(Seq(entityType))).entities(entityType)
     DbQueryExecutor.fromEntities(entities)
   }

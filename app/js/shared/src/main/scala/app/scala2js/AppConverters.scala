@@ -39,18 +39,18 @@ object AppConverters {
         loginName = dict.getRequired(ModelFields.User.loginName),
         passwordHash = dict.getRequired(ModelFields.User.passwordHash),
         name = dict.getRequired(ModelFields.User.name),
-        isAdmin = dict.getRequired(ModelFields.User.isAdmin)
-    )
+        isAdmin = dict.getRequired(ModelFields.User.isAdmin),
+      ),
   )
 
   implicit val DocumentEntityConverter: EntityConverter[DocumentEntity] = new EntityConverter(
     allFieldsWithoutId = Seq(
-      ModelFields.DocumentEntity.name,
+      ModelFields.DocumentEntity.name
     ),
     toScalaWithoutId = dict =>
       DocumentEntity(
-        name = dict.getRequired(ModelFields.DocumentEntity.name),
-    )
+        name = dict.getRequired(ModelFields.DocumentEntity.name)
+      ),
   )
 
   implicit val DocumentPermissionAndPlacementConverter: EntityConverter[DocumentPermissionAndPlacement] =
@@ -65,7 +65,7 @@ object AppConverters {
           documentId = dict.getRequired(ModelFields.DocumentPermissionAndPlacement.documentId),
           userId = dict.getRequired(ModelFields.DocumentPermissionAndPlacement.userId),
           orderToken = dict.getRequired(ModelFields.DocumentPermissionAndPlacement.orderToken),
-      )
+        ),
     )
 
   implicit val TaskEntityConverter: EntityConverter[TaskEntity] = new EntityConverter(
@@ -89,6 +89,6 @@ object AppConverters {
         delayedUntil = dict.getRequired(ModelFields.TaskEntity.delayedUntil),
         tags = dict.getRequired(ModelFields.TaskEntity.tags),
         lastContentModifierUserId = dict.getRequired(ModelFields.TaskEntity.lastContentModifierUserId),
-    )
+      ),
   )
 }

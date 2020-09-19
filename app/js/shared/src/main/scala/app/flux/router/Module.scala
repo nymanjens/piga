@@ -7,11 +7,12 @@ import hydro.flux.router.Page
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react.extra.router._
 
-final class Module(implicit reactAppModule: app.flux.react.app.Module,
-                   dispatcher: Dispatcher,
-                   i18n: I18n,
-                   allDocumentsStore: AllDocumentsStore,
-                   entityAccess: EntityAccess,
+final class Module(implicit
+    reactAppModule: app.flux.react.app.Module,
+    dispatcher: Dispatcher,
+    i18n: I18n,
+    allDocumentsStore: AllDocumentsStore,
+    entityAccess: EntityAccess,
 ) {
 
   implicit lazy val router: Router[Page] = (new RouterFactory).createRouter()

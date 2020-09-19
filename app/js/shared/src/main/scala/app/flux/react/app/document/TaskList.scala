@@ -14,8 +14,8 @@ import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-private[app] final class TaskList(
-    implicit entityAccess: EntityAccess,
+private[app] final class TaskList(implicit
+    entityAccess: EntityAccess,
     documentStoreFactory: DocumentStoreFactory,
     i18n: I18n,
     desktopTaskEditor: DesktopTaskEditor,
@@ -55,7 +55,7 @@ private[app] final class TaskList(
       <.span(
         pageHeader(router.currentPage, title = state.document.name),
         if (props.mobileOrTabletVersion) mobileTaskEditor(props.documentStore)
-        else desktopTaskEditor(props.documentStore)
+        else desktopTaskEditor(props.documentStore),
       )
     }
   }

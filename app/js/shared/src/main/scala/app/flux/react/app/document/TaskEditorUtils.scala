@@ -35,7 +35,8 @@ private[document] object TaskEditorUtils {
           index = index,
           maybeAmountCollapsed = maybeAmountCollapsed,
           isRoot = isRoot,
-          isLeaf = isLeaf)
+          isLeaf = isLeaf,
+        )
         nextTaskInSeq #:: inner(rest.drop(maybeAmountCollapsed getOrElse 0))
       case Stream.Empty => Stream.Empty
     }

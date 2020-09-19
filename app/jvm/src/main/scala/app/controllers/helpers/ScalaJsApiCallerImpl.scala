@@ -17,7 +17,7 @@ import hydro.models.modification.EntityType
 
 import scala.collection.immutable.Seq
 
-final class ScalaJsApiCallerImpl @Inject()(implicit scalaJsApiServerFactory: ScalaJsApiServerFactory)
+final class ScalaJsApiCallerImpl @Inject() (implicit scalaJsApiServerFactory: ScalaJsApiServerFactory)
     extends ScalaJsApiCaller {
 
   override def apply(path: String, argsMap: Map[String, ByteBuffer])(implicit user: User): ByteBuffer = {
@@ -34,7 +34,8 @@ final class ScalaJsApiCallerImpl @Inject()(implicit scalaJsApiServerFactory: Sca
         val waitUntilQueryReflectsModifications =
           Unpickle[Boolean].fromBytes(argsMap("waitUntilQueryReflectsModifications"))
         Pickle.intoBytes(
-          scalaJsApiServer.persistEntityModifications(modifications, waitUntilQueryReflectsModifications))
+          scalaJsApiServer.persistEntityModifications(modifications, waitUntilQueryReflectsModifications)
+        )
       case "executeDataQuery" =>
         val dbQuery = Unpickle[PicklableDbQuery].fromBytes(argsMap("dbQuery"))
         Pickle.intoBytes[Seq[Entity]](scalaJsApiServer.executeDataQuery(dbQuery))

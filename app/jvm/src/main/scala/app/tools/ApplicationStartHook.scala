@@ -19,8 +19,8 @@ import play.api.Mode
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
 
-final class ApplicationStartHook @Inject()(
-    implicit app: Application,
+final class ApplicationStartHook @Inject() (implicit
+    app: Application,
     entityAccess: JvmEntityAccess,
     clock: Clock,
 ) {
@@ -69,7 +69,9 @@ final class ApplicationStartHook @Inject()(
       println(s"      password: $password")
       entityAccess.persistEntityModifications(
         EntityModification.createAddWithRandomId(
-          Users.createUser(loginName, password, name = "Admin", isAdmin = true)))
+          Users.createUser(loginName, password, name = "Admin", isAdmin = true)
+        )
+      )
       println("  Done. Exiting.")
 
       System.exit(0)
@@ -87,15 +89,18 @@ final class ApplicationStartHook @Inject()(
       EntityModification
         .createAddWithId(
           ApplicationStartHook.userIdAdmin,
-          Users.createUser(loginName = "admin", password = "a", name = "Admin", isAdmin = true)),
+          Users.createUser(loginName = "admin", password = "a", name = "Admin", isAdmin = true),
+        ),
       EntityModification
         .createAddWithId(
           ApplicationStartHook.userIdAlice,
-          Users.createUser(loginName = "alice", password = "a", name = "Alice", isAdmin = true)),
+          Users.createUser(loginName = "alice", password = "a", name = "Alice", isAdmin = true),
+        ),
       EntityModification
         .createAddWithId(
           ApplicationStartHook.userIdBob,
-          Users.createUser(loginName = "bob", password = "b", name = "Bob", isAdmin = true))
+          Users.createUser(loginName = "bob", password = "b", name = "Bob", isAdmin = true),
+        ),
     )
   }
 
@@ -109,33 +114,38 @@ final class ApplicationStartHook @Inject()(
         DocumentEntity(
           name = "Test document A (shared)",
           idOption = Some(documentIdA),
-        )),
+        )
+      ),
       EntityModification.Add(
         DocumentEntity(
           name = "Test document B",
           idOption = Some(documentIdB),
-        )),
+        )
+      ),
       EntityModification.Add(
         DocumentPermissionAndPlacement(
           documentId = documentIdA,
           userId = ApplicationStartHook.userIdAlice,
           orderToken = OrderToken.middle,
           idOption = Some(5551),
-        )),
+        )
+      ),
       EntityModification.Add(
         DocumentPermissionAndPlacement(
           documentId = documentIdB,
           userId = ApplicationStartHook.userIdAlice,
           orderToken = OrderToken.middleBetween(Some(OrderToken.middle), None),
           idOption = Some(5552),
-        )),
+        )
+      ),
       EntityModification.Add(
         DocumentPermissionAndPlacement(
           documentId = documentIdA,
           userId = ApplicationStartHook.userIdBob,
           orderToken = OrderToken.middle,
           idOption = Some(5553),
-        )),
+        )
+      ),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,
@@ -147,7 +157,8 @@ final class ApplicationStartHook @Inject()(
           tags = Seq(),
           lastContentModifierUserId = ApplicationStartHook.userIdBob,
           idOption = Some(11),
-        )),
+        )
+      ),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,
@@ -159,7 +170,8 @@ final class ApplicationStartHook @Inject()(
           tags = Seq("indented"),
           lastContentModifierUserId = ApplicationStartHook.userIdAlice,
           idOption = Some(22),
-        )),
+        )
+      ),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdA,
@@ -171,7 +183,8 @@ final class ApplicationStartHook @Inject()(
           tags = Seq(),
           lastContentModifierUserId = ApplicationStartHook.userIdBob,
           idOption = Some(33),
-        )),
+        )
+      ),
       EntityModification.Add(
         TaskEntity(
           documentId = documentIdB,
@@ -183,7 +196,8 @@ final class ApplicationStartHook @Inject()(
           tags = Seq(),
           lastContentModifierUserId = ApplicationStartHook.userIdAlice,
           idOption = Some(44),
-        ))
+        )
+      ),
     )
   }
 

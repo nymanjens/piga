@@ -27,7 +27,8 @@ object DesktopTaskEditorTest extends TestSuite {
             Seq(
               newTask(content = TextWithMarkup("a") + italic("b")),
               newTask(content = TextWithMarkup("a") + italic("b")),
-            )) ==>
+            )
+          ) ==>
             """- a*b*
               |- a*b*
               |""".stripMargin
@@ -37,7 +38,8 @@ object DesktopTaskEditorTest extends TestSuite {
             Seq(
               newTask("a\nb"),
               newTask("c\nd"),
-            )) ==>
+            )
+          ) ==>
             s"""- a${"  " /* Suffix via code to avoid triming whitespace*/}
                |  b
                |- c${"  " /* Suffix via code to avoid triming whitespace*/}
@@ -50,7 +52,8 @@ object DesktopTaskEditorTest extends TestSuite {
               newTask("a", indentation = 2),
               newTask("b\nB", indentation = 4),
               newTask("c", indentation = 1),
-            )) ==>
+            )
+          ) ==>
             s"""  - a
                |      - b${"  " /* Suffix via code to avoid triming whitespace*/}
                |        B
@@ -68,7 +71,7 @@ object DesktopTaskEditorTest extends TestSuite {
             newTask("defg", tags = Seq()),
             newTask("hij", tags = Seq()),
           ),
-          IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2))
+          IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(2, 2)),
         ) ==>
           editor.ClipboardData(
             htmlText = removeFormattingWhitespace("""
@@ -84,9 +87,9 @@ object DesktopTaskEditorTest extends TestSuite {
       "with formatting" - {
         editor.convertToClipboardData(
           newDocument(
-            newTask(content = TextWithMarkup("a") + italic("b"), tags = Seq()),
+            newTask(content = TextWithMarkup("a") + italic("b"), tags = Seq())
           ),
-          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2))
+          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2)),
         ) ==>
           editor.ClipboardData(
             htmlText = removeFormattingWhitespace("""
@@ -102,9 +105,9 @@ object DesktopTaskEditorTest extends TestSuite {
           "whole task is selected" - {
             editor.convertToClipboardData(
               newDocument(
-                newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
+                newTask("ABC", collapsed = true, tags = Seq("XX", "YY"))
               ),
-              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))
+              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3)),
             ) ==>
               editor.ClipboardData(
                 htmlText = removeFormattingWhitespace("""
@@ -123,7 +126,7 @@ object DesktopTaskEditorTest extends TestSuite {
                 newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
                 newTask("DEF", collapsed = true, tags = Seq()),
               ),
-              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(1, 3))
+              IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(1, 3)),
             ) ==>
               editor.ClipboardData(
                 htmlText = removeFormattingWhitespace("""
@@ -145,7 +148,7 @@ object DesktopTaskEditorTest extends TestSuite {
                 newTask("ABC", collapsed = true, tags = Seq("XX", "YY")),
                 newTask("DEF", collapsed = true, tags = Seq()),
               ),
-              IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(1, 2))
+              IndexedSelection(start = IndexedCursor(0, 1), end = IndexedCursor(1, 2)),
             ) ==>
               editor.ClipboardData(
                 htmlText = removeFormattingWhitespace("""
@@ -166,9 +169,10 @@ object DesktopTaskEditorTest extends TestSuite {
       "escapes html" - {
         editor.convertToClipboardData(
           newDocument(
-            newTask("a<b>cd", tags = Seq()),
+            newTask("a<b>cd", tags = Seq())
           ),
-          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5))) ==>
+          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 5)),
+        ) ==>
           editor.ClipboardData(
             htmlText = removeFormattingWhitespace("""
               <span piga="true">
@@ -181,9 +185,10 @@ object DesktopTaskEditorTest extends TestSuite {
       "converts newline to <br>" - {
         editor.convertToClipboardData(
           newDocument(
-            newTask("a\nb", tags = Seq()),
+            newTask("a\nb", tags = Seq())
           ),
-          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3))) ==>
+          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3)),
+        ) ==>
           editor.ClipboardData(
             htmlText = removeFormattingWhitespace("""
               <span piga="true">
@@ -198,8 +203,9 @@ object DesktopTaskEditorTest extends TestSuite {
           newDocument(
             newTask("a", indentation = 2, tags = Seq()),
             newTask("b", indentation = 4, tags = Seq()),
-            newTask("c", indentation = 1, tags = Seq())),
-          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1))
+            newTask("c", indentation = 1, tags = Seq()),
+          ),
+          IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(2, 1)),
         ) ==>
           editor.ClipboardData(
             htmlText = removeFormattingWhitespace("""
@@ -215,7 +221,7 @@ object DesktopTaskEditorTest extends TestSuite {
                 <li piga="true">c</li>
               </ul>
             """),
-            plainText = "a\nb\nc"
+            plainText = "a\nb\nc",
           )
       }
     }
@@ -278,7 +284,8 @@ object DesktopTaskEditorTest extends TestSuite {
                   TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
                   collapsed = true,
                   tags = Seq("XX", "YY"),
-                ))
+                )
+              )
           }
         }
         "with list tags" - {
@@ -293,7 +300,7 @@ object DesktopTaskEditorTest extends TestSuite {
              </li>
            </ul>
           """)),
-            baseFormatting = Formatting.none
+            baseFormatting = Formatting.none,
           ) ==>
             replacement(
               TextWithMarkup("a\nb"),
@@ -310,13 +317,14 @@ object DesktopTaskEditorTest extends TestSuite {
               <div>c</div>
               d
             """)),
-              baseFormatting = Formatting.none
+              baseFormatting = Formatting.none,
             ) ==>
               replacement(
                 TextWithMarkup("a"),
                 replacementPart("b"),
                 replacementPart("c"),
-                replacementPart("d"))
+                replacementPart("d"),
+              )
           }
           "br" - {
             editor.clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
@@ -333,13 +341,15 @@ object DesktopTaskEditorTest extends TestSuite {
           "ignores html comments" - {
             editor.clipboardStringToReplacement(
               asHtml("<!-- comment -->abc"),
-              baseFormatting = Formatting.none) ==>
+              baseFormatting = Formatting.none,
+            ) ==>
               replacement(TextWithMarkup("abc"))
           }
           "ignores style tags" - {
             editor.clipboardStringToReplacement(
               asHtml("""<style type="text/css">STYLE</style>abc"""),
-              baseFormatting = Formatting.none) ==>
+              baseFormatting = Formatting.none,
+            ) ==>
               replacement(TextWithMarkup("abc"))
           }
         }
@@ -355,7 +365,7 @@ object DesktopTaskEditorTest extends TestSuite {
                   <li>xy<i>z</i></li>
                 </ul>
               """)),
-              baseFormatting = Formatting.none
+              baseFormatting = Formatting.none,
             ) ==>
               replacement(
                 TextWithMarkup("a\nb\nc"),
@@ -378,7 +388,7 @@ object DesktopTaskEditorTest extends TestSuite {
                   </ul>
                 </ul>
               """)),
-              baseFormatting = Formatting.none
+              baseFormatting = Formatting.none,
             ) ==>
               replacement(
                 TextWithMarkup("abc"),
@@ -398,11 +408,12 @@ object DesktopTaskEditorTest extends TestSuite {
                </li>
              </ul>
             """)),
-            baseFormatting = Formatting.none
+            baseFormatting = Formatting.none,
           ) ==>
             replacement(
               TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
-              replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")))
+              replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")),
+            )
         }
         "with baseFormatting" - {
           editor
@@ -434,18 +445,20 @@ object DesktopTaskEditorTest extends TestSuite {
           editor.clipboardStringToReplacement(asHtml(html), baseFormatting = Formatting.none)
         val clipboardData = editor.convertToClipboardData(
           newDocument(
-            replacement.parts.map(
-              p =>
-                newTask(
-                  content = p.content,
-                  orderToken = orderTokenA,
-                  indentation = 10 + p.indentationRelativeToCurrent,
-                  collapsed = p.collapsed,
-                  tags = p.tags,
-              )): _*),
+            replacement.parts.map(p =>
+              newTask(
+                content = p.content,
+                orderToken = orderTokenA,
+                indentation = 10 + p.indentationRelativeToCurrent,
+                collapsed = p.collapsed,
+                tags = p.tags,
+              )
+            ): _*
+          ),
           IndexedSelection(
             start = IndexedCursor(0, 0),
-            end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.contentString.length))
+            end = IndexedCursor(replacement.parts.length - 1, replacement.parts.last.contentString.length),
+          ),
         )
         clipboardData.htmlText ==> html
       }

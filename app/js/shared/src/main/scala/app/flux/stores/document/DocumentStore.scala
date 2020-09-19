@@ -33,14 +33,14 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     pendingTaskIds = {
       val idsInDocument = initialDocument.tasks.map(_.id).toSet
       pendingModificationTaskIds(entityAccess) intersect idsInDocument
-    }
+    },
   )
   private val syncer: SyncerWithReplenishingDelay[DocumentEdit.WithUpdateTimes] =
     new SyncerWithReplenishingDelay(
       delay = 500.milliseconds,
       emptyValue = DocumentEdit.WithUpdateTimes.empty,
       merge = _ mergedWith _,
-      sync = syncDocumentEdit
+      sync = syncDocumentEdit,
     )
 
   /**
@@ -121,7 +121,8 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
                 if taskEntity.documentId == _state.document.id =>
               Task.fromTaskEntity(taskEntity)
           },
-        ))
+        )
+      )
 
       // Apply Document updates
       modifications.collect {

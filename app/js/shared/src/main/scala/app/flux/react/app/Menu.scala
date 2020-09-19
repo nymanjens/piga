@@ -14,8 +14,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
 
-private[app] final class Menu(
-    implicit i18n: I18n,
+private[app] final class Menu(implicit
+    i18n: I18n,
     allDocumentsStore: AllDocumentsStore,
     sbadminMenu: SbadminMenu,
 ) extends HydroReactComponent {
@@ -44,11 +44,12 @@ private[app] final class Menu(
             MenuItem(
               i18n("app.document-administration.html"),
               AppPages.DocumentAdministration,
-              shortcuts = Seq("shift+alt+d"))
-          )
+              shortcuts = Seq("shift+alt+d"),
+            )
+          ),
         ),
         enableSearch = false,
-        router = props.router
+        router = props.router,
       )
     }
   }

@@ -63,7 +63,8 @@ object EditHistoryTest extends TestSuite {
 
         assertEditWithUpdate(
           editHistory.undo(),
-          (updateAbcdS mergedWith updateAbcdSe mergedWith updateAbcdSef).reversed)
+          (updateAbcdS mergedWith updateAbcdSe mergedWith updateAbcdSef).reversed,
+        )
         assertEditWithUpdate(editHistory.undo(), updateAbcd.reversed)
       }
       "not merged after undo()" - {
@@ -116,8 +117,8 @@ object EditHistoryTest extends TestSuite {
       originalTask: Task,
       newContent: String,
       replacementString: String = "",
-  )(
-      implicit editHistory: EditHistory,
+  )(implicit
+      editHistory: EditHistory,
       user: User,
   ): DocumentEdit.MaskedTaskUpdate = {
     val taskUpdate =
@@ -130,16 +131,19 @@ object EditHistoryTest extends TestSuite {
         taskUpdates = Seq(taskUpdate),
       ),
       selectionBeforeEdit = DetachedSelection.singleton(
-        DetachedCursor(originalTask.id, originalTask.orderToken, originalTask.contentString.length)),
+        DetachedCursor(originalTask.id, originalTask.orderToken, originalTask.contentString.length)
+      ),
       selectionAfterEdit = DetachedSelection.singleton(
-        DetachedCursor(originalTask.id, originalTask.orderToken, newContent.length)),
-      replacementString = replacementString
+        DetachedCursor(originalTask.id, originalTask.orderToken, newContent.length)
+      ),
+      replacementString = replacementString,
     )
     taskUpdate
   }
 
-  private def addEdit(removedTask: Task = null, addedTask: Task = null)(
-      implicit editHistory: EditHistory): Unit = {
+  private def addEdit(removedTask: Task = null, addedTask: Task = null)(implicit
+      editHistory: EditHistory
+  ): Unit = {
     val anyTask = if (removedTask == null) addedTask else removedTask
 
     editHistory.addEdit(

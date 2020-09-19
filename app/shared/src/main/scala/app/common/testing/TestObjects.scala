@@ -66,7 +66,8 @@ object TestObjects {
       loginName = testUser.loginName,
       plainTextPassword = "dlkfjasfd",
       name = testUser.name,
-      isAdmin = testUser.isAdmin)
+      isAdmin = testUser.isAdmin,
+    )
 
   def testDocumentEntity: DocumentEntity =
     DocumentEntity(name = "Some test document", idOption = Some(129830), lastUpdateTime = testLastUpdateTime)
@@ -76,7 +77,8 @@ object TestObjects {
       userId = testUser.id,
       orderToken = orderTokenA,
       idOption = Some(129830),
-      lastUpdateTime = testLastUpdateTime)
+      lastUpdateTime = testLastUpdateTime,
+    )
   def testUserDocument: UserDocument = UserDocument(
     documentId = testDocumentEntity.id,
     name = testDocumentEntity.name,
@@ -104,6 +106,6 @@ object TestObjects {
     user = testUserRedacted,
     allAccessibleDocuments = Seq(testUserDocument),
     i18nMessages = Map("abc" -> "def"),
-    nextUpdateToken = testUpdateToken
+    nextUpdateToken = testUpdateToken,
   )
 }

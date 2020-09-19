@@ -27,8 +27,8 @@ import scala.collection.immutable.Seq
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-final class AllDocumentsStore(
-    implicit dispatcher: Dispatcher,
+final class AllDocumentsStore(implicit
+    dispatcher: Dispatcher,
     user: User,
     clock: Clock,
     scalaJsApiClient: ScalaJsApiClient,
@@ -56,41 +56,41 @@ final class AllDocumentsStore(
             collapsed = false,
             delayedUntil = None,
             tags = Seq(),
-            lastContentModifierUserId = user.id
-          ))
+            lastContentModifierUserId = user.id,
+          )
+        ),
       )
     case UpdateDocuments(userDocuments) =>
       async {
 
         val updateFutures =
           for (userDocument <- userDocuments)
-            yield
-              async {
-                val documentEntityUpdate = {
-                  val documentEntity =
-                    await(entityAccess.newQuery[DocumentEntity]().findById(userDocument.documentId))
-                  val newDocumentEntity =
-                    documentEntity.copy(name = userDocument.name)
-                  if (documentEntity == newDocumentEntity) {
-                    None
-                  } else {
-                    Some(EntityModification.createUpdateAllFields(newDocumentEntity))
-                  }
+            yield async {
+              val documentEntityUpdate = {
+                val documentEntity =
+                  await(entityAccess.newQuery[DocumentEntity]().findById(userDocument.documentId))
+                val newDocumentEntity =
+                  documentEntity.copy(name = userDocument.name)
+                if (documentEntity == newDocumentEntity) {
+                  None
+                } else {
+                  Some(EntityModification.createUpdateAllFields(newDocumentEntity))
                 }
-
-                val permissionAndPlacementUpdate = {
-                  val permissionAndPlacement = await(fetchPermissionAndPlacement(userDocument))
-                  val newPermissionAndPlacement =
-                    permissionAndPlacement.copy(orderToken = userDocument.orderToken)
-                  if (permissionAndPlacement == newPermissionAndPlacement) {
-                    None
-                  } else {
-                    Some(EntityModification.createUpdateAllFields(newPermissionAndPlacement))
-                  }
-                }
-
-                Seq() ++ documentEntityUpdate ++ permissionAndPlacementUpdate
               }
+
+              val permissionAndPlacementUpdate = {
+                val permissionAndPlacement = await(fetchPermissionAndPlacement(userDocument))
+                val newPermissionAndPlacement =
+                  permissionAndPlacement.copy(orderToken = userDocument.orderToken)
+                if (permissionAndPlacement == newPermissionAndPlacement) {
+                  None
+                } else {
+                  Some(EntityModification.createUpdateAllFields(newPermissionAndPlacement))
+                }
+              }
+
+              Seq() ++ documentEntityUpdate ++ permissionAndPlacementUpdate
+            }
 
         val updates = await(Future.sequence(updateFutures)).flatten
 
@@ -119,12 +119,14 @@ final class AllDocumentsStore(
   }
 
   private def fetchPermissionAndPlacement(
-      userDocument: UserDocument): Future[DocumentPermissionAndPlacement] = async {
+      userDocument: UserDocument
+  ): Future[DocumentPermissionAndPlacement] = async {
     await(
       entityAccess
         .newQuery[DocumentPermissionAndPlacement]()
         .filter(ModelFields.DocumentPermissionAndPlacement.documentId === userDocument.documentId)
-        .findOne(ModelFields.DocumentPermissionAndPlacement.userId === user.id)).get
+        .findOne(ModelFields.DocumentPermissionAndPlacement.userId === user.id)
+    ).get
   }
 
   private object StateOptionStore extends AsyncEntityDerivedStateStore[State] {

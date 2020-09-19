@@ -86,7 +86,10 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
           DbQuery[User](
             filter = ModelFields.User.loginName === testUserA.loginName,
             sorting = None,
-            limit = None)))
+            limit = None,
+          )
+        )
+      )
 
     entities.toSet mustEqual Set(testUserA)
   }
@@ -120,8 +123,10 @@ class ScalaJsApiServerFactoryTest extends HookedSpecification {
       "isAdmin" in new WithApplication {
         serverFactory
           .create()(testUser.copy(isAdmin = true))
-          .upsertUser(UserPrototype
-            .create(loginName = "tester", plainTextPassword = "abc", name = "Tester", isAdmin = false))
+          .upsertUser(
+            UserPrototype
+              .create(loginName = "tester", plainTextPassword = "abc", name = "Tester", isAdmin = false)
+          )
         val createdUser = getOnlyElement(entityAccess.newQuerySync[User]().data())
         serverFactory
           .create()(testUser.copy(idOption = Some(createdUser.id)))

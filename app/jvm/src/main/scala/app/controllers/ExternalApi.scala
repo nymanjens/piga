@@ -20,8 +20,8 @@ import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 
-final class ExternalApi @Inject()(
-    implicit override val messagesApi: MessagesApi,
+final class ExternalApi @Inject() (implicit
+    override val messagesApi: MessagesApi,
     components: ControllerComponents,
     entityAccess: JvmEntityAccess,
     playConfiguration: play.api.Configuration,
@@ -53,7 +53,7 @@ final class ExternalApi @Inject()(
           DocumentPermissionAndPlacement(
             documentId = document.id,
             userId = user.id,
-            orderToken = OrderToken.middleBetween(greatestOrderToken, None)
+            orderToken = OrderToken.middleBetween(greatestOrderToken, None),
           )
         )
       )
@@ -80,17 +80,23 @@ final class ExternalApi @Inject()(
       resultString.append(s"  Found ${orderTokens.size} tasks\n")
       if (orderTokens.distinct != orderTokens) {
         resultString.append(
-          s"  !! Found ${orderTokens.size - orderTokens.distinct.size} tasks with duplicate order tokens\n")
+          s"  !! Found ${orderTokens.size - orderTokens.distinct.size} tasks with duplicate order tokens\n"
+        )
       }
 
-
-      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(allTasksInDocument.size, lowerExclusive = None, higherExclusive = None)
+      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
+        allTasksInDocument.size,
+        lowerExclusive = None,
+        higherExclusive = None,
+      )
       val taskUpdates =
-      for {
-        (task, newOrderToken) <- allTasksInDocument zip newOrderTokens
-        if task.orderToken != newOrderToken
-      } yield
-        EntityModification.createUpdate(task.copy(orderToken = newOrderToken),  Seq(ModelFields.TaskEntity.orderToken))
+        for {
+          (task, newOrderToken) <- allTasksInDocument zip newOrderTokens
+          if task.orderToken != newOrderToken
+        } yield EntityModification.createUpdate(
+          task.copy(orderToken = newOrderToken),
+          Seq(ModelFields.TaskEntity.orderToken),
+        )
 
       dryOrWetRun match {
         case "dry" =>
@@ -126,7 +132,8 @@ final class ExternalApi @Inject()(
         .data()
     require(
       existingPermissions.isEmpty,
-      s"This document has already been shared: existingPermissions = $existingPermissions")
+      s"This document has already been shared: existingPermissions = $existingPermissions",
+    )
 
   }
 
@@ -134,6 +141,7 @@ final class ExternalApi @Inject()(
     val realApplicationSecret: String = playConfiguration.get[String]("play.http.secret.key")
     require(
       applicationSecret == realApplicationSecret,
-      s"Invalid application secret. Found '$applicationSecret' but should be '$realApplicationSecret'")
+      s"Invalid application secret. Found '$applicationSecret' but should be '$realApplicationSecret'",
+    )
   }
 }

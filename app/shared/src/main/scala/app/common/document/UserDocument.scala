@@ -28,14 +28,16 @@ object UserDocument {
       entityAccess
         .newQuery[DocumentPermissionAndPlacement]()
         .filter(ModelFields.DocumentPermissionAndPlacement.userId === user.id)
-        .data())
+        .data()
+    )
 
     val documentEntities =
       await(
         entityAccess
           .newQuery[DocumentEntity]()
           .filter(ModelFields.DocumentEntity.id isAnyOf (permissionAndPlacements.map(_.documentId)))
-          .data())
+          .data()
+      )
     val documentEntityMap = uniqueIndex(documentEntities)(_.id)
 
     val unsortedResult =

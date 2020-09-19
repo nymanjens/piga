@@ -18,7 +18,7 @@ object TestUtils {
       loginName = "robot",
       passwordHash = "Some hash",
       name = "Robot",
-      isAdmin = false
+      isAdmin = false,
     )
     val addition =
       if (entity.idOption.isDefined) EntityModification.Add(entity)
@@ -31,7 +31,7 @@ object TestUtils {
     val instant = Instant.ofEpochSecond(milli).atZone(ZoneId.of("Europe/Paris"))
     LocalDateTime.of(
       instant.toLocalDate,
-      instant.toLocalTime
+      instant.toLocalTime,
     )
   }
 }

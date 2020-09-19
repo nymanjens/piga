@@ -58,7 +58,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
             }
           }.void
         },
-        children
+        children,
       )
     }
 
@@ -102,7 +102,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
             ^.key := nextKey,
             if (recurseFirstPart) inner(before) else before,
             linkVdomNode(href = (if (prependHttp) "http://" else "") + linkText, children = linkText),
-            inner(after)
+            inner(after),
           )
         }
 
@@ -122,7 +122,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       addSpaceAfterTrailingNewline(parts),
       applyFormattingOption = applyFormattingOption,
       liftString = convertLinksToAnchors,
-      mergeResults = _.toVdomArray)
+      mergeResults = _.toVdomArray,
+    )
   }
 
   def toHtml: String = {
@@ -151,7 +152,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       parts,
       applyFormattingOption = applyFormattingOption,
       liftString = (s, insideLink) => escapeHtml(s).replace("\n", "<br />"),
-      mergeResults = _.mkString)
+      mergeResults = _.mkString,
+    )
   }
 
   def toMarkdown: String = {
@@ -170,7 +172,9 @@ final class TextWithMarkup private (private val parts: List[Part]) {
         def trimmedTransform(s: String, transform: String => String): String = {
           val spacesInFront = countSpacesInFront(s)
           val spacesAtEnd = countSpacesInFront(s.reverse)
-          " " * spacesInFront + transform(s.substring(spacesInFront, s.length - spacesAtEnd)) + " " * spacesAtEnd
+          " " * spacesInFront + transform(
+            s.substring(spacesInFront, s.length - spacesAtEnd)
+          ) + " " * spacesAtEnd
         }
 
         option match {
@@ -193,7 +197,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       parts,
       applyFormattingOption = applyFormattingOption,
       liftString = (s, insideLink) => s.replace("\n", "  \n"), // Two spaces to force line break
-      mergeResults = _.mkString
+      mergeResults = _.mkString,
     )
   }
 
@@ -236,7 +240,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       TextWithMarkup.empty
     } else {
       TextWithMarkup.createCanonical(
-        subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset))
+        subInner(parts, beginOffset, endOffset = if (endOffset == -1) contentString.length else endOffset)
+      )
     }
   }
 
@@ -256,7 +261,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
-        textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting))))
+        textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting)))
+      )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
@@ -268,7 +274,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
-        textWithMarkup.parts.map(part => part.copy(text = characterTransform(part.text))))
+        textWithMarkup.parts.map(part => part.copy(text = characterTransform(part.text)))
+      )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
   }
@@ -355,7 +362,8 @@ object TextWithMarkup {
 
     def sub(beginOffset: Int, endOffset: Int = -1): Part =
       copy(
-        text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset))
+        text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset)
+      )
 
     def +(thatText: String): Part = copy(text = this.text + thatText)
   }
@@ -430,9 +438,11 @@ object TextWithMarkup {
                     children = serializeToDomInner(
                       partBuffer.toList,
                       otherFormattingOptions,
-                      insideLink = insideLink || currentFormattingIsLink),
-                    childrenParts = partBuffer
-                  ))
+                      insideLink = insideLink || currentFormattingIsLink,
+                    ),
+                    childrenParts = partBuffer,
+                  )
+                )
                 partBuffer.clear()
               }
             }
@@ -458,6 +468,7 @@ object TextWithMarkup {
     serializeToDomInner(
       parts,
       formattingLeft = List(Link, Code, Strikethrough, Italic, Bold),
-      insideLink = false)
+      insideLink = false,
+    )
   }
 }

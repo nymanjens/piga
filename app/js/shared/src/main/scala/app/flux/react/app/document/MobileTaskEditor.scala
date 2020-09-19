@@ -49,8 +49,8 @@ import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.scalajs.js
 
-private[document] final class MobileTaskEditor(
-    implicit entityAccess: EntityAccess,
+private[document] final class MobileTaskEditor(implicit
+    entityAccess: EntityAccess,
     user: User,
     i18n: I18n,
     clock: Clock,
@@ -103,7 +103,7 @@ private[document] final class MobileTaskEditor(
           Callback {
             val taskToFocus = state.document.tasks(taskIndex)
             taskIdToInputRef.get(taskToFocus.id)().focus()
-          }
+          },
         )
       } else {
         Callback.empty
@@ -141,18 +141,18 @@ private[document] final class MobileTaskEditor(
                     ifThenOption(isHighlighted)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user") ++
-                    ifThenOption(isReadOnly)("read-only")),
+                    ifThenOption(isReadOnly)("read-only")
+                ),
                 ^.onClick --> selectTask(task),
-                task.tags.zipWithIndex.map {
-                  case (tag, tagIndex) =>
-                    <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
-                      ^.key := tagIndex,
-                      ^.className := "tag-holder",
-                      Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
-                        ^.className := "tag",
-                        tag,
-                      ),
-                    )
+                task.tags.zipWithIndex.map { case (tag, tagIndex) =>
+                  <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
+                    ^.key := tagIndex,
+                    ^.className := "tag-holder",
+                    Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+                      ^.className := "tag",
+                      tag,
+                    ),
+                  )
                 }.toVdomArray, {
                   if (isReadOnly) readonlyTask(task)
                   else plainTextInput(task)
@@ -163,20 +163,20 @@ private[document] final class MobileTaskEditor(
                 <<.ifDefined(maybeAmountCollapsed) { amountCollapsed =>
                   <.div(
                     ^.className := "collapsed-suffix",
-                    s" {+ $amountCollapsed}"
+                    s" {+ $amountCollapsed}",
                   )
                 },
               )
           }.toVdomArray
         ),
-        editButtons
+        editButtons,
       )
     }
 
     private def plainTextInput(task: Task)(implicit props: Props, state: State): VdomNode = {
       ResizingTextArea(
         resizeStrategy = if (state.highlightedTask == task) ScaleWithInput else Fixed(numberOfRows = 1),
-        ref = taskIdToInputRef.get(task.id)
+        ref = taskIdToInputRef.get(task.id),
       )(
         ^.key := task.id,
         ^.value := task.contentString,
@@ -276,22 +276,24 @@ private[document] final class MobileTaskEditor(
       ),
     )
 
-    private def onPlainTextChange(newContent: String, originalTask: Task)(
-        implicit state: State,
+    private def onPlainTextChange(newContent: String, originalTask: Task)(implicit
+        state: State,
         props: Props,
     ): Callback = {
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
           taskUpdates = Seq(
-            MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent)))),
+            MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
+          )
+        ),
         replacementString =
           deriveReplacementString(oldContent = originalTask.contentString, newContent = newContent),
       )
     }
 
     // Intercept newline to add a new task
-    private def handleKeyDown(event: SyntheticKeyboardEvent[_])(
-        implicit state: State,
+    private def handleKeyDown(event: SyntheticKeyboardEvent[_])(implicit
+        state: State,
         props: Props,
     ): Callback = {
       event.key match {
@@ -310,7 +312,8 @@ private[document] final class MobileTaskEditor(
           case Some(taskIndex) =>
             documentSelectionStore.setSelection(
               documentId = state.document.id,
-              IndexedSelection.atStartOfTask(taskIndex))
+              IndexedSelection.atStartOfTask(taskIndex),
+            )
             state.copy(highlightedTaskIndex = taskIndex)
         }
       }
@@ -332,16 +335,20 @@ private[document] final class MobileTaskEditor(
 
         __ <- replaceWithHistory(
           edit = DocumentEdit.Reversible(
-            addedTasks = Seq(Task.withRandomId(
-              content = TextWithMarkup.empty,
-              orderToken = OrderToken.middleBetween(
-                oldDocument.tasksOption(insertIndex).map(_.orderToken),
-                oldDocument.tasksOption(insertIndex + 1).map(_.orderToken)),
-              indentation = state.highlightedTask.indentation,
-              collapsed = false,
-              delayedUntil = None,
-              tags = Seq()
-            ))),
+            addedTasks = Seq(
+              Task.withRandomId(
+                content = TextWithMarkup.empty,
+                orderToken = OrderToken.middleBetween(
+                  oldDocument.tasksOption(insertIndex).map(_.orderToken),
+                  oldDocument.tasksOption(insertIndex + 1).map(_.orderToken),
+                ),
+                indentation = state.highlightedTask.indentation,
+                collapsed = false,
+                delayedUntil = None,
+                tags = Seq(),
+              )
+            )
+          ),
           highlightedTaskIndexAfterEdit = insertIndex + 1,
           focusHighlightedTaskAfterEdit = true,
         )
@@ -374,15 +381,16 @@ private[document] final class MobileTaskEditor(
               indentation = 0,
               collapsed = false,
               delayedUntil = None,
-              tags = Seq()
-            ))
+              tags = Seq(),
+            )
+          )
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(removedTasks = removedTasks, addedTasks = addedTasks),
         highlightedTaskIndexAfterEdit =
           if (oldDocument.tasks.size > indicesToRemove.head + indicesToRemove.size) indicesToRemove.head
           else if (indicesToRemove.head == 0) 0
-          else indicesToRemove.head - 1
+          else indicesToRemove.head - 1,
       )
     }
 
@@ -429,7 +437,8 @@ private[document] final class MobileTaskEditor(
         oldDocument.familyTreeRange(
           anyMemberSeqIndex = indexThatIsHoppedOver,
           rootParentIndentation =
-            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min) match {
+            selectionWithChildren.seqIndices.map(i => oldDocument.tasks(i).indentation).min,
+        ) match {
           case None                    => direction * 1
           case Some(adjacentTaskRange) => direction * adjacentTaskRange.numberOfTasks
         }
@@ -439,11 +448,13 @@ private[document] final class MobileTaskEditor(
         if (seqIndexMovement < 0)
           (
             oldDocument.tasksOption(start.seqIndex + seqIndexMovement - 1),
-            oldDocument.tasksOption(start.seqIndex + seqIndexMovement))
+            oldDocument.tasksOption(start.seqIndex + seqIndexMovement),
+          )
         else
           (
             oldDocument.tasksOption(end.seqIndex + seqIndexMovement),
-            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1))
+            oldDocument.tasksOption(end.seqIndex + seqIndexMovement + 1),
+          )
 
       if (task1.isEmpty && task2.isEmpty) {
         Callback.empty
@@ -452,7 +463,7 @@ private[document] final class MobileTaskEditor(
           OrderToken.evenlyDistributedValuesBetween(
             numValues = selectionWithChildren.seqIndices.length,
             lowerExclusive = task1.map(_.orderToken),
-            higherExclusive = task2.map(_.orderToken)
+            higherExclusive = task2.map(_.orderToken),
           )
         }
 
@@ -493,7 +504,7 @@ private[document] final class MobileTaskEditor(
               IndexedSelection.atStartOfTask(oldState.highlightedTaskIndex).detach(oldDocument),
             selectionAfterEdit =
               IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit).detach(newDocument),
-            replacementString = replacementString
+            replacementString = replacementString,
           )
 
           if (focusHighlightedTaskAfterEdit) {
@@ -503,13 +514,14 @@ private[document] final class MobileTaskEditor(
 
           documentSelectionStore.setSelection(
             documentId = oldState.document.id,
-            IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit))
-        }
+            IndexedSelection.atStartOfTask(actualHighlightedTaskIndexAfterEdit),
+          )
+        },
       )
     }
 
-    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(
-        implicit props: Props,
+    private def applyHistoryEdit(maybeEdit: Option[EditHistory.Edit])(implicit
+        props: Props,
         state: State,
     ): Callback =
       maybeEdit match {
@@ -524,8 +536,9 @@ private[document] final class MobileTaskEditor(
             Callback {
               documentSelectionStore.setSelection(
                 documentId = state.document.id,
-                IndexedSelection.atStartOfTask(newHighlightedTaskIndex))
-            }
+                IndexedSelection.atStartOfTask(newHighlightedTaskIndex),
+              )
+            },
           )
         case Some(edit) if edit.documentId != state.document.id =>
           Callback.future {
@@ -535,7 +548,8 @@ private[document] final class MobileTaskEditor(
               val newOtherDocument = otherDocumentStore.state.document
               documentSelectionStore.setSelection(
                 edit.documentId,
-                edit.selectionAfterEdit.attachToDocument(newOtherDocument))
+                edit.selectionAfterEdit.attachToDocument(newOtherDocument),
+              )
               props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
               Callback.empty
             }

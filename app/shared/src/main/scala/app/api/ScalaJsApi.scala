@@ -96,7 +96,7 @@ object ScalaJsApi {
         loginName = Option(loginName),
         plainTextPassword = Option(plainTextPassword),
         name = Option(name),
-        isAdmin = if (isAdmin == null) None else Some(isAdmin)
+        isAdmin = if (isAdmin == null) None else Some(isAdmin),
       )
   }
 }

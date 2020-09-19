@@ -40,8 +40,8 @@ object DocumentEdit {
           if (removedTasks.isEmpty) {
             true
           } else {
-            (removedTasks.sorted zip addedTasks.sorted).forall {
-              case (t1, t2) => t1 equalsIgnoringMetadata t2
+            (removedTasks.sorted zip addedTasks.sorted).forall { case (t1, t2) =>
+              t1 equalsIgnoringMetadata t2
             }
           }
         } else {
@@ -85,8 +85,8 @@ object DocumentEdit {
     val empty =
       DocumentEdit.WithUpdateTimes(removedTasksIds = Set(), addedTasks = Seq(), taskUpdatesById = Map())
 
-    def fromReversible(edit: DocumentEdit.Reversible)(
-        implicit clock: Clock,
+    def fromReversible(edit: DocumentEdit.Reversible)(implicit
+        clock: Clock,
         document: Document,
     ): DocumentEdit.WithUpdateTimes =
       create(
@@ -162,7 +162,7 @@ object DocumentEdit {
         delayedUntil = mergeFieldUpdates(this.delayedUntil, that.delayedUntil),
         tags = mergeFieldUpdates(this.tags, that.tags),
         lastContentModifierUserId =
-          mergeFieldUpdates(this.lastContentModifierUserId, that.lastContentModifierUserId)
+          mergeFieldUpdates(this.lastContentModifierUserId, that.lastContentModifierUserId),
       )
     }
   }

@@ -72,7 +72,8 @@ object ModelFields {
     val lastContentModifierUserId: ModelField[Long, E] = ModelField(
       "lastContentModifierUserId",
       _.lastContentModifierUserId,
-      v => _.copy(lastContentModifierUserId = v))
+      v => _.copy(lastContentModifierUserId = v),
+    )
   }
 
   // **************** Field-related methods **************** //
@@ -101,7 +102,7 @@ object ModelFields {
   private val fieldToNumberMap: ImmutableBiMap[ModelField.any, Int] =
     CollectionUtils.toBiMapWithStableIntKeys(
       stableNameMapper = field => s"${field.entityType.entityClass.getSimpleName}$$${field.name}$$",
-      values = allFields
+      values = allFields,
     )
 
   def allFieldsOfEntity(entityType: EntityType.any): Seq[ModelField.any] = {

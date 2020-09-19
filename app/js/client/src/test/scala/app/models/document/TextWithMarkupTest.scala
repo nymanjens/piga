@@ -39,7 +39,9 @@ object TextWithMarkupTest extends TestSuite {
         TextWithMarkup("http is a protocol").containsLink ==> false
       }
       "has link" - {
-        TextWithMarkup("the apple can be purchased at http://www.apples.org/ for a fair price").containsLink ==> true
+        TextWithMarkup(
+          "the apple can be purchased at http://www.apples.org/ for a fair price"
+        ).containsLink ==> true
       }
     }
     "sub" - {
@@ -67,9 +69,9 @@ object TextWithMarkupTest extends TestSuite {
 
       textWithMarkup.withFormatting(beginOffset = 1, endOffset = 4, _.copy(link = Some("example.com"))) ==>
         TextWithMarkup("a") +
-          TextWithMarkup("bc", Formatting(link = Some("example.com"))) +
-          TextWithMarkup("d", Formatting(italic = true, link = Some("example.com"))) +
-          italic("ef")
+        TextWithMarkup("bc", Formatting(link = Some("example.com"))) +
+        TextWithMarkup("d", Formatting(italic = true, link = Some("example.com"))) +
+        italic("ef")
     }
     "withTransformedCharacters" - {
       val textWithMarkup = TextWithMarkup("abc") + italic("def")
@@ -110,7 +112,10 @@ object TextWithMarkupTest extends TestSuite {
         italic("ABC").toHtml ==> "<i>ABC</i>"
       }
       "b and i" - {
-        (italic("AB") + TextWithMarkup("C", Formatting(bold = true, italic = true))).toHtml ==> "<i>AB<b>C</b></i>"
+        (italic("AB") + TextWithMarkup(
+          "C",
+          Formatting(bold = true, italic = true),
+        )).toHtml ==> "<i>AB<b>C</b></i>"
       }
       "code" - {
         TextWithMarkup("ABC", Formatting(code = true)).toHtml ==> "<code>ABC</code>"

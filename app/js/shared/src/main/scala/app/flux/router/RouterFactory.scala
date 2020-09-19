@@ -21,8 +21,8 @@ import scala.async.Async.await
 import scala.reflect.ClassTag
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-private[router] final class RouterFactory(
-    implicit reactAppModule: app.flux.react.app.Module,
+private[router] final class RouterFactory(implicit
+    reactAppModule: app.flux.react.app.Module,
     dispatcher: Dispatcher,
     i18n: I18n,
     entityAccess: EntityAccess,
@@ -42,12 +42,13 @@ private[router] final class RouterFactory(
           val path = RouterFactory.pathPrefix + page.getClass.getSimpleName.toLowerCase
           staticRoute(path, page) ~> renderR(ctl => logExceptions(renderer(RouterContext(page, ctl))))
         }
-        def dynamicRuleFromPage[P <: Page](dynamicPart: String => RouteB[P])(
-            renderer: (P, RouterContext) => VdomElement)(implicit pageClass: ClassTag[P]): dsl.Rule = {
+        def dynamicRuleFromPage[P <: Page](
+            dynamicPart: String => RouteB[P]
+        )(renderer: (P, RouterContext) => VdomElement)(implicit pageClass: ClassTag[P]): dsl.Rule = {
           val staticPathPart = RouterFactory.pathPrefix + pageClass.runtimeClass.getSimpleName.toLowerCase
           val path = dynamicPart(staticPathPart)
-          dynamicRouteCT(path) ~> dynRenderR {
-            case (page, ctl) => logExceptions(renderer(page, RouterContext(page, ctl)))
+          dynamicRouteCT(path) ~> dynRenderR { case (page, ctl) =>
+            logExceptions(renderer(page, RouterContext(page, ctl)))
           }
         }
 
@@ -55,12 +56,12 @@ private[router] final class RouterFactory(
         (emptyRule
 
           | staticRoute(RouterFactory.pathPrefix, StandardPages.Root)
-            ~> redirectToPage(
-              allDocumentsStore.state.allDocuments.headOption match {
-                case Some(firstDocument) => AppPages.TaskList(documentId = firstDocument.documentId)
-                case None                => AppPages.DocumentAdministration
-              }
-            )(Redirect.Replace)
+          ~> redirectToPage(
+            allDocumentsStore.state.allDocuments.headOption match {
+              case Some(firstDocument) => AppPages.TaskList(documentId = firstDocument.documentId)
+              case None                => AppPages.DocumentAdministration
+            }
+          )(Redirect.Replace)
 
           | staticRuleFromPage(StandardPages.UserProfile, reactAppModule.userProfile.apply)
 
@@ -74,7 +75,8 @@ private[router] final class RouterFactory(
             reactAppModule.taskList(
               page.documentId,
               mobileOrTabletVersion = BrowserUtils.isMobileOrTablet,
-              router = ctl)
+              router = ctl,
+            )
           }
           | dynamicRuleFromPage(_ / long.caseClass[AppPages.MobileTaskList]) { (page, ctl) =>
             reactAppModule.taskList(page.documentId, mobileOrTabletVersion = true, router = ctl)
@@ -83,21 +85,24 @@ private[router] final class RouterFactory(
         // Fallback
         ).notFound(redirectToPage(StandardPages.Root)(Redirect.Replace))
           .onPostRender((prev, cur) =>
-            LogExceptionsCallback(
-              dispatcher.dispatch(StandardActions.SetPageLoadingState(isLoading = false))))
+            LogExceptionsCallback(dispatcher.dispatch(StandardActions.SetPageLoadingState(isLoading = false)))
+          )
           .onPostRender((_, page) =>
             LogExceptionsCallback(async {
               val title = await(page.title)
               dom.document.title = s"$title | Task Keeper"
-            }))
+            })
+          )
       }
       .renderWith(layout)
   }
 
-  private def layout(routerCtl: RouterCtl[Page], resolution: Resolution[Page])(
-      implicit reactAppModule: app.flux.react.app.Module) = {
+  private def layout(routerCtl: RouterCtl[Page], resolution: Resolution[Page])(implicit
+      reactAppModule: app.flux.react.app.Module
+  ) = {
     reactAppModule.layout(RouterContext(resolution.page, routerCtl))(
-      <.div(^.key := resolution.page.toString, resolution.render()))
+      <.div(^.key := resolution.page.toString, resolution.render())
+    )
   }
 }
 private[router] object RouterFactory {

@@ -37,7 +37,7 @@ final class EditHistory(implicit clock: Clock) {
       selectionBeforeEdit = selectionBeforeEdit,
       selectionAfterEdit = selectionAfterEdit,
       replacementString = replacementString,
-      timestamp = clock.nowInstant
+      timestamp = clock.nowInstant,
     )
 
     if (lastEditCanBeMerged && shouldBeMerged(edits.last, newEdit)) {
@@ -95,7 +95,8 @@ final class EditHistory(implicit clock: Clock) {
       def updateTaskIdsInSelection(selection: DetachedSelection): DetachedSelection =
         DetachedSelection(
           start = updateTaskIdsInCursor(selection.start),
-          end = updateTaskIdsInCursor(selection.end))
+          end = updateTaskIdsInCursor(selection.end),
+        )
 
       for ((edit, i) <- edits.zipWithIndex) {
         edits.update(
@@ -107,8 +108,8 @@ final class EditHistory(implicit clock: Clock) {
               taskUpdates = updateTaskIdsInUpdates(edit.documentEdit.taskUpdates),
             ),
             selectionBeforeEdit = updateTaskIdsInSelection(edit.selectionBeforeEdit),
-            selectionAfterEdit = updateTaskIdsInSelection(edit.selectionAfterEdit)
-          )
+            selectionAfterEdit = updateTaskIdsInSelection(edit.selectionAfterEdit),
+          ),
         )
       }
     }
@@ -156,7 +157,7 @@ private[document] object EditHistory {
         selectionBeforeEdit = selectionAfterEdit,
         selectionAfterEdit = selectionBeforeEdit,
         replacementString = null,
-        timestamp = timestamp
+        timestamp = timestamp,
       )
 
     private[EditHistory] def mergedWith(that: Edit): Edit = {
@@ -167,7 +168,7 @@ private[document] object EditHistory {
         selectionBeforeEdit = this.selectionBeforeEdit,
         selectionAfterEdit = that.selectionAfterEdit,
         replacementString = this.replacementString + that.replacementString,
-        timestamp = that.timestamp
+        timestamp = that.timestamp,
       )
     }
 
