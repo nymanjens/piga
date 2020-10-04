@@ -49,7 +49,7 @@ Example use cases:
     bin/server
     ```
 
-- Browse to http://localhost:9000
+- Browse to http://<ip_address>:9000/app/useradministration (username: "admin", password: "changeme")
 
 ## Installation with Docker
 
