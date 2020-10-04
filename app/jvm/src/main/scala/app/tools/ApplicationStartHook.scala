@@ -1,5 +1,6 @@
 package app.tools
 
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -54,6 +55,7 @@ final class ApplicationStartHook @Inject() (implicit
       dropAndCreateNewDb()
       println("  Done. Exiting.")
 
+      new File("RUNNING_PID").delete()
       System.exit(0)
     }
 
@@ -74,6 +76,7 @@ final class ApplicationStartHook @Inject() (implicit
       )
       println("  Done. Exiting.")
 
+      new File("RUNNING_PID").delete()
       System.exit(0)
     }
   }
