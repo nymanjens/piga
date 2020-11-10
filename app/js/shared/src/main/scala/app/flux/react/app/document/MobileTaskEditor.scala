@@ -226,7 +226,7 @@ private[document] final class MobileTaskEditor(implicit
       Bootstrap.ButtonGroup(
         // Create empty
         Bootstrap.Button(Variant.info)(
-          ^.onClick --> creatEmptyTaskUnderHighlighted(),
+          ^.onClick --> createEmptyTaskUnderHighlighted(),
           Bootstrap.FontAwesomeIcon("calendar-o"),
         ),
         // Delete
@@ -306,7 +306,7 @@ private[document] final class MobileTaskEditor(implicit
       event.key match {
         case "Enter" =>
           event.preventDefault()
-          creatEmptyTaskUnderHighlighted()
+          createEmptyTaskUnderHighlighted()
         case _ =>
           Callback.empty
       }
@@ -328,7 +328,7 @@ private[document] final class MobileTaskEditor(implicit
       }
     }
 
-    private def creatEmptyTaskUnderHighlighted()(implicit state: State, props: Props): Callback = {
+    private def createEmptyTaskUnderHighlighted()(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
       val insertIndex =
