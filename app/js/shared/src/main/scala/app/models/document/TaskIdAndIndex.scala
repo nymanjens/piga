@@ -28,9 +28,12 @@ object TaskIdAndIndex {
   val nullInstance: TaskIdAndIndex = TaskIdAndIndex(taskId = -1, taskIndex = 0)
 
   def fromIndexedCursor(indexedCursor: IndexedCursor)(implicit document: Document): TaskIdAndIndex = {
+    fromTaskIndex(indexedCursor.seqIndex)
+  }
+  def fromTaskIndex(seqIndex: Int)(implicit document: Document): TaskIdAndIndex = {
     TaskIdAndIndex(
-      taskId = document.tasks(indexedCursor.seqIndex).id,
-      taskIndex = indexedCursor.seqIndex,
+      taskId = document.tasks(seqIndex).id,
+      taskIndex = seqIndex,
     )
   }
 }

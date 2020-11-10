@@ -17,6 +17,7 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
+import app.models.document.TaskIdAndIndex
 import app.models.document.TextWithMarkup
 import app.models.user.User
 import hydro.common.I18n
@@ -77,15 +78,20 @@ private[document] final class MobileTaskEditor(implicit
       inEditMode: Boolean = false,
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
-      highlightedTaskIndex: Int = 0,
+      highlightedTaskIdAndIndex: TaskIdAndIndex = TaskIdAndIndex.nullInstance,
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
-      copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
+      copy(
+        document = documentStore.state.document,
+        pendingTaskIds = documentStore.state.pendingTaskIds,
+        highlightedTaskIdAndIndex = highlightedTaskIdAndIndex.inDocument(documentStore.state.document),
+      )
 
-    lazy val highlightedTask: Task = document.tasks(highlightedTaskIndex)
-    def startOfHighlightedTask: IndexedSelection =
-      IndexedSelection.singleton(IndexedCursor.atStartOfTask(highlightedTaskIndex))
-
+    lazy val highlightedTask: Task = document.tasks(highlightedTaskIdAndIndex.taskIndex)
+    def highlightedTaskIndex: Int = highlightedTaskIdAndIndex.taskIndex
+    def startOfHighlightedTask: IndexedSelection = {
+      IndexedSelection.singleton(IndexedCursor.atStartOfTask(highlightedTaskIdAndIndex.taskIndex))
+    }
   }
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) with DidMount {
@@ -96,10 +102,11 @@ private[document] final class MobileTaskEditor(implicit
     override def didMount(props: Props, state: State): Callback = {
       val selection = documentSelectionStore.getSelection(state.document.id)
       val taskIndex = selection.start.seqIndex
+      implicit val document = state.document
 
       if (state.document.tasksOption(taskIndex).isDefined) {
         $.modState(
-          _.copy(highlightedTaskIndex = taskIndex),
+          _.copy(highlightedTaskIdAndIndex = TaskIdAndIndex.fromTaskIndex(taskIndex)),
           Callback {
             val taskToFocus = state.document.tasks(taskIndex)
             taskIdToInputRef.get(taskToFocus.id)().focus()
@@ -307,6 +314,8 @@ private[document] final class MobileTaskEditor(implicit
 
     private def selectTask(task: Task)(implicit state: State): Callback = {
       $.modState { state =>
+        implicit val document = state.document
+
         state.document.maybeIndexOf(task.id, orderTokenHint = task.orderToken) match {
           case None => state
           case Some(taskIndex) =>
@@ -314,7 +323,7 @@ private[document] final class MobileTaskEditor(implicit
               documentId = state.document.id,
               IndexedSelection.atStartOfTask(taskIndex),
             )
-            state.copy(highlightedTaskIndex = taskIndex)
+            state.copy(highlightedTaskIdAndIndex = TaskIdAndIndex.fromTaskIndex(taskIndex))
         }
       }
     }
@@ -495,7 +504,10 @@ private[document] final class MobileTaskEditor(implicit
       val newDocument = documentStore.state.document
 
       $.modState(
-        _.copyFromStore(documentStore).copy(highlightedTaskIndex = actualHighlightedTaskIndexAfterEdit),
+        _.copyFromStore(documentStore).copy(
+          highlightedTaskIdAndIndex =
+            TaskIdAndIndex.fromTaskIndex(actualHighlightedTaskIndexAfterEdit)(newDocument)
+        ),
         Callback {
           editHistory.addEdit(
             documentId = oldState.document.id,
@@ -532,7 +544,9 @@ private[document] final class MobileTaskEditor(implicit
           val newDocument = documentStore.state.document
           val newHighlightedTaskIndex = edit.selectionAfterEdit.attachToDocument(newDocument).start.seqIndex
           $.modState(
-            _.copyFromStore(documentStore).copy(highlightedTaskIndex = newHighlightedTaskIndex),
+            _.copyFromStore(documentStore).copy(highlightedTaskIdAndIndex =
+              TaskIdAndIndex.fromTaskIndex(newHighlightedTaskIndex)(newDocument)
+            ),
             Callback {
               documentSelectionStore.setSelection(
                 documentId = state.document.id,
