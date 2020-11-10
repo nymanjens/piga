@@ -48,7 +48,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     def linkVdomNode(href: String, children: VdomNode): VdomNode = {
       <.a(
         ^.href := href,
-        ^.target := "blank",
+        ^.target := "_blank",
         ^.key := nextKey,
         ^.onClick ==> { e =>
           LogExceptionsCallback {
