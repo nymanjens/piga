@@ -2,6 +2,7 @@
   "name": "Task Keeper",
   "short_name": "Task Keeper",
   "start_url": "/app/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fff",
   "theme_color": "#f8f8f8",
