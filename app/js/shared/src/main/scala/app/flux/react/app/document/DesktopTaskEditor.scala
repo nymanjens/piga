@@ -15,6 +15,7 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
+import app.models.document.TaskIdAndIndex
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import app.models.user.User
@@ -82,10 +83,14 @@ private[document] final class DesktopTaskEditor(implicit
   protected case class State(
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
-      highlightedTaskIndex: Int = 0,
+      highlightedTaskIdAndIndex: TaskIdAndIndex = TaskIdAndIndex.nullInstance,
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
-      copy(document = documentStore.state.document, pendingTaskIds = documentStore.state.pendingTaskIds)
+      copy(
+        document = documentStore.state.document,
+        pendingTaskIds = documentStore.state.pendingTaskIds,
+        highlightedTaskIdAndIndex = highlightedTaskIdAndIndex.inDocument(documentStore.state.document),
+      )
   }
 
   protected class Backend($ : BackendScope[Props, State])
@@ -176,7 +181,7 @@ private[document] final class DesktopTaskEditor(implicit
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
-                    ifThenOption(state.highlightedTaskIndex == taskIndex)("highlighted") ++
+                    ifThenOption(state.highlightedTaskIdAndIndex.taskIndex == taskIndex)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user")
                 ),
@@ -265,8 +270,8 @@ private[document] final class DesktopTaskEditor(implicit
           val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
             case Some(s) => s
             case None =>
-              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
-              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+              renameTaskKeyToWorkAroundReactBug(taskId = state.highlightedTaskIdAndIndex.taskId)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIdAndIndex.taskIndex)
           }
 
           val IndexedSelection(start, end) = selection
@@ -294,8 +299,12 @@ private[document] final class DesktopTaskEditor(implicit
 
     private def updateCursor: Callback = {
       IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
-        case Some(selection) => $.modState(_.copy(highlightedTaskIndex = selection.end.seqIndex))
-        case None            => Callback.empty
+        case Some(selection) =>
+          $.modState { state =>
+            implicit val document = state.document
+            state.copy(highlightedTaskIdAndIndex = TaskIdAndIndex.fromIndexedCursor(selection.end))
+          }
+        case None => Callback.empty
       }
     }
 
@@ -305,8 +314,8 @@ private[document] final class DesktopTaskEditor(implicit
           val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
             case Some(s) => s
             case None =>
-              renameTaskKeyToWorkAroundReactBug(state.highlightedTaskIndex)
-              IndexedSelection.atStartOfTask(state.highlightedTaskIndex)
+              renameTaskKeyToWorkAroundReactBug(taskId = state.highlightedTaskIdAndIndex.taskId)
+              IndexedSelection.atStartOfTask(state.highlightedTaskIdAndIndex.taskIndex)
           }
           val IndexedSelection(start, end) = selection
           implicit val document = state.document
@@ -1154,8 +1163,8 @@ private[document] final class DesktopTaskEditor(implicit
       *
       * The fix is to force a React redraw by remapping its key to a random number.
       */
-    private def renameTaskKeyToWorkAroundReactBug(seqIndex: Int)(implicit state: State): Unit = {
-      taskKeyRemapForReactBugWorkaround.put(state.document.tasks(seqIndex).id, abs(Random.nextLong))
+    private def renameTaskKeyToWorkAroundReactBug(taskId: Long)(implicit state: State): Unit = {
+      taskKeyRemapForReactBugWorkaround.put(taskId, abs(Random.nextLong))
     }
 
     private def setSelection(selection: IndexedSelection): Callback = $.state.map[Unit] { state =>

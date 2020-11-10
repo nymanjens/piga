@@ -96,8 +96,9 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
         } else {
           val index = (upperIndex + lowerIndex) / 2
           tasks(index) match {
-            case t if t.id == taskId                 => Some(index)
-            case t if orderTokenHint < t.orderToken  => inner(lowerIndex, upperIndex - 1)
+            case t if t.id == taskId => Some(index)
+            case t if orderTokenHint != null && orderTokenHint < t.orderToken =>
+              inner(lowerIndex, upperIndex - 1)
             case t if orderTokenHint == t.orderToken => findWithEqualOrderTokenAround(index)
             case _                                   => inner(index + 1, upperIndex)
           }
