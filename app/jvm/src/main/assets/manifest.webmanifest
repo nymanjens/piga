@@ -27,7 +27,7 @@
   "shortcuts":[
     {
       "name":"Document Administration",
-      "url":"/app/documentadministration",
+      "url":"/app/documentadministration"
     }
   ]
 }
