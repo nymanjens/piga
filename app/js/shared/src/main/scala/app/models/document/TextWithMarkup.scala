@@ -3,9 +3,11 @@ package app.models.document
 import app.models.document.TextWithMarkup.Formatting
 import app.models.document.TextWithMarkup.FormattingOption
 import app.models.document.TextWithMarkup.Part
+import hydro.common.BrowserUtils
 import hydro.common.DomNodeUtils.children
 import hydro.common.DomNodeUtils._
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
+import hydro.flux.react.ReactVdomUtils.^^
 import hydro.jsfacades.escapeHtml
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.vdom.html_<^._
@@ -50,13 +52,15 @@ final class TextWithMarkup private (private val parts: List[Part]) {
         ^.href := href,
         ^.target := "_blank",
         ^.key := nextKey,
-        ^.onClick ==> { e =>
-          LogExceptionsCallback {
-            if (e.ctrlKey) {
-              e.preventDefault()
-              dom.window.open(href, "_blank")
-            }
-          }.void
+        ^^.ifThen(!BrowserUtils.isMobileOrTablet) {
+          ^.onClick ==> { e =>
+            LogExceptionsCallback {
+              if (e.ctrlKey) {
+                e.preventDefault()
+                dom.window.open(href, "_blank")
+              }
+            }.void
+          }
         },
         children,
       )
