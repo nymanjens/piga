@@ -1,14 +1,18 @@
 package app.flux.react.app
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.async.Async.async
+import scala.async.Async.await
 import app.common.document.UserDocument
+import app.flux.react.uielements.SelectPrompt
 import app.flux.router.AppPages
 import app.flux.stores.document.AllDocumentsStore
-import app.models.document.DocumentEntity
 import hydro.common.I18n
 import hydro.flux.react.uielements.SbadminMenu
 import hydro.flux.react.uielements.SbadminMenu.MenuItem
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.router.RouterContext
+import hydro.jsfacades.Mousetrap
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -50,6 +54,46 @@ private[app] final class Menu(implicit
         ),
         enableSearch = false,
         router = props.router,
+        configureAdditionalKeyboardShortcuts = () => configureAdditionalKeyboardShortcuts(props.router),
+      )
+    }
+
+    private def configureAdditionalKeyboardShortcuts(router: RouterContext): Unit = {
+      def bind(shortcut: String, runnable: () => Unit): Unit = {
+        Mousetrap.bind(
+          shortcut,
+          e => {
+            e.preventDefault()
+            runnable()
+          },
+        )
+      }
+      def bindGlobal(shortcut: String, runnable: () => Unit): Unit = {
+        Mousetrap.bindGlobal(
+          shortcut,
+          e => {
+            e.preventDefault()
+            runnable()
+          },
+        )
+      }
+
+      bindGlobal(
+        "ctrl+p",
+        () =>
+          async {
+            val answer = await(
+              SelectPrompt.choose(
+                title = "Go to file",
+                optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
+              )
+            )
+
+            answer match {
+              case None             => // do nothing
+              case Some(documentId) => router.setPage(AppPages.TaskList(documentId))
+            }
+          },
       )
     }
   }
