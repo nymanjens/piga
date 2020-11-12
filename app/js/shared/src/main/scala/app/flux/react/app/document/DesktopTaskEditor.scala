@@ -4,7 +4,9 @@ import java.lang.Math.abs
 
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
+import app.flux.react.uielements.SelectPrompt
 import app.flux.router.AppPages
+import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
@@ -64,6 +66,7 @@ private[document] final class DesktopTaskEditor(implicit
     documentSelectionStore: DocumentSelectionStore,
     documentStoreFactory: DocumentStoreFactory,
     editHistory: EditHistory,
+    allDocumentsStore: AllDocumentsStore,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
@@ -595,6 +598,11 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               editTagsInTasks(selection)
 
+            // Go to file
+            case CharacterKey('p', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+              event.preventDefault()
+              goToFilePrompt(selection)
+
             // Find next occurrence of selected string
             case CharacterKey('g', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
               event.preventDefault()
@@ -892,6 +900,24 @@ private[document] final class DesktopTaskEditor(implicit
         tagsDialog(currentTags) map {
           case Some(newTags) => replaceTags(relevantTasks, currentTags, newTags)
           case None          => setSelection(selection)
+        }
+      }
+    }
+
+    private def goToFilePrompt(selection: IndexedSelection)(
+      implicit props: Props,
+      state: State,
+    ): Callback = {
+      Callback.future {
+        SelectPrompt.choose(
+          title = "Go to file:",
+          optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
+        ) map {
+          case Some(documentId) if documentId != state.document.id =>
+            props.router.setPage(AppPages.TaskList(documentId))
+            Callback.empty
+          case _ =>
+            setSelection(selection)
         }
       }
     }

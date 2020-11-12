@@ -78,23 +78,23 @@ private[app] final class Menu(implicit
         )
       }
 
-      bindGlobal(
-        "ctrl+p",
-        () =>
-          async {
-            val answer = await(
-              SelectPrompt.choose(
-                title = "Go to file:",
-                optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
-              )
-            )
-
-            answer match {
-              case None             => // do nothing
-              case Some(documentId) => router.setPage(AppPages.TaskList(documentId))
-            }
-          },
-      )
+//      bindGlobal(
+//        "ctrl+p",
+//        () =>
+//          async {
+//            val answer = await(
+//              SelectPrompt.choose(
+//                title = "Go to file:",
+//                optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
+//              )
+//            )
+//
+//            answer match {
+//              case None             => // do nothing
+//              case Some(documentId) => router.setPage(AppPages.TaskList(documentId))
+//            }
+//          },
+//      )
     }
   }
 }
