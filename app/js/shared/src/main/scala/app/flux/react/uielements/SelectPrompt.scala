@@ -88,7 +88,7 @@ object SelectPrompt {
   }
 
   private class DialogHandler(options: Seq[String], optionsDiv: Element) {
-    private var lastSearchValue: String = ""
+    private var lastSearchValue: String = null
 
     def renderOptionsList(matcher: Matcher): Unit = {
       if (lastSearchValue != matcher.searchString) {
