@@ -32,6 +32,7 @@ object SelectPrompt {
 
     val form = dom.document.getElementsByClassName("bootbox-form").apply(0)
     val optionsDiv = dom.document.createElement("div")
+    optionsDiv.id = "SelectPrompt-options"
     form.appendChild(optionsDiv)
 
     val diaglogHandler = new DialogHandler(options = optionsIdToName.values.toVector, optionsDiv = optionsDiv)
