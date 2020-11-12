@@ -84,7 +84,7 @@ private[app] final class Menu(implicit
           async {
             val answer = await(
               SelectPrompt.choose(
-                title = "Go to file",
+                title = "Go to file:",
                 optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
               )
             )
