@@ -23,11 +23,12 @@ import org.scalajs.dom.raw.Event
 import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.dom.raw.HTMLFormElement
 
+import scala.collection.immutable.ListMap
 import scala.collection.immutable.Seq
 import scala.scalajs.js
 
 object SelectPrompt {
-  def choose(title: String, optionsIdToName: Map[Long, String]): Future[Option[Long]] = {
+  def choose(title: String, optionsIdToName: ListMap[Long, String]): Future[Option[Long]] = {
     val result = Bootbox.prompt(title, value = "", animate = false, selectValue = false)
 
     val form = dom.document.getElementsByClassName("bootbox-form").apply(0)
@@ -96,7 +97,7 @@ object SelectPrompt {
         optionsDiv.innerHTML = "" +
           "<ul>" +
           (
-            for ((option, index) <- options.sortBy(matcher.rank).reverseIterator.zipWithIndex)
+            for ((option, index) <- options.sortBy(o => -matcher.rank(o)).zipWithIndex)
               yield {
                 val className =
                   if (!matcher.isMatch(option)) "no-match"

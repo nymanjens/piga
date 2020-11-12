@@ -34,6 +34,7 @@ import hydro.common.ScalaUtils.ifThenOption
 import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.BrowserUtils
+import hydro.common.CollectionUtils
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
@@ -50,6 +51,7 @@ import org.scalajs.dom
 
 import scala.async.Async.async
 import scala.async.Async.await
+import scala.collection.immutable.ListMap
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -904,14 +906,14 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    private def goToFilePrompt(selection: IndexedSelection)(
-      implicit props: Props,
-      state: State,
+    private def goToFilePrompt(selection: IndexedSelection)(implicit
+        props: Props,
+        state: State,
     ): Callback = {
       Callback.future {
         SelectPrompt.choose(
           title = "Go to file:",
-          optionsIdToName = allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)).toMap,
+          optionsIdToName = ListMap(allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)): _*),
         ) map {
           case Some(documentId) if documentId != state.document.id =>
             props.router.setPage(AppPages.TaskList(documentId))
