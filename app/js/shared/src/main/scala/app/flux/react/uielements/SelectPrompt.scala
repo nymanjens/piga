@@ -48,7 +48,7 @@ object SelectPrompt {
       for {
         searchString <- await(result)
         matcher <- Some(new Matcher(searchString))
-        (optionId, optionName) <- optionsIdToName.toVector.sortBy(pair => matcher.rank(pair._2)).lastOption
+        (optionId, optionName) <- optionsIdToName.toVector.sortBy(_._2)(matcher.ordering).headOption
         if matcher.isMatch(optionName)
       } yield optionId
     }
@@ -83,6 +83,8 @@ object SelectPrompt {
         0
       }
     }
+
+    def ordering: Ordering[String] = Ordering.by(string => -rank(string))
   }
   private object Matcher {
     val noopMatcher: Matcher = new Matcher("")
@@ -97,7 +99,7 @@ object SelectPrompt {
         optionsDiv.innerHTML = "" +
           "<ul>" +
           (
-            for ((option, index) <- options.sortBy(o => -matcher.rank(o)).zipWithIndex)
+            for ((option, index) <- options.sorted(matcher.ordering).zipWithIndex)
               yield {
                 val className =
                   if (!matcher.isMatch(option)) "no-match"
