@@ -1,5 +1,7 @@
 package app.flux.react.uielements
 
+import hydro.common.CollectionUtils
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.async.Async.async
 import scala.async.Async.await
@@ -36,33 +38,52 @@ object SelectPrompt {
     optionsDiv.id = "SelectPrompt-options"
     form.appendChild(optionsDiv)
 
-    val diaglogHandler = new DialogHandler(options = optionsIdToName.values.toVector, optionsDiv = optionsDiv)
+    val diaglogHandler = new DialogHandler(optionsIdToName, optionsDiv)
 
-    diaglogHandler.renderOptionsList(Matcher.noopMatcher)
+    diaglogHandler.renderOptionsList(Matcher.noopMatcher, selectedIndex = 0)
 
     val promptInput =
       dom.document.getElementsByClassName("bootbox-input-text").apply(0).asInstanceOf[HTMLInputElement]
-    addChangeListeners(promptInput, newValue => diaglogHandler.renderOptionsList(new Matcher(newValue)))
+    addChangeListeners(
+      promptInput,
+      onAnyChange = newValue => diaglogHandler.setSearchString(newValue),
+      onArrowUp = () => diaglogHandler.incrementSelectedIndex(diff = -1),
+      onArrowDown = () => diaglogHandler.incrementSelectedIndex(diff = +1),
+    )
 
     async {
       for {
         searchString <- await(result)
-        matcher <- Some(new Matcher(searchString))
-        (optionId, optionName) <- optionsIdToName.toVector.sortBy(_._2)(matcher.ordering).headOption
-        if matcher.isMatch(optionName)
+        optionId <- diaglogHandler.lastSelectedOptionId
       } yield optionId
     }
   }
 
-  private def addChangeListeners(input: HTMLInputElement, listener: String => Unit): Unit = {
+  private def addChangeListeners(
+      input: HTMLInputElement,
+      onAnyChange: String => Unit,
+      onArrowUp: () => Unit,
+      onArrowDown: () => Unit,
+  ): Unit = {
     def getEventValue(event: Event): String =
       event.target.asInstanceOf[js.Dynamic].value.asInstanceOf[String]
 
-    input.onchange = event => listener(getEventValue(event))
-    input.onkeydown = event => listener(getEventValue(event))
-    input.onpaste = event => listener(getEventValue(event))
-    input.oninput = event => listener(getEventValue(event))
-    input.onchange = event => listener(getEventValue(event))
+    input.onchange = event => onAnyChange(getEventValue(event))
+    input.onpaste = event => onAnyChange(getEventValue(event))
+    input.oninput = event => onAnyChange(getEventValue(event))
+    input.onchange = event => onAnyChange(getEventValue(event))
+
+    input.onkeydown = event => {
+      event.keyCode match {
+        case 38 =>
+          onArrowUp()
+          event.preventDefault()
+        case 40 =>
+          onArrowDown()
+          event.preventDefault()
+        case _ => onAnyChange(getEventValue(event))
+      }
+    }
   }
 
   private class Matcher(val searchString: String) {
@@ -84,18 +105,30 @@ object SelectPrompt {
       }
     }
 
-    def ordering: Ordering[String] = Ordering.by(string => -rank(string))
+    def ordering: Ordering[String] = {
+      Ordering.by(string => -rank(string))
+    }
   }
   private object Matcher {
     val noopMatcher: Matcher = new Matcher("")
   }
 
-  private class DialogHandler(options: Seq[String], optionsDiv: Element) {
-    private var lastSearchValue: String = null
+  private class DialogHandler(optionsIdToName: ListMap[Long, String], optionsDiv: Element) {
+    private var lastSearchString: String = _
+    private var lastSelectedIndex: Int = -99
 
-    def renderOptionsList(matcher: Matcher): Unit = {
-      if (lastSearchValue != matcher.searchString) {
-        lastSearchValue = matcher.searchString
+    def renderOptionsList(matcher: Matcher, selectedIndex: Int): Unit = {
+      if (lastSearchString != matcher.searchString || lastSelectedIndex != selectedIndex) {
+        val selectedIndexWithinBounds = {
+          val matchedOptions = options.count(matcher.isMatch)
+          if (selectedIndex < 0) 0
+          else if (selectedIndex >= matchedOptions) matchedOptions - 1
+          else selectedIndex
+        }
+
+        lastSearchString = matcher.searchString
+        lastSelectedIndex = selectedIndexWithinBounds
+
         optionsDiv.innerHTML = "" +
           "<ul>" +
           (
@@ -103,13 +136,39 @@ object SelectPrompt {
               yield {
                 val className =
                   if (!matcher.isMatch(option)) "no-match"
-                  else if (index == 0) "match selected"
+                  else if (index == selectedIndexWithinBounds) "match selected"
                   else "match"
                 s"<li class='$className'>$option</li>"
               }
           ).mkString("") +
           "</ul>"
       }
+    }
+
+    def setSearchString(searchString: String): Unit = {
+      renderOptionsList(
+        matcher = new Matcher(searchString),
+        selectedIndex =
+          if (lastSearchString == searchString) lastSelectedIndex
+          else 0,
+      )
+    }
+
+    def incrementSelectedIndex(diff: Int): Unit = {
+      renderOptionsList(matcher = new Matcher(lastSearchString), selectedIndex = lastSelectedIndex + diff)
+    }
+
+    def lastSelectedOptionId: Option[Long] = {
+      val matcher = new Matcher(lastSearchString)
+      val maybePair = CollectionUtils.maybeGet(
+        optionsIdToName.toVector.sortBy(_._2)(matcher.ordering).filter(pair => matcher.isMatch(pair._2)),
+        index = lastSelectedIndex,
+      )
+      maybePair.map(_._1)
+    }
+
+    private def options: Seq[String] = {
+      optionsIdToName.values.toVector
     }
   }
 }
