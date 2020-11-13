@@ -1,6 +1,7 @@
 package app.flux.react.uielements
 
 import hydro.common.CollectionUtils
+import hydro.common.GuavaReplacement.Splitter
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.async.Async.async
@@ -86,23 +87,45 @@ object SelectPrompt {
     }
   }
 
+  private def max(ints: Int*): Int = {
+    Seq(ints: _*).max
+  }
+
   private class Matcher(val searchString: String) {
     def isMatch(option: String): Boolean = {
       rank(option) > 0
     }
 
     def rank(option: String): Int = {
-      if (option.startsWith(searchString)) {
-        4
-      } else if (option.toLowerCase.startsWith(searchString.toLowerCase())) {
-        3
-      } else if (option.contains(searchString)) {
-        2
-      } else if (option.toLowerCase.contains(searchString.toLowerCase())) {
-        1
-      } else {
-        0
+      def scoreWithExtraPointIfCaseMatches(option: String, searchString: String, points: Int)(
+          matchingFunc: (String, String) => Boolean
+      ): Int = {
+        if (matchingFunc(option, searchString)) points + 1
+        else if (matchingFunc(option.toLowerCase, searchString.toLowerCase)) points
+        else 0
       }
+      max(
+        scoreWithExtraPointIfCaseMatches(option, searchString, 20000)(_ startsWith _),
+        scoreWithExtraPointIfCaseMatches(option, searchString, 10000)(_ contains _),
+        // Tokenized match
+        {
+          (
+            for (searchPart <- Splitter.on(' ').split(searchString)) yield {
+              val bestOptionScore = (
+                for (optionPart <- Splitter.on(' ').split(option))
+                  yield max(
+                    scoreWithExtraPointIfCaseMatches(optionPart, searchPart, 300)(_ == _),
+                    scoreWithExtraPointIfCaseMatches(optionPart, searchPart, 200)(_ startsWith _),
+                    scoreWithExtraPointIfCaseMatches(optionPart, searchPart, 100)(_ contains _),
+                  )
+              ).max
+
+              // If one search token doesn't match, it means there is no match
+              if (bestOptionScore == 0) Int.MinValue else bestOptionScore
+            }
+          ).sum
+        },
+      )
     }
 
     def ordering: Ordering[String] = {
