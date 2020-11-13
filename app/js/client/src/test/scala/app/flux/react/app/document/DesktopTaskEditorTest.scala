@@ -1,6 +1,5 @@
 package app.flux.react.app.document
 
-import scala.collection.immutable.Seq
 import app.common.testing.JsTestObjects._
 import app.common.testing.TestObjects._
 import app.models.document.Document.IndexedCursor
@@ -8,6 +7,8 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.TextWithMarkup
 import app.models.document.TextWithMarkup.Formatting
 import utest._
+
+import scala.collection.immutable.Seq
 
 object DesktopTaskEditorTest extends TestSuite {
 
