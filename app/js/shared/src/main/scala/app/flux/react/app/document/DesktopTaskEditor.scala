@@ -1186,11 +1186,11 @@ private[document] final class DesktopTaskEditor(implicit
     }
 
     /**
-      * React bug workaround: Sometimes, a <li> element is broken: The cursor still shows on the element but the
-      * selection is on the whole contenteditable div and the <li> contents are no longer updated by React.
-      *
-      * The fix is to force a React redraw by remapping its key to a random number.
-      */
+     * React bug workaround: Sometimes, a <li> element is broken: The cursor still shows on the element but the
+     * selection is on the whole contenteditable div and the <li> contents are no longer updated by React.
+     *
+     * The fix is to force a React redraw by remapping its key to a random number.
+     */
     private def renameTaskKeyToWorkAroundReactBug(taskId: Long)(implicit state: State): Unit = {
       taskKeyRemapForReactBugWorkaround.put(taskId, abs(Random.nextLong))
     }

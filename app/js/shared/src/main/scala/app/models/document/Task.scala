@@ -189,9 +189,9 @@ object Task {
     )
 
   /**
-    * Fake entity that provides a way to re-use UpdatableEntity logic without converting `TextWithMarkup` into
-    * `String`.
-    */
+   * Fake entity that provides a way to re-use UpdatableEntity logic without converting `TextWithMarkup` into
+   * `String`.
+   */
   private case class FakeJsTaskEntity(
       documentId: Long,
       content: TextWithMarkup,

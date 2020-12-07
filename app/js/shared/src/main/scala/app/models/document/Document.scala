@@ -123,10 +123,10 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
   }
 
   /**
-    * Returns the task at the given index, only if it exists and is not the child of a collapsed task.
-    *
-    * @param minExpandedIndentation The minimum indentation of which the caller is certain that it is not collapsed
-    */
+   * Returns the task at the given index, only if it exists and is not the child of a collapsed task.
+   *
+   * @param minExpandedIndentation The minimum indentation of which the caller is certain that it is not collapsed
+   */
   def visibleTaskOption(index: Int, minExpandedIndentation: Int = -1): Option[Task] = {
     tasksOption(index) filter { task =>
       val ancestors =

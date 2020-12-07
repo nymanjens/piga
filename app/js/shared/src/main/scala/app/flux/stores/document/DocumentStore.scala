@@ -44,21 +44,22 @@ final class DocumentStore(initialDocument: Document)(implicit entityAccess: JsEn
     )
 
   /**
-    * Set that keeps the IDs of all added tasks.
-    *
-    * This is used to avoid UI glitches when a task is added and immediately removed.
-    */
+   * Set that keeps the IDs of all added tasks.
+   *
+   * This is used to avoid UI glitches when a task is added and immediately removed.
+   */
   private val alreadyAddedTaskIds: mutable.Set[Long] = mutable.Set()
 
   // **************** Implementation of StateStore methods **************** //
   override def state: State = _state
 
   // **************** Additional API **************** //
-  /** Applies the given edit in the local state without calling the store listeners.
-    *
-    * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
-    * to this front-end.
-    */
+  /**
+   * Applies the given edit in the local state without calling the store listeners.
+   *
+   * Note that the listeners still will be called once the EntityModifications reach the back-end and are pushed back
+   * to this front-end.
+   */
   def applyEditWithoutCallingListeners(reversibleEdit: DocumentEdit.Reversible): Unit = {
     val editWithUpdateTimes =
       DocumentEdit.WithUpdateTimes.fromReversible(reversibleEdit)(clock, state.document)

@@ -7,9 +7,9 @@ import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.modification.EntityType
 
 /**
-  * Combines a user and a document. The existence of this combination implies a permission. The extra data
-  * indicates the placement of the document for that user.
-  */
+ * Combines a user and a document. The existence of this combination implies a permission. The extra data
+ * indicates the placement of the document for that user.
+ */
 case class DocumentPermissionAndPlacement(
     documentId: Long,
     userId: Long,
