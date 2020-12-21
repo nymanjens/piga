@@ -338,14 +338,19 @@ private[document] final class DesktopTaskEditor(implicit
           //dom.console.log(s"keyCombination = $keyCombination")
 
           keyCombination match {
-            case CharacterKey(character, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
+            case _ if keyCombination.meta =>
+              // Do nothing when meta key is pressed
+              event.preventDefault()
+              Callback.empty
+
+            case CharacterKey(character, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               replaceSelection(
                 replacement = Replacement.fromString(character.toString, formatting),
                 IndexedSelection(start, end),
               )
 
-            case SpecialKey(Enter, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
+            case SpecialKey(Enter, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               if (keyCombination.shift) {
                 replaceSelection(
@@ -372,10 +377,10 @@ private[document] final class DesktopTaskEditor(implicit
                 }
               }
 
-            case SpecialKey(Backspace, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
+            case SpecialKey(Backspace, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               if (start == end) {
-                if (keyCombination.ctrlOrMeta) {
+                if (keyCombination.ctrl) {
                   replaceSelection(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
                 } else {
                   replaceSelection(
@@ -387,10 +392,10 @@ private[document] final class DesktopTaskEditor(implicit
                 replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
               }
 
-            case SpecialKey(Delete, /* ctrlOrMeta */ _, /* shift */ false, /* alt */ false) =>
+            case SpecialKey(Delete, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               if (start == end) {
-                if (keyCombination.ctrlOrMeta) {
+                if (keyCombination.ctrl) {
                   replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
                 } else {
                   replaceSelection(
@@ -402,25 +407,24 @@ private[document] final class DesktopTaskEditor(implicit
                 replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
               }
 
-            case SpecialKey(
-                  Delete, /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false,
-                ) => // Delete rest of line
+            // Delete rest of line
+            case SpecialKey(Delete, /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.toEndOfTask))
 
             // Move cursor up/down
             // Note: This is re-implementation of the default behavior only for Firefox because it behaves weirdly with
             // indented tasks (as of early 2020)
-            case SpecialKey(ArrowDown, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ false)
+            case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
                 if BrowserUtils.isFirefox =>
               event.preventDefault()
               moveCursorVertically(selection, direction = +1)
-            case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ false)
+            case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
                 if BrowserUtils.isFirefox =>
               event.preventDefault()
               moveCursorVertically(selection, direction = -1)
 
-            case SpecialKey(Tab, /* ctrlOrMeta */ false, /* shift */ _, /* alt */ false) =>
+            case SpecialKey(Tab, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               val indentIncrease = if (keyCombination.shift) -1 else 1
               // Don't indent children if task is empty
@@ -433,13 +437,13 @@ private[document] final class DesktopTaskEditor(implicit
               }
 
             // Copy whole task and its children (shift-copy)
-            case CharacterKey('C', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('C', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
               Callback.empty
 
             // Cut whole task and its children (shift-cut)
-            case CharacterKey('X', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('X', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
 
               val fullSelection = selection.includeChildren().includeFullTasks()
@@ -447,7 +451,7 @@ private[document] final class DesktopTaskEditor(implicit
               removeTasks(fullSelection.seqIndices)
 
             // Copy whole task and its children as Markdown (shift+alt+M)
-            case CharacterKey('M', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+            case CharacterKey('M', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               val markdown =
                 convertToMarkdown(document.tasksIn(selection.includeChildren().includeFullTasks()))
@@ -455,7 +459,7 @@ private[document] final class DesktopTaskEditor(implicit
               Callback.empty
 
             // Italic
-            case CharacterKey('i', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('i', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(italic = value),
@@ -464,7 +468,7 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Bold
-            case CharacterKey('b', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('b', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(bold = value),
@@ -473,7 +477,7 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Code font
-            case CharacterKey('`', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('`', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(code = value),
@@ -482,7 +486,7 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Strikethrough (Alt + Shift + 5)
-            case CharacterKey(_, /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true)
+            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
                 if event.keyCode == 53 =>
               event.preventDefault()
               toggleFormatting(
@@ -492,42 +496,42 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Clear formatting
-            case CharacterKey('\\', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('\\', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
             // Disable underline modifier
-            case CharacterKey('u', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               Callback.empty
 
             // Disable save shortcut
-            case CharacterKey('s', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('s', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               Callback.empty
 
             // Undo
-            case CharacterKey('z', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('z', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               applyHistoryEdit(editHistory.undo())
 
             // Redo
-            case CharacterKey('Z', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('Z', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               applyHistoryEdit(editHistory.redo())
 
             // Redo
-            case CharacterKey('y', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('y', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               applyHistoryEdit(editHistory.redo())
 
             // Edit link
-            case CharacterKey('k', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('k', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               editLink(selection)
 
             // Open link
-            case SpecialKey(Enter, /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case SpecialKey(Enter, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               getAnyLinkInSelection(selection) match {
                 case Some(link) => dom.window.open(link, "_blank")
                 case None       =>
@@ -535,17 +539,17 @@ private[document] final class DesktopTaskEditor(implicit
               Callback.empty
 
             // Select word
-            case CharacterKey('m', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('m', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               selectExtendedWordAround(start)
 
             // Select task
-            case CharacterKey('j', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('j', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
             // Delete task
-            case CharacterKey('d', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('d', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               val currentTaskIsEmpty = selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty
               removeTasks(
@@ -554,7 +558,7 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Duplicate task
-            case CharacterKey('B', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('B', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               duplicateTasks(
                 selection.includeChildren(collapsedOnly = true).seqIndices,
@@ -562,54 +566,54 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Move tasks up
-            case SpecialKey(ArrowUp, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
+            case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               moveTasksInSeq(selection, direction = -1)
 
             // Move tasks down
-            case SpecialKey(ArrowDown, /* ctrlOrMeta */ false, /* shift */ false, /* alt */ true) =>
+            case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               moveTasksInSeq(selection, direction = +1)
 
             // Expand tasks
-            case CharacterKey('=' | '+', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('=' | '+', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
                 MaskedTaskUpdate.fromFields(task, collapsed = false)
               }
 
             // Collapse tasks
-            case CharacterKey('-', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('-', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateTasksInSelection(selection, updateChildren = false) { task =>
                 MaskedTaskUpdate.fromFields(task, collapsed = true)
               }
 
             // Convert to upper case
-            case CharacterKey('U', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('U', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toUpperCase)
 
             // Convert to lower case
-            case CharacterKey('L', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('L', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toLowerCase)
 
             // Edit tags
-            case CharacterKey('T', /* ctrlOrMeta */ false, /* shift */ true, /* alt */ true) =>
+            case CharacterKey('T', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               editTagsInTasks(selection)
 
             // Go to file
-            case CharacterKey('p', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('p', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               goToFilePrompt(selection)
 
             // Find next occurrence of selected string
-            case CharacterKey('g', /* ctrlOrMeta */ true, /* shift */ false, /* alt */ false) =>
+            case CharacterKey('g', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               findNextOccurrenceOfSelectedString(selection)
-            case CharacterKey('G', /* ctrlOrMeta */ true, /* shift */ true, /* alt */ false) =>
+            case CharacterKey('G', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               findNextOccurrenceOfSelectedString(selection, backwards = true)
 
