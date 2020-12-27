@@ -77,6 +77,11 @@ final class Webmanifest @Inject() (implicit
                     `type` = "image/png",
                   ),
                   Webmanifest.Icon(
+                    src = "/assets/images/favicon192x192.png",
+                    sizes = "96x96",
+                    `type` = "image/png",
+                  ),
+                  Webmanifest.Icon(
                     src = "/assets/images/favicon512x512.png",
                     sizes = "512x512",
                     `type` = "image/png",
