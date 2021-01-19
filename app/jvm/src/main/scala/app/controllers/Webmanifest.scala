@@ -60,27 +60,11 @@ final class Webmanifest @Inject() (implicit
                 name = document.name,
                 url = s"/app/tasklist/${document.documentId}",
                 icons = Seq(
-                  // Disabled because I use this as shortcut to particular document
-                  // Webmanifest.Icon(
-                  //   src = "/assets/images/document_shortcut_96x96.png",
-                  //   sizes = "96x96",
-                  //   `type` = "image/png",
-                  // ),
                   Webmanifest.Icon(
-                    src = "/assets/images/favicon48x48.png",
-                    sizes = "48x48",
+                    src = "/assets/images/document_shortcut_96x96.png",
+                    sizes = "96x96",
                     `type` = "image/png",
-                  ),
-                  Webmanifest.Icon(
-                    src = "/assets/images/favicon192x192.png",
-                    sizes = "72x72 96x96 144x144 168x168 192x192",
-                    `type` = "image/png",
-                  ),
-                  Webmanifest.Icon(
-                    src = "/assets/images/favicon512x512.png",
-                    sizes = "512x512",
-                    `type` = "image/png",
-                  ),
+                  )
                 ),
               ),
         )
