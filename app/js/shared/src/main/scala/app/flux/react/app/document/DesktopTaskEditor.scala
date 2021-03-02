@@ -2,6 +2,7 @@ package app.flux.react.app.document
 
 import java.lang.Math.abs
 
+import app.common.CaseFormats
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
 import app.flux.react.uielements.SelectPrompt
@@ -602,17 +603,20 @@ private[document] final class DesktopTaskEditor(implicit
             // convert to CamelCase
             case CharacterKey('L', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
-              updateCharactersInSelection(selection, _.toLowerCase)
+              updateCharactersInSelection(
+                selection,
+                s => CaseFormats.toUpperCamelCase(CaseFormats.tokenize(s)),
+              )
 
             // convert to snake_case
             case CharacterKey('K', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
-              updateCharactersInSelection(selection, _.toLowerCase)
+              updateCharactersInSelection(selection, s => CaseFormats.toSnakeCase(CaseFormats.tokenize(s)))
 
             // convert to dash-case
             case CharacterKey('H', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
-              updateCharactersInSelection(selection, _.toLowerCase)
+              updateCharactersInSelection(selection, s => CaseFormats.toDashCase(CaseFormats.tokenize(s)))
 
             // Edit tags
             case CharacterKey('T', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
