@@ -59,7 +59,6 @@ class CaseFormatsTest {
     assertThat(CaseFormats.toSnakeCase(input.asScala)) isEqualTo expected
   }
 
-
   @Test
   @TestParameters(
     Array(
