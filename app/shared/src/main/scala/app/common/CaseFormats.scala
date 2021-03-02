@@ -3,6 +3,7 @@ package app.common
 import hydro.common.GuavaReplacement.Splitter
 
 object CaseFormats {
+
   def tokenize(s: String): Seq[String] = {
     // Convert to ASCII alphanumeric characters + underscores
     val normalized = {
