@@ -594,8 +594,23 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               updateCharactersInSelection(selection, _.toUpperCase)
 
-            // Convert to lower case
+            // convert to lower case
             case CharacterKey('L', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toLowerCase)
+
+            // convert to CamelCase
+            case CharacterKey('L', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toLowerCase)
+
+            // convert to snake_case
+            case CharacterKey('K', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toLowerCase)
+
+            // convert to dash-case
+            case CharacterKey('H', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toLowerCase)
 
