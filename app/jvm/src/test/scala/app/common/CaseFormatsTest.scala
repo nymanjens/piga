@@ -24,7 +24,7 @@ class CaseFormatsTest {
       // dash-case
       "{input: ab-C, expected: [ab, c]}",
       // Other
-      "{input: THE angry Bird, expected: [the, angry, bird]}",
+      "{input: THE angryBird, expected: [the, angry, bird]}",
       "{input: 'a;b,c:-=+', expected: [a, b, c]}",
       "{input: a1, expected: [a1]}",
     )
