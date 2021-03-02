@@ -874,10 +874,20 @@ private[document] final class DesktopTaskEditor(implicit
               characterTransform = characterTransform,
             ),
           )
+
+      // Update selection in case characterTransform changes the String length
+      val upatedSelection = {
+        val endCursor = selection.`end`
+        val endTask = oldDocument.tasks(endCursor.seqIndex)
+        val endContent = endTask.content.sub(0, endCursor.offsetInTask)
+        val newEndString = characterTransform(endContent.contentString)
+        selection.copy(`end` = endCursor.copy(offsetInTask = newEndString.size))
+      }
+
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selection,
-        selectionAfterEdit = selection,
+        selectionAfterEdit = upatedSelection,
       )
     }
 

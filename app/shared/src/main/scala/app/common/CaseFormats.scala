@@ -47,7 +47,7 @@ object CaseFormats {
         remainder match {
           case Nil                          => lastWord :: Nil
           case head :: tail if head.isUpper => lastWord :: inner(lastWord = head.toString, remainder = tail)
-          case head :: tail if head.isLower => inner(lastWord = lastWord + head, remainder = tail)
+          case head :: tail                 => inner(lastWord = lastWord + head, remainder = tail)
         }
       }
 
