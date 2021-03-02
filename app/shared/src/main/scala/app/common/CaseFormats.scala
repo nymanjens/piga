@@ -18,10 +18,22 @@ object CaseFormats {
     // Separate camelCase words
     result = result.flatMap(parseCamelCase)
 
-    // Convert all strings to lowerase
+    // Convert all strings to lowercase
     result = result.map(_.toLowerCase)
 
     result
+  }
+
+  def toUpperCamelCase(tokens: Seq[String]): String = {
+    tokens.map(s => s.head.toUpper + s.tail).mkString
+  }
+
+  def toSnakeCase(tokens: Seq[String]): String = {
+    tokens.mkString("_")
+  }
+
+  def toDashCase(tokens: Seq[String]): String = {
+    tokens.mkString("-")
   }
 
   private def parseCamelCase(s: String): Seq[String] = {

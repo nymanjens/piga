@@ -32,4 +32,44 @@ class CaseFormatsTest {
   def tokenize_success(input: String, expected: java.util.List[String]) = {
     assertThat(CaseFormats.tokenize(input).asJava) containsExactlyElementsIn expected
   }
+
+  @Test
+  @TestParameters(
+    Array(
+      "{input: [a], expected: A}",
+      "{input: [ab], expected: Ab}",
+      "{input: [ab, c], expected: AbC}",
+      "{input: [ab, c, d], expected: AbCD}",
+    )
+  )
+  def toUpperCamelCase_success(input: java.util.List[String], expected: String) = {
+    assertThat(CaseFormats.toUpperCamelCase(input.asScala)) isEqualTo expected
+  }
+
+  @Test
+  @TestParameters(
+    Array(
+      "{input: [a], expected: a}",
+      "{input: [ab], expected: ab}",
+      "{input: [ab, c], expected: ab_c}",
+      "{input: [ab, c, d], expected: ab_c_d}",
+    )
+  )
+  def toSnakeCase_success(input: java.util.List[String], expected: String) = {
+    assertThat(CaseFormats.toSnakeCase(input.asScala)) isEqualTo expected
+  }
+
+
+  @Test
+  @TestParameters(
+    Array(
+      "{input: [a], expected: a}",
+      "{input: [ab], expected: ab}",
+      "{input: [ab, c], expected: ab-c}",
+      "{input: [ab, c, d], expected: ab-c-d}",
+    )
+  )
+  def toDashCase_success(input: java.util.List[String], expected: String) = {
+    assertThat(CaseFormats.toDashCase(input.asScala)) isEqualTo expected
+  }
 }
