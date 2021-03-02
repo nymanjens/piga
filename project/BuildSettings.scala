@@ -63,6 +63,8 @@ object BuildSettings {
       "com.typesafe.play" %% "play-cache" % versions.play,
       "com.typesafe.play" %% "play-ws" % versions.play,
       "com.typesafe.play" %% "play-specs2" % versions.play % Test,
+      "com.google.truth" % "truth" % "1.1.2" % Test,
+      "com.google.testparameterinjector" % "test-parameter-injector" % "1.0-rc1" % Test,
       "com.typesafe.slick" %% "slick" % "3.2.0",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
       "commons-lang" % "commons-lang" % "2.6",
