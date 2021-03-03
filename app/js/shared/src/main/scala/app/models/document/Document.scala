@@ -167,6 +167,10 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     )
   }
 
+  def findParentIndex(seqIndex: Int): Option[Int] = {
+    findRootParentIndex(seqIndex, rootParentIndentation = tasks(seqIndex).indentation - 1)
+  }
+
   private def findRootParentIndex(seqIndex: Int, rootParentIndentation: Int): Option[Int] = {
     var result = seqIndex
     while (result >= 0 && tasks(result).indentation > rootParentIndentation) {

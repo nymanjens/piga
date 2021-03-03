@@ -437,6 +437,14 @@ private[document] final class DesktopTaskEditor(implicit
                 )
               }
 
+            // Go to parent task
+            case CharacterKey('p', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              document.findParentIndex(selection.start.seqIndex) match {
+                case None                 => Callback.empty
+                case Some(parentSeqIndex) => setSelection(IndexedSelection.atStartOfTask(parentSeqIndex))
+              }
+
             // Copy whole task and its children (shift-copy)
             case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
