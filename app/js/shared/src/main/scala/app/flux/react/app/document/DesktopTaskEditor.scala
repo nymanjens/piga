@@ -344,10 +344,10 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               Callback.empty
 
-            case CharacterKey(character, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
+            case c @ CharacterKey(_, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               replaceSelection(
-                replacement = Replacement.fromString(character.toString, formatting),
+                replacement = Replacement.fromString(c.capitalizedCharacter.toString, formatting),
                 IndexedSelection(start, end),
               )
 
@@ -438,13 +438,13 @@ private[document] final class DesktopTaskEditor(implicit
               }
 
             // Copy whole task and its children (shift-copy)
-            case CharacterKey('C', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
               Callback.empty
 
             // Cut whole task and its children (shift-cut)
-            case CharacterKey('X', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('x', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
 
               val fullSelection = selection.includeChildren().includeFullTasks()
@@ -452,7 +452,7 @@ private[document] final class DesktopTaskEditor(implicit
               removeTasks(fullSelection.seqIndices)
 
             // Copy whole task and its children as Markdown (shift+alt+M)
-            case CharacterKey('M', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+            case CharacterKey('m', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               val markdown =
                 convertToMarkdown(document.tasksIn(selection.includeChildren().includeFullTasks()))
@@ -517,7 +517,7 @@ private[document] final class DesktopTaskEditor(implicit
               applyHistoryEdit(editHistory.undo())
 
             // Redo
-            case CharacterKey('Z', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('z', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               applyHistoryEdit(editHistory.redo())
 
@@ -545,7 +545,7 @@ private[document] final class DesktopTaskEditor(implicit
               selectExtendedWordAround(start)
 
             // Select quoted sentence
-            case CharacterKey('M', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('m', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               selectQuotedSentenceAround(start)
 
@@ -564,7 +564,7 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Duplicate task
-            case CharacterKey('B', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('b', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               duplicateTasks(
                 selection.includeChildren(collapsedOnly = true).seqIndices,
@@ -596,17 +596,17 @@ private[document] final class DesktopTaskEditor(implicit
               }
 
             // Convert to upper case
-            case CharacterKey('U', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('u', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toUpperCase)
 
             // convert to lower case
-            case CharacterKey('L', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('l', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toLowerCase)
 
             // convert to CamelCase
-            case CharacterKey('L', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+            case CharacterKey('l', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(
                 selection,
@@ -614,17 +614,17 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // convert to snake_case
-            case CharacterKey('K', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+            case CharacterKey('k', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, s => CaseFormats.toSnakeCase(CaseFormats.tokenize(s)))
 
             // convert to dash-case
-            case CharacterKey('H', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+            case CharacterKey('h', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, s => CaseFormats.toDashCase(CaseFormats.tokenize(s)))
 
             // Edit tags
-            case CharacterKey('T', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+            case CharacterKey('t', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               editTagsInTasks(selection)
 
@@ -637,7 +637,7 @@ private[document] final class DesktopTaskEditor(implicit
             case CharacterKey('g', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               findNextOccurrenceOfSelectedString(selection)
-            case CharacterKey('G', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('g', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               findNextOccurrenceOfSelectedString(selection, backwards = true)
 
