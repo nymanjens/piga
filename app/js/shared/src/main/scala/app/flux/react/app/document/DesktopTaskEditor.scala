@@ -544,6 +544,11 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               selectExtendedWordAround(start)
 
+            // Select quoted sentence
+            case CharacterKey('M', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              selectQuotedSentenceAround(start)
+
             // Select task
             case CharacterKey('j', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
@@ -1166,6 +1171,33 @@ private[document] final class DesktopTaskEditor(implicit
     }
 
     private def selectExtendedWordAround(cursor: IndexedCursor)(implicit state: State): Callback = {
+      selectAroundCursorUntilChars(cursor, " \f\n\r\t\u00A0\u2028\u2029$()'\"`")
+    }
+
+    private def selectQuotedSentenceAround(cursor: IndexedCursor)(implicit state: State): Callback = {
+      val selectedLineInTask = {
+        val taskContent = state.document.tasks(cursor.seqIndex).content
+        val beforeCursor = taskContent.sub(0, cursor.offsetInTask).splitByNewlines().last
+        val afterCursor = taskContent.sub(cursor.offsetInTask).splitByNewlines().head
+        (beforeCursor + afterCursor).contentString
+      }
+
+      if (selectedLineInTask.count(_ == '"') >= 2) {
+        selectAroundCursorUntilChars(cursor, "\"\n")
+      } else if (selectedLineInTask.count(_ == '\'') >= 2) {
+        selectAroundCursorUntilChars(cursor, "'\n")
+      } else if (selectedLineInTask.count(_ == '`') >= 2) {
+        selectAroundCursorUntilChars(cursor, "`\n")
+      } else if (selectedLineInTask.count(_ == '>') >= 1 && selectedLineInTask.count(_ == '<') >= 1) {
+        selectAroundCursorUntilChars(cursor, "<>\n")
+      } else {
+        selectAroundCursorUntilChars(cursor, "`'\"\n<>")
+      }
+    }
+
+    private def selectAroundCursorUntilChars(cursor: IndexedCursor, chars: String)(implicit
+        state: State
+    ): Callback = {
       val document = state.document
       val taskContent = document.tasks(cursor.seqIndex).contentString
 
@@ -1176,10 +1208,8 @@ private[document] final class DesktopTaskEditor(implicit
         } else {
           val currentChar = if (step > 0) taskContent.charAt(offsetInTask) else taskContent.charAt(nextOffset)
           currentChar match {
-            case ' ' | '\f' | '\n' | '\r' | '\t' | '\u00A0' | '\u2028' | '\u2029' | '$' | '(' | ')' | '\'' |
-                '"' | '`' =>
-              offsetInTask
-            case _ => moveOffset(nextOffset, step)
+            case c if chars.contains(c) => offsetInTask
+            case _                      => moveOffset(nextOffset, step)
           }
         }
       }
