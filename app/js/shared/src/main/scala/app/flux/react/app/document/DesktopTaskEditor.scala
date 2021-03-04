@@ -599,8 +599,12 @@ private[document] final class DesktopTaskEditor(implicit
             // Collapse tasks
             case CharacterKey('-', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
-              updateTasksInSelection(selection, updateChildren = false) { task =>
-                MaskedTaskUpdate.fromFields(task, collapsed = true)
+              if (selection.includeChildren() == selection) {
+                Callback.empty // Don't collapse a task tha has no children
+              } else {
+                updateTasksInSelection(selection, updateChildren = false) { task =>
+                  MaskedTaskUpdate.fromFields(task, collapsed = true)
+                }
               }
 
             // Convert to upper case
