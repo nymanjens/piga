@@ -184,8 +184,16 @@ object TextWithMarkupTest extends TestSuite {
       "b" - {
         TextWithMarkup.fromHtml("A<b>B</b>C") ==> TextWithMarkup("A") + bold("B") + TextWithMarkup("C")
       }
+      "b via style" - {
+        TextWithMarkup.fromHtml("A<span style='font-weight:bold;'>B</span>C") ==> TextWithMarkup("A") + bold(
+          "B"
+        ) + TextWithMarkup("C")
+      }
       "i" - {
         TextWithMarkup.fromHtml("<i>ABC</i>") ==> italic("ABC")
+      }
+      "i via style" - {
+        TextWithMarkup.fromHtml("<span style='font-style:italic'>ABC</style>") ==> italic("ABC")
       }
       "b and i" - {
         TextWithMarkup.fromHtml("<i>AB<b>C</b></i>") ==>
@@ -194,8 +202,20 @@ object TextWithMarkupTest extends TestSuite {
       "code" - {
         TextWithMarkup.fromHtml("<code>ABC</code>") ==> TextWithMarkup("ABC", Formatting(code = true))
       }
+      "code via style" - {
+        TextWithMarkup.fromHtml("<span style='font: monospace;'>ABC</span>") ==> TextWithMarkup(
+          "ABC",
+          Formatting(code = true),
+        )
+      }
       "strikethrough" - {
         TextWithMarkup.fromHtml("<s>ABC</s>") ==> TextWithMarkup("ABC", Formatting(strikethrough = true))
+      }
+      "strikethrough via style" - {
+        TextWithMarkup.fromHtml("<span style='text-decoration:line-through'>ABC</span>") ==> TextWithMarkup(
+          "ABC",
+          Formatting(strikethrough = true),
+        )
       }
       "link" - {
         TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""") ==>
