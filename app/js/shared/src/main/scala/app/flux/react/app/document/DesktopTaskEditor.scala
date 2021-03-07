@@ -1661,7 +1661,7 @@ private[document] final class DesktopTaskEditor(implicit
   private case class SingletonFormating(cursor: DetachedCursor, formatting: Formatting)
 
   @visibleForTesting private[document] case class ClipboardData(htmlText: String, plainText: String)
-  private object ClipboardData {
+  @visibleForTesting private[document] object ClipboardData {
     def fromEvent(event: ReactEventFromInput): ClipboardData = ClipboardData(
       htmlText =
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
