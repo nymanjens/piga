@@ -48,11 +48,12 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       }
     }
 
-    def linkVdomNode(href: String, children: VdomNode): VdomNode = {
+    def linkVdomNode(href: String, children: VdomNode, cssClass: String = ""): VdomNode = {
       <.a(
         ^.href := href,
         ^.target := "_blank",
         ^.key := nextKey,
+        ^.className := cssClass,
         ^^.ifThen(!BrowserUtils.isMobileOrTablet) {
           ^.onClick ==> { e =>
             LogExceptionsCallback {
@@ -86,7 +87,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
             if (asBoolean(value)) <.s(^.key := nextKey, children) else children
           case FormattingOption.Link =>
             asOption(value) match {
-              case Some(href) => linkVdomNode(href = href, children = children)
+              case Some(href) => linkVdomNode(href = href, children = children, cssClass = "explicit")
               case None       => children
             }
         }
