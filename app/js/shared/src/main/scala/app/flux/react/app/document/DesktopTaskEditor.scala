@@ -1435,20 +1435,12 @@ private[document] final class DesktopTaskEditor(implicit
       baseFormatting: Formatting,
   ): Replacement = {
     case class PigaAttributes(tags: Seq[String], collapsed: Boolean)
-    def getNodeAttributeOrEmpty(node: dom.raw.Node, name: String): String = {
-      if (!js.isUndefined(node.asInstanceOf[js.Dynamic].hasAttributes) && node.hasAttributes()) {
-        val attribute = node.attributes.getNamedItem(name)
-        if (attribute != null) attribute.value else ""
-      } else {
-        ""
-      }
-    }
     def getPigaAttributes(nodes: Seq[dom.raw.Node]): PigaAttributes = {
-      nodes.find(node => getNodeAttributeOrEmpty(node, "piga") == "true") match {
+      nodes.find(node => getAttributeOrEmpty(node, "piga") == "true") match {
         case Some(node) =>
           PigaAttributes(
-            tags = Splitter.on(',').omitEmptyStrings().split(getNodeAttributeOrEmpty(node, "piga-tags")),
-            collapsed = getNodeAttributeOrEmpty(node, "piga-collapsed") == "true",
+            tags = Splitter.on(',').omitEmptyStrings().split(getAttributeOrEmpty(node, "piga-tags")),
+            collapsed = getAttributeOrEmpty(node, "piga-collapsed") == "true",
           )
         case None =>
           println("  Warning: Could not find a node with the piga attribute")
@@ -1456,14 +1448,14 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
     def containsNodeWithPigaAttribute(node: dom.raw.Node): Boolean = {
-      if (getNodeAttributeOrEmpty(node, "piga") == "true") {
+      if (getAttributeOrEmpty(node, "piga") == "true") {
         true
       } else {
         children(node).exists(containsNodeWithPigaAttribute)
       }
     }
     def nodeWithGoogleDocsAttribute(node: dom.raw.Node): Option[dom.raw.Node] = {
-      if (getNodeAttributeOrEmpty(node, "id").startsWith("docs-internal-guid")) {
+      if (getAttributeOrEmpty(node, "id").startsWith("docs-internal-guid")) {
         Some(node)
       } else {
         children(node).flatMap(nodeWithGoogleDocsAttribute).headOption

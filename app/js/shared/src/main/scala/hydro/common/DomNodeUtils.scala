@@ -40,6 +40,15 @@ object DomNodeUtils {
     }
   }
 
+  def getAttributeOrEmpty(node: dom.raw.Node, name: String): String = {
+    if (!js.isUndefined(node.asInstanceOf[js.Dynamic].hasAttributes) && node.hasAttributes()) {
+      val attribute = node.attributes.getNamedItem(name)
+      if (attribute != null) attribute.value else ""
+    } else {
+      ""
+    }
+  }
+
   def walkDepthFirstPreOrder(node: dom.raw.Node): Iterable[NodeWithOffset] = {
     var offsetSoFar = 0
     def internal(node: dom.raw.Node): Iterable[NodeWithOffset] = {

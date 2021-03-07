@@ -4,6 +4,7 @@ import app.models.document.TextWithMarkup.Formatting
 import app.models.document.TextWithMarkup.FormattingOption
 import app.models.document.TextWithMarkup.Part
 import hydro.common.BrowserUtils
+import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils.children
 import hydro.common.DomNodeUtils._
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
@@ -320,26 +321,47 @@ object TextWithMarkup {
       case _ if !parts.last.text.endsWith("\n") => parts.updated(parts.size - 1, parts.last + "\n")
       case _                                    => parts
     }
+    def updateFormattingFromStyle(node: dom.raw.Node, formatting: Formatting): Formatting = {
+      val style = DomNodeUtils.getAttributeOrEmpty(node, "style")
+
+      var result = formatting
+      if (style.contains("font-weight:700") || style.contains("font-weight:bold")) {
+        result = result.copy(bold = true)
+      }
+      if (style.contains("font-style:italic")) {
+        result = result.copy(italic = true)
+      }
+      if (style.contains("text-decoration:line-through")) {
+        result = result.copy(strikethrough = true)
+      }
+      if (style.contains("font-family:Consolas") || style.contains("monospace")) {
+        result = result.copy(code = true)
+      }
+
+      result
+    }
     def fromHtmlNodesInner(nodes: Seq[dom.raw.Node], formatting: Formatting): Seq[Part] = {
       for {
         (node, i) <- nodes.zipWithIndex
         part <- {
+          val formattingFromStyle = updateFormattingFromStyle(node, formatting)
           val last = i == nodes.length - 1
           parseNode(node) match {
-            case ParsedNode.Text(string) => Seq(Part(string, formatting))
-            case ParsedNode.Br(_)        => Seq(Part("\n", formatting))
+            case ParsedNode.Text(string) => Seq(Part(string, formattingFromStyle))
+            case ParsedNode.Br(_)        => Seq(Part("\n", formattingFromStyle))
             case ParsedNode.Div(e) if !last =>
-              ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
+              ensureTrailingNewline(fromHtmlNodesInner(children(e), formattingFromStyle))
             case ParsedNode.P(e) if !last =>
-              ensureTrailingNewline(fromHtmlNodesInner(children(e), formatting))
-            case ParsedNode.B(e)    => fromHtmlNodesInner(children(e), formatting.copy(bold = true))
-            case ParsedNode.I(e)    => fromHtmlNodesInner(children(e), formatting.copy(italic = true))
-            case ParsedNode.Code(e) => fromHtmlNodesInner(children(e), formatting.copy(code = true))
-            case ParsedNode.S(e)    => fromHtmlNodesInner(children(e), formatting.copy(strikethrough = true))
+              ensureTrailingNewline(fromHtmlNodesInner(children(e), formattingFromStyle))
+            case ParsedNode.B(e)    => fromHtmlNodesInner(children(e), formattingFromStyle.copy(bold = true))
+            case ParsedNode.I(e)    => fromHtmlNodesInner(children(e), formattingFromStyle.copy(italic = true))
+            case ParsedNode.Code(e) => fromHtmlNodesInner(children(e), formattingFromStyle.copy(code = true))
+            case ParsedNode.S(e) =>
+              fromHtmlNodesInner(children(e), formattingFromStyle.copy(strikethrough = true))
             case ParsedNode.A(e) =>
-              fromHtmlNodesInner(children(e), formatting.copy(link = Some(e.getAttribute("href"))))
+              fromHtmlNodesInner(children(e), formattingFromStyle.copy(link = Some(e.getAttribute("href"))))
             case ParsedNode.Style(e) => Seq() // Ignore style tags
-            case _                   => fromHtmlNodesInner(children(node), formatting)
+            case _                   => fromHtmlNodesInner(children(node), formattingFromStyle)
           }
         }
       } yield part
