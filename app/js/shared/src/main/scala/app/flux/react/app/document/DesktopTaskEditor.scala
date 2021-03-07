@@ -291,13 +291,9 @@ private[document] final class DesktopTaskEditor(implicit
 
           documentSelectionStore.setSelection(document.id, selection)
 
-          val clipboardData = getAnyClipboardString(event)
+          val clipboardData = ClipboardData.fromEvent(event)
           replaceSelection(
-            replacement = if (formatting.code && clipboardData.plainText.nonEmpty) {
-              Replacement.fromString(clipboardData.plainText, formatting)
-            } else {
-              clipboardStringToReplacement(clipboardData, baseFormatting = formatting)
-            },
+            replacement = clipboardStringToReplacement(clipboardData, baseFormatting = formatting),
             selection,
           )
         }
@@ -1474,106 +1470,120 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    val partsBuilder = mutable.Buffer[Replacement.Part]()
+    val parts = {
+      val partsBuilder = mutable.Buffer[Replacement.Part]()
 
-    def addPastedText(rootNode: dom.raw.Node): Unit = {
-      def addPastedPigaText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
-        if (nodes.exists(containsListItem)) { // Multiple tasks in potentially nested <ul>
+      def addPastedText(rootNode: dom.raw.Node): Unit = {
+        def addPastedPigaText(nodes: Seq[dom.raw.Node], nextRelativeIndentation: Int): Unit = {
+          if (nodes.exists(containsListItem)) { // Multiple tasks in potentially nested <ul>
+            for (node <- nodes) {
+              if (containsListItem(node)) {
+                if (nodeIsLi(node)) {
+                  val attributes = getPigaAttributes(Seq(node))
+                  partsBuilder.append(
+                    Replacement.Part(
+                      TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
+                      zeroIfNegative(nextRelativeIndentation),
+                      collapsed = attributes.collapsed,
+                      tags = attributes.tags,
+                    )
+                  )
+                } else {
+                  addPastedPigaText(
+                    children(node),
+                    nextRelativeIndentation =
+                      if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
+                  )
+                }
+              }
+            }
+          } else { // this is a single line
+            val attributes = getPigaAttributes(nodes ++ nodes.flatMap(children))
+            partsBuilder.append(
+              Replacement.Part(
+                TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
+                zeroIfNegative(nextRelativeIndentation),
+                collapsed = attributes.collapsed,
+                tags = attributes.tags,
+              )
+            )
+          }
+        }
+
+        def addPastedNonPigaText(
+            nodes: Seq[dom.raw.Node],
+            nextRelativeIndentation: Int,
+            insideListItem: Boolean,
+        ): Unit = {
+          val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
+
+          def pushChildNodesWithoutLi(): Unit = {
+            if (childNodesWithoutLi.nonEmpty) {
+              val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting)
+              if (insideListItem) {
+                partsBuilder.append(Replacement.Part(parsedText, zeroIfNegative(nextRelativeIndentation)))
+              } else {
+                for (line <- parsedText.splitByNewlines()) {
+                  partsBuilder.append(Replacement.Part(line, zeroIfNegative(nextRelativeIndentation)))
+                }
+              }
+              childNodesWithoutLi.clear()
+            }
+          }
+
           for (node <- nodes) {
             if (containsListItem(node)) {
-              if (nodeIsLi(node)) {
-                val attributes = getPigaAttributes(Seq(node))
-                partsBuilder.append(
-                  Replacement.Part(
-                    TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
-                    zeroIfNegative(nextRelativeIndentation),
-                    collapsed = attributes.collapsed,
-                    tags = attributes.tags,
-                  )
-                )
-              } else {
-                addPastedPigaText(
-                  children(node),
-                  nextRelativeIndentation =
-                    if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
-                )
-              }
+              pushChildNodesWithoutLi()
+              addPastedNonPigaText(
+                children(node),
+                nextRelativeIndentation =
+                  if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
+                insideListItem = true,
+              )
+            } else {
+              childNodesWithoutLi.append(node)
             }
           }
-        } else { // this is a single line
-          val attributes = getPigaAttributes(nodes ++ nodes.flatMap(children))
+
+          pushChildNodesWithoutLi()
+        }
+
+        if (containsNodeWithPigaAttribute(rootNode)) {
+          addPastedPigaText(Seq(rootNode), nextRelativeIndentation = -1)
+        } else {
+          addPastedNonPigaText(Seq(rootNode), nextRelativeIndentation = -1, insideListItem = false)
+        }
+      }
+
+      if (clipboardData.htmlText.nonEmpty) {
+        val htmlElement = {
+          val resultHolder = dom.document.createElement("span")
+          resultHolder.innerHTML = clipboardData.htmlText
+          resultHolder
+        }
+        addPastedText(htmlElement)
+      } else {
+        Splitter.on('\n').split(clipboardData.plainText).foreach { line =>
           partsBuilder.append(
             Replacement.Part(
-              TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
-              zeroIfNegative(nextRelativeIndentation),
-              collapsed = attributes.collapsed,
-              tags = attributes.tags,
+              content = TextWithMarkup(line, formatting = baseFormatting),
+              indentationRelativeToCurrent = 0,
             )
           )
         }
       }
-      def addPastedNonPigaText(
-          nodes: Seq[dom.raw.Node],
-          nextRelativeIndentation: Int,
-          insideListItem: Boolean,
-      ): Unit = {
-        val childNodesWithoutLi = mutable.Buffer[dom.raw.Node]()
-        def pushChildNodesWithoutLi(): Unit = {
-          if (childNodesWithoutLi.nonEmpty) {
-            val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting)
-            if (insideListItem) {
-              partsBuilder.append(Replacement.Part(parsedText, zeroIfNegative(nextRelativeIndentation)))
-            } else {
-              for (line <- parsedText.splitByNewlines()) {
-                partsBuilder.append(Replacement.Part(line, zeroIfNegative(nextRelativeIndentation)))
-              }
-            }
-            childNodesWithoutLi.clear()
-          }
-        }
 
-        for (node <- nodes) {
-          if (containsListItem(node)) {
-            pushChildNodesWithoutLi()
-            addPastedNonPigaText(
-              children(node),
-              nextRelativeIndentation =
-                if (nodeIsList(node)) nextRelativeIndentation + 1 else nextRelativeIndentation,
-              insideListItem = true,
-            )
-          } else {
-            childNodesWithoutLi.append(node)
-          }
-        }
-
-        pushChildNodesWithoutLi()
-      }
-
-      if (containsNodeWithPigaAttribute(rootNode)) {
-        addPastedPigaText(Seq(rootNode), nextRelativeIndentation = -1)
-      } else {
-        addPastedNonPigaText(Seq(rootNode), nextRelativeIndentation = -1, insideListItem = false)
-      }
+      partsBuilder.toVector
     }
 
-    if (clipboardData.htmlText.nonEmpty) {
-      val htmlElement = {
-        val resultHolder = dom.document.createElement("span")
-        resultHolder.innerHTML = clipboardData.htmlText
-        resultHolder
-      }
-      addPastedText(htmlElement)
+    if (baseFormatting.code && clipboardData.plainText.nonEmpty) {
+      // Paste as plain text if this is a code block
+      Replacement.fromString(clipboardData.plainText, baseFormatting)
+    } else if (parts.nonEmpty) {
+      Replacement(parts)
     } else {
-      Splitter.on('\n').split(clipboardData.plainText).foreach { line =>
-        partsBuilder.append(
-          Replacement.Part(
-            content = TextWithMarkup(line, formatting = baseFormatting),
-            indentationRelativeToCurrent = 0,
-          )
-        )
-      }
+      Replacement.empty
     }
-    if (partsBuilder.nonEmpty) Replacement(partsBuilder.toVector) else Replacement.empty
   }
 
   private def elementIsFullyInView(element: dom.raw.Element): Boolean = {
@@ -1584,13 +1594,6 @@ private[document] final class DesktopTaskEditor(implicit
     rect.bottom <= dom.window.innerHeight &&
     rect.right <= dom.window.innerWidth
   }
-
-  private def getAnyClipboardString(event: ReactEventFromInput): ClipboardData = ClipboardData(
-    htmlText =
-      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
-    plainText =
-      event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
-  )
 
   private def maybeGetTaskElement(cursor: IndexedCursor): Option[dom.raw.Element] =
     Option(dom.document.getElementById(s"teli-${cursor.seqIndex}"))
@@ -1653,4 +1656,12 @@ private[document] final class DesktopTaskEditor(implicit
   private case class SingletonFormating(cursor: DetachedCursor, formatting: Formatting)
 
   @visibleForTesting private[document] case class ClipboardData(htmlText: String, plainText: String)
+  private object ClipboardData {
+    def fromEvent(event: ReactEventFromInput): ClipboardData = ClipboardData(
+      htmlText =
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
+      plainText =
+        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
+    )
+  }
 }
