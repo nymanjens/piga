@@ -1462,6 +1462,13 @@ private[document] final class DesktopTaskEditor(implicit
         children(node).exists(containsNodeWithPigaAttribute)
       }
     }
+    def nodeWithGoogleDocsAttribute(node: dom.raw.Node): Option[dom.raw.Node] = {
+      if (getNodeAttributeOrEmpty(node, "id").startsWith("docs-internal-guid")) {
+        Some(node)
+      } else {
+        children(node).flatMap(nodeWithGoogleDocsAttribute).headOption
+      }
+    }
     def containsListItem(node: dom.raw.Node): Boolean = {
       if (nodeIsLi(node)) {
         true
@@ -1550,6 +1557,12 @@ private[document] final class DesktopTaskEditor(implicit
 
         if (containsNodeWithPigaAttribute(rootNode)) {
           addPastedPigaText(Seq(rootNode), nextRelativeIndentation = -1)
+        } else if (nodeWithGoogleDocsAttribute(rootNode).isDefined) {
+          // Workaround: Pastes from Google Docs sometimes contain a <b> node surrounding the paste, even if
+          // the pasted text itself is not supposed to be bold. Taking only the children of that node fixed
+          // the problem.
+          val childrenOfDocsNode = children(nodeWithGoogleDocsAttribute(rootNode).get)
+          addPastedNonPigaText(childrenOfDocsNode, nextRelativeIndentation = -1, insideListItem = false)
         } else {
           addPastedNonPigaText(Seq(rootNode), nextRelativeIndentation = -1, insideListItem = false)
         }

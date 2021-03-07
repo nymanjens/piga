@@ -3,6 +3,7 @@ package hydro.common
 import org.scalajs.dom
 
 import scala.collection.immutable.Seq
+import scala.scalajs.js
 
 object DomNodeUtils {
 
@@ -29,6 +30,14 @@ object DomNodeUtils {
 
   def children(node: dom.raw.Node): Seq[dom.raw.Node] = {
     for (i <- 0 until node.childNodes.length) yield node.childNodes.item(i)
+  }
+
+  def attributes(node: dom.raw.Node): Seq[dom.raw.Attr] = {
+    if (js.isUndefined(node.attributes)) {
+      Seq()
+    } else {
+      for (i <- 0 until node.attributes.length) yield node.attributes.item(i)
+    }
   }
 
   def walkDepthFirstPreOrder(node: dom.raw.Node): Iterable[NodeWithOffset] = {
