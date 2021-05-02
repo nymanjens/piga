@@ -10,6 +10,7 @@ Example use cases:
 * A TODO list
 * A list of meals and ingredients
 * Notes from a meeting
+* A list of things to remember
 
 ## Features
 
