@@ -82,6 +82,14 @@ final class EditHistory(implicit clock: Clock) {
     }
   }
 
+  def lastEdit(): Option[Edit] = {
+    if (nextRedoEditIndex > 0) {
+      Some(edits(nextRedoEditIndex - 1))
+    } else {
+      None
+    }
+  }
+
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {
     def updateTaskIdsInHistory(oldId: Long, newId: Long): Unit = {
       def updateTaskId(task: Task): Task = if (task.id == oldId) task.copyWithId(newId) else task

@@ -440,6 +440,10 @@ private[document] final class DesktopTaskEditor(implicit
                 case None                 => Callback.empty
                 case Some(parentSeqIndex) => setSelection(IndexedSelection.atStartOfTask(parentSeqIndex))
               }
+            // Go to last edit
+            case CharacterKey('q', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              goToEdit(editHistory.lastEdit())
 
             // Copy whole task and its children (shift-copy)
             case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
@@ -684,6 +688,29 @@ private[document] final class DesktopTaskEditor(implicit
             }
           }
       }
+
+    private def goToEdit(maybeEdit: Option[EditHistory.Edit])(implicit
+        props: Props,
+        state: State,
+    ): Callback = {
+      maybeEdit match {
+        case None => Callback.empty
+        case Some(edit) if edit.documentId == state.document.id =>
+          setSelection(edit.selectionAfterEdit.attachToDocument(state.document))
+        case Some(edit) if edit.documentId != state.document.id =>
+          Callback.future {
+            async {
+              val otherDocumentStore = await(documentStoreFactory.create(edit.documentId))
+              documentSelectionStore.setSelection(
+                edit.documentId,
+                edit.selectionAfterEdit.attachToDocument(otherDocumentStore.state.document),
+              )
+              props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
+              Callback.empty
+            }
+          }
+      }
+    }
 
     private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(implicit
         state: State,
