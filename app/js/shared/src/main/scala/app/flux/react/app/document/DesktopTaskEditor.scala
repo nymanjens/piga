@@ -1715,7 +1715,7 @@ private[document] final class DesktopTaskEditor(implicit
   }
 
   private final class DuplicateKeypressWorkaroundManager {
-    private var lastEventFingerprint: EventFingerprint = EventFingerprint.nullInstance
+    private val lastEventFingerprints: mutable.Queue[EventFingerprint] = new mutable.Queue()
 
     def recordAndIsDuplicate(
         event: dom.Event,
@@ -1727,10 +1727,13 @@ private[document] final class DesktopTaskEditor(implicit
         eventContentFingerprint = eventContentFingerprint,
       )
 
-      if (lastEventFingerprint == fingerprint) {
+      if (lastEventFingerprints contains fingerprint) {
         true
       } else {
-        lastEventFingerprint = fingerprint
+        lastEventFingerprints.enqueue(fingerprint)
+        if(lastEventFingerprints.size > 10) {
+          lastEventFingerprints.dequeue()
+        }
         false
       }
     }
