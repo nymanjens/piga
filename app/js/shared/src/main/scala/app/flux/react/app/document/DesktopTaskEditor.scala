@@ -1,7 +1,6 @@
 package app.flux.react.app.document
 
 import java.lang.Math.abs
-
 import app.common.CaseFormats
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
@@ -45,6 +44,7 @@ import hydro.jsfacades.Bootbox
 import hydro.jsfacades.ClipboardPolyfill
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.SyntheticEvent
 import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
@@ -109,6 +109,8 @@ private[document] final class DesktopTaskEditor(implicit
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none,
     )
+    private val duplicateKeypressWorkaroundManager: DuplicateKeypressWorkaroundManager =
+      new DuplicateKeypressWorkaroundManager()
     private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
       mutable.Map().withDefault(identity)
 
@@ -225,15 +227,18 @@ private[document] final class DesktopTaskEditor(implicit
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
+          if (duplicateKeypressWorkaroundManager.recordAndIsDuplicate(event.nativeEvent, "cut")) {
+            Callback.empty
+          } else {
+            val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+              IndexedSelection.nullInstance
 
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-            IndexedSelection.nullInstance
+            setEventClipboardData(event, selection = selection)
 
-          setEventClipboardData(event, selection = selection)
+            documentSelectionStore.setSelection(state.document.id, selection)
 
-          documentSelectionStore.setSelection(state.document.id, selection)
-
-          replaceSelection(replacement = Replacement.empty, selection)
+            replaceSelection(replacement = Replacement.empty, selection)
+          }
         }
       }
 
@@ -273,29 +278,33 @@ private[document] final class DesktopTaskEditor(implicit
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
-          val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
-            case Some(s) => s
-            case None =>
-              renameTaskKeyToWorkAroundReactBug(taskId = state.highlightedTaskIdAndIndex.taskId)
-              IndexedSelection.atStartOfTask(state.highlightedTaskIdAndIndex.taskIndex)
-          }
-
-          val IndexedSelection(start, end) = selection
-          implicit val document = state.document
-          val formatting =
-            if (lastSingletonFormating.cursor == start.detach) {
-              lastSingletonFormating.formatting
-            } else {
-              document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+          if (duplicateKeypressWorkaroundManager.recordAndIsDuplicate(event.nativeEvent, "copy")) {
+            Callback.empty
+          } else {
+            val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+              case Some(s) => s
+              case None =>
+                renameTaskKeyToWorkAroundReactBug(taskId = state.highlightedTaskIdAndIndex.taskId)
+                IndexedSelection.atStartOfTask(state.highlightedTaskIdAndIndex.taskIndex)
             }
 
-          documentSelectionStore.setSelection(document.id, selection)
+            val IndexedSelection(start, end) = selection
+            implicit val document = state.document
+            val formatting =
+              if (lastSingletonFormating.cursor == start.detach) {
+                lastSingletonFormating.formatting
+              } else {
+                document.tasks(start.seqIndex).content.formattingAtCursor(start.offsetInTask)
+              }
 
-          val clipboardData = ClipboardData.fromEvent(event)
-          replaceSelection(
-            replacement = clipboardStringToReplacement(clipboardData, baseFormatting = formatting),
-            selection,
-          )
+            documentSelectionStore.setSelection(document.id, selection)
+
+            val clipboardData = ClipboardData.fromEvent(event)
+            replaceSelection(
+              replacement = clipboardStringToReplacement(clipboardData, baseFormatting = formatting),
+              selection,
+            )
+          }
         }
       }
 
@@ -332,9 +341,17 @@ private[document] final class DesktopTaskEditor(implicit
 
           val keyCombination = DesktopKeyCombination.fromEvent(event)
 
+          //dom.console.log(event.nativeEvent)
           //dom.console.log(s"keyCombination = $keyCombination")
 
           keyCombination match {
+            case _
+                if duplicateKeypressWorkaroundManager.recordAndIsDuplicate(
+                  event.nativeEvent,
+                  keyCombination.toString,
+                ) =>
+              event.preventDefault()
+              Callback.empty
             case _ if keyCombination.meta =>
               // Do nothing when meta key is pressed
               event.preventDefault()
@@ -1695,5 +1712,36 @@ private[document] final class DesktopTaskEditor(implicit
       plainText =
         event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
     )
+  }
+
+  private final class DuplicateKeypressWorkaroundManager {
+    private var lastEventFingerprint: EventFingerprint = EventFingerprint.nullInstance
+
+    def recordAndIsDuplicate(
+        event: dom.Event,
+        eventContentFingerprint: String,
+    ): Boolean = {
+      val fingerprint = EventFingerprint(
+        eventTimestamp = event.timeStamp,
+        eventType = event.`type`,
+        eventContentFingerprint = eventContentFingerprint,
+      )
+
+      if (lastEventFingerprint == fingerprint) {
+        true
+      } else {
+        lastEventFingerprint = fingerprint
+        false
+      }
+    }
+
+    private case class EventFingerprint(
+        eventTimestamp: Double,
+        eventType: String,
+        eventContentFingerprint: String,
+    )
+    private object EventFingerprint {
+      val nullInstance: EventFingerprint = EventFingerprint(0, "", "")
+    }
   }
 }
