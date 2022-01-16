@@ -3,7 +3,6 @@ package hydro.scala2js
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-
 import hydro.common.GuavaReplacement.ImmutableBiMap
 import hydro.common.OrderToken
 import app.models.access.ModelFields
@@ -12,6 +11,7 @@ import app.scala2js.AppConverters
 import app.scala2js.AppConverters.fromEntityType
 import hydro.common.time.LocalDateTime
 import hydro.common.CollectionUtils
+import hydro.common.GuavaReplacement
 import hydro.models.Entity
 import hydro.models.access.ModelField
 import hydro.models.modification.EntityModification
@@ -104,19 +104,56 @@ object StandardConverters {
   }
 
   implicit object LongConverter extends Converter[Long] {
-    override def toJs(long: Long) = {
-      // Note: It would be easier to implement this by `"%022d".format(long)`
-      // but that transforms the given long to a javascript number (double precision)
-      // causing the least significant long digits sometimes to become zero
-      // (e.g. 6886911427549585292 becomes 6886911427549585000)
-      val signChar = if (long < 0) "-" else ""
-      val stringWithoutSign = Math.abs(long).toString
-
-      val numZerosToPrepend = 22 - stringWithoutSign.size
-      require(numZerosToPrepend > 0)
-      signChar + ("0" * numZerosToPrepend) + stringWithoutSign
+    private final val twoPower63: Long = 1L << 63
+    // Converts 6 bits into a single character.
+    private final val charLookupTable: GuavaReplacement.ImmutableBiMap[Int, Char] = {
+      // Sorted via Javascript default sort.
+      val lookupTableString = "+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      val resultBuilder = GuavaReplacement.ImmutableBiMap.builder[Int, Char]()
+      for ((char, index) <- lookupTableString.zipWithIndex) {
+        resultBuilder.put(index, char)
+      }
+      resultBuilder.build()
     }
-    override def toScala(value: js.Any) = value.asInstanceOf[String].toLong
+    private final val bitsLookupTable: GuavaReplacement.ImmutableBiMap[Char, Int] = charLookupTable.inverse()
+
+    override def toJs(long: Long) = {
+      // Note: Negative numbers are moved into the positive part of the long range so alphabetical
+      // ordering is the same as numerical order
+      var number = if (long < 0) long + twoPower63 else long
+
+      require(number >= 0)
+
+      val stringBuilder = StringBuilder.newBuilder
+      for (_ <- 0 until 10) {
+        stringBuilder.append(charLookupTable.get(number.toInt & 0x3f))
+        number = number >> 6
+      }
+      require(number.toInt >> 3 == 0)
+      stringBuilder.append(charLookupTable.get {
+        if (long < 0) number.toInt
+        else 0x20 + number.toInt
+      })
+      val result = stringBuilder.reverse.toString()
+      require(result.length == 11)
+      result
+    }
+    override def toScala(value: js.Any) = {
+      val string = value.asInstanceOf[String]
+      require(string.length == 11)
+
+      val firstBits = bitsLookupTable.get(string(0))
+      var result: Long = firstBits & 0x7
+      for (char <- string.substring(1)) {
+        result = result << 6
+        result += bitsLookupTable.get(char)
+      }
+
+      if ((firstBits & 0x20) == 0) {
+        result -= twoPower63
+      }
+      result
+    }
   }
 
   implicit object DoubleConverter extends Converter[Double] {
