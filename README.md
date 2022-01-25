@@ -1,7 +1,7 @@
 Task Keeper
 ===========
 
-[![Build Status](https://travis-ci.org/nymanjens/piga.svg?branch=master)](https://travis-ci.org/nymanjens/piga)
+[![CI Status](https://github.com/nymanjens/piga/actions/workflows/ci.yml/badge.svg)](https://github.com/nymanjens/piga/actions)
 
 This project aims to be a list editor for power users.
 
