@@ -35,6 +35,7 @@ import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
+import hydro.common.GuavaReplacement
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
@@ -360,7 +361,7 @@ private[document] final class DesktopTaskEditor(implicit
             case c @ CharacterKey(_, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               replaceSelection(
-                replacement = Replacement.fromString(c.capitalizedCharacter.toString, formatting),
+                replacement = getReplacementForCharacterPress(c.capitalizedCharacter, selection, formatting),
                 IndexedSelection(start, end),
               )
 
@@ -826,6 +827,39 @@ private[document] final class DesktopTaskEditor(implicit
         ),
         replacementString = replacement.contentString,
       )
+    }
+
+    private val wrappingCharacters: Map[Char, Char] =
+      Map(
+        '{' -> '}',
+        '[' -> ']',
+        '(' -> ')',
+        '"' -> '"',
+        '\'' -> '\'',
+        '`' -> '`',
+      )
+
+    private def getReplacementForCharacterPress(
+        char: Char,
+        selection: IndexedSelection,
+        formatting: Formatting,
+    )(implicit document: Document): Replacement = {
+      val IndexedSelection(start, end) = selection
+
+      if (
+        wrappingCharacters.contains(
+          char
+        ) && start.seqIndex == end.seqIndex && start.offsetInTask != end.offsetInTask
+      ) {
+        val wrappedContent = document.tasks(start.seqIndex).content.sub(start.offsetInTask, end.offsetInTask)
+        val mirrorText = TextWithMarkup(
+          wrappingCharacters(char).toString,
+          formatting = document.tasks(start.seqIndex).content.formattingAtCursor(end.offsetInTask),
+        )
+        Replacement.create(TextWithMarkup(char.toString, formatting) + wrappedContent + mirrorText)
+      } else {
+        Replacement.fromString(char.toString, formatting)
+      }
     }
 
     private def removeTasks(taskIndices: Range)(implicit state: State, props: Props): Callback = {
@@ -1731,7 +1765,7 @@ private[document] final class DesktopTaskEditor(implicit
         true
       } else {
         lastEventFingerprints.enqueue(fingerprint)
-        if(lastEventFingerprints.size > 10) {
+        if (lastEventFingerprints.size > 10) {
           lastEventFingerprints.dequeue()
         }
         false
