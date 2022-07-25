@@ -92,3 +92,4 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
 - Add users:<br>
   A default user is created with the `-DcreateAdminUser` flag (username: admin, password:
   changeme). This account can create new users.
+
