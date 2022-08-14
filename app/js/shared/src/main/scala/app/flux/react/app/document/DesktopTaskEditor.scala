@@ -630,8 +630,18 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               updateCharactersInSelection(selection, _.toUpperCase)
 
+            // Convert to upper case
+            case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toUpperCase)
+
             // convert to lower case
             case CharacterKey('l', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toLowerCase)
+
+            // convert to lower case
+            case CharacterKey('l', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toLowerCase)
 
