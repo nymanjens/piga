@@ -156,7 +156,7 @@ private[document] final class MobileTaskEditor(implicit
                     ^.className := "tag-holder",
                     Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
                       ^.className := "tag",
-                      tag,
+                      TaskEditorUtils.maybeHideTagName(tag),
                     ),
                   )
                 }.toVdomArray, {

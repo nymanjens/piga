@@ -1,6 +1,9 @@
 package app.flux.react.app.document
 
 import app.models.document.Task
+import hydro.flux.react.uielements.BootstrapTags
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^.^
 
 import scala.collection.immutable.Seq
 
@@ -42,6 +45,14 @@ private[document] object TaskEditorUtils {
     }
 
     inner(tasks.toStream.zipWithIndex)
+  }
+
+  def maybeHideTagName(tag: String): String = {
+    if (tag.startsWith("#")) {
+      "#"
+    } else {
+      tag
+    }
   }
 
   private def getOption[T](seq: Seq[T], index: Int): Option[T] =

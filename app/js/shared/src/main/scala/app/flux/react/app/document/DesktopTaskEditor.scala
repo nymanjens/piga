@@ -147,7 +147,7 @@ private[document] final class DesktopTaskEditor(implicit
               ^.key := tagId,
               ^.id := tagId,
             ),
-            style = s"""#$tagId:after {content: "$tag";}""",
+            style = s"""#$tagId:after {content: "${TaskEditorUtils.maybeHideTagName(tag)}";}""",
           )
       }
 
