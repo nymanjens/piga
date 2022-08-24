@@ -154,7 +154,7 @@ private[document] final class MobileTaskEditor(implicit
                   <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
                     ^.key := tagIndex,
                     ^.className := "tag-holder",
-                    Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+                    Bootstrap.Label(TaskEditorUtils.toStableBootstrapTagVariant(tag))(
                       ^.className := "tag",
                       TaskEditorUtils.maybeHideTagName(tag),
                     ),

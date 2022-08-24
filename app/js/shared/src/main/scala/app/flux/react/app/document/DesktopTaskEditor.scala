@@ -142,7 +142,7 @@ private[document] final class DesktopTaskEditor(implicit
         case (tag, tagIndex) =>
           val tagId = s"tag-$seqIndex-$tagIndex"
           RenderedTag(
-            span = Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+            span = Bootstrap.Label(TaskEditorUtils.toStableBootstrapTagVariant(tag))(
               ^.className := "tag",
               ^.key := tagId,
               ^.id := tagId,
