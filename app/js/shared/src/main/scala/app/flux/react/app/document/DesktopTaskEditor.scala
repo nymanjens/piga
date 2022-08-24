@@ -31,7 +31,6 @@ import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import hydro.common.I18n
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
@@ -1003,7 +1002,7 @@ private[document] final class DesktopTaskEditor(implicit
         val result = await(
           Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false, selectValue = true)
         )
-        result.map(s => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag))
+        result.map(s => Splitter.on(',').omitEmptyStrings().trimResults().split(s))
       }
 
       def replaceTags(

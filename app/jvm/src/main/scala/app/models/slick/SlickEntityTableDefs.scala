@@ -6,7 +6,7 @@ import app.models.document.TaskEntity
 import app.models.user.User
 import hydro.common.OrderToken
 import hydro.common.time.LocalDateTime
-import hydro.common.Tags
+import hydro.common.GuavaReplacement.Splitter
 import hydro.models.slick.SlickEntityTableDef
 import hydro.models.slick.SlickEntityTableDef.EntityTable
 import hydro.models.slick.SlickUtils._
@@ -91,7 +91,7 @@ object SlickEntityTableDefs {
     override def table(tag: SlickTag): Table = new Table(tag)
 
     private implicit val tagsSeqToStringMapper: ColumnType[Seq[String]] = {
-      MappedColumnType.base[Seq[String], String](Tags.serializeToString, Tags.parseTagsString)
+      MappedColumnType.base[Seq[String], String](_.mkString(","), Splitter.on(',').omitEmptyStrings().split)
     }
 
     /* override */

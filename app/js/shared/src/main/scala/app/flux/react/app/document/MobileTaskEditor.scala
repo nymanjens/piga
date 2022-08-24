@@ -22,7 +22,6 @@ import app.models.document.TextWithMarkup
 import app.models.user.User
 import hydro.common.I18n
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
