@@ -17,6 +17,7 @@ import hydro.models.UpdatableEntity
 import hydro.models.access.ModelField.FieldType
 import hydro.models.modification.EntityType
 
+import java.time.Instant
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 
@@ -117,8 +118,16 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
 
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
-    this.orderToken compare that.orderToken
+    val result = this.orderToken compare that.orderToken
+    if (result == 0)
+      this.jsTaskEntity.lastUpdateTime
+        .mostRecentInstant()
+        .getOrElse(Instant.EPOCH) compareTo that.jsTaskEntity.lastUpdateTime
+        .mostRecentInstant()
+        .getOrElse(Instant.EPOCH)
+    else result
   }
+
   // **************** Object methods **************** //
   override def toString: String = jsTaskEntity.toString
 
