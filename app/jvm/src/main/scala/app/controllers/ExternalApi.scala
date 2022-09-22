@@ -1,5 +1,7 @@
 package app.controllers
 
+import app.common.MarkdownConverter
+
 import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
 import app.models.access.JvmEntityAccess
@@ -74,7 +76,7 @@ final class ExternalApi @Inject() (implicit
 
       val documentId = documentIdString.toLong
       val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
-      val content = URLDecoder.decode(contentEncoded, "UTF-8")
+      val parsedTasks = MarkdownConverter.markdownToParsedTasks(URLDecoder.decode(contentEncoded, "UTF-8"))
 
       // Validate that document exists
       entityAccess
@@ -95,8 +97,7 @@ final class ExternalApi @Inject() (implicit
       require(parentAndBelow.nonEmpty, s"Could not find $parentTag")
       val parent = parentAndBelow.head
 
-      val orderToken = {
-
+      val orderTokens = {
         val lastChildIndex: Int = {
           var lastChildIndex = 0
           while (
@@ -108,25 +109,30 @@ final class ExternalApi @Inject() (implicit
           lastChildIndex
         }
 
-        OrderToken.middleBetween(
-          CollectionUtils.maybeGet(parentAndBelow, lastChildIndex).map(_.orderToken),
-          CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).map(_.orderToken),
+        OrderToken.evenlyDistributedValuesBetween(
+          numValues = parsedTasks.size,
+          lowerExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex).map(_.orderToken),
+          higherExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).map(_.orderToken),
         )
       }
 
+      require(orderTokens.size == parsedTasks.size)
+
       entityAccess.persistEntityModifications(
-        EntityModification.createAddWithRandomId(
-          TaskEntity(
-            documentId = documentId,
-            contentHtml = content,
-            orderToken = orderToken,
-            indentation = parent.indentation + 1,
-            collapsed = false,
-            delayedUntil = None,
-            tags = Seq(),
-            lastContentModifierUserId = user.id,
+        for ((parsedTask, orderToken) <- (parsedTasks zip orderTokens).toVector) yield {
+          EntityModification.createAddWithRandomId(
+            TaskEntity(
+              documentId = documentId,
+              contentHtml = parsedTask.html,
+              orderToken = orderToken,
+              indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
+              collapsed = false,
+              delayedUntil = None,
+              tags = Seq(),
+              lastContentModifierUserId = user.id,
+            )
           )
-        )
+        }
       )
 
       Ok(s"OK\n")
