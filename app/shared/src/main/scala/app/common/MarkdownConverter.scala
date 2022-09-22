@@ -11,7 +11,6 @@ object MarkdownConverter {
     val markdown = s.trim
     if (s.startsWith("- ")) {
       for (task <- splitInTasks(s)) yield {
-        println(f"<<${task}>>")
         ParsedTask(
           html = toHtml(task.trim.stripPrefix("- ")),
           relativeIndentation = task.prefixLength(_ == ' ') / 2,
@@ -70,7 +69,7 @@ object MarkdownConverter {
   }
 
   private def urlToHtml(markdown: String): String = {
-    markdown
+    markdown.replaceAll("""\[(.*?)\]\((.*?)\)""", """<a href="$2">$1</a>""")
   }
 
   private def split(s: String, separator: String): Seq[String] = {

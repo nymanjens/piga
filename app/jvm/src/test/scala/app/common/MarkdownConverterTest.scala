@@ -93,17 +93,24 @@ class MarkdownConverterTest {
   def markdownToParsedTasks_href(): Unit = {
     assertThat(
       MarkdownConverter.markdownToParsedTasks("- [abc](http://example.com)\n").asJava
-    ) containsExactly ParsedTask("<a href=\"exapmle.com\">abc</a>", 0)
+    ) containsExactly ParsedTask("""<a href="http://example.com">abc</a>""", 0)
+  }
+
+  @Test
+  def markdownToParsedTasks_href_multiple(): Unit = {
+    assertThat(
+      MarkdownConverter.markdownToParsedTasks("- [abc](c.com) -- ) ( ] ) [def](f.com)\n").asJava
+    ) containsExactly ParsedTask("""<a href="c.com">abc</a> -- ) ( ] ) <a href="f.com">def</a>""", 0)
   }
 
   @Test
   def markdownToParsedTasks_symbolsCombined(): Unit = {
     assertThat(
       MarkdownConverter
-        .markdownToParsedTasks("- [abc](http://example.com) _def_ **ghi** `klm` `nop`\n")
+        .markdownToParsedTasks("- [abc](ex.com) _def_ **ghi** `klm` `nop`\n")
         .asJava
     ) containsExactly ParsedTask(
-      "<a href=\"exapmle.com\">abc</a> <i>def</i> <b>ghi</b> <code>klm</code> <code>nop</code>",
+      """<a href="ex.com">abc</a> <i>def</i> <b>ghi</b> <code>klm</code> <code>nop</code>""",
       0,
     )
   }
