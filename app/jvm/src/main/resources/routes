@@ -26,6 +26,10 @@ GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalA
 GET  /externalapi/inserttask/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, appSecret)
 GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
 
+# Interactive shortcuts
+GET  /interactive/done  app.controllers.ExternalApi.interactiveDone()
+GET  /interactive/inserttask/:docId/$parentTag<[^/]+>/*content  app.controllers.ExternalApi.interactiveInsertTask(docId, parentTag, content)
+
 # Auth
 GET  /login/                           hydro.controllers.Auth.login(returnTo ?= "/")
 POST /login/                           hydro.controllers.Auth.authenticate(returnTo ?= "/")

@@ -34,6 +34,8 @@ final class ExternalApi @Inject() (implicit
 ) extends AbstractController(components)
     with I18nSupport {
 
+  // ********** External API ********** //
+
   def shareDocument(documentIdString: String, loginName: String, applicationSecret: String) = Action {
     implicit request =>
       validateApplicationSecret(applicationSecret)
@@ -74,66 +76,7 @@ final class ExternalApi @Inject() (implicit
       validateApplicationSecret(applicationSecret)
       implicit val user = Users.getOrCreateRobotUser()
 
-      val documentId = documentIdString.toLong
-      val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
-      val parsedTasks = MarkdownConverter.markdownToParsedTasks(URLDecoder.decode(contentEncoded, "UTF-8"))
-
-      // Validate that document exists
-      entityAccess
-        .newQuerySync[DocumentEntity]()
-        .findById(documentId)
-
-      val tasks =
-        entityAccess
-          .newQuerySync[TaskEntity]()
-          .filter(ModelFields.TaskEntity.documentId === documentId)
-          .data()
-          .sorted
-
-      // Find parent task with given tag
-      val parentAndBelow: Seq[TaskEntity] = tasks.dropWhile(t => !(t.tags contains parentTag))
-
-      // Validate that the given tag exists in the document
-      require(parentAndBelow.nonEmpty, s"Could not find $parentTag")
-      val parent = parentAndBelow.head
-
-      val orderTokens = {
-        val lastChildIndex: Int = {
-          var lastChildIndex = 0
-          while (
-            CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).isDefined &&
-            parentAndBelow(lastChildIndex + 1).indentation > parent.indentation
-          ) {
-            lastChildIndex += 1
-          }
-          lastChildIndex
-        }
-
-        OrderToken.evenlyDistributedValuesBetween(
-          numValues = parsedTasks.size,
-          lowerExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex).map(_.orderToken),
-          higherExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).map(_.orderToken),
-        )
-      }
-
-      require(orderTokens.size == parsedTasks.size)
-
-      entityAccess.persistEntityModifications(
-        for ((parsedTask, orderToken) <- (parsedTasks zip orderTokens).toVector) yield {
-          EntityModification.createAddWithRandomId(
-            TaskEntity(
-              documentId = documentId,
-              contentHtml = parsedTask.html,
-              orderToken = orderToken,
-              indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
-              collapsed = false,
-              delayedUntil = None,
-              tags = Seq(),
-              lastContentModifierUserId = user.id,
-            )
-          )
-        }
-      )
+      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
 
       Ok(s"OK\n")
     }
@@ -190,7 +133,81 @@ final class ExternalApi @Inject() (implicit
     Ok(s"OK\n\n$resultString")
   }
 
+  // ********** Interactive API ********** //
+
+  def interactiveDone() = Action { implicit request =>
+    Ok(s"Done\n")
+  }
+
+  def interactiveInsertTask(documentIdString: String, parentTagEncoded: String, contentEncoded: String) = AuthenticatedAction(parse.raw) { implicit user => implicit request =>
+    insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
+    Redirect(app.controllers.routes.ExternalApi.interactiveDone())
+  }
+
   // ********** private helper methods ********** //
+  private def insertTaskInternal(documentIdString: String, parentTagEncoded: String, contentEncoded: String)(implicit user: User): Unit = {
+    val documentId = documentIdString.toLong
+    val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
+    val parsedTasks = MarkdownConverter.markdownToParsedTasks(URLDecoder.decode(contentEncoded, "UTF-8"))
+
+    // Validate that document exists
+    entityAccess
+      .newQuerySync[DocumentEntity]()
+      .findById(documentId)
+
+    val tasks =
+      entityAccess
+        .newQuerySync[TaskEntity]()
+        .filter(ModelFields.TaskEntity.documentId === documentId)
+        .data()
+        .sorted
+
+    // Find parent task with given tag
+    val parentAndBelow: Seq[TaskEntity] = tasks.dropWhile(t => !(t.tags contains parentTag))
+
+    // Validate that the given tag exists in the document
+    require(parentAndBelow.nonEmpty, s"Could not find $parentTag")
+    val parent = parentAndBelow.head
+
+    val orderTokens = {
+      val lastChildIndex: Int = {
+        var lastChildIndex = 0
+        while (
+          CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).isDefined &&
+            parentAndBelow(lastChildIndex + 1).indentation > parent.indentation
+        ) {
+          lastChildIndex += 1
+        }
+        lastChildIndex
+      }
+
+      OrderToken.evenlyDistributedValuesBetween(
+        numValues = parsedTasks.size,
+        lowerExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex).map(_.orderToken),
+        higherExclusive = CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).map(_.orderToken),
+      )
+    }
+
+    require(orderTokens.size == parsedTasks.size)
+
+    entityAccess.persistEntityModifications(
+      for ((parsedTask, orderToken) <- (parsedTasks zip orderTokens).toVector) yield {
+        EntityModification.createAddWithRandomId(
+          TaskEntity(
+            documentId = documentId,
+            contentHtml = parsedTask.html,
+            orderToken = orderToken,
+            indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
+            collapsed = false,
+            delayedUntil = None,
+            tags = Seq(),
+            lastContentModifierUserId = user.id,
+          )
+        )
+      }
+    )
+  }
+
   private def getGreatestDocumentOrderToken(user: User): Option[OrderToken] = {
     val allPermissionAndPlacements =
       entityAccess
