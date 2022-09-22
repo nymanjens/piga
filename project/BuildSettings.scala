@@ -98,8 +98,8 @@ object BuildSettings {
     "bootbox" -> "5.4.0",
     // Used in ScalaJS code
     "lokijs" -> "1.4.2",
-    "react" -> "16.2.0",
-    "react-dom" -> "16.2.0",
+    "react" -> "16.14.0",
+    "react-dom" -> "16.14.0",
     "escape-html" -> "1.0.3",
     "clipboard-polyfill" -> "2.8.6",
     "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/shared/src/main/npm-packages/global-mousetrap"}"

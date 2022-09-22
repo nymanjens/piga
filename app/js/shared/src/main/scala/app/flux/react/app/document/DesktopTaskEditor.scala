@@ -31,7 +31,6 @@ import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import hydro.common.I18n
 import hydro.common.OrderToken
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
@@ -143,12 +142,12 @@ private[document] final class DesktopTaskEditor(implicit
         case (tag, tagIndex) =>
           val tagId = s"tag-$seqIndex-$tagIndex"
           RenderedTag(
-            span = Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+            span = Bootstrap.Label(TaskEditorUtils.toStableBootstrapTagVariant(tag))(
               ^.className := "tag",
               ^.key := tagId,
               ^.id := tagId,
             ),
-            style = s"""#$tagId:after {content: "$tag";}""",
+            style = s"""#$tagId:after {content: "${TaskEditorUtils.maybeHideTagName(tag)}";}""",
           )
       }
 
@@ -630,8 +629,18 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               updateCharactersInSelection(selection, _.toUpperCase)
 
+            // Convert to upper case
+            case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toUpperCase)
+
             // convert to lower case
             case CharacterKey('l', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              updateCharactersInSelection(selection, _.toLowerCase)
+
+            // convert to lower case
+            case CharacterKey('l', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               updateCharactersInSelection(selection, _.toLowerCase)
 
@@ -993,7 +1002,7 @@ private[document] final class DesktopTaskEditor(implicit
         val result = await(
           Bootbox.prompt(title, value = defaultTags.mkString(", "), animate = false, selectValue = true)
         )
-        result.map(s => Splitter.on(',').trimResults().split(s).filter(Tags.isValidTag))
+        result.map(s => Splitter.on(',').omitEmptyStrings().trimResults().split(s))
       }
 
       def replaceTags(

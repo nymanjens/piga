@@ -4,7 +4,6 @@ import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
-import app.models.access.ModelFields.TaskEntity
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
@@ -14,11 +13,14 @@ import com.google.inject.Inject
 import hydro.common.CollectionUtils
 import hydro.common.OrderToken
 import hydro.common.time.Clock
+import hydro.common.ScalaUtils
 import hydro.controllers.helpers.AuthenticatedAction
 import hydro.models.modification.EntityModification
 import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
 import play.api.mvc._
+
+import java.net.URLDecoder
 
 final class ExternalApi @Inject() (implicit
     override val messagesApi: MessagesApi,
@@ -60,6 +62,75 @@ final class ExternalApi @Inject() (implicit
 
       Ok(s"OK\n")
   }
+  def insertTask(
+      documentIdString: String,
+      parentTagEncoded: String,
+      contentEncoded: String,
+      applicationSecret: String,
+  ) =
+    Action { implicit request =>
+      validateApplicationSecret(applicationSecret)
+      implicit val user = Users.getOrCreateRobotUser()
+
+      val documentId = documentIdString.toLong
+      val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
+      val content = URLDecoder.decode(contentEncoded, "UTF-8")
+
+      // Validate that document exists
+      entityAccess
+        .newQuerySync[DocumentEntity]()
+        .findById(documentId)
+
+      val tasks =
+        entityAccess
+          .newQuerySync[TaskEntity]()
+          .filter(ModelFields.TaskEntity.documentId === documentId)
+          .data()
+          .sorted
+
+      // Find parent task with given tag
+      val parentAndBelow: Seq[TaskEntity] = tasks.dropWhile(t => !(t.tags contains parentTag))
+
+      // Validate that the given tag exists in the document
+      require(parentAndBelow.nonEmpty, s"Could not find $parentTag")
+      val parent = parentAndBelow.head
+
+      val orderToken = {
+
+        val lastChildIndex: Int = {
+          var lastChildIndex = 0
+          while (
+            CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).isDefined &&
+            parentAndBelow(lastChildIndex + 1).indentation > parent.indentation
+          ) {
+            lastChildIndex += 1
+          }
+          lastChildIndex
+        }
+
+        OrderToken.middleBetween(
+          CollectionUtils.maybeGet(parentAndBelow, lastChildIndex).map(_.orderToken),
+          CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).map(_.orderToken),
+        )
+      }
+
+      entityAccess.persistEntityModifications(
+        EntityModification.createAddWithRandomId(
+          TaskEntity(
+            documentId = documentId,
+            contentHtml = content,
+            orderToken = orderToken,
+            indentation = parent.indentation + 1,
+            collapsed = false,
+            delayedUntil = None,
+            tags = Seq(),
+            lastContentModifierUserId = user.id,
+          )
+        )
+      )
+
+      Ok(s"OK\n")
+    }
 
   def regenerateOrderTokens(dryOrWetRun: String, applicationSecret: String) = Action { implicit request =>
     validateApplicationSecret(applicationSecret)

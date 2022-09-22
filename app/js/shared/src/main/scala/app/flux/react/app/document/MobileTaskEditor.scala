@@ -22,7 +22,6 @@ import app.models.document.TextWithMarkup
 import app.models.user.User
 import hydro.common.I18n
 import hydro.common.ScalaUtils.ifThenOption
-import hydro.common.Tags
 import hydro.common.time.Clock
 import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
@@ -155,9 +154,9 @@ private[document] final class MobileTaskEditor(implicit
                   <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
                     ^.key := tagIndex,
                     ^.className := "tag-holder",
-                    Bootstrap.Label(BootstrapTags.toStableVariant(tag))(
+                    Bootstrap.Label(TaskEditorUtils.toStableBootstrapTagVariant(tag))(
                       ^.className := "tag",
-                      tag,
+                      TaskEditorUtils.maybeHideTagName(tag),
                     ),
                   )
                 }.toVdomArray, {

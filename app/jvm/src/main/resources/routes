@@ -23,6 +23,7 @@ GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthC
 GET  /externalapi/dbschema/:appSecret/  hydro.controllers.StandardActions.databaseSchema(appSecret)
 GET  /externalapi/clearoldentitymodifications/:dryOrWet/:appSecret/  hydro.controllers.StandardActions.clearOldEntityModifications(dryOrWet, appSecret)
 GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalApi.shareDocument(docId, loginName, appSecret)
+GET  /externalapi/inserttask/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, appSecret)
 GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
 
 # Auth
