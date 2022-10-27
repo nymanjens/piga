@@ -23,6 +23,9 @@ import play.api.i18n.MessagesApi
 import play.api.mvc._
 
 import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import scala.tools.scalap.scalax.util.StringUtil
 
 final class ExternalApi @Inject() (implicit
     override val messagesApi: MessagesApi,
@@ -139,16 +142,19 @@ final class ExternalApi @Inject() (implicit
     Ok(s"Done\n")
   }
 
-  def interactiveInsertTask(documentIdString: String, parentTagEncoded: String, contentEncoded: String) = AuthenticatedAction(parse.raw) { implicit user => implicit request =>
-    insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
-    Redirect(app.controllers.routes.ExternalApi.interactiveDone())
-  }
+  def interactiveInsertTask(documentIdString: String, parentTagEncoded: String, contentEncoded: String) =
+    AuthenticatedAction(parse.raw) { implicit user => implicit request =>
+      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
+      Redirect(app.controllers.routes.ExternalApi.interactiveDone())
+    }
 
   // ********** private helper methods ********** //
-  private def insertTaskInternal(documentIdString: String, parentTagEncoded: String, contentEncoded: String)(implicit user: User): Unit = {
+  private def insertTaskInternal(documentIdString: String, parentTagEncoded: String, contentEncoded: String)(
+      implicit user: User
+  ): Unit = {
     val documentId = documentIdString.toLong
     val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
-    val parsedTasks = MarkdownConverter.markdownToParsedTasks(URLDecoder.decode(contentEncoded, "UTF-8"))
+    val parsedTasks = MarkdownConverter.markdownToParsedTasks(maybeDecodeAsBase64(contentEncoded))
 
     // Validate that document exists
     entityAccess
@@ -174,7 +180,7 @@ final class ExternalApi @Inject() (implicit
         var lastChildIndex = 0
         while (
           CollectionUtils.maybeGet(parentAndBelow, lastChildIndex + 1).isDefined &&
-            parentAndBelow(lastChildIndex + 1).indentation > parent.indentation
+          parentAndBelow(lastChildIndex + 1).indentation > parent.indentation
         ) {
           lastChildIndex += 1
         }
@@ -206,6 +212,17 @@ final class ExternalApi @Inject() (implicit
         )
       }
     )
+  }
+
+  private def maybeDecodeAsBase64(str: String): String = {
+    if (str.startsWith("base64:")) {
+      new String(
+        Base64.getDecoder.decode(ScalaUtils.stripRequiredPrefix(str, "base64:")),
+        StandardCharsets.UTF_8,
+      )
+    } else {
+      URLDecoder.decode(str, "UTF-8")
+    }
   }
 
   private def getGreatestDocumentOrderToken(user: User): Option[OrderToken] = {
