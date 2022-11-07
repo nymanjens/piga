@@ -1,6 +1,8 @@
 package app.controllers
 
 import app.common.MarkdownConverter
+import net.liftweb.json.DefaultFormats
+import net.liftweb.json.Serialization
 
 import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
@@ -25,7 +27,6 @@ import play.api.mvc._
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.Base64
-import scala.tools.scalap.scalax.util.StringUtil
 
 final class ExternalApi @Inject() (implicit
     override val messagesApi: MessagesApi,
@@ -69,6 +70,42 @@ final class ExternalApi @Inject() (implicit
 
       Ok(s"OK\n")
   }
+
+  def getTasksAsJson(
+      documentIdString: String,
+      parentTagEncoded: String,
+      applicationSecret: String,
+  ) =
+    Action { implicit request =>
+      validateApplicationSecret(applicationSecret)
+
+      val documentId = documentIdString.toLong
+      val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
+
+      // Validate that document exists
+      entityAccess
+        .newQuerySync[DocumentEntity]()
+        .findById(documentId)
+
+      val tasks =
+        entityAccess
+          .newQuerySync[TaskEntity]()
+          .filter(ModelFields.TaskEntity.documentId === documentId)
+          .data()
+          .sorted
+
+      // Find parent task with given tag
+      val parentAndBelow: Seq[TaskEntity] = tasks.dropWhile(t => !(t.tags contains parentTag))
+
+      // Validate that the given tag exists in the document
+      require(parentAndBelow.nonEmpty, s"Could not find $parentTag")
+      val parent = parentAndBelow.head
+
+      val tasksToReturn = parentAndBelow.takeWhile(t => t == parent || t.indentation > parent.indentation)
+
+      Ok(toJson(tasksToReturn))
+    }
+
   def insertTask(
       documentIdString: String,
       parentTagEncoded: String,
@@ -91,7 +128,7 @@ final class ExternalApi @Inject() (implicit
 
     val resultString = new StringBuilder()
     for (document <- allDocuments) {
-      resultString.append(s"Processing docuemnt ${document.id}: ${document.name}\n")
+      resultString.append(s"Processing document ${document.id}: ${document.name}\n")
       val allTasksInDocument = entityAccess
         .newQuerySync[TaskEntity]()
         .filter(ModelFields.TaskEntity.documentId === document.id)
@@ -234,6 +271,7 @@ final class ExternalApi @Inject() (implicit
 
     if (allPermissionAndPlacements.nonEmpty) Some(allPermissionAndPlacements.map(_.orderToken).max) else None
   }
+
   private def requireNoExistingPermissions(user: User, document: DocumentEntity): Unit = {
     val existingPermissions =
       entityAccess
@@ -253,6 +291,33 @@ final class ExternalApi @Inject() (implicit
     require(
       applicationSecret == realApplicationSecret,
       s"Invalid application secret. Found '$applicationSecret' but should be '$realApplicationSecret'",
+    )
+  }
+
+  private def toJson(tasks: Seq[TaskEntity]): String = {
+    val normalizedTasks = {
+      val root = tasks.head
+      tasks.map(t => t.copy(indentation = t.indentation - root.indentation))
+    }
+
+    implicit val formats = DefaultFormats
+    Serialization.write(normalizedTasks.map(JsonSerializableTask.fromTaskEntity))
+  }
+
+}
+private case class JsonSerializableTask(
+    contentHtml: String,
+    indentation: Int,
+    collapsed: Boolean,
+    tags: Seq[String],
+)
+private object JsonSerializableTask {
+  def fromTaskEntity(taskEntity: TaskEntity): JsonSerializableTask = {
+    JsonSerializableTask(
+      contentHtml = taskEntity.contentHtml,
+      indentation = taskEntity.indentation,
+      collapsed = taskEntity.collapsed,
+      tags = taskEntity.tags,
     )
   }
 }

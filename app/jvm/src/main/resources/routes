@@ -24,6 +24,7 @@ GET  /externalapi/dbschema/:appSecret/  hydro.controllers.StandardActions.databa
 GET  /externalapi/clearoldentitymodifications/:dryOrWet/:appSecret/  hydro.controllers.StandardActions.clearOldEntityModifications(dryOrWet, appSecret)
 GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalApi.shareDocument(docId, loginName, appSecret)
 GET  /externalapi/inserttask/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, appSecret)
+GET  /externalapi/gettasksasjson/:docId/$parentTag<[^/]+>/:appSecret/ app.controllers.ExternalApi.getTasksAsJson(docId, parentTag, appSecret)
 GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
 
 # Interactive shortcuts
