@@ -42,6 +42,7 @@ import hydro.flux.react.uielements.BootstrapTags
 import hydro.flux.router.RouterContext
 import hydro.jsfacades.Bootbox
 import hydro.jsfacades.ClipboardPolyfill
+import hydro.jsfacades.Mousetrap
 import hydro.models.access.EntityAccess
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticEvent
@@ -49,6 +50,8 @@ import japgolly.scalajs.react.raw.SyntheticKeyboardEvent
 import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
+import org.scalajs.dom.raw.Event
+import org.scalajs.dom.raw.KeyboardEvent
 
 import scala.async.Async.async
 import scala.async.Async.await
@@ -121,7 +124,16 @@ private[document] final class DesktopTaskEditor(implicit
         setSelection(selection).runNow()
       }
 
-      dom.window.addEventListener("resize", resizeListener)
+      // Add global bindings to refocus the editor when focus was lost
+      val focusDesktopTaskEditor: js.Function1[KeyboardEvent, Unit] = e => {
+        e.preventDefault()
+        setSelection(documentSelectionStore.getSelection(state.document.id)).runNow()
+      }
+      Mousetrap.bindGlobal("ctrl+p", focusDesktopTaskEditor)
+      Mousetrap.bind("ctrl", focusDesktopTaskEditor)
+      Mousetrap.bind("shift", focusDesktopTaskEditor)
+      Mousetrap.bind("alt", focusDesktopTaskEditor)
+
       Callback.empty
     }
 
