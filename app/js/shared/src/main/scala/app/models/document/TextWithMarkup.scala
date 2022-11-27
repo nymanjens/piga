@@ -22,8 +22,8 @@ import scala.util.matching.Regex.Match
 final class TextWithMarkup private (private val parts: List[Part]) {
 
   private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s\)]*".r
-  private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,})|" +
-    raw"((go|bit\.ly)\/[a-zA-Z0-9-_:]{3,})").r
+  private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,}[a-zA-Z0-9_#$$.:-]*)|" +
+    raw"((go|google3|bit\.ly)\/[a-zA-Z0-9_#$$.:/-]{2,})").r
 
   lazy val contentString: String = parts.map(_.text).mkString
 
