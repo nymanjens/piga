@@ -14,20 +14,13 @@ Example use cases:
 
 ## Features
 
-*(Note: Some are not ready yet)*
-
 * Document editing:
     * Productivity **shortcuts** for actions such as 'remove task', 'swap task down',
       'open link', 'convert selection to lower case', ...
     * Ability to **collapse** all indented tasks beneath selected task
     * Tasks can have **tags**
-    * Ability to **search** in all documents
-    * Taks can be **postponed** until a later date
 * Many documents:
     * Easy **switching** between documents
-    * Ability to **archive** documents and easily **search for documents**
-* Works offline (via PWA)
-* Dedicated mobile version
 
 ## Screenshot
 
@@ -93,3 +86,53 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
   A default user is created with the `-DcreateAdminUser` flag (username: admin, password:
   changeme). This account can create new users.
 
+## Shortcuts
+
+- **Basics**
+    - **Indentation**
+        - `tab`: Increase current indentation
+        - `shift + tab`: Decrease current indentation
+    - **Formatting**
+        - `ctrl + I`: Toggle 'italic'
+        - `ctrl + B`: Toggle 'bold'
+        - ``ctrl + `` `: Toggle 'code font'
+        - `alt + shift + 5`: Toggle 'strikethrough'
+        - `ctrl + \`: Reset formatting
+    - **Undo/redo**
+        - `ctrl + Z`: undo
+        - `ctrl + Y`: redo
+        - `ctrl + shift + Z`: redo
+- **Special actions**
+    - `ctrl + K`: Create or edit a link
+    - `alt + shift + T`: Create or edit a tag
+    - `ctrl + P`: Open "Go to file" dialog
+    - `ctrl + plus`: Expand current task
+    - `ctrl + minus`: Collapse current task
+- **Power user shortcuts**
+    - **Copying**
+        - `ctrl + shift + C`: Copy selected task and its children
+        - `ctrl + shift + X`: Cut selected task and its children
+        - `alt + shift + M`: Copy selected task and its children as Markdown
+    - **Tasks**
+        - `alt + up`: Swap current task with the previous task
+        - `alt + down`: Swap current task with the next task
+        - `ctrl + shift + P`: Go to the parent task
+        - `ctrl + D`: Delete current task
+        - `ctrl + shift + B`: Duplicate current task
+    - **Change casing**
+        - `ctrl + alt + U`: Convert selection to uppercase
+        - `ctrl + shift + U`: Convert selection to uppercase
+        - `ctrl + alt + L`: Convert selection to lowercase
+        - `ctrl + shift + L`: Convert selection to lowercase
+        - `alt + shift + L`: Convert selection to CamelCase
+        - `alt + shift + K`: Convert selection to snake_case
+        - `alt + shift + H`: Convert selection to dash-case
+    - **Selection**
+        - `ctrl + enter`: Open selected link
+        - `ctrl + M`: Select current word
+        - `ctrl + shift + M`: Select current quoted sentence
+        - `ctrl + J`: Select current task
+        - `ctrl + G`: Find next occurrence of selected text
+    - **Other**
+        - `ctrl + Q`: Go to the last edit
+        - `ctrl + shift + delete`: Delete the remainder of the line after the cursor
