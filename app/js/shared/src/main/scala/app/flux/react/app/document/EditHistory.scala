@@ -2,7 +2,6 @@ package app.flux.react.app.document
 
 import java.time.Duration
 import java.time.Instant
-
 import hydro.common.GuavaReplacement.Iterables.getOnlyElement
 import app.flux.react.app.document.EditHistory.Edit
 import app.models.document.Document.DetachedCursor
@@ -13,6 +12,7 @@ import app.models.document.Task
 import hydro.models.modification.EntityModification
 import hydro.common.time.Clock
 import hydro.common.time.JavaTimeImplicits._
+import hydro.common.ScalaUtils.ifThenOption
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -82,12 +82,9 @@ final class EditHistory(implicit clock: Clock) {
     }
   }
 
-  def lastEdit(): Option[Edit] = {
-    if (nextRedoEditIndex > 0) {
-      Some(edits(nextRedoEditIndex - 1))
-    } else {
-      None
-    }
+  def lastEdit(offset: Int): Option[Edit] = {
+    val editIndexCandidate = nextRedoEditIndex - offset - 1
+    ifThenOption(edits.indices contains editIndexCandidate)(edits(editIndexCandidate))
   }
 
   private def randomizeIdsInHistory(oldIds: Seq[Long]): Unit = {

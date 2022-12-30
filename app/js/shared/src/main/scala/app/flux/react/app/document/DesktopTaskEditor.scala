@@ -112,6 +112,7 @@ private[document] final class DesktopTaskEditor(implicit
       cursor = DetachedCursor(task = Task.nullInstance, offsetInTask = 0),
       formatting = Formatting.none,
     )
+    private var goToLastEditOffset: Int = 0
     private val duplicateKeypressWorkaroundManager: DuplicateKeypressWorkaroundManager =
       new DuplicateKeypressWorkaroundManager()
     private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
@@ -177,7 +178,7 @@ private[document] final class DesktopTaskEditor(implicit
         // Since onKeyDown calls preventDefault() for all handled events, it's safe to call it again for onKeyPress
         // as a fall-back.
         ^.onKeyPress ==> handleKeyDown,
-        ^.onSelect ==> (_ => updateCursor),
+        ^.onSelect ==> (_ => updateCursor()),
         ^.onPaste ==> handlePaste,
         ^.onCut ==> handleCut,
         ^.onCopy ==> handleCopy,
@@ -320,7 +321,7 @@ private[document] final class DesktopTaskEditor(implicit
         }
       }
 
-    private def updateCursor: Callback = {
+    private def updateCursor(): Callback = {
       IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
         case Some(selection) =>
           $.modState { state =>
@@ -472,7 +473,7 @@ private[document] final class DesktopTaskEditor(implicit
             // Go to last edit
             case CharacterKey('q', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
-              goToEdit(editHistory.lastEdit())
+              goToLastEdit(selection)
 
             // Copy whole task and its children (shift-copy)
             case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
@@ -728,26 +729,37 @@ private[document] final class DesktopTaskEditor(implicit
           }
       }
 
-    private def goToEdit(maybeEdit: Option[EditHistory.Edit])(implicit
+    private def goToLastEdit(selection: IndexedSelection)(implicit
         props: Props,
         state: State,
     ): Callback = {
-      maybeEdit match {
-        case None => Callback.empty
-        case Some(edit) if edit.documentId == state.document.id =>
-          setSelection(edit.selectionAfterEdit.attachToDocument(state.document))
-        case Some(edit) if edit.documentId != state.document.id =>
-          Callback.future {
-            async {
-              val otherDocumentStore = await(documentStoreFactory.create(edit.documentId))
-              documentSelectionStore.setSelection(
-                edit.documentId,
-                edit.selectionAfterEdit.attachToDocument(otherDocumentStore.state.document),
-              )
-              props.router.setPage(AppPages.TaskList(documentId = edit.documentId))
-              Callback.empty
-            }
+      implicit val _ = state.document
+
+      // Maybe reset offset
+      goToLastEditOffset = {
+        val previousLastEdit = editHistory.lastEdit(offset = goToLastEditOffset - 1)
+        previousLastEdit match {
+          case Some(edit) if edit.selectionAfterEdit == selection.detach =>
+            // Do not reset offset
+            goToLastEditOffset
+          case _ => 0 // Reset offset
+        }
+      }
+
+      val lastEditInDocument = {
+        var candidate: Option[EditHistory.Edit] = None
+        do {
+          candidate = editHistory.lastEdit(offset = goToLastEditOffset)
+          if (candidate.isDefined) {
+            goToLastEditOffset += 1
           }
+        } while (candidate.isDefined && candidate.get.documentId != state.document.id)
+        candidate
+      }
+
+      lastEditInDocument match {
+        case None       => Callback.empty
+        case Some(edit) => setSelection(edit.selectionAfterEdit.attachToDocument(state.document))
       }
     }
 
