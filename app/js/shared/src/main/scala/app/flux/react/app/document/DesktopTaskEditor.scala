@@ -12,6 +12,7 @@ import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
+import app.models.document.Document.DetachedSelection
 import app.models.document.Document.IndexedCursor
 import app.models.document.Document.IndexedSelection
 import app.models.document.DocumentEdit
@@ -680,10 +681,10 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               editTagsInTasks(selection)
 
-            // Go to file
+            // Go to file or chapter
             case CharacterKey('p', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
-              goToFilePrompt(selection)
+              goToFileOrChapterPrompt(selection)
 
             // Find next occurrence of selected string
             case CharacterKey('g', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
@@ -1063,16 +1064,55 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    private def goToFilePrompt(selection: IndexedSelection)(implicit
+    private def goToFileOrChapterPrompt(selection: IndexedSelection)(implicit
         props: Props,
         state: State,
-    ): Callback = {
-      Callback.future {
-        SelectPrompt.choose(
-          title = "Go to file:",
-          optionsIdToName = ListMap(allDocumentsStore.state.allDocuments.map(d => (d.documentId, d.name)): _*),
-        ) map {
-          case Some(documentId) if documentId != state.document.id =>
+    ): Callback = Callback.future[Unit] {
+        case class Choice(documentId: Long, selectionOverride: Option[IndexedSelection], title: String)
+
+      async {
+        val allDocumentStores = await(
+          Future.sequence(
+            for (document <- allDocumentsStore.state.allDocuments)
+              yield documentStoreFactory.create(document.documentId)
+          )
+        )
+        val allChoices =
+          (for (documentStore <- allDocumentStores) yield {
+            val document = documentStore.state.document
+
+            val documentChoice =
+              Choice(documentId = document.id, selectionOverride = None, title = document.name)
+            val chapterChoices = {
+              for {
+                (task, index) <- document.tasks.zipWithIndex
+                tag <- task.tags
+                if tag.startsWith("#")
+              } yield {
+                Choice(
+                  documentId = document.id,
+                  selectionOverride = Some(IndexedSelection.atStartOfTask(index)),
+                  title = tag,
+                )
+              }
+            }
+
+            documentChoice +: chapterChoices
+          }).flatten
+
+        val choice = await(
+          SelectPrompt.choose(
+            title = "Go to file or chapter:",
+            optionsIdToName = ListMap(allChoices.map(c => (c, c.title)): _*),
+          )
+        )
+        choice match {
+          case Some(Choice(state.document.id, Some(selectionOverride), _)) =>
+            setSelection(selectionOverride)
+          case Some(Choice(documentId, selectionOverride, _)) if documentId != state.document.id =>
+            if (selectionOverride.isDefined) {
+              documentSelectionStore.setSelection(documentId, selectionOverride.get)
+            }
             props.router.setPage(AppPages.TaskList(documentId))
             Callback.empty
           case _ =>

@@ -31,7 +31,7 @@ import scala.collection.immutable.Seq
 import scala.scalajs.js
 
 object SelectPrompt {
-  def choose(title: String, optionsIdToName: ListMap[Long, String]): Future[Option[Long]] = {
+  def choose[K](title: String, optionsIdToName: ListMap[K, String]): Future[Option[K]] = {
     val result = Bootbox.prompt(title, value = "", animate = false, selectValue = false)
 
     val form = dom.document.getElementsByClassName("bootbox-form").apply(0)
@@ -136,7 +136,7 @@ object SelectPrompt {
     val noopMatcher: Matcher = new Matcher("")
   }
 
-  private class DialogHandler(optionsIdToName: ListMap[Long, String], optionsDiv: Element) {
+  private class DialogHandler[K](optionsIdToName: ListMap[K, String], optionsDiv: Element) {
     private var lastSearchString: String = _
     private var lastSelectedIndex: Int = -99
 
@@ -181,7 +181,7 @@ object SelectPrompt {
       renderOptionsList(matcher = new Matcher(lastSearchString), selectedIndex = lastSelectedIndex + diff)
     }
 
-    def lastSelectedOptionId: Option[Long] = {
+    def lastSelectedOptionId: Option[K] = {
       val matcher = new Matcher(lastSearchString)
       val maybePair = CollectionUtils.maybeGet(
         optionsIdToName.toVector.sortBy(_._2)(matcher.ordering).filter(pair => matcher.isMatch(pair._2)),
