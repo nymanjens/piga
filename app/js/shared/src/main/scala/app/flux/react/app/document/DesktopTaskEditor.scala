@@ -572,6 +572,7 @@ private[document] final class DesktopTaskEditor(implicit
 
             // Open link
             case SpecialKey(Enter, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
               getAnyLinkInSelection(selection) match {
                 case Some(link) => dom.window.open(link, "_blank")
                 case None       =>
