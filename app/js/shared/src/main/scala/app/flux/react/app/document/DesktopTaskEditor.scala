@@ -1093,7 +1093,7 @@ private[document] final class DesktopTaskEditor(implicit
                 Choice(
                   documentId = document.id,
                   selectionOverride = Some(IndexedSelection.atStartOfTask(index)),
-                  title = tag,
+                  title = s"${document.name} > $tag",
                 )
               }
             }
