@@ -28,7 +28,8 @@ Example use cases:
 
 ## Installation from release
 
-- Download the [latest release](https://github.com/nymanjens/piga/releases)
+- Download "Binaries (compiled files) with demo configuration" from the [latest
+  release](https://github.com/nymanjens/piga/releases)
 - Unpack the archive
 - Open `conf/application.conf` in the unpacked folder:
   - Configure a database. The easiest way is to set up a MariaDB server locally,
