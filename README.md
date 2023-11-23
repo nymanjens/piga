@@ -137,3 +137,4 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
     - **Other**
         - `ctrl + Q`: Go to the last edit
         - `ctrl + shift + delete`: Delete the remainder of the line after the cursor
+
