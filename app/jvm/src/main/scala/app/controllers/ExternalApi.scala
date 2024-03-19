@@ -176,7 +176,7 @@ final class ExternalApi @Inject() (implicit
   // ********** Interactive API ********** //
 
   def interactiveDone() = Action { implicit request =>
-    Ok(s"Done\n")
+    Ok(views.html.doneAndClose())
   }
 
   def interactiveInsertTask(documentIdString: String, parentTagEncoded: String, contentEncoded: String) =
