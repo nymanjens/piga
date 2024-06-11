@@ -33,7 +33,7 @@ Example use cases:
 - Unpack the archive
 - Open `conf/application.conf` in the unpacked folder:
   - Configure a database. The easiest way is to set up a MariaDB server locally,
-    create an empty database called `facto` and configure it as follows:
+    create an empty database called `piga` and configure it as follows:
 
 ```
 db.default.driver=com.mysql.jdbc.Driver
