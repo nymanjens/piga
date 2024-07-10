@@ -28,6 +28,7 @@ Example use cases:
 
 ## Installation from release
 
+- Install Java 11 (JDK 11) on your server
 - Download "Binaries (compiled files) with demo configuration" from the [latest
   release](https://github.com/nymanjens/piga/releases)
 - Unpack the archive
