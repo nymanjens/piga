@@ -54,6 +54,8 @@ import japgolly.scalajs.react.vdom.PackageBase.VdomAttr
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.Event
+import org.scalajs.dom.raw.HTMLButtonElement
+import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.raw.KeyboardEvent
 
 import scala.async.Async.async
@@ -1213,7 +1215,24 @@ private[document] final class DesktopTaskEditor(implicit
 
       def newLinkFromDialog(defaultValue: Option[String]): Future[Option[String]] = {
         val title = if (defaultValue.isEmpty) "Add link" else "Edit link"
-        Bootbox.prompt(title, value = defaultValue getOrElse "", animate = false, selectValue = true)
+        val linkFuture =
+          Bootbox.prompt(title, value = defaultValue getOrElse "", animate = false, selectValue = true)
+
+        val promptInput =
+          dom.document.getElementsByClassName("bootbox-input-text").apply(0).asInstanceOf[HTMLInputElement]
+        promptInput.onpaste = event => {
+          if (promptInput.value.isEmpty) {
+            event.preventDefault()
+            promptInput.value = ClipboardData.fromEvent(event).trimWhitespace().plainText
+            dom.document
+              .getElementsByClassName("bootbox-accept")
+              .apply(0)
+              .asInstanceOf[HTMLButtonElement]
+              .click()
+          }
+        }
+
+        linkFuture
       }
 
       def isValidUrl(s: String): Boolean = {
@@ -1835,11 +1854,13 @@ private[document] final class DesktopTaskEditor(implicit
     )
   }
   @visibleForTesting private[document] object ClipboardData {
-    def fromEvent(event: ReactEventFromInput): ClipboardData = ClipboardData(
-      htmlText =
-        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
-      plainText =
-        event.nativeEvent.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
+    def fromEvent(event: ReactEventFromInput): ClipboardData = {
+      fromEvent(event.nativeEvent)
+    }
+
+    def fromEvent(event: dom.Event) = ClipboardData(
+      htmlText = event.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
+      plainText = event.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
     )
   }
 
