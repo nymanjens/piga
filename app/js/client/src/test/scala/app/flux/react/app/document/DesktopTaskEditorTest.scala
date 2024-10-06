@@ -298,7 +298,7 @@ object DesktopTaskEditorTest extends TestSuite {
              <li piga="true">
                a<br />b
              </li>
-             <li piga="true" piga-collapsed="true" piga-tags="XX,YY">
+             <li piga="true" piga-collapsed="true" piga-checked="true" piga-tags="XX,YY">
                xyz
              </li>
            </ul>
@@ -307,7 +307,7 @@ object DesktopTaskEditorTest extends TestSuite {
           ) ==>
             replacement(
               TextWithMarkup("a\nb"),
-              replacementPart("xyz", collapsed = true, tags = Seq("XX", "YY")),
+              replacementPart("xyz", collapsed = true, checked = true, tags = Seq("XX", "YY")),
             )
         }
       }
