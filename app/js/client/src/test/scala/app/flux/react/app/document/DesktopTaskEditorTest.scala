@@ -487,7 +487,7 @@ object DesktopTaskEditorTest extends TestSuite {
       }
       "escapes html" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true" piga-checked="truex">
+          <span piga="true" piga-checked="true">
             a&lt;b&gt;c
           </span>
         """))

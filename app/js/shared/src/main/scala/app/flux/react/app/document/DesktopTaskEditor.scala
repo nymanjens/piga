@@ -1615,7 +1615,7 @@ private[document] final class DesktopTaskEditor(implicit
         if (subtasks.size == 1) {
           val task = getOnlyElement(subtasks)
           val innerHtml = task.content.toHtml
-          s"""<span piga="true"${tagsAttribute(task)}>$innerHtml</span>"""
+          s"""<span piga="true"${checkedAttribute(task)}${tagsAttribute(task)}>$innerHtml</span>"""
         } else {
           val resultBuilder = StringBuilder.newBuilder
           val baseIndentation = subtasks.map(_.indentation).min - 1
