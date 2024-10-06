@@ -208,6 +208,7 @@ private[document] final class DesktopTaskEditor(implicit
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
+                    ifThenOption(task.checked)("checked") ++
                     ifThenOption(state.highlightedTaskIdAndIndex.taskIndex == taskIndex)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user")
@@ -845,6 +846,7 @@ private[document] final class DesktopTaskEditor(implicit
                 orderToken = newOrderToken,
                 indentation = newIndentation,
                 collapsed = replacementPart.collapsed,
+                checked = false,
                 delayedUntil = None,
                 tags = replacementPart.tags,
               )
@@ -915,6 +917,7 @@ private[document] final class DesktopTaskEditor(implicit
               orderToken = OrderToken.middle,
               indentation = 0,
               collapsed = false,
+              checked = false,
               delayedUntil = None,
               tags = Seq(),
             )
@@ -960,6 +963,7 @@ private[document] final class DesktopTaskEditor(implicit
               orderToken = orderToken,
               indentation = taskToCopy.indentation,
               collapsed = taskToCopy.collapsed,
+              checked = taskToCopy.checked,
               delayedUntil = taskToCopy.delayedUntil,
               tags = taskToCopy.tags,
             )
@@ -1544,6 +1548,7 @@ private[document] final class DesktopTaskEditor(implicit
       def content: TextWithMarkup = task.content.sub(startOffset, endOffset)
       def indentation: Int = task.indentation
       def collapsed: Boolean = task.collapsed
+      def checked: Boolean = task.checked
       def tagsString: String = {
         if (isFullTask) {
           task.tags.mkString(",")
@@ -1582,6 +1587,13 @@ private[document] final class DesktopTaskEditor(implicit
         ""
       }
     }
+    def checkedAttribute(subtask: Subtask): String = {
+      if (subtask.checked) {
+        s""" piga-checked="true""""
+      } else {
+        ""
+      }
+    }
 
     ClipboardData(
       htmlText = {
@@ -1600,7 +1612,7 @@ private[document] final class DesktopTaskEditor(implicit
             for (i <- subtask.indentation until lastIndentation) {
               resultBuilder.append("</ul>")
             }
-            resultBuilder.append(s"""<li piga="true"${collapsedAttribute(subtask)}${tagsAttribute(
+            resultBuilder.append(s"""<li piga="true"${collapsedAttribute(subtask)}${checkedAttribute(subtask)}${tagsAttribute(
               subtask
             )}>""")
             resultBuilder.append(subtask.content.toHtml)
@@ -1621,17 +1633,18 @@ private[document] final class DesktopTaskEditor(implicit
       clipboardData: ClipboardData,
       baseFormatting: Formatting,
   ): Replacement = {
-    case class PigaAttributes(tags: Seq[String], collapsed: Boolean)
+    case class PigaAttributes(tags: Seq[String], collapsed: Boolean, checked:Boolean)
     def getPigaAttributes(nodes: Seq[dom.raw.Node]): PigaAttributes = {
       nodes.find(node => getAttributeOrEmpty(node, "piga") == "true") match {
         case Some(node) =>
           PigaAttributes(
             tags = Splitter.on(',').omitEmptyStrings().split(getAttributeOrEmpty(node, "piga-tags")),
             collapsed = getAttributeOrEmpty(node, "piga-collapsed") == "true",
+            checked = getAttributeOrEmpty(node, "piga-checked") == "true",
           )
         case None =>
           println("  Warning: Could not find a node with the piga attribute")
-          PigaAttributes(tags = Seq(), collapsed = false)
+          PigaAttributes(tags = Seq(), collapsed = false, checked=false)
       }
     }
     def containsNodeWithPigaAttribute(node: dom.raw.Node): Boolean = {
@@ -1671,6 +1684,7 @@ private[document] final class DesktopTaskEditor(implicit
                       TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
                       zeroIfNegative(nextRelativeIndentation),
                       collapsed = attributes.collapsed,
+                      checked = attributes.checked,
                       tags = attributes.tags,
                     )
                   )
@@ -1690,6 +1704,7 @@ private[document] final class DesktopTaskEditor(implicit
                 TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
                 zeroIfNegative(nextRelativeIndentation),
                 collapsed = attributes.collapsed,
+                checked = attributes.checked,
                 tags = attributes.tags,
               )
             )
@@ -1839,6 +1854,7 @@ private[document] final class DesktopTaskEditor(implicit
         content: TextWithMarkup,
         indentationRelativeToCurrent: Int,
         collapsed: Boolean = false,
+        checked: Boolean = false,
         tags: Seq[String] = Seq(),
     ) {
       def contentString: String = content.contentString
