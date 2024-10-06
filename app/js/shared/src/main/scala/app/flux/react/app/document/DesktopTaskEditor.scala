@@ -1213,6 +1213,10 @@ private[document] final class DesktopTaskEditor(implicit
         Bootbox.prompt(title, value = defaultValue getOrElse "", animate = false, selectValue = true)
       }
 
+      def isValidUrl(s: String): Boolean = {
+        s.contains("://")
+      }
+
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
         val taskUpdates =
           for (task <- oldDocument.tasksIn(selection))
@@ -1238,9 +1242,10 @@ private[document] final class DesktopTaskEditor(implicit
         case expandedSelection =>
           Callback.future {
             newLinkFromDialog(getAnyLinkInSelection(originalSelection)) map {
-              case None          => setSelection(originalSelection)
-              case Some("")      => editLinkInternal(expandedSelection, None)
-              case Some(newLink) => editLinkInternal(expandedSelection, Some(newLink))
+              case None                                 => setSelection(originalSelection)
+              case Some("")                             => editLinkInternal(expandedSelection, None)
+              case Some(newLink) if isValidUrl(newLink) => editLinkInternal(expandedSelection, Some(newLink))
+              case Some(newLink)                        => setSelection(originalSelection)
             }
           }
       }
