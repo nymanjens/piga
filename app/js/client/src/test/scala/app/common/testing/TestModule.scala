@@ -5,6 +5,7 @@ import app.flux.react.app.document.EditHistory
 import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStoreFactory
+import app.flux.stores.GlobalMessagesStore
 import hydro.common.testing.FakeClock
 import hydro.common.testing.FakeI18n
 import hydro.common.testing.FakeJsEntityAccess
@@ -38,4 +39,5 @@ class TestModule {
   implicit lazy val documentStoreFactory: DocumentStoreFactory = new DocumentStoreFactory
   implicit lazy val editHistory: EditHistory = new EditHistory
   implicit lazy val allDocumentsStore: AllDocumentsStore = new AllDocumentsStore
+  implicit lazy val gobalMessagesStore: GlobalMessagesStore = new GlobalMessagesStore
 }
