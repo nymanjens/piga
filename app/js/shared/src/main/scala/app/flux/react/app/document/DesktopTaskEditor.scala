@@ -1221,15 +1221,13 @@ private[document] final class DesktopTaskEditor(implicit
         val promptInput =
           dom.document.getElementsByClassName("bootbox-input-text").apply(0).asInstanceOf[HTMLInputElement]
         promptInput.onpaste = event => {
-          if (promptInput.value.isEmpty) {
-            event.preventDefault()
-            promptInput.value = ClipboardData.fromEvent(event).trimWhitespace().plainText
-            dom.document
-              .getElementsByClassName("bootbox-accept")
-              .apply(0)
-              .asInstanceOf[HTMLButtonElement]
-              .click()
-          }
+          event.preventDefault()
+          promptInput.value = ClipboardData.fromEvent(event).trimWhitespace().plainText
+          dom.document
+            .getElementsByClassName("bootbox-accept")
+            .apply(0)
+            .asInstanceOf[HTMLButtonElement]
+            .click()
         }
 
         linkFuture
