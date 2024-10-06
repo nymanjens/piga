@@ -32,6 +32,7 @@ object JsTestObjects {
       orderToken: OrderToken = orderTokenB,
       indentation: Int = 2,
       collapsed: Boolean = false,
+      checked: Boolean = false,
       delayedUntil: Option[LocalDateTime] = Some(testDate),
       tags: Seq[String] = Seq("test-tag"),
   ): Task = {
@@ -44,6 +45,7 @@ object JsTestObjects {
       orderToken = orderToken,
       indentation = indentation,
       collapsed = collapsed,
+      checked = checked,
       delayedUntil = delayedUntil,
       tags = tags,
     )

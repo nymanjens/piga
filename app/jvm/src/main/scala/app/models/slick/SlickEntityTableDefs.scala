@@ -101,6 +101,7 @@ object SlickEntityTableDefs {
       def orderToken = column[OrderToken]("orderToken")
       def indentation = column[Int]("indentation")
       def collapsed = column[Boolean]("collapsed")
+      def checked = column[Boolean]("checked")
       def delayedUntil = column[Option[LocalDateTime]]("delayedUntil")
       def tags = column[Seq[String]]("tagsString")(tagsSeqToStringMapper)
       def lastContentModifierUserId = column[Long]("lastContentModifierUserId")
@@ -113,6 +114,7 @@ object SlickEntityTableDefs {
           orderToken,
           indentation,
           collapsed,
+          checked,
           delayedUntil,
           tags,
           lastContentModifierUserId,

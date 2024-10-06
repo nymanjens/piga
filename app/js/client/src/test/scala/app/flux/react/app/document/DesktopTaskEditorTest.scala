@@ -106,13 +106,13 @@ object DesktopTaskEditorTest extends TestSuite {
           "whole task is selected" - {
             editor.convertToClipboardData(
               newDocument(
-                newTask("ABC", collapsed = true, tags = Seq("XX", "YY"))
+                newTask("ABC", collapsed = true, checked = true, tags = Seq("XX", "YY"))
               ),
               IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3)),
             ) ==>
               editor.ClipboardData(
                 htmlText = removeFormattingWhitespace("""
-                    <span piga="true" piga-tags="XX,YY">
+                    <span piga="true" piga-checked="true" piga-tags="XX,YY">
                       ABC
                     </span>
                   """),
@@ -234,16 +234,18 @@ object DesktopTaskEditorTest extends TestSuite {
           content: String,
           indentation: Int = 0,
           collapsed: Boolean = false,
+          checked: Boolean = false,
           tags: Seq[String] = Seq(),
       ) =
-        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, tags)
+        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, checked, tags)
       def replacementPartFormatted(
           content: TextWithMarkup,
           indentation: Int = 0,
           collapsed: Boolean = false,
+          checked: Boolean = false,
           tags: Seq[String] = Seq(),
       ) =
-        editor.Replacement.Part(content, indentation, collapsed, tags)
+        editor.Replacement.Part(content, indentation, collapsed, checked, tags)
       def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
       def asText(s: String) = editor.ClipboardData(htmlText = "", plainText = s)
 
@@ -296,7 +298,7 @@ object DesktopTaskEditorTest extends TestSuite {
              <li piga="true">
                a<br />b
              </li>
-             <li piga="true" piga-collapsed="true" piga-tags="XX,YY">
+             <li piga="true" piga-collapsed="true" piga-checked="true" piga-tags="XX,YY">
                xyz
              </li>
            </ul>
@@ -305,7 +307,7 @@ object DesktopTaskEditorTest extends TestSuite {
           ) ==>
             replacement(
               TextWithMarkup("a\nb"),
-              replacementPart("xyz", collapsed = true, tags = Seq("XX", "YY")),
+              replacementPart("xyz", collapsed = true, checked = true, tags = Seq("XX", "YY")),
             )
         }
       }
@@ -452,6 +454,7 @@ object DesktopTaskEditorTest extends TestSuite {
                 orderToken = orderTokenA,
                 indentation = 10 + p.indentationRelativeToCurrent,
                 collapsed = p.collapsed,
+                checked = p.checked,
                 tags = p.tags,
               )
             ): _*
@@ -467,14 +470,14 @@ object DesktopTaskEditorTest extends TestSuite {
         roundTrip(removeFormattingWhitespace("""
           <ul>
             <li piga="true">bc</li>
-            <li piga="true">defg</li>
+            <li piga="true" piga-checked="true">defg</li>
             <li piga="true">hi</li>
           </ul>
         """))
       }
       "with formatting and tags" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true" piga-tags="XX,YY">
+          <span piga="true" piga-checked="true" piga-tags="XX,YY">
             <b>this is bold</b>
             <i>this is italic</i>
             <code>this is code</code>

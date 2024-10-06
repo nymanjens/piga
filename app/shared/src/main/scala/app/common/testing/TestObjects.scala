@@ -90,6 +90,7 @@ object TestObjects {
     orderToken = orderTokenA,
     indentation = 12,
     collapsed = true,
+    checked = true,
     delayedUntil = Some(testDate),
     tags = Seq("tag"),
     idOption = Some(821379),

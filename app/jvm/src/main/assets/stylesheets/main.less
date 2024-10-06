@@ -128,29 +128,33 @@ ul.task-editor-base {
         width: 1.7em;
         font-size: .7em;
       }
-      &.collapsed:before {
-        content: "\e158"; // glyphicon-expand
+      &.checked:before {
+        content: "\e067"; // glyphicon-check
       }
-      &:not(.collapsed):before {
-        content: "\e159"; // glyphicon-collapse-down
+      &:not(.checked) {
+        &.collapsed:before {
+          content: "\e158"; // glyphicon-expand
+        }
+        &:not(.collapsed):before {
+          content: "\e159"; // glyphicon-collapse-down
+        }
+        &:not(.collapsed).leaf:before {
+          content: "\e157"; // glyphicon-unchecked
+        }
       }
-      &:not(.collapsed).leaf:before {
-        content: "\e157"; // glyphicon-unchecked
-      }
-    }
-
-    &.highlighted {
-      background-color: #efeeee;
     }
 
     &.modified-by-other-user {
       color: #008000; // Green
     }
     &.modification-pending {
-      color: grey;
-      &.modified-by-other-user {
-        color: #00b000;
-      }
+      background-color: #f7f7f7;
+    }
+    &.checked {
+      color: #ccc;
+    }
+    &.highlighted {
+      background-color: #eee;
     }
 
     .tag {
@@ -204,10 +208,6 @@ ul.task-editor-base {
       &:after { // For collapsed tasks
         color: #CCC;
         font-style: italic;
-      }
-
-      &.modification-pending {
-        color: grey;
       }
     }
   }
