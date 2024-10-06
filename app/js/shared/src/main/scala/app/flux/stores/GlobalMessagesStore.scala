@@ -35,6 +35,12 @@ final class GlobalMessagesStore(implicit
   private var _state: Option[Unique[Message]] = None
 
   // **************** Public API ****************//
+  def showAdHocMessage(message: String, messageType: Message.Type): Unit = {
+    setState(Message(string = message, messageType = messageType))
+    clearMessageAfterDelay()
+
+  }
+
   override def state: Option[Message] = _state.map(_.get)
 
   // **************** Private dispatcher methods ****************//

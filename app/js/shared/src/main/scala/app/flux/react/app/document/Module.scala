@@ -9,12 +9,14 @@ import hydro.common.time.Clock
 import hydro.flux.action.Dispatcher
 import hydro.flux.react.uielements.PageHeader
 import hydro.models.access.JsEntityAccess
+import app.flux.stores.GlobalMessagesStore
 
 final class Module(implicit
     i18n: I18n,
     user: User,
     dispatcher: Dispatcher,
     clock: Clock,
+    globalMessagesStore: GlobalMessagesStore,
     entityAccess: JsEntityAccess,
     documentStoreFactory: DocumentStoreFactory,
     documentSelectionStore: DocumentSelectionStore,

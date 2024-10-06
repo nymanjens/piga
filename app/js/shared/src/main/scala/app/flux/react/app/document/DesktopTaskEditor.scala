@@ -10,6 +10,8 @@ import app.flux.stores.document.AllDocumentsStore
 import app.flux.stores.document.DocumentSelectionStore
 import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
+import app.flux.stores.GlobalMessagesStore.Message
+import app.flux.stores.GlobalMessagesStore
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
@@ -74,6 +76,7 @@ private[document] final class DesktopTaskEditor(implicit
     documentStoreFactory: DocumentStoreFactory,
     editHistory: EditHistory,
     allDocumentsStore: AllDocumentsStore,
+    globalMessagesStore: GlobalMessagesStore,
 ) extends HydroReactComponent {
 
   // **************** API ****************//
@@ -1245,7 +1248,11 @@ private[document] final class DesktopTaskEditor(implicit
               case None                                 => setSelection(originalSelection)
               case Some("")                             => editLinkInternal(expandedSelection, None)
               case Some(newLink) if isValidUrl(newLink) => editLinkInternal(expandedSelection, Some(newLink))
-              case Some(newLink)                        => setSelection(originalSelection)
+              case Some(newLink) =>
+                Future {
+                  globalMessagesStore.showAdHocMessage(f"Not a valid link: $newLink", Message.Type.Failure)
+                }
+                setSelection(originalSelection)
             }
           }
       }
