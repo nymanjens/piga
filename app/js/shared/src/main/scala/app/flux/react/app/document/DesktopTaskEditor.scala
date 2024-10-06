@@ -536,10 +536,12 @@ private[document] final class DesktopTaskEditor(implicit
                 if event.keyCode == 52 =>
               event.preventDefault()
               val newCheckedValue = document.tasksIn(selection).forall(!_.checked)
-              updateTasksInSelection(selection, updateChildren = false) { task =>
-                val taskSelection =
-                  DetachedSelection.singleton(DetachedCursor(task, offsetInTask = 0)).attachToDocument
-                val hasChildren = taskSelection.includeChildren() != taskSelection
+              updateTasksInSelection(selection, updateChildren = !newCheckedValue) { task =>
+                def hasChildren: Boolean = {
+                  val taskSelection =
+                    DetachedSelection.singleton(DetachedCursor(task, offsetInTask = 0)).attachToDocument
+                  taskSelection.includeChildren() != taskSelection
+                }
                 MaskedTaskUpdate.fromFields(
                   task,
                   checked = newCheckedValue,
