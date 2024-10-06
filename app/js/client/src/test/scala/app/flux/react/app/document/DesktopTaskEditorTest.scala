@@ -469,14 +469,14 @@ object DesktopTaskEditorTest extends TestSuite {
         roundTrip(removeFormattingWhitespace("""
           <ul>
             <li piga="true">bc</li>
-            <li piga="true">defg</li>
+            <li piga="true" piga-checked="true">defg</li>
             <li piga="true">hi</li>
           </ul>
         """))
       }
       "with formatting and tags" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true" piga-tags="XX,YY">
+          <span piga="true" piga-checked="true" piga-tags="XX,YY">
             <b>this is bold</b>
             <i>this is italic</i>
             <code>this is code</code>
@@ -487,7 +487,7 @@ object DesktopTaskEditorTest extends TestSuite {
       }
       "escapes html" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true" piga-checked="true">
+          <span piga="true">
             a&lt;b&gt;c
           </span>
         """))
