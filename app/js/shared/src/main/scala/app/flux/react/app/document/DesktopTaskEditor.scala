@@ -1209,6 +1209,8 @@ private[document] final class DesktopTaskEditor(implicit
         getAnyLinkInSelection(selection) match {
           case Some(link) if selection.isSingleton =>
             IndexedSelection(expand(link, start, -1), expand(link, end, 1))
+          case None if selection.isSingleton =>
+            IndexedSelection(start.toStartOfTask, start.toEndOfTask)
           case _ => selection
         }
       }
