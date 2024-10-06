@@ -106,13 +106,13 @@ object DesktopTaskEditorTest extends TestSuite {
           "whole task is selected" - {
             editor.convertToClipboardData(
               newDocument(
-                newTask("ABC", collapsed = true, tags = Seq("XX", "YY"))
+                newTask("ABC", collapsed = true, checked = true, tags = Seq("XX", "YY"))
               ),
               IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 3)),
             ) ==>
               editor.ClipboardData(
                 htmlText = removeFormattingWhitespace("""
-                    <span piga="true" piga-tags="XX,YY">
+                    <span piga="true" piga-checked="true" piga-tags="XX,YY">
                       ABC
                     </span>
                   """),
@@ -234,16 +234,18 @@ object DesktopTaskEditorTest extends TestSuite {
           content: String,
           indentation: Int = 0,
           collapsed: Boolean = false,
+          checked: Boolean = false,
           tags: Seq[String] = Seq(),
       ) =
-        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, tags)
+        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, checked, tags)
       def replacementPartFormatted(
           content: TextWithMarkup,
           indentation: Int = 0,
           collapsed: Boolean = false,
+          checked: Boolean = false,
           tags: Seq[String] = Seq(),
       ) =
-        editor.Replacement.Part(content, indentation, collapsed, tags)
+        editor.Replacement.Part(content, indentation, collapsed, checked, tags)
       def asHtml(s: String) = editor.ClipboardData(htmlText = s, plainText = "")
       def asText(s: String) = editor.ClipboardData(htmlText = "", plainText = s)
 
@@ -485,7 +487,7 @@ object DesktopTaskEditorTest extends TestSuite {
       }
       "escapes html" - {
         roundTrip(removeFormattingWhitespace("""
-          <span piga="true">
+          <span piga="true" piga-checked="truex">
             a&lt;b&gt;c
           </span>
         """))

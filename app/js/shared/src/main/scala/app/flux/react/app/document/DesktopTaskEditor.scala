@@ -531,6 +531,21 @@ private[document] final class DesktopTaskEditor(implicit
                 formattingAtStart = formatting,
               )
 
+            // Check (Alt + Shift + 4)
+            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                if event.keyCode == 52 =>
+              event.preventDefault()
+              val hasChildren = selection.includeChildren() != selection
+              val alreadyAllChecked = document.tasksIn(selection).forall(_.checked)
+              val newCheckedValue = !alreadyAllChecked
+              updateTasksInSelection(selection, updateChildren = false) { task =>
+                MaskedTaskUpdate.fromFields(
+                  task,
+                  checked = newCheckedValue,
+                  collapsed = if (newCheckedValue) hasChildren else  task.collapsed,
+                )
+              }
+
             // Strikethrough (Alt + Shift + 5)
             case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
                 if event.keyCode == 53 =>
@@ -1612,7 +1627,9 @@ private[document] final class DesktopTaskEditor(implicit
             for (i <- subtask.indentation until lastIndentation) {
               resultBuilder.append("</ul>")
             }
-            resultBuilder.append(s"""<li piga="true"${collapsedAttribute(subtask)}${checkedAttribute(subtask)}${tagsAttribute(
+            resultBuilder.append(s"""<li piga="true"${collapsedAttribute(subtask)}${checkedAttribute(
+              subtask
+            )}${tagsAttribute(
               subtask
             )}>""")
             resultBuilder.append(subtask.content.toHtml)
@@ -1633,7 +1650,7 @@ private[document] final class DesktopTaskEditor(implicit
       clipboardData: ClipboardData,
       baseFormatting: Formatting,
   ): Replacement = {
-    case class PigaAttributes(tags: Seq[String], collapsed: Boolean, checked:Boolean)
+    case class PigaAttributes(tags: Seq[String], collapsed: Boolean, checked: Boolean)
     def getPigaAttributes(nodes: Seq[dom.raw.Node]): PigaAttributes = {
       nodes.find(node => getAttributeOrEmpty(node, "piga") == "true") match {
         case Some(node) =>
@@ -1644,7 +1661,7 @@ private[document] final class DesktopTaskEditor(implicit
           )
         case None =>
           println("  Warning: Could not find a node with the piga attribute")
-          PigaAttributes(tags = Seq(), collapsed = false, checked=false)
+          PigaAttributes(tags = Seq(), collapsed = false, checked = false)
       }
     }
     def containsNodeWithPigaAttribute(node: dom.raw.Node): Boolean = {

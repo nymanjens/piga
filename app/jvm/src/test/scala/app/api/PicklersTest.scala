@@ -4,6 +4,7 @@ import app.api.Picklers._
 import app.api.ScalaJsApi._
 import app.common.testing.TestObjects._
 import app.common.testing._
+import app.models.document.TaskEntity
 import hydro.common.testing._
 import hydro.models.modification.EntityModification
 import hydro.models.modification.EntityType
@@ -26,6 +27,10 @@ class PicklersTest extends HookedSpecification {
 
   "GetInitialDataResponse" in {
     testPickleAndUnpickle[GetInitialDataResponse](testGetInitialDataResponse)
+  }
+
+  "TaskEntity" in {
+    testPickleAndUnpickle[TaskEntity](testTaskEntity)
   }
 
   private def testPickleAndUnpickle[T: Pickler](value: T) = {

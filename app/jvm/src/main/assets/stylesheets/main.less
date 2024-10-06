@@ -137,20 +137,23 @@ ul.task-editor-base {
       &:not(.collapsed).leaf:before {
         content: "\e157"; // glyphicon-unchecked
       }
-    }
-
-    &.highlighted {
-      background-color: #efeeee;
+      &.checked:before {
+        content: "\e067"; // glyphicon-check
+      }
     }
 
     &.modified-by-other-user {
       color: #008000; // Green
     }
     &.modification-pending {
-      color: grey;
-      &.modified-by-other-user {
-        color: #00b000;
-      }
+      background-color: #eee;
+/*      color: #888;*/
+    }
+    &.checked {
+      color: #ccc;
+    }
+    &.highlighted {
+      background-color: #efeeee;
     }
 
     .tag {
@@ -204,10 +207,6 @@ ul.task-editor-base {
       &:after { // For collapsed tasks
         color: #CCC;
         font-style: italic;
-      }
-
-      &.modification-pending {
-        color: grey;
       }
     }
   }
