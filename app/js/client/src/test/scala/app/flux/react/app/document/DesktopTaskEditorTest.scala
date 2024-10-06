@@ -454,6 +454,7 @@ object DesktopTaskEditorTest extends TestSuite {
                 orderToken = orderTokenA,
                 indentation = 10 + p.indentationRelativeToCurrent,
                 collapsed = p.collapsed,
+                checked = p.checked,
                 tags = p.tags,
               )
             ): _*
