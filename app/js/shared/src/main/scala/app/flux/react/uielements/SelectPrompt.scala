@@ -31,7 +31,7 @@ import scala.collection.immutable.Seq
 import scala.scalajs.js
 
 object SelectPrompt {
-  def choose[K](title: String, optionsIdToName: ListMap[K, String]): Future[Option[K]] = {
+  def choose[K](title: String, optionsIdToName: Future[ListMap[K, String]]): Future[Option[K]] = async {
     val result = Bootbox.prompt(title, value = "", animate = false, selectValue = false)
 
     val form = dom.document.getElementsByClassName("bootbox-form").apply(0)
@@ -39,7 +39,8 @@ object SelectPrompt {
     optionsDiv.id = "SelectPrompt-options"
     form.appendChild(optionsDiv)
 
-    val diaglogHandler = new DialogHandler(optionsIdToName, optionsDiv)
+    val resolvedOptionsIdToName = await(optionsIdToName)
+    val diaglogHandler = new DialogHandler(resolvedOptionsIdToName, optionsDiv)
 
     diaglogHandler.renderOptionsList(Matcher.noopMatcher, selectedIndex = 0)
 
@@ -52,12 +53,10 @@ object SelectPrompt {
       onArrowDown = () => diaglogHandler.incrementSelectedIndex(diff = +1),
     )
 
-    async {
-      for {
-        searchString <- await(result)
-        optionId <- diaglogHandler.lastSelectedOptionId
-      } yield optionId
-    }
+    for {
+      searchString <- await(result)
+      optionId <- diaglogHandler.lastSelectedOptionId
+    } yield optionId
   }
 
   private def addChangeListeners(

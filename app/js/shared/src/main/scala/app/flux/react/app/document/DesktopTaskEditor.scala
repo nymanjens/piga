@@ -1069,17 +1069,18 @@ private[document] final class DesktopTaskEditor(implicit
         props: Props,
         state: State,
     ): Callback = Callback.future[Unit] {
-        case class Choice(documentId: Long, selectionOverride: Option[IndexedSelection], title: String)
+      case class Choice(documentId: Long, selectionOverride: Option[IndexedSelection], title: String)
 
       async {
-        val allDocumentStores = await(
-          Future.sequence(
-            for (document <- allDocumentsStore.state.allDocuments)
-              yield documentStoreFactory.create(document.documentId)
+        val optionsIdToName = async {
+          val allDocumentStores = await(
+            Future.sequence(
+              for (document <- allDocumentsStore.state.allDocuments)
+                yield documentStoreFactory.create(document.documentId)
+            )
           )
-        )
-        val allChoices =
-          (for (documentStore <- allDocumentStores) yield {
+
+          val allChoices = (for (documentStore <- allDocumentStores) yield {
             val document = documentStore.state.document
 
             val documentChoice =
@@ -1101,10 +1102,13 @@ private[document] final class DesktopTaskEditor(implicit
             documentChoice +: chapterChoices
           }).flatten
 
+          ListMap(allChoices.map(c => (c, c.title)): _*)
+        }
+
         val choice = await(
           SelectPrompt.choose(
             title = "Go to file or chapter:",
-            optionsIdToName = ListMap(allChoices.map(c => (c, c.title)): _*),
+            optionsIdToName = optionsIdToName,
           )
         )
         choice match {
