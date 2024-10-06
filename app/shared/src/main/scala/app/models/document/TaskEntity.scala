@@ -16,6 +16,7 @@ case class TaskEntity(
     orderToken: OrderToken,
     indentation: Int,
     collapsed: Boolean,
+    checked: Boolean,
     delayedUntil: Option[LocalDateTime],
     tags: Seq[String],
     lastContentModifierUserId: Long,

@@ -28,6 +28,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   def orderToken: OrderToken = jsTaskEntity.orderToken
   def indentation: Int = jsTaskEntity.indentation
   def collapsed: Boolean = jsTaskEntity.collapsed
+  def checked: Boolean = jsTaskEntity.checked
   def delayedUntil: Option[LocalDateTime] = jsTaskEntity.delayedUntil
   def tags: Seq[String] = jsTaskEntity.tags
   def lastContentModifierUserId: Long = jsTaskEntity.lastContentModifierUserId
@@ -39,6 +40,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     this.orderToken == that.orderToken &&
     this.indentation == that.indentation &&
     this.collapsed == that.collapsed &&
+    this.checked == that.checked &&
     this.delayedUntil == that.delayedUntil &&
     this.tags == that.tags &&
     this.lastContentModifierUserId == that.lastContentModifierUserId
@@ -51,6 +53,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       orderToken = jsTaskEntity.orderToken,
       indentation = jsTaskEntity.indentation,
       collapsed = jsTaskEntity.collapsed,
+      checked = jsTaskEntity.checked,
       delayedUntil = jsTaskEntity.delayedUntil,
       tags = jsTaskEntity.tags,
       lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
@@ -80,6 +83,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     applyUpdate(maskedTaskUpdate.orderToken, FakeJsTaskEntity.Fields.orderToken)
     applyUpdate(maskedTaskUpdate.indentation, FakeJsTaskEntity.Fields.indentation)
     applyUpdate(maskedTaskUpdate.collapsed, FakeJsTaskEntity.Fields.collapsed)
+    applyUpdate(maskedTaskUpdate.checked, FakeJsTaskEntity.Fields.checked)
     applyUpdate(maskedTaskUpdate.delayedUntil, FakeJsTaskEntity.Fields.delayedUntil)
     applyUpdate(maskedTaskUpdate.tags, FakeJsTaskEntity.Fields.tags)
     applyUpdate(maskedTaskUpdate.lastContentModifierUserId, FakeJsTaskEntity.Fields.lastContentModifierUserId)
@@ -96,6 +100,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
       orderToken: OrderToken = null,
       indentation: Int = -1,
       collapsed: java.lang.Boolean = null,
+      checked: java.lang.Boolean = null,
       delayedUntil: Option[LocalDateTime] = null,
       tags: Seq[String] = null,
   ): Task = {
@@ -107,6 +112,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
         orderToken = Option(orderToken) getOrElse this.orderToken,
         indentation = if (indentation == -1) this.indentation else indentation,
         collapsed = toScala(Option(collapsed) getOrElse this.collapsed),
+        checked = toScala(Option(checked) getOrElse this.checked),
         delayedUntil = Option(delayedUntil) getOrElse this.delayedUntil,
         tags = Option(tags) getOrElse this.tags,
         lastContentModifierUserId = jsTaskEntity.lastContentModifierUserId,
@@ -147,6 +153,7 @@ object Task {
       orderToken = OrderToken.middle,
       indentation = 0,
       collapsed = false,
+      checked = false,
       delayedUntil = None,
       tags = Seq(),
       lastContentModifierUserId = -1,
@@ -160,6 +167,7 @@ object Task {
       orderToken: OrderToken,
       indentation: Int,
       collapsed: Boolean,
+      checked: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
   )(implicit document: Document, user: User): Task =
@@ -170,6 +178,7 @@ object Task {
         orderToken = orderToken,
         indentation = indentation,
         collapsed = collapsed,
+        checked = checked,
         delayedUntil = delayedUntil,
         tags = tags,
         lastContentModifierUserId = user.id,
@@ -186,6 +195,7 @@ object Task {
         orderToken = taskEntity.orderToken,
         indentation = taskEntity.indentation,
         collapsed = taskEntity.collapsed,
+        checked = taskEntity.checked,
         delayedUntil = taskEntity.delayedUntil,
         tags = taskEntity.tags,
         lastContentModifierUserId = taskEntity.lastContentModifierUserId,
@@ -207,6 +217,7 @@ object Task {
       orderToken: OrderToken,
       indentation: Int,
       collapsed: Boolean,
+      checked: Boolean,
       delayedUntil: Option[LocalDateTime],
       tags: Seq[String],
       lastContentModifierUserId: Long,
@@ -230,6 +241,7 @@ object Task {
         .put(Fields.orderToken, ModelFields.TaskEntity.orderToken)
         .put(Fields.indentation, ModelFields.TaskEntity.indentation)
         .put(Fields.collapsed, ModelFields.TaskEntity.collapsed)
+        .put(Fields.checked, ModelFields.TaskEntity.checked)
         .put(Fields.delayedUntil, ModelFields.TaskEntity.delayedUntil)
         .put(Fields.tags, ModelFields.TaskEntity.tags)
         .put(Fields.lastContentModifierUserId, ModelFields.TaskEntity.lastContentModifierUserId)
@@ -248,6 +260,7 @@ object Task {
       val indentation: ModelField[Int, E] =
         ModelField("indentation", _.indentation, v => _.copy(indentation = v))
       val collapsed: ModelField[Boolean, E] = ModelField("collapsed", _.collapsed, v => _.copy(collapsed = v))
+      val checked: ModelField[Boolean, E] = ModelField("checked", _.checked, v => _.copy(checked = v))
       val delayedUntil: ModelField[Option[LocalDateTime], E] =
         ModelField("delayedUntil", _.delayedUntil, v => _.copy(delayedUntil = v))
       val tags: ModelField[Seq[String], E] = ModelField("tags", _.tags, v => _.copy(tags = v))

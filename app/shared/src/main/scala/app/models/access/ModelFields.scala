@@ -66,6 +66,7 @@ object ModelFields {
     val indentation: ModelField[Int, E] =
       ModelField("indentation", _.indentation, v => _.copy(indentation = v))
     val collapsed: ModelField[Boolean, E] = ModelField("collapsed", _.collapsed, v => _.copy(collapsed = v))
+    val checked: ModelField[Boolean, E] = ModelField("checked", _.checked, v => _.copy(checked = v))
     val delayedUntil: ModelField[Option[LocalDateTime], E] =
       ModelField("delayedUntil", _.delayedUntil, v => _.copy(delayedUntil = v))
     val tags: ModelField[Seq[String], E] = ModelField("tags", _.tags, v => _.copy(tags = v))
@@ -95,6 +96,7 @@ object ModelFields {
     TaskEntity.orderToken,
     TaskEntity.indentation,
     TaskEntity.collapsed,
+    TaskEntity.checked,
     TaskEntity.delayedUntil,
     TaskEntity.tags,
     TaskEntity.lastContentModifierUserId,

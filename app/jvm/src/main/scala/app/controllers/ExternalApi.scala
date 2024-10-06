@@ -242,6 +242,7 @@ final class ExternalApi @Inject() (implicit
             orderToken = orderToken,
             indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
             collapsed = false,
+            checked = false,
             delayedUntil = None,
             tags = Seq(),
             lastContentModifierUserId = user.id,
@@ -309,6 +310,7 @@ private case class JsonSerializableTask(
     contentHtml: String,
     indentation: Int,
     collapsed: Boolean,
+    checked: Boolean,
     tags: Seq[String],
 )
 private object JsonSerializableTask {
@@ -317,6 +319,7 @@ private object JsonSerializableTask {
       contentHtml = taskEntity.contentHtml,
       indentation = taskEntity.indentation,
       collapsed = taskEntity.collapsed,
+      checked = taskEntity.checked,
       tags = taskEntity.tags,
     )
   }

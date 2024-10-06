@@ -119,6 +119,7 @@ object DocumentEdit {
       orderToken: Option[FieldUpdate[OrderToken]],
       indentation: Option[FieldUpdate[Int]],
       collapsed: Option[FieldUpdate[Boolean]],
+      checked: Option[FieldUpdate[Boolean]],
       delayedUntil: Option[FieldUpdate[Option[LocalDateTime]]],
       tags: Option[FieldUpdate[Seq[String]]],
       lastContentModifierUserId: Option[FieldUpdate[Long]],
@@ -130,6 +131,7 @@ object DocumentEdit {
       orderToken = orderToken.map(_.reversed),
       indentation = indentation.map(_.reversed),
       collapsed = collapsed.map(_.reversed),
+      checked = checked.map(_.reversed),
       delayedUntil = delayedUntil.map(_.reversed),
       tags = tags.map(_.reversed),
       lastContentModifierUserId = lastContentModifierUserId.map(_.reversed),
@@ -159,6 +161,7 @@ object DocumentEdit {
         orderToken = mergeFieldUpdates(this.orderToken, that.orderToken),
         indentation = mergeFieldUpdates(this.indentation, that.indentation),
         collapsed = mergeFieldUpdates(this.collapsed, that.collapsed),
+        checked = mergeFieldUpdates(this.checked, that.checked),
         delayedUntil = mergeFieldUpdates(this.delayedUntil, that.delayedUntil),
         tags = mergeFieldUpdates(this.tags, that.tags),
         lastContentModifierUserId =
@@ -173,6 +176,7 @@ object DocumentEdit {
         orderToken: OrderToken = null,
         indentation: Int = -1,
         collapsed: java.lang.Boolean = null,
+        checked: java.lang.Boolean = null,
         delayedUntil: Option[LocalDateTime] = null,
         tags: Seq[String] = null,
     )(implicit user: User): MaskedTaskUpdate = {
@@ -189,6 +193,7 @@ object DocumentEdit {
         orderToken = ifUpdate(orderToken, originalTask.orderToken),
         indentation = ifUpdate(indentation, originalTask.indentation),
         collapsed = ifUpdate(collapsed, originalTask.collapsed),
+        checked = ifUpdate(checked, originalTask.checked),
         delayedUntil = ifUpdate(delayedUntil, originalTask.delayedUntil),
         tags = ifUpdate(tags, originalTask.tags),
         lastContentModifierUserId =

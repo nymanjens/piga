@@ -54,6 +54,7 @@ final class AllDocumentsStore(implicit
             orderToken = OrderToken.middle,
             indentation = 0,
             collapsed = false,
+            checked = false,
             delayedUntil = None,
             tags = Seq(),
             lastContentModifierUserId = user.id,

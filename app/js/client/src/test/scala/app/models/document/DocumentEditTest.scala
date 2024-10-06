@@ -168,6 +168,7 @@ object DocumentEditTest extends TestSuite {
           orderToken = Some(FieldUpdate(testTask.orderToken, orderTokenE)),
           indentation = None,
           collapsed = None,
+          checked = None,
           delayedUntil = None,
           tags = None,
           lastContentModifierUserId = None,
