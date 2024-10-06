@@ -128,17 +128,19 @@ ul.task-editor-base {
         width: 1.7em;
         font-size: .7em;
       }
-      &.collapsed:before {
-        content: "\e158"; // glyphicon-expand
-      }
-      &:not(.collapsed):before {
-        content: "\e159"; // glyphicon-collapse-down
-      }
-      &:not(.collapsed).leaf:before {
-        content: "\e157"; // glyphicon-unchecked
-      }
       &.checked:before {
         content: "\e067"; // glyphicon-check
+      }
+      &:not(.checked) {
+        &.collapsed:before {
+          content: "\e158"; // glyphicon-expand
+        }
+        &:not(.collapsed):before {
+          content: "\e159"; // glyphicon-collapse-down
+        }
+        &:not(.collapsed).leaf:before {
+          content: "\e157"; // glyphicon-unchecked
+        }
       }
     }
 
@@ -146,14 +148,13 @@ ul.task-editor-base {
       color: #008000; // Green
     }
     &.modification-pending {
-      background-color: #eee;
-/*      color: #888;*/
+      background-color: #f7f7f7;
     }
     &.checked {
       color: #ccc;
     }
     &.highlighted {
-      background-color: #efeeee;
+      background-color: #eee;
     }
 
     .tag {

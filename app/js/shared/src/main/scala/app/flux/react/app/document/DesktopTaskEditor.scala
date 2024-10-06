@@ -535,14 +535,15 @@ private[document] final class DesktopTaskEditor(implicit
             case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
                 if event.keyCode == 52 =>
               event.preventDefault()
-              val hasChildren = selection.includeChildren() != selection
-              val alreadyAllChecked = document.tasksIn(selection).forall(_.checked)
-              val newCheckedValue = !alreadyAllChecked
+              val newCheckedValue = document.tasksIn(selection).forall(!_.checked)
               updateTasksInSelection(selection, updateChildren = false) { task =>
+                val taskSelection =
+                  DetachedSelection.singleton(DetachedCursor(task, offsetInTask = 0)).attachToDocument
+                val hasChildren = taskSelection.includeChildren() != taskSelection
                 MaskedTaskUpdate.fromFields(
                   task,
                   checked = newCheckedValue,
-                  collapsed = if (newCheckedValue) hasChildren else  task.collapsed,
+                  collapsed = if (newCheckedValue) hasChildren else task.collapsed,
                 )
               }
 
