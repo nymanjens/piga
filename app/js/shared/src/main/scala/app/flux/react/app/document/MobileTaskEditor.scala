@@ -144,6 +144,7 @@ private[document] final class MobileTaskEditor(implicit
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(task.contentString.isEmpty)("empty-task") ++
                     ifThenOption(task.collapsed)("collapsed") ++
+                    ifThenOption(task.checked)("checked") ++
                     ifThenOption(isHighlighted)("highlighted") ++
                     ifThenOption(state.pendingTaskIds contains task.id)("modification-pending") ++
                     ifThenOption(task.lastContentModifierUserId != user.id)("modified-by-other-user") ++
@@ -352,6 +353,7 @@ private[document] final class MobileTaskEditor(implicit
                 ),
                 indentation = state.highlightedTask.indentation,
                 collapsed = false,
+                checked = false,
                 delayedUntil = None,
                 tags = Seq(),
               )
@@ -388,6 +390,7 @@ private[document] final class MobileTaskEditor(implicit
               orderToken = OrderToken.middle,
               indentation = 0,
               collapsed = false,
+              checked = false,
               delayedUntil = None,
               tags = Seq(),
             )
