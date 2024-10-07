@@ -854,6 +854,7 @@ private[document] final class DesktopTaskEditor(implicit
                 indentation = newIndentation,
                 collapsed =
                   if (replacesWholeTask) taskToUpdate.collapsed || replacementPart.collapsed else null,
+                checked = if (replacesWholeTask) taskToUpdate.checked || replacementPart.checked else null,
                 tags = if (replacesWholeTask) (taskToUpdate.tags ++ replacementPart.tags).distinct else null,
               )
             )
