@@ -110,6 +110,7 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
     - `ctrl + P`: Open "Go to file" dialog
     - `ctrl + plus`: Expand current task
     - `ctrl + minus`: Collapse current task
+    - `alt + shift + 4`: Mark as 'done'
 - **Power user shortcuts**
     - **Copying**
         - `ctrl + shift + C`: Copy selected task and its children
