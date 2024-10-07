@@ -865,7 +865,7 @@ private[document] final class DesktopTaskEditor(implicit
                 orderToken = newOrderToken,
                 indentation = newIndentation,
                 collapsed = replacementPart.collapsed,
-                checked = false,
+                checked = replacementPart.checked,
                 delayedUntil = None,
                 tags = replacementPart.tags,
               )
