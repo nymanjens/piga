@@ -1287,9 +1287,14 @@ private[document] final class DesktopTaskEditor(implicit
         case expandedSelection =>
           Callback.future {
             newLinkFromDialog(getAnyLinkInSelection(originalSelection)) map {
-              case None                                 => setSelection(originalSelection)
-              case Some("")                             => editLinkInternal(expandedSelection, None)
-              case Some(newLink) if isValidUrl(newLink) => editLinkInternal(expandedSelection, Some(newLink))
+              case None     => setSelection(originalSelection)
+              case Some("") => editLinkInternal(expandedSelection, None)
+              case Some(newLink) if isValidUrl(newLink) =>
+                editLinkInternal(expandedSelection, Some(newLink)) >> {
+                  // When adding a link, the selection may have been expanded from a singleton. It can be annoying when
+                  // working with links if the whole line is then selected.
+                  setSelection(originalSelection)
+                }
               case Some(newLink) =>
                 Future {
                   globalMessagesStore.showAdHocMessage(f"Not a valid link: $newLink", Message.Type.Failure)
