@@ -531,6 +531,16 @@ private[document] final class DesktopTaskEditor(implicit
                 formattingAtStart = formatting,
               )
 
+            // Code font (Alt + Shift + 1)
+            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                if event.keyCode == 49 =>
+              event.preventDefault()
+              toggleFormatting(
+                (form, value) => form.copy(code = value),
+                selection,
+                formattingAtStart = formatting,
+              )
+
             // Check (Alt + Shift + 4)
             case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
                 if event.keyCode == 52 =>
