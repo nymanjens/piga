@@ -125,6 +125,8 @@ private[document] final class DesktopTaskEditor(implicit
       mutable.Map().withDefault(identity)
 
     override def didMount(props: Props, state: State): Callback = {
+      dom.window.addEventListener("resize", resizeListener)
+
       val selection = documentSelectionStore.getSelection(state.document.id)
       // Add timeout because scroll to view doesn't seem to work immediately after mount
       js.timers.setTimeout(20.milliseconds) {
