@@ -57,6 +57,8 @@ import org.scalajs.dom.raw.Event
 import org.scalajs.dom.raw.HTMLButtonElement
 import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.raw.KeyboardEvent
+import org.scalajs.dom.ClipboardEvent
+import org.scalajs.dom.raw.DataTransfer
 
 import scala.async.Async.async
 import scala.async.Async.await
@@ -296,7 +298,7 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    private def handlePaste(event: ReactEventFromInput): Callback =
+    private def handlePaste(event: ReactClipboardEventFromInput): Callback =
       $.state flatMap { implicit state =>
         $.props flatMap { implicit props =>
           event.preventDefault()
@@ -1908,14 +1910,20 @@ private[document] final class DesktopTaskEditor(implicit
     )
   }
   @visibleForTesting private[document] object ClipboardData {
-    def fromEvent(event: ReactEventFromInput): ClipboardData = {
-      fromEvent(event.nativeEvent)
+    def fromEvent(event: ReactClipboardEventFromInput): ClipboardData = {
+      fromData(event.clipboardData)
     }
 
-    def fromEvent(event: dom.Event) = ClipboardData(
-      htmlText = event.asInstanceOf[js.Dynamic].clipboardData.getData("text/html").asInstanceOf[String],
-      plainText = event.asInstanceOf[js.Dynamic].clipboardData.getData("text/plain").asInstanceOf[String],
-    )
+    def fromEvent(event: ClipboardEvent) = {
+      fromData(event.clipboardData)
+    }
+
+    private def fromData(clipboardData: DataTransfer) = {
+      ClipboardData(htmlText = clipboardData.getData("text/html"),
+        plainText = clipboardData.getData("text/plain"),
+      )
+    }
+
   }
 
   private final class DuplicateKeypressWorkaroundManager {
