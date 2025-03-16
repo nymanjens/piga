@@ -69,7 +69,6 @@ object BuildSettings {
       "com.google.testparameterinjector" % "test-parameter-injector" % "1.9" % Test,
       "org.yaml" % "snakeyaml" % "1.14",
       "com.google.truth" % "truth" % "1.1.2" % Test,
-      "com.google.testparameterinjector" % "test-parameter-injector" % "1.0-rc1" % Test,
       "com.typesafe.slick" %% "slick" % "3.3.0",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.3.0",
       "commons-lang" % "commons-lang" % "2.6",
