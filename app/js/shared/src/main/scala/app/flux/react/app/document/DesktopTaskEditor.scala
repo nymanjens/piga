@@ -1313,12 +1313,18 @@ private[document] final class DesktopTaskEditor(implicit
               case Some(newLink)
                   if StringUtils.containsSpecialCharacters(
                     newLink,
-                    allowNewlines = false,
-                    allowNonLatin1 = false,
+                    newlinesAreSpecial = true,
+                    nonLatin1AreSpecial = true,
                   ) =>
+                val escapedLink = StringUtils
+                  .toStringWithSpecializedCharactersEscaped(
+                    newLink,
+                    escapeNewlines = true,
+                    escapeNonLatin1 = true,
+                  )
                 Future {
                   globalMessagesStore.showAdHocMessage(
-                    f"Not a valid link because it contains special (probably weird unicode) characters: $newLink",
+                    f"Not a valid link because it contains special (probably weird unicode) characters: $escapedLink",
                     Message.Type.Failure,
                   )
                 }

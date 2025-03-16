@@ -64,13 +64,13 @@ object StringUtils {
 
   def containsSpecialCharacters(
       string: String,
-      allowNewlines: Boolean,
-      allowNonLatin1: Boolean,
+      newlinesAreSpecial: Boolean,
+      nonLatin1AreSpecial: Boolean,
   ): Boolean = {
     val sanitized = sanitizeSpecializedCharacters(
       string,
-      stripNewlines = !allowNewlines,
-      substituteNonLatin1 = !allowNonLatin1,
+      stripNewlines = newlinesAreSpecial,
+      substituteNonLatin1 = nonLatin1AreSpecial,
     )
     sanitized != string
   }
@@ -84,8 +84,8 @@ object StringUtils {
       case c
           if containsSpecialCharacters(
             c.toString,
-            allowNewlines = !escapeNewlines,
-            allowNonLatin1 = !escapeNonLatin1,
+            newlinesAreSpecial = escapeNewlines,
+            nonLatin1AreSpecial = escapeNonLatin1,
           ) =>
         f"\\u$c%04X"
       case c => c.toString

@@ -418,7 +418,7 @@ object TextWithMarkup {
             .sanitizeSpecializedCharacters(text, stripNewlines = false, substituteNonLatin1 = false),
           formatting = formatting.copy(link =
             formatting.link.filter(l =>
-              !StringUtils.containsSpecialCharacters(l, allowNewlines = false, allowNonLatin1 = false)
+              !StringUtils.containsSpecialCharacters(l, newlinesAreSpecial = true, nonLatin1AreSpecial = true)
             )
           ),
         )
