@@ -18,7 +18,7 @@ object DesktopTaskEditorTest extends TestSuite {
     "convertToMarkdown" - {
       "single task" - {
         "with formatting" - {
-          editor.convertToMarkdown(Seq(newTask(content = TextWithMarkup("a") + italic("b")))) ==>
+          editor.convertToMarkdown(Seq(newTask(content = textWithMarkup("a") + italic("b")))) ==>
             "a*b*"
         }
       }
@@ -26,8 +26,8 @@ object DesktopTaskEditorTest extends TestSuite {
         "with formatting" - {
           editor.convertToMarkdown(
             Seq(
-              newTask(content = TextWithMarkup("a") + italic("b")),
-              newTask(content = TextWithMarkup("a") + italic("b")),
+              newTask(content = textWithMarkup("a") + italic("b")),
+              newTask(content = textWithMarkup("a") + italic("b")),
             )
           ) ==>
             """- a*b*
@@ -88,7 +88,7 @@ object DesktopTaskEditorTest extends TestSuite {
       "with formatting" - {
         editor.convertToClipboardData(
           newDocument(
-            newTask(content = TextWithMarkup("a") + italic("b"), tags = Seq())
+            newTask(content = textWithMarkup("a") + italic("b"), tags = Seq())
           ),
           IndexedSelection(start = IndexedCursor(0, 0), end = IndexedCursor(0, 2)),
         ) ==>
@@ -237,7 +237,7 @@ object DesktopTaskEditorTest extends TestSuite {
           checked: Boolean = false,
           tags: Seq[String] = Seq(),
       ) =
-        editor.Replacement.Part(TextWithMarkup(content), indentation, collapsed, checked, tags)
+        editor.Replacement.Part(textWithMarkup(content), indentation, collapsed, checked, tags)
       def replacementPartFormatted(
           content: TextWithMarkup,
           indentation: Int = 0,
@@ -260,7 +260,7 @@ object DesktopTaskEditorTest extends TestSuite {
               """)),
               baseFormatting = Formatting.none,
             ) ==>
-              replacement(TextWithMarkup("abc\ndef"))
+              replacement(textWithMarkup("abc\ndef"))
           }
           "applies formatting" - {
             editor.clipboardStringToReplacement(
@@ -271,7 +271,7 @@ object DesktopTaskEditorTest extends TestSuite {
               """)),
               baseFormatting = Formatting.none,
             ) ==>
-              replacement(TextWithMarkup("a") + italic("b") + TextWithMarkup("c"))
+              replacement(textWithMarkup("a") + italic("b") + textWithMarkup("c"))
           }
           "with tags and collapsed" - {
             editor.clipboardStringToReplacement(
@@ -284,7 +284,7 @@ object DesktopTaskEditorTest extends TestSuite {
             ) ==>
               replacementFromParts(
                 replacementPartFormatted(
-                  TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
+                  textWithMarkup("a") + italic("b") + textWithMarkup("c"),
                   collapsed = true,
                   tags = Seq("XX", "YY"),
                 )
@@ -306,7 +306,7 @@ object DesktopTaskEditorTest extends TestSuite {
             baseFormatting = Formatting.none,
           ) ==>
             replacement(
-              TextWithMarkup("a\nb"),
+              textWithMarkup("a\nb"),
               replacementPart("xyz", collapsed = true, checked = true, tags = Seq("XX", "YY")),
             )
         }
@@ -323,7 +323,7 @@ object DesktopTaskEditorTest extends TestSuite {
               baseFormatting = Formatting.none,
             ) ==>
               replacement(
-                TextWithMarkup("a"),
+                textWithMarkup("a"),
                 replacementPart("b"),
                 replacementPart("c"),
                 replacementPart("d"),
@@ -331,29 +331,29 @@ object DesktopTaskEditorTest extends TestSuite {
           }
           "br" - {
             editor.clipboardStringToReplacement(asHtml("abc<br/>def"), baseFormatting = Formatting.none) ==>
-              replacement(TextWithMarkup("abc"), replacementPart("def"))
+              replacement(textWithMarkup("abc"), replacementPart("def"))
           }
           "newline" - {
             editor.clipboardStringToReplacement(asHtml("abc\ndef"), baseFormatting = Formatting.none) ==>
-              replacement(TextWithMarkup("abc"), replacementPart("def"))
+              replacement(textWithMarkup("abc"), replacementPart("def"))
           }
           "applies formatting" - {
             editor.clipboardStringToReplacement(asHtml("a<i>b</i>c"), baseFormatting = Formatting.none) ==>
-              replacement(TextWithMarkup("a") + italic("b") + TextWithMarkup("c"))
+              replacement(textWithMarkup("a") + italic("b") + textWithMarkup("c"))
           }
           "ignores html comments" - {
             editor.clipboardStringToReplacement(
               asHtml("<!-- comment -->abc"),
               baseFormatting = Formatting.none,
             ) ==>
-              replacement(TextWithMarkup("abc"))
+              replacement(textWithMarkup("abc"))
           }
           "ignores style tags" - {
             editor.clipboardStringToReplacement(
               asHtml("""<style type="text/css">STYLE</style>abc"""),
               baseFormatting = Formatting.none,
             ) ==>
-              replacement(TextWithMarkup("abc"))
+              replacement(textWithMarkup("abc"))
           }
         }
         "with list tags" - {
@@ -371,8 +371,8 @@ object DesktopTaskEditorTest extends TestSuite {
               baseFormatting = Formatting.none,
             ) ==>
               replacement(
-                TextWithMarkup("a\nb\nc"),
-                replacementPartFormatted(TextWithMarkup("xy") + italic("z"), indentation = 0),
+                textWithMarkup("a\nb\nc"),
+                replacementPartFormatted(textWithMarkup("xy") + italic("z"), indentation = 0),
               )
           }
           "nested level" - {
@@ -394,7 +394,7 @@ object DesktopTaskEditorTest extends TestSuite {
               baseFormatting = Formatting.none,
             ) ==>
               replacement(
-                TextWithMarkup("abc"),
+                textWithMarkup("abc"),
                 replacementPart("def", indentation = 1),
                 replacementPart("ghi", indentation = 1),
                 replacementPart("klm", indentation = 2),
@@ -414,8 +414,8 @@ object DesktopTaskEditorTest extends TestSuite {
             baseFormatting = Formatting.none,
           ) ==>
             replacement(
-              TextWithMarkup("a") + italic("b") + TextWithMarkup("c"),
-              replacementPartFormatted(TextWithMarkup("d") + italic("e") + TextWithMarkup("f")),
+              textWithMarkup("a") + italic("b") + textWithMarkup("c"),
+              replacementPartFormatted(textWithMarkup("d") + italic("e") + textWithMarkup("f")),
             )
         }
         "with baseFormatting" - {
@@ -427,12 +427,12 @@ object DesktopTaskEditorTest extends TestSuite {
       "plainText input" - {
         "newline" - {
           editor.clipboardStringToReplacement(asText("abc\ndef"), baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("abc"), replacementPart("def"))
+            replacement(textWithMarkup("abc"), replacementPart("def"))
         }
         "with HTML tag" - {
           editor
             .clipboardStringToReplacement(asText("abc<br/>def"), baseFormatting = Formatting.none) ==>
-            replacement(TextWithMarkup("abc<br/>def"))
+            replacement(textWithMarkup("abc<br/>def"))
         }
         "with baseFormatting" - {
           editor
@@ -518,7 +518,9 @@ object DesktopTaskEditorTest extends TestSuite {
     }
   }
 
-  private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
+  private def italic(string: String): TextWithMarkup = textWithMarkup(string, Formatting(italic = true))
+  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
+    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 
   private def removeFormattingWhitespace(s: String): String = {
     s.split('\n').map(_.trim).mkString("")
