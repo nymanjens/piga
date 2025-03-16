@@ -4,29 +4,30 @@ import java.nio.charset.Charset
 
 object StringUtils {
 
-  private val EDGE_CASE_REPLACEMENTS: GuavaReplacement.ImmutableBiMap[Char, String] = GuavaReplacement.ImmutableBiMap
-    .builder()
-    // Workaround for odd bug in p{Z} regex below that also seems to be filtering out newlines
-    .put('\n', "%)A_[7|%*&")
-    // Supported by latin1, but with a different code
-    .put('€', "%)B_[7|%*&")
-    // Supported by latin1, but with a different code
-    .put('‰', "%)C_[7|%*&")
-    .build()
+  private val EDGE_CASE_REPLACEMENTS: GuavaReplacement.ImmutableBiMap[Char, String] =
+    GuavaReplacement.ImmutableBiMap
+      .builder()
+      // Workaround for odd bug in p{Z} regex below that also seems to be filtering out newlines
+      .put('\n', "%)A_[7|%*&")
+      // Supported by latin1, but with a different code
+      .put('€', "%)B_[7|%*&")
+      // Supported by latin1, but with a different code
+      .put('‰', "%)C_[7|%*&")
+      .build()
 
   def cleanupSpecializedCharacters(
-      input: String,
+      string: String,
       stripNewlines: Boolean,
       substituteNonLatin1: Boolean,
   ): String = {
-    var result = input
+    var result = string
 
     if (stripNewlines) {
       result = result.replace("\n", "")
     }
 
     // Workarounds for operations below that do too much
-    for(char <- EDGE_CASE_REPLACEMENTS.keySet){
+    for (char <- EDGE_CASE_REPLACEMENTS.keySet) {
       result = result.replace(char.toString, EDGE_CASE_REPLACEMENTS.get(char))
     }
 
@@ -59,5 +60,18 @@ object StringUtils {
     }
 
     result
+  }
+
+  def containsSpecialCharacters(
+      string: String,
+      allowNewlines: Boolean,
+      allowNonLatin1: Boolean,
+  ): Boolean = {
+    val sanitized = cleanupSpecializedCharacters(
+      string,
+      stripNewlines = !allowNewlines,
+      substituteNonLatin1 = !allowNonLatin1,
+    )
+    sanitized != string
   }
 }

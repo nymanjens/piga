@@ -38,6 +38,7 @@ import hydro.common.time.Clock
 import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
+import hydro.common.StringUtils
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
@@ -1274,10 +1275,6 @@ private[document] final class DesktopTaskEditor(implicit
         linkFuture
       }
 
-      def isValidUrl(s: String): Boolean = {
-        s.contains("://")
-      }
-
       def editLinkInternal(selection: IndexedSelection, newLink: Option[String]): Callback = {
         val taskUpdates =
           for (task <- oldDocument.tasksIn(selection))
@@ -1305,17 +1302,33 @@ private[document] final class DesktopTaskEditor(implicit
             newLinkFromDialog(getAnyLinkInSelection(originalSelection)) map {
               case None     => setSelection(originalSelection)
               case Some("") => editLinkInternal(expandedSelection, None)
-              case Some(newLink) if isValidUrl(newLink) =>
+              case Some(newLink) if !newLink.contains("://") =>
+                Future {
+                  globalMessagesStore.showAdHocMessage(
+                    f"Not a valid link because it does not contain '://': $newLink",
+                    Message.Type.Failure,
+                  )
+                }
+                setSelection(originalSelection)
+              case Some(newLink)
+                  if StringUtils.containsSpecialCharacters(
+                    newLink,
+                    allowNewlines = false,
+                    allowNonLatin1 = false,
+                  ) =>
+                Future {
+                  globalMessagesStore.showAdHocMessage(
+                    f"Not a valid link because it contains special (probably weird unicode) characters: $newLink",
+                    Message.Type.Failure,
+                  )
+                }
+                setSelection(originalSelection)
+              case Some(newLink) =>
                 editLinkInternal(expandedSelection, Some(newLink)) >> {
                   // When adding a link, the selection may have been expanded from a singleton. It can be annoying when
                   // working with links if the whole line is then selected.
                   setSelection(originalSelection)
                 }
-              case Some(newLink) =>
-                Future {
-                  globalMessagesStore.showAdHocMessage(f"Not a valid link: $newLink", Message.Type.Failure)
-                }
-                setSelection(originalSelection)
             }
           }
       }

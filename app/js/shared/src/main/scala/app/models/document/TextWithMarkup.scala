@@ -273,7 +273,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
-        textWithMarkup.parts.map(part => part.withFormatting( updateFunc(part.formatting)))
+        textWithMarkup.parts.map(part => part.withFormatting(updateFunc(part.formatting)))
       )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
@@ -363,8 +363,8 @@ object TextWithMarkup {
           val formattingFromStyle = updateFormattingFromStyle(node, formatting)
           val last = i == nodes.length - 1
           parseNode(node) match {
-            case ParsedNode.Text(string) => Seq(Part(string, formattingFromStyle,alreadySanitized))
-            case ParsedNode.Br(_)        => Seq(Part("\n", formattingFromStyle,alreadySanitized))
+            case ParsedNode.Text(string) => Seq(Part(string, formattingFromStyle, alreadySanitized))
+            case ParsedNode.Br(_)        => Seq(Part("\n", formattingFromStyle, alreadySanitized))
             case ParsedNode.Div(e) if !last =>
               ensureTrailingNewline(fromHtmlNodesInner(children(e), formattingFromStyle))
             case ParsedNode.P(e) if !last =>
@@ -410,14 +410,19 @@ object TextWithMarkup {
   }
   private object Part {
     def apply(text: String, formatting: Formatting = Formatting.none, alreadySanitized: Boolean): Part = {
-      PartImpl(
-        text = if (alreadySanitized) {
-          text
-        } else {
-          StringUtils.cleanupSpecializedCharacters(text, stripNewlines = false, substituteNonLatin1 = false)
-        },
-        formatting = formatting,
-      )
+      if (alreadySanitized) {
+        PartImpl(text, formatting)
+      } else {
+        PartImpl(
+          text = StringUtils
+            .cleanupSpecializedCharacters(text, stripNewlines = false, substituteNonLatin1 = false),
+          formatting = formatting.copy(link =
+            formatting.link.filter(l =>
+              !StringUtils.containsSpecialCharacters(l, allowNewlines = false, allowNonLatin1 = false)
+            )
+          ),
+        )
+      }
     }
 
     private case class PartImpl(override val text: String, override val formatting: Formatting) extends Part {
@@ -427,7 +432,7 @@ object TextWithMarkup {
         )
 
       override def +(thatText: String): Part = copy(text = this.text + thatText)
-      override def withText(text: String): Part = copy(text=text)
+      override def withText(text: String): Part = copy(text = text)
       override def withFormatting(formatting: Formatting): Part = copy(formatting = formatting)
     }
   }
