@@ -185,4 +185,20 @@ class StringUtilsTest {
     assertThat(StringUtils.sanitizeSpecializedCharacters(s, stripNewlines, substituteNonLatin1 = false))
       .isEqualTo(s)
   }
+
+  @Test
+  def toStringWithSpecializedCharactersEscaped_success(
+      @TestParameter escapeNewlines: Boolean,
+      @TestParameter escapeNonLatin1: Boolean,
+  ): Unit = {
+    assertThat(
+      StringUtils.toStringWithSpecializedCharactersEscaped("ABC\u202Bé€\r", escapeNewlines, escapeNonLatin1)
+    )
+      .isEqualTo("ABC\\u202Bé€\\u000D")
+
+    assertThat(StringUtils.toStringWithSpecializedCharactersEscaped("\n", escapeNewlines, escapeNonLatin1))
+      .isEqualTo(if (escapeNewlines) "\\u000A" else "\n")
+    assertThat(StringUtils.toStringWithSpecializedCharactersEscaped("≡", escapeNewlines, escapeNonLatin1))
+      .isEqualTo(if (escapeNonLatin1) "\\u2261" else "≡")
+  }
 }

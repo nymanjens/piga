@@ -74,4 +74,21 @@ object StringUtils {
     )
     sanitized != string
   }
+
+  def toStringWithSpecializedCharactersEscaped(
+      string: String,
+      escapeNewlines: Boolean,
+      escapeNonLatin1: Boolean,
+  ): String = {
+    string.map {
+      case c
+          if containsSpecialCharacters(
+            c.toString,
+            allowNewlines = !escapeNewlines,
+            allowNonLatin1 = !escapeNonLatin1,
+          ) =>
+        f"\\u$c%04X"
+      case c => c.toString
+    }.mkString
+  }
 }
