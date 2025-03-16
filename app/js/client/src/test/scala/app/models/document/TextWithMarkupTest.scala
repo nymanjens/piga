@@ -7,8 +7,8 @@ object TextWithMarkupTest extends TestSuite {
 
   override def tests = TestSuite {
     "contentString" - {
-      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d")
-      textWithMarkup.contentString ==> "abcd"
+      val twm = textWithMarkup("a") + italic("bc") + bold("d")
+      twm.contentString ==> "abcd"
     }
     "isPlainText" - {
       "empty" - {
@@ -16,7 +16,7 @@ object TextWithMarkupTest extends TestSuite {
           TextWithMarkup.empty.isPlainText ==> true
         }
         "empty string" - {
-          TextWithMarkup("").isPlainText ==> true
+          textWithMarkup("").isPlainText ==> true
         }
         "empty string with markup" - {
           bold("").isPlainText ==> true
@@ -24,174 +24,174 @@ object TextWithMarkupTest extends TestSuite {
       }
       "non-empty" - {
         "no markup" - {
-          TextWithMarkup("the apple is delicious").isPlainText ==> true
+          textWithMarkup("the apple is delicious").isPlainText ==> true
         }
         "markup" - {
-          (TextWithMarkup("A") + bold("B") + TextWithMarkup("C")).isPlainText ==> false
+          (textWithMarkup("A") + bold("B") + textWithMarkup("C")).isPlainText ==> false
         }
       }
     }
     "containsLink" - {
       "empty" - {
-        TextWithMarkup("").containsLink ==> false
+        textWithMarkup("").containsLink ==> false
       }
       "has no link" - {
-        TextWithMarkup("http is a protocol").containsLink ==> false
+        textWithMarkup("http is a protocol").containsLink ==> false
       }
       "has link" - {
-        TextWithMarkup(
+        textWithMarkup(
           "the apple can be purchased at http://www.apples.org/ for a fair price"
         ).containsLink ==> true
       }
     }
     "sub" - {
-      val textWithMarkup = TextWithMarkup("a") + italic("bc") + bold("d") + italic("efg")
+      val twm = textWithMarkup("a") + italic("bc") + bold("d") + italic("efg")
 
-      textWithMarkup.sub(0, 0) ==> TextWithMarkup.empty
-      textWithMarkup.sub(3, 3) ==> TextWithMarkup.empty
-      textWithMarkup.sub(0) ==> textWithMarkup
+      twm.sub(0, 0) ==> TextWithMarkup.empty
+      twm.sub(3, 3) ==> TextWithMarkup.empty
+      twm.sub(0) ==> twm
 
-      textWithMarkup.sub(3) ==> bold("d") + italic("efg")
-      textWithMarkup.sub(0, 3) ==> TextWithMarkup("a") + italic("bc")
-      textWithMarkup.sub(0, 2) ==> TextWithMarkup("a") + italic("b")
-      textWithMarkup.sub(5, 6) ==> italic("f")
-      textWithMarkup.sub(5, 7) ==> italic("fg")
+      twm.sub(3) ==> bold("d") + italic("efg")
+      twm.sub(0, 3) ==> textWithMarkup("a") + italic("bc")
+      twm.sub(0, 2) ==> textWithMarkup("a") + italic("b")
+      twm.sub(5, 6) ==> italic("f")
+      twm.sub(5, 7) ==> italic("fg")
     }
     "splitByNewlines" - {
-      TextWithMarkup("a\nb").splitByNewlines() ==> List(TextWithMarkup("a"), TextWithMarkup("b"))
-      (TextWithMarkup("ab") + bold("\nc")).splitByNewlines() ==> List(TextWithMarkup("ab"), bold("c"))
-      TextWithMarkup("\nA").splitByNewlines() ==> List(TextWithMarkup.empty, TextWithMarkup("A"))
-      TextWithMarkup("\n\nb").splitByNewlines() ==>
-        List(TextWithMarkup.empty, TextWithMarkup.empty, TextWithMarkup("b"))
+      textWithMarkup("a\nb").splitByNewlines() ==> List(textWithMarkup("a"), textWithMarkup("b"))
+      (textWithMarkup("ab") + bold("\nc")).splitByNewlines() ==> List(textWithMarkup("ab"), bold("c"))
+      textWithMarkup("\nA").splitByNewlines() ==> List(TextWithMarkup.empty, textWithMarkup("A"))
+      textWithMarkup("\n\nb").splitByNewlines() ==>
+        List(TextWithMarkup.empty, TextWithMarkup.empty, textWithMarkup("b"))
     }
     "withFormatting" - {
-      val textWithMarkup = TextWithMarkup("abc") + italic("def")
+      val twm = textWithMarkup("abc") + italic("def")
 
-      textWithMarkup.withFormatting(beginOffset = 1, endOffset = 4, _.copy(link = Some("example.com"))) ==>
-        TextWithMarkup("a") +
-        TextWithMarkup("bc", Formatting(link = Some("example.com"))) +
-        TextWithMarkup("d", Formatting(italic = true, link = Some("example.com"))) +
+      twm.withFormatting(beginOffset = 1, endOffset = 4, _.copy(link = Some("example.com"))) ==>
+        textWithMarkup("a") +
+        textWithMarkup("bc", Formatting(link = Some("example.com"))) +
+        textWithMarkup("d", Formatting(italic = true, link = Some("example.com"))) +
         italic("ef")
     }
     "withTransformedCharacters" - {
-      val textWithMarkup = TextWithMarkup("abc") + italic("def")
+      val twm = textWithMarkup("abc") + italic("def")
 
-      textWithMarkup.withTransformedCharacters(beginOffset = 1, endOffset = 4, _.toUpperCase) ==>
-        TextWithMarkup("aBC") + italic("Def")
+      twm.withTransformedCharacters(beginOffset = 1, endOffset = 4, _.toUpperCase) ==>
+        textWithMarkup("aBC") + italic("Def")
     }
     "formattingAtCursor" - {
-      val textWithMarkup = TextWithMarkup("a") +
-        TextWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))) +
+      val twm = textWithMarkup("a") +
+        textWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))) +
         italic("d") +
         bold("e")
 
-      textWithMarkup.formattingAtCursor(0) ==> Formatting.none
-      textWithMarkup.formattingAtCursor(1) ==> Formatting.none
-      textWithMarkup.formattingAtCursor(2) ==> Formatting(italic = true, link = Some("example.com"))
-      textWithMarkup.formattingAtCursor(3) ==> Formatting(italic = true)
-      textWithMarkup.formattingAtCursor(4) ==> Formatting(italic = true)
-      textWithMarkup.formattingAtCursor(5) ==> Formatting(bold = true)
+      twm.formattingAtCursor(0) ==> Formatting.none
+      twm.formattingAtCursor(1) ==> Formatting.none
+      twm.formattingAtCursor(2) ==> Formatting(italic = true, link = Some("example.com"))
+      twm.formattingAtCursor(3) ==> Formatting(italic = true)
+      twm.formattingAtCursor(4) ==> Formatting(italic = true)
+      twm.formattingAtCursor(5) ==> Formatting(bold = true)
     }
     "anyLink" - {
-      TextWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))).anyLink ==>
+      textWithMarkup("bc", Formatting(italic = true, link = Some("example.com"))).anyLink ==>
         Some("example.com")
     }
     "canonicalized equality check" - {
-      TextWithMarkup("a") + TextWithMarkup("b") ==> TextWithMarkup("ab")
+      textWithMarkup("a") + textWithMarkup("b") ==> textWithMarkup("ab")
       italic("a") + italic("b") ==> italic("ab")
       bold("abc").withFormatting(1, 2, _.copy(bold = true)) ==> bold("abc")
     }
     "toHtml" - {
       "br" - {
-        TextWithMarkup("A\n\nB").toHtml ==> "A<br /><br />B"
+        textWithMarkup("A\n\nB").toHtml ==> "A<br /><br />B"
       }
       "b" - {
-        (TextWithMarkup("A") + bold("B") + TextWithMarkup("C")).toHtml ==> "A<b>B</b>C"
+        (textWithMarkup("A") + bold("B") + textWithMarkup("C")).toHtml ==> "A<b>B</b>C"
       }
       "i" - {
         italic("ABC").toHtml ==> "<i>ABC</i>"
       }
       "b and i" - {
-        (italic("AB") + TextWithMarkup(
+        (italic("AB") + textWithMarkup(
           "C",
           Formatting(bold = true, italic = true),
         )).toHtml ==> "<i>AB<b>C</b></i>"
       }
       "code" - {
-        TextWithMarkup("ABC", Formatting(code = true)).toHtml ==> "<code>ABC</code>"
+        textWithMarkup("ABC", Formatting(code = true)).toHtml ==> "<code>ABC</code>"
       }
       "strikethrough" - {
-        TextWithMarkup("ABC", Formatting(strikethrough = true)).toHtml ==> "<s>ABC</s>"
+        textWithMarkup("ABC", Formatting(strikethrough = true)).toHtml ==> "<s>ABC</s>"
       }
       "link" - {
-        TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
+        textWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
           """<a href="example.com">ABC</a>"""
       }
       "link and b" - {
-        val textWithMarkup =
-          (TextWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
+        val twm =
+          (textWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
             .withFormatting(2, 4, _.copy(bold = true))
-        textWithMarkup.toHtml ==> """<a href="example.com">AB<b>C</b></a><b>D</b>"""
+        twm.toHtml ==> """<a href="example.com">AB<b>C</b></a><b>D</b>"""
       }
       "non-ascii" - {
-        TextWithMarkup("AäB").toHtml ==> "AäB"
+        textWithMarkup("AäB").toHtml ==> "AäB"
       }
     }
     "toMarkdown" - {
       "newline" - {
-        TextWithMarkup("A\n\nB").toMarkdown ==> "A  \n  \nB"
+        textWithMarkup("A\n\nB").toMarkdown ==> "A  \n  \nB"
       }
       "b" - {
-        (TextWithMarkup("A") + bold(" B ") + TextWithMarkup("C")).toMarkdown ==> "A **B** C"
+        (textWithMarkup("A") + bold(" B ") + textWithMarkup("C")).toMarkdown ==> "A **B** C"
       }
       "i" - {
         italic("ABC").toMarkdown ==> "*ABC*"
       }
       "code" - {
-        (TextWithMarkup("X") + TextWithMarkup("  ABC  ", Formatting(code = true))).toMarkdown ==> "X  `ABC`  "
+        (textWithMarkup("X") + textWithMarkup("  ABC  ", Formatting(code = true))).toMarkdown ==> "X  `ABC`  "
       }
       "strikethrough" - {
-        TextWithMarkup("ABC \n", Formatting(strikethrough = true)).toMarkdown ==> "~ABC   \n~"
+        textWithMarkup("ABC \n", Formatting(strikethrough = true)).toMarkdown ==> "~ABC   \n~"
       }
       "link" - {
-        TextWithMarkup("ABC", Formatting(link = Some("example.com"))).toMarkdown ==> "[ABC](example.com)"
+        textWithMarkup("ABC", Formatting(link = Some("example.com"))).toMarkdown ==> "[ABC](example.com)"
       }
       "link and b" - {
-        val textWithMarkup =
-          (TextWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
+        val twm =
+          (textWithMarkup("ABC", Formatting(link = Some("example.com"))) + bold("D"))
             .withFormatting(2, 4, _.copy(bold = true))
-        textWithMarkup.toMarkdown ==> "[AB**C**](example.com)**D**"
+        twm.toMarkdown ==> "[AB**C**](example.com)**D**"
       }
       "non-ascii" - {
-        TextWithMarkup("AäB").toMarkdown ==> "AäB"
+        textWithMarkup("AäB").toMarkdown ==> "AäB"
       }
     }
     "fromSanitizedHtml" - {
       "p" - {
-        TextWithMarkup.fromSanitizedHtml("<p>A</p>") ==> TextWithMarkup("A")
-        TextWithMarkup.fromSanitizedHtml("<p>A</p><p>B</p>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<p>A</p>") ==> textWithMarkup("A")
+        TextWithMarkup.fromSanitizedHtml("<p>A</p><p>B</p>") ==> textWithMarkup("A\nB")
       }
       "div" - {
-        TextWithMarkup.fromSanitizedHtml("<div>A</div>") ==> TextWithMarkup("A")
-        TextWithMarkup.fromSanitizedHtml("<div>A</div><div>B</div>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<div>A</div>") ==> textWithMarkup("A")
+        TextWithMarkup.fromSanitizedHtml("<div>A</div><div>B</div>") ==> textWithMarkup("A\nB")
       }
       "div and p" - {
-        TextWithMarkup.fromSanitizedHtml("<div><p>A</p></div><div><p>B</p></div>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<div><p>A</p></div><div><p>B</p></div>") ==> textWithMarkup("A\nB")
       }
       "br" - {
-        TextWithMarkup.fromSanitizedHtml("A<br/><br/>B") ==> TextWithMarkup("A\n\nB")
+        TextWithMarkup.fromSanitizedHtml("A<br/><br/>B") ==> textWithMarkup("A\n\nB")
       }
       "b" - {
-        TextWithMarkup.fromSanitizedHtml("A<b>B</b>C") ==> TextWithMarkup("A") + bold("B") + TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("A<b>B</b>C") ==> textWithMarkup("A") + bold("B") + textWithMarkup(
           "C"
         )
       }
       "b via style" - {
-        TextWithMarkup.fromSanitizedHtml("A<span style='font-weight:bold;'>B</span>C") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("A<span style='font-weight:bold;'>B</span>C") ==> textWithMarkup(
           "A"
         ) + bold(
           "B"
-        ) + TextWithMarkup("C")
+        ) + textWithMarkup("C")
       }
       "i" - {
         TextWithMarkup.fromSanitizedHtml("<i>ABC</i>") ==> italic("ABC")
@@ -201,22 +201,22 @@ object TextWithMarkupTest extends TestSuite {
       }
       "b and i" - {
         TextWithMarkup.fromSanitizedHtml("<i>AB<b>C</b></i>") ==>
-          italic("AB") + TextWithMarkup("C", Formatting(bold = true, italic = true))
+          italic("AB") + textWithMarkup("C", Formatting(bold = true, italic = true))
       }
       "code" - {
-        TextWithMarkup.fromSanitizedHtml("<code>ABC</code>") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("<code>ABC</code>") ==> textWithMarkup(
           "ABC",
           Formatting(code = true),
         )
       }
       "code via style" - {
-        TextWithMarkup.fromSanitizedHtml("<span style='font: monospace;'>ABC</span>") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("<span style='font: monospace;'>ABC</span>") ==> textWithMarkup(
           "ABC",
           Formatting(code = true),
         )
       }
       "strikethrough" - {
-        TextWithMarkup.fromSanitizedHtml("<s>ABC</s>") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("<s>ABC</s>") ==> textWithMarkup(
           "ABC",
           Formatting(strikethrough = true),
         )
@@ -224,24 +224,25 @@ object TextWithMarkupTest extends TestSuite {
       "strikethrough via style" - {
         TextWithMarkup.fromSanitizedHtml(
           "<span style='text-decoration:line-through'>ABC</span>"
-        ) ==> TextWithMarkup(
+        ) ==> textWithMarkup(
           "ABC",
           Formatting(strikethrough = true),
         )
       }
       "link" - {
         TextWithMarkup.fromSanitizedHtml("""<a href="example.com">ABC</a>""") ==>
-          TextWithMarkup("ABC", Formatting(link = Some("example.com")))
+          textWithMarkup("ABC", Formatting(link = Some("example.com")))
       }
       "ignores irrelevant elements" - {
-        TextWithMarkup.fromSanitizedHtml("A<span>B</span>") ==> TextWithMarkup("AB")
+        TextWithMarkup.fromSanitizedHtml("A<span>B</span>") ==> textWithMarkup("AB")
       }
       "non-ascii" - {
-        TextWithMarkup.fromSanitizedHtml("AäB") ==> TextWithMarkup("AäB")
+        TextWithMarkup.fromSanitizedHtml("AäB") ==> textWithMarkup("AäB")
       }
     }
   }
 
-  private def italic(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(italic = true))
-  private def bold(string: String): TextWithMarkup = TextWithMarkup(string, Formatting(bold = true))
+  private def italic(string: String): TextWithMarkup = textWithMarkup(string, Formatting(italic = true))
+  private def bold(string: String): TextWithMarkup = textWithMarkup(string, Formatting(bold = true))
+  private def textWithMarkup(string:String, formatting: Formatting= Formatting.none): TextWithMarkup = TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

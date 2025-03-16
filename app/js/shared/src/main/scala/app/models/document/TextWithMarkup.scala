@@ -307,12 +307,13 @@ object TextWithMarkup {
 
   val empty: TextWithMarkup = new TextWithMarkup(Nil)
 
-  private def create(
+  def create(
       string: String,
       formatting: Formatting,
       alreadySanitized: Boolean,
-  ): TextWithMarkup =
+  ): TextWithMarkup = {
     new TextWithMarkup(List(Part(string, formatting, alreadySanitized)))
+  }
 
   def fromUnsanitizedString(string: String, formatting: Formatting = Formatting.none): TextWithMarkup = {
     create(string, formatting, alreadySanitized = false)
