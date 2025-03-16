@@ -927,11 +927,13 @@ private[document] final class DesktopTaskEditor(implicit
         ) && start.seqIndex == end.seqIndex && start.offsetInTask != end.offsetInTask
       ) {
         val wrappedContent = document.tasks(start.seqIndex).content.sub(start.offsetInTask, end.offsetInTask)
-        val mirrorText = TextWithMarkup(
+        val mirrorText = TextWithMarkup.fromUnsanitizedString(
           wrappingCharacters(char).toString,
           formatting = document.tasks(start.seqIndex).content.formattingAtCursor(end.offsetInTask),
         )
-        Replacement.create(TextWithMarkup(char.toString, formatting) + wrappedContent + mirrorText)
+        Replacement.create(
+          TextWithMarkup.fromUnsanitizedString(char.toString, formatting) + wrappedContent + mirrorText
+        )
       } else {
         Replacement.fromString(char.toString, formatting)
       }
@@ -1721,7 +1723,7 @@ private[document] final class DesktopTaskEditor(implicit
                   val attributes = getPigaAttributes(Seq(node))
                   partsBuilder.append(
                     Replacement.Part(
-                      TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting),
+                      TextWithMarkup.fromHtmlNodes(Seq(node), baseFormatting, alreadySanitized = false),
                       zeroIfNegative(nextRelativeIndentation),
                       collapsed = attributes.collapsed,
                       checked = attributes.checked,
@@ -1741,7 +1743,7 @@ private[document] final class DesktopTaskEditor(implicit
             val attributes = getPigaAttributes(nodes ++ nodes.flatMap(children))
             partsBuilder.append(
               Replacement.Part(
-                TextWithMarkup.fromHtmlNodes(nodes, baseFormatting),
+                TextWithMarkup.fromHtmlNodes(nodes, baseFormatting, alreadySanitized = false),
                 zeroIfNegative(nextRelativeIndentation),
                 collapsed = attributes.collapsed,
                 checked = attributes.checked,
@@ -1760,7 +1762,8 @@ private[document] final class DesktopTaskEditor(implicit
 
           def pushChildNodesWithoutLi(): Unit = {
             if (childNodesWithoutLi.nonEmpty) {
-              val parsedText = TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting)
+              val parsedText =
+                TextWithMarkup.fromHtmlNodes(childNodesWithoutLi, baseFormatting, alreadySanitized = false)
               if (insideListItem) {
                 partsBuilder.append(Replacement.Part(parsedText, zeroIfNegative(nextRelativeIndentation)))
               } else {
@@ -1813,7 +1816,7 @@ private[document] final class DesktopTaskEditor(implicit
         Splitter.on('\n').split(clipboardData.plainText).foreach { line =>
           partsBuilder.append(
             Replacement.Part(
-              content = TextWithMarkup(line, formatting = baseFormatting),
+              content = TextWithMarkup.fromUnsanitizedString(line, formatting = baseFormatting),
               indentationRelativeToCurrent = 0,
             )
           )
@@ -1882,7 +1885,7 @@ private[document] final class DesktopTaskEditor(implicit
     def create(firstPartContent: TextWithMarkup, otherParts: Part*): Replacement =
       Replacement(Part(firstPartContent, indentationRelativeToCurrent = 0) :: List(otherParts: _*))
     def fromString(string: String, formatting: Formatting): Replacement =
-      Replacement.create(TextWithMarkup(string, formatting))
+      Replacement.create(TextWithMarkup.fromUnsanitizedString(string, formatting))
     def newEmptyTask(indentationRelativeToCurrent: Int = 0): Replacement =
       Replacement.create(
         TextWithMarkup.empty,
@@ -1919,7 +1922,8 @@ private[document] final class DesktopTaskEditor(implicit
     }
 
     private def fromData(clipboardData: DataTransfer) = {
-      ClipboardData(htmlText = clipboardData.getData("text/html"),
+      ClipboardData(
+        htmlText = clipboardData.getData("text/html"),
         plainText = clipboardData.getData("text/plain"),
       )
     }

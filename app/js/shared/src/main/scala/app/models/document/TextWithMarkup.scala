@@ -8,6 +8,7 @@ import hydro.common.DomNodeUtils
 import hydro.common.DomNodeUtils.children
 import hydro.common.DomNodeUtils._
 import hydro.common.JsLoggingUtils.LogExceptionsCallback
+import hydro.common.StringUtils
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.jsfacades.escapeHtml
 import japgolly.scalajs.react.vdom.VdomNode
@@ -29,7 +30,12 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
   def isEmpty: Boolean = contentString.isEmpty
   def nonEmpty: Boolean = contentString.nonEmpty
-  def isPlainText: Boolean = contentString.isEmpty || this == TextWithMarkup(contentString)
+  def isPlainText: Boolean =
+    contentString.isEmpty || this == TextWithMarkup.create(
+      contentString,
+      formatting = Formatting.none,
+      alreadySanitized = true,
+    )
   lazy val containsLink: Boolean = urlRegex.findFirstMatchIn(contentString).isDefined
 
   lazy val toVdomNode: VdomNode = {
@@ -267,7 +273,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
-        textWithMarkup.parts.map(part => part.copy(formatting = updateFunc(part.formatting)))
+        textWithMarkup.parts.map(part => part.withFormatting( updateFunc(part.formatting)))
       )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
@@ -280,7 +286,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
   ): TextWithMarkup = {
     def updated(textWithMarkup: TextWithMarkup): TextWithMarkup = {
       TextWithMarkup.createCanonical(
-        textWithMarkup.parts.map(part => part.copy(text = characterTransform(part.text)))
+        textWithMarkup.parts.map(part => part.withText(characterTransform(part.text)))
       )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
@@ -301,21 +307,30 @@ object TextWithMarkup {
 
   val empty: TextWithMarkup = new TextWithMarkup(Nil)
 
-  def apply(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    new TextWithMarkup(List(Part(string, formatting)))
+  private def create(
+      string: String,
+      formatting: Formatting,
+      alreadySanitized: Boolean,
+  ): TextWithMarkup =
+    new TextWithMarkup(List(Part(string, formatting, alreadySanitized)))
 
-  def fromHtml(string: String): TextWithMarkup = {
+  def fromUnsanitizedString(string: String, formatting: Formatting = Formatting.none): TextWithMarkup = {
+    create(string, formatting, alreadySanitized = false)
+  }
+
+  def fromSanitizedHtml(string: String): TextWithMarkup = {
     val html = {
       val resultHolder = dom.document.createElement("span")
       resultHolder.innerHTML = string
       resultHolder
     }
-    fromHtmlNodes(Seq(html))
+    fromHtmlNodes(Seq(html), baseFormatting = Formatting.none, alreadySanitized = true)
   }
 
   def fromHtmlNodes(
       nodes: Iterable[dom.raw.Node],
-      baseFormatting: Formatting = Formatting.none,
+      baseFormatting: Formatting,
+      alreadySanitized: Boolean,
   ): TextWithMarkup = {
     def ensureTrailingNewline(parts: Seq[Part]): Seq[Part] = parts match {
       case Seq()                                => Seq()
@@ -348,8 +363,8 @@ object TextWithMarkup {
           val formattingFromStyle = updateFormattingFromStyle(node, formatting)
           val last = i == nodes.length - 1
           parseNode(node) match {
-            case ParsedNode.Text(string) => Seq(Part(string, formattingFromStyle))
-            case ParsedNode.Br(_)        => Seq(Part("\n", formattingFromStyle))
+            case ParsedNode.Text(string) => Seq(Part(string, formattingFromStyle,alreadySanitized))
+            case ParsedNode.Br(_)        => Seq(Part("\n", formattingFromStyle,alreadySanitized))
             case ParsedNode.Div(e) if !last =>
               ensureTrailingNewline(fromHtmlNodesInner(children(e), formattingFromStyle))
             case ParsedNode.P(e) if !last =>
@@ -385,14 +400,36 @@ object TextWithMarkup {
   }
 
   // **************** private inner types **************** //
-  private case class Part(text: String, formatting: Formatting = Formatting.none) {
-
-    def sub(beginOffset: Int, endOffset: Int = -1): Part =
-      copy(
-        text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset)
+  private trait Part {
+    def text: String
+    def formatting: Formatting
+    def sub(beginOffset: Int, endOffset: Int = -1): Part
+    def +(thatText: String): Part
+    def withText(text: String): Part
+    def withFormatting(formatting: Formatting): Part
+  }
+  private object Part {
+    def apply(text: String, formatting: Formatting = Formatting.none, alreadySanitized: Boolean): Part = {
+      PartImpl(
+        text = if (alreadySanitized) {
+          text
+        } else {
+          StringUtils.cleanupSpecializedCharacters(text, stripNewlines = false, substituteNonLatin1 = false)
+        },
+        formatting = formatting,
       )
+    }
 
-    def +(thatText: String): Part = copy(text = this.text + thatText)
+    private case class PartImpl(override val text: String, override val formatting: Formatting) extends Part {
+      override def sub(beginOffset: Int, endOffset: Int = -1): Part =
+        copy(
+          text = if (endOffset == -1) text.substring(beginOffset) else text.substring(beginOffset, endOffset)
+        )
+
+      override def +(thatText: String): Part = copy(text = this.text + thatText)
+      override def withText(text: String): Part = copy(text=text)
+      override def withFormatting(formatting: Formatting): Part = copy(formatting = formatting)
+    }
   }
 
   private[TextWithMarkup] abstract class FormattingOption[T] {
@@ -425,7 +462,7 @@ object TextWithMarkup {
   private def createCanonical(parts: Iterable[Part]): TextWithMarkup = {
     def createCanonicalInner(parts: List[Part]): List[Part] = parts match {
       case part1 :: part2 :: rest if part1.formatting == part2.formatting =>
-        createCanonicalInner(Part(part1.text + part2.text, part1.formatting) :: rest)
+        createCanonicalInner(Part(part1.text + part2.text, part1.formatting, alreadySanitized = true) :: rest)
       case Nil          => Nil
       case part :: rest => part :: createCanonicalInner(rest)
     }

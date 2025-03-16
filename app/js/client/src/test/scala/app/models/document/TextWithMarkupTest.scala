@@ -166,66 +166,78 @@ object TextWithMarkupTest extends TestSuite {
         TextWithMarkup("AäB").toMarkdown ==> "AäB"
       }
     }
-    "fromHtml" - {
+    "fromSanitizedHtml" - {
       "p" - {
-        TextWithMarkup.fromHtml("<p>A</p>") ==> TextWithMarkup("A")
-        TextWithMarkup.fromHtml("<p>A</p><p>B</p>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<p>A</p>") ==> TextWithMarkup("A")
+        TextWithMarkup.fromSanitizedHtml("<p>A</p><p>B</p>") ==> TextWithMarkup("A\nB")
       }
       "div" - {
-        TextWithMarkup.fromHtml("<div>A</div>") ==> TextWithMarkup("A")
-        TextWithMarkup.fromHtml("<div>A</div><div>B</div>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<div>A</div>") ==> TextWithMarkup("A")
+        TextWithMarkup.fromSanitizedHtml("<div>A</div><div>B</div>") ==> TextWithMarkup("A\nB")
       }
       "div and p" - {
-        TextWithMarkup.fromHtml("<div><p>A</p></div><div><p>B</p></div>") ==> TextWithMarkup("A\nB")
+        TextWithMarkup.fromSanitizedHtml("<div><p>A</p></div><div><p>B</p></div>") ==> TextWithMarkup("A\nB")
       }
       "br" - {
-        TextWithMarkup.fromHtml("A<br/><br/>B") ==> TextWithMarkup("A\n\nB")
+        TextWithMarkup.fromSanitizedHtml("A<br/><br/>B") ==> TextWithMarkup("A\n\nB")
       }
       "b" - {
-        TextWithMarkup.fromHtml("A<b>B</b>C") ==> TextWithMarkup("A") + bold("B") + TextWithMarkup("C")
+        TextWithMarkup.fromSanitizedHtml("A<b>B</b>C") ==> TextWithMarkup("A") + bold("B") + TextWithMarkup(
+          "C"
+        )
       }
       "b via style" - {
-        TextWithMarkup.fromHtml("A<span style='font-weight:bold;'>B</span>C") ==> TextWithMarkup("A") + bold(
+        TextWithMarkup.fromSanitizedHtml("A<span style='font-weight:bold;'>B</span>C") ==> TextWithMarkup(
+          "A"
+        ) + bold(
           "B"
         ) + TextWithMarkup("C")
       }
       "i" - {
-        TextWithMarkup.fromHtml("<i>ABC</i>") ==> italic("ABC")
+        TextWithMarkup.fromSanitizedHtml("<i>ABC</i>") ==> italic("ABC")
       }
       "i via style" - {
-        TextWithMarkup.fromHtml("<span style='font-style:italic'>ABC</style>") ==> italic("ABC")
+        TextWithMarkup.fromSanitizedHtml("<span style='font-style:italic'>ABC</style>") ==> italic("ABC")
       }
       "b and i" - {
-        TextWithMarkup.fromHtml("<i>AB<b>C</b></i>") ==>
+        TextWithMarkup.fromSanitizedHtml("<i>AB<b>C</b></i>") ==>
           italic("AB") + TextWithMarkup("C", Formatting(bold = true, italic = true))
       }
       "code" - {
-        TextWithMarkup.fromHtml("<code>ABC</code>") ==> TextWithMarkup("ABC", Formatting(code = true))
+        TextWithMarkup.fromSanitizedHtml("<code>ABC</code>") ==> TextWithMarkup(
+          "ABC",
+          Formatting(code = true),
+        )
       }
       "code via style" - {
-        TextWithMarkup.fromHtml("<span style='font: monospace;'>ABC</span>") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml("<span style='font: monospace;'>ABC</span>") ==> TextWithMarkup(
           "ABC",
           Formatting(code = true),
         )
       }
       "strikethrough" - {
-        TextWithMarkup.fromHtml("<s>ABC</s>") ==> TextWithMarkup("ABC", Formatting(strikethrough = true))
+        TextWithMarkup.fromSanitizedHtml("<s>ABC</s>") ==> TextWithMarkup(
+          "ABC",
+          Formatting(strikethrough = true),
+        )
       }
       "strikethrough via style" - {
-        TextWithMarkup.fromHtml("<span style='text-decoration:line-through'>ABC</span>") ==> TextWithMarkup(
+        TextWithMarkup.fromSanitizedHtml(
+          "<span style='text-decoration:line-through'>ABC</span>"
+        ) ==> TextWithMarkup(
           "ABC",
           Formatting(strikethrough = true),
         )
       }
       "link" - {
-        TextWithMarkup.fromHtml("""<a href="example.com">ABC</a>""") ==>
+        TextWithMarkup.fromSanitizedHtml("""<a href="example.com">ABC</a>""") ==>
           TextWithMarkup("ABC", Formatting(link = Some("example.com")))
       }
       "ignores irrelevant elements" - {
-        TextWithMarkup.fromHtml("A<span>B</span>") ==> TextWithMarkup("AB")
+        TextWithMarkup.fromSanitizedHtml("A<span>B</span>") ==> TextWithMarkup("AB")
       }
       "non-ascii" - {
-        TextWithMarkup.fromHtml("AäB") ==> TextWithMarkup("AäB")
+        TextWithMarkup.fromSanitizedHtml("AäB") ==> TextWithMarkup("AäB")
       }
     }
   }

@@ -290,7 +290,10 @@ private[document] final class MobileTaskEditor(implicit
       replaceWithHistory(
         edit = DocumentEdit.Reversible(
           taskUpdates = Seq(
-            MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
+            MaskedTaskUpdate.fromFields(
+              originalTask = originalTask,
+              content = TextWithMarkup.fromUnsanitizedString(newContent),
+            )
           )
         ),
         replacementString =

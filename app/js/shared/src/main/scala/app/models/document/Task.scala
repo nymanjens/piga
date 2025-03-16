@@ -191,7 +191,7 @@ object Task {
     new Task(
       Task.FakeJsTaskEntity(
         documentId = taskEntity.documentId,
-        content = TextWithMarkup.fromHtml(taskEntity.contentHtml),
+        content = TextWithMarkup.fromSanitizedHtml(taskEntity.contentHtml),
         orderToken = taskEntity.orderToken,
         indentation = taskEntity.indentation,
         collapsed = taskEntity.collapsed,
