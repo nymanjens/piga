@@ -395,8 +395,6 @@ object DocumentTest extends TestSuite {
     }
   }
 
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
   private def collapsed(task: Task): Task = task.copyForTests(collapsed = true)
   private def indentation(newIndentation: Int, task: Task): Task =
     task.copyForTests(indentation = newIndentation)

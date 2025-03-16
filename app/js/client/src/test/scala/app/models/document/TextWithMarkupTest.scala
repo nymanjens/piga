@@ -1,5 +1,6 @@
 package app.models.document
 
+import app.common.testing.JsTestObjects._
 import app.models.document.TextWithMarkup.Formatting
 import utest._
 
@@ -244,6 +245,4 @@ object TextWithMarkupTest extends TestSuite {
 
   private def italic(string: String): TextWithMarkup = textWithMarkup(string, Formatting(italic = true))
   private def bold(string: String): TextWithMarkup = textWithMarkup(string, Formatting(bold = true))
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

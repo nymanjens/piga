@@ -176,7 +176,4 @@ object DocumentEditTest extends TestSuite {
       }
     }
   }
-
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

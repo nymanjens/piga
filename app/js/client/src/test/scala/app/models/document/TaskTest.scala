@@ -242,7 +242,4 @@ object TaskTest extends TestSuite {
       task1A.hashCode == task2.hashCode ==> false
     }
   }
-
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

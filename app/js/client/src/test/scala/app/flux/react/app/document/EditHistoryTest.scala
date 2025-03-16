@@ -204,7 +204,4 @@ object EditHistoryTest extends TestSuite {
 
     addedTaskInEdit
   }
-
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

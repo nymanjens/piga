@@ -27,6 +27,10 @@ object JsTestObjects {
   def testDetachedCursor = DetachedCursor(taskA, 12938)
   def testDetachedSelection = DetachedSelection(testDetachedCursor, testDetachedCursor)
 
+  def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup = {
+    TextWithMarkup.create(string, formatting, alreadySanitized = true)
+  }
+
   def newTask(
       contentString: String = null,
       content: TextWithMarkup = null,

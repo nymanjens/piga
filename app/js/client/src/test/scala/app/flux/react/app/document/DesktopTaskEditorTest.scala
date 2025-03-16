@@ -519,8 +519,6 @@ object DesktopTaskEditorTest extends TestSuite {
   }
 
   private def italic(string: String): TextWithMarkup = textWithMarkup(string, Formatting(italic = true))
-  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
-    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 
   private def removeFormattingWhitespace(s: String): String = {
     s.split('\n').map(_.trim).mkString("")
