@@ -15,7 +15,7 @@ object StringUtils {
       .put('‰', "%)C_[7|%*&")
       .build()
 
-  def cleanupSpecializedCharacters(
+  def sanitizeSpecializedCharacters(
       string: String,
       stripNewlines: Boolean,
       substituteNonLatin1: Boolean,
@@ -67,7 +67,7 @@ object StringUtils {
       allowNewlines: Boolean,
       allowNonLatin1: Boolean,
   ): Boolean = {
-    val sanitized = cleanupSpecializedCharacters(
+    val sanitized = sanitizeSpecializedCharacters(
       string,
       stripNewlines = !allowNewlines,
       substituteNonLatin1 = !allowNonLatin1,
