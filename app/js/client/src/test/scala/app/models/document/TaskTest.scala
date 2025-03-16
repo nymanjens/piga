@@ -1,6 +1,7 @@
 package app.models.document
 
 import app.common.testing.JsTestObjects.newDocument
+import app.common.testing.JsTestObjects.textWithMarkup
 import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.access.ModelFields
