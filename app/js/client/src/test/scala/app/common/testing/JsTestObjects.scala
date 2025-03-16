@@ -9,6 +9,7 @@ import app.models.document.Document.IndexedSelection
 import app.models.document.Document
 import app.models.document.Task
 import app.models.document.TextWithMarkup
+import app.models.document.TextWithMarkup.Formatting
 import hydro.common.time.LocalDateTime
 
 import scala.collection.immutable.Seq
@@ -41,7 +42,8 @@ object JsTestObjects {
     implicit val user = TestObjects.testUser
 
     Task.withRandomId(
-      content = Option(content) getOrElse TextWithMarkup(contentString),
+      content = Option(content) getOrElse TextWithMarkup
+        .create(contentString, formatting = Formatting.none, alreadySanitized = true),
       orderToken = orderToken,
       indentation = indentation,
       collapsed = collapsed,

@@ -10,6 +10,7 @@ import app.models.document.DocumentEdit
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.Task
 import app.models.document.TextWithMarkup
+import app.models.document.TextWithMarkup.Formatting
 import app.models.user.User
 import hydro.common.OrderToken
 import utest._
@@ -122,7 +123,7 @@ object EditHistoryTest extends TestSuite {
       user: User,
   ): DocumentEdit.MaskedTaskUpdate = {
     val taskUpdate =
-      MaskedTaskUpdate.fromFields(originalTask = originalTask, content = TextWithMarkup(newContent))
+      MaskedTaskUpdate.fromFields(originalTask = originalTask, content = textWithMarkup(newContent))
     editHistory.addEdit(
       documentId = 19191,
       documentEdit = DocumentEdit.Reversible(
@@ -203,4 +204,7 @@ object EditHistoryTest extends TestSuite {
 
     addedTaskInEdit
   }
+
+  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
+    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

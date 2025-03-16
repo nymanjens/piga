@@ -1,7 +1,6 @@
 package app.models.document
 
 import java.time.Duration
-
 import hydro.common.time.JavaTimeImplicits._
 import app.common.testing.JsTestObjects._
 import app.common.testing.JsTestObjects.testTask
@@ -9,6 +8,7 @@ import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.document.DocumentEdit.MaskedTaskUpdate
 import app.models.document.DocumentEdit.MaskedTaskUpdate.FieldUpdate
+import app.models.document.TextWithMarkup.Formatting
 import hydro.common.testing.FakeClock
 import hydro.models.modification.EntityModification
 import utest._
@@ -24,7 +24,7 @@ object DocumentEditTest extends TestSuite {
   private val taskG = newTask("Task G")
 
   private val taskDUpdate = MaskedTaskUpdate
-    .fromFields(originalTask = taskD, content = TextWithMarkup("edited"), orderToken = orderTokenE)
+    .fromFields(originalTask = taskD, content = textWithMarkup("edited"), orderToken = orderTokenE)
   private val reversibleEdit = DocumentEdit.Reversible(
     removedTasks = Seq(taskA, taskB),
     addedTasks = Seq(taskC, taskE),
@@ -56,7 +56,7 @@ object DocumentEditTest extends TestSuite {
           taskUpdates = Seq(
             MaskedTaskUpdate.fromFields(
               originalTask = taskDAfterUpdate,
-              content = TextWithMarkup("edited2"),
+              content = textWithMarkup("edited2"),
               indentation = 96,
             ),
             MaskedTaskUpdate.fromFields(originalTask = taskC, tags = Seq("xioq")),
@@ -70,7 +70,7 @@ object DocumentEditTest extends TestSuite {
         result.taskUpdates.toSet ==> Set(
           MaskedTaskUpdate.fromFields(
             originalTask = taskD,
-            content = TextWithMarkup("edited2"),
+            content = textWithMarkup("edited2"),
             orderToken = orderTokenE,
             indentation = 96,
           ),
@@ -129,7 +129,7 @@ object DocumentEditTest extends TestSuite {
         val taskDAfterUpdate2 =
           taskD.withAppliedUpdateAndNewUpdateTime(
             MaskedTaskUpdate
-              .fromFields(taskD, content = TextWithMarkup("edited2"), indentation = 96)
+              .fromFields(taskD, content = textWithMarkup("edited2"), indentation = 96)
           )
         val taskCAfterUpdate =
           taskC.withAppliedUpdateAndNewUpdateTime(MaskedTaskUpdate.fromFields(taskC, tags = Seq("xioq")))
@@ -159,12 +159,12 @@ object DocumentEditTest extends TestSuite {
       "fromFields" - {
         val testTask = newTask("test task", collapsed = true)
         val update = MaskedTaskUpdate
-          .fromFields(originalTask = testTask, content = TextWithMarkup("edited"), orderToken = orderTokenE)
+          .fromFields(originalTask = testTask, content = textWithMarkup("edited"), orderToken = orderTokenE)
 
         update ==> MaskedTaskUpdate(
           taskId = testTask.id,
           originalOrderToken = testTask.orderToken,
-          content = Some(FieldUpdate(testTask.content, TextWithMarkup("edited"))),
+          content = Some(FieldUpdate(testTask.content, textWithMarkup("edited"))),
           orderToken = Some(FieldUpdate(testTask.orderToken, orderTokenE)),
           indentation = None,
           collapsed = None,
@@ -176,4 +176,7 @@ object DocumentEditTest extends TestSuite {
       }
     }
   }
+
+  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
+    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }

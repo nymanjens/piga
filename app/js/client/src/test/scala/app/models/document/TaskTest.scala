@@ -5,6 +5,7 @@ import app.common.testing.TestModule
 import app.common.testing.TestObjects._
 import app.models.access.ModelFields
 import app.models.document.DocumentEdit.MaskedTaskUpdate
+import app.models.document.TextWithMarkup.Formatting
 import hydro.models.UpdatableEntity.LastUpdateTime
 import utest._
 
@@ -21,7 +22,7 @@ object TaskTest extends TestSuite {
 
     "equalsIgnoringMetadata" - {
       val taskA1 = Task.withRandomId(
-        content = TextWithMarkup("a"),
+        content = textWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
@@ -30,7 +31,7 @@ object TaskTest extends TestSuite {
         tags = Seq("a"),
       )
       val taskA2 = Task.withRandomId(
-        content = TextWithMarkup("a"),
+        content = textWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
@@ -39,7 +40,7 @@ object TaskTest extends TestSuite {
         tags = Seq("a"),
       )
       val taskB = Task.withRandomId(
-        content = TextWithMarkup("b"),
+        content = textWithMarkup("b"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
@@ -151,7 +152,7 @@ object TaskTest extends TestSuite {
       "with matching baseline" - {
         clock.setNowInstant(testInstantB)
         task.withAppliedUpdateAndNewUpdateTime(
-          MaskedTaskUpdate.fromFields(originalTask = task, content = TextWithMarkup("B"))
+          MaskedTaskUpdate.fromFields(originalTask = task, content = textWithMarkup("B"))
         ) ==>
           taskAfterUpdate
       }
@@ -186,7 +187,7 @@ object TaskTest extends TestSuite {
 
     "equals and hashCode" - {
       val task1A = Task.withRandomId(
-        content = TextWithMarkup("a"),
+        content = textWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
@@ -223,7 +224,7 @@ object TaskTest extends TestSuite {
         )
       )
       val task2 = Task.withRandomId(
-        content = TextWithMarkup("a"),
+        content = textWithMarkup("a"),
         orderToken = orderTokenA,
         indentation = 1,
         collapsed = true,
@@ -241,4 +242,7 @@ object TaskTest extends TestSuite {
       task1A.hashCode == task2.hashCode ==> false
     }
   }
+
+  private def textWithMarkup(string: String, formatting: Formatting = Formatting.none): TextWithMarkup =
+    TextWithMarkup.create(string, formatting, alreadySanitized = true)
 }
