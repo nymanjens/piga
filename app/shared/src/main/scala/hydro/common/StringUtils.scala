@@ -40,6 +40,7 @@ object StringUtils {
         // Invisible characters: Only " " and "\n" are allowed as whitespace
         case ' '                                                              => " "
         case '\n'                                                             => if (stripNewlines) "" else "\n"
+        case 0xa0                                                             => " " // Non-breaking space
         case '\t'                                                             => "  "
         case _ if INVISIBLE_CHARACTER_TYPES.contains(Character.getType(char)) => ""
 
