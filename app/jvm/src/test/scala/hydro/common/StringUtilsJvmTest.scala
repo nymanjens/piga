@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.junit.Test
 
 @RunWith(classOf[TestParameterInjector])
-class StringUtilsTest {
+class StringUtilsJvmTest {
 
   case class StringCase(string: String)
 
