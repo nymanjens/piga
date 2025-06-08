@@ -551,16 +551,14 @@ private[document] final class DesktopTaskEditor(implicit
                 if event.keyCode == 52 =>
               event.preventDefault()
               val newCheckedValue = document.tasksIn(selection).forall(!_.checked)
-              updateTasksInSelection(selection, updateChildren = !newCheckedValue) { task =>
-                def hasChildren: Boolean = {
-                  val taskSelection =
-                    DetachedSelection.singleton(DetachedCursor(task, offsetInTask = 0)).attachToDocument
-                  taskSelection.includeChildren() != taskSelection
-                }
+              updateTasksInSelection(
+                selection,
+                updateChildren = !newCheckedValue,
+                collapseIfChildren = newCheckedValue,
+              ) { task =>
                 MaskedTaskUpdate.fromFields(
                   task,
                   checked = newCheckedValue,
-                  collapsed = if (newCheckedValue) hasChildren else task.collapsed,
                 )
               }
 
@@ -572,7 +570,34 @@ private[document] final class DesktopTaskEditor(implicit
                 (form, value) => form.copy(strikethrough = value),
                 selection,
                 formattingAtStart = formatting,
-              )
+              ) >> {
+                if (selection.isSingleton) {
+                  val selectedTask = document.tasks(selection.start.seqIndex)
+                  if (selectedTask.content.nonEmpty) {
+                    val hasStrikethrough = selectedTask.content.hasFormattingEverywhere(_.strikethrough)
+                    val hasNoStrikethrough = selectedTask.content.hasFormattingEverywhere(!_.strikethrough)
+                    if (hasStrikethrough || hasNoStrikethrough) {
+                      val newStrikethrough = !hasStrikethrough
+                      updateTasksInSelection(
+                        selection,
+                        updateChildren = !newStrikethrough,
+                        collapseIfChildren = newStrikethrough,
+                      ) { task =>
+                        MaskedTaskUpdate.fromFields(
+                          task,
+                          content = task.content.withFormatting(_.copy(strikethrough = newStrikethrough)),
+                        )
+                      }
+                    } else {
+                      Callback.empty
+                    }
+                  } else {
+                    Callback.empty
+                  }
+                } else {
+                  Callback.empty
+                }
+              }
 
             // Clear formatting
             case CharacterKey('\\', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
@@ -1015,12 +1040,33 @@ private[document] final class DesktopTaskEditor(implicit
       )
     }
 
-    private def updateTasksInSelection(selection: IndexedSelection, updateChildren: Boolean)(
+    private def updateTasksInSelection(
+        selection: IndexedSelection,
+        updateChildren: Boolean,
+        collapseIfChildren: Boolean = false,
+    )(
         taskUpdate: Task => MaskedTaskUpdate
     )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val updateSelection = if (updateChildren) selection.includeChildren() else selection
-      val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield taskUpdate(task)
+      val taskUpdates = for (task <- oldDocument.tasksIn(updateSelection)) yield {
+        def hasChildren: Boolean = {
+          val taskSelection =
+            DetachedSelection.singleton(DetachedCursor(task, offsetInTask = 0)).attachToDocument
+          taskSelection.includeChildren() != taskSelection
+        }
+
+        if (collapseIfChildren && hasChildren) {
+          taskUpdate(task).mergedWith(
+            MaskedTaskUpdate.fromFields(
+              task,
+              collapsed = true,
+            )
+          )
+        } else {
+          taskUpdate(task)
+        }
+      }
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),

@@ -237,6 +237,10 @@ final class TextWithMarkup private (private val parts: List[Part]) {
     formattingAtCursorInner(parts, offset)
   }
 
+  def hasFormattingEverywhere(predicate: Formatting => Boolean): Boolean = {
+    parts.forall(p => predicate(p.formatting))
+  }
+
   def sub(beginOffset: Int, endOffset: Int = -1): TextWithMarkup = {
     def subInner(parts: List[Part], beginOffset: Int, endOffset: Int): List[Part] = parts match {
       case Nil => Nil
@@ -277,6 +281,10 @@ final class TextWithMarkup private (private val parts: List[Part]) {
       )
     }
     sub(0, beginOffset) + updated(sub(beginOffset, endOffset)) + sub(endOffset, contentString.length)
+  }
+
+  def withFormatting(updateFunc: Formatting => Formatting): TextWithMarkup = {
+    withFormatting(beginOffset = 0, endOffset = contentString.length, updateFunc = updateFunc)
   }
 
   def withTransformedCharacters(
