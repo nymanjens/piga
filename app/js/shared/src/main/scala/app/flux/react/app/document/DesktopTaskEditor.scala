@@ -384,8 +384,12 @@ private[document] final class DesktopTaskEditor(implicit
 
             case c @ CharacterKey(_, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
-              replaceSelection(
-                replacement = getReplacementForCharacterPress(c.capitalizedCharacter, selection, formatting),
+              maybeHandleWrappingCharacter(
+                c.capitalizedCharacter,
+                selection,
+                formatting,
+              ) getOrElse replaceSelection(
+                replacement = Replacement.fromString(c.capitalizedCharacter.toString, formatting),
                 IndexedSelection(start, end),
               )
 
@@ -829,7 +833,11 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    private def replaceSelection(replacement: Replacement, selectionBeforeEdit: IndexedSelection)(implicit
+    private def replaceSelection(
+        replacement: Replacement,
+        selectionBeforeEdit: IndexedSelection,
+        selectionAfterEditOverride: IndexedSelection = null,
+    )(implicit
         state: State,
         props: Props,
     ): Callback = {
@@ -923,8 +931,10 @@ private[document] final class DesktopTaskEditor(implicit
           taskUpdates = taskUpdates.toVector,
         ),
         selectionBeforeEdit = selectionBeforeEdit,
-        selectionAfterEdit = IndexedSelection.singleton(
-          (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length
+        selectionAfterEdit = Option(selectionAfterEditOverride).getOrElse(
+          IndexedSelection.singleton(
+            (start proceedNTasks (replacement.parts.length - 1)) plusOffset replacement.parts.last.contentString.length
+          )
         ),
         replacementString = replacement.contentString,
       )
@@ -940,11 +950,11 @@ private[document] final class DesktopTaskEditor(implicit
         '`' -> '`',
       )
 
-    private def getReplacementForCharacterPress(
+    private def maybeHandleWrappingCharacter(
         char: Char,
         selection: IndexedSelection,
         formatting: Formatting,
-    )(implicit document: Document): Replacement = {
+    )(implicit document: Document, state: State, props: Props): Option[Callback] = {
       val IndexedSelection(start, end) = selection
 
       if (
@@ -957,11 +967,17 @@ private[document] final class DesktopTaskEditor(implicit
           wrappingCharacters(char).toString,
           formatting = document.tasks(start.seqIndex).content.formattingAtCursor(end.offsetInTask),
         )
-        Replacement.create(
-          TextWithMarkup.fromUnsanitizedString(char.toString, formatting) + wrappedContent + mirrorText
+        Some(
+          replaceSelection(
+            replacement = Replacement.create(
+              TextWithMarkup.fromUnsanitizedString(char.toString, formatting) + wrappedContent + mirrorText
+            ),
+            IndexedSelection(start, end),
+            selectionAfterEditOverride = IndexedSelection(start.plusOffset(1), end.plusOffset(1)),
+          )
         )
       } else {
-        Replacement.fromString(char.toString, formatting)
+        None
       }
     }
 
