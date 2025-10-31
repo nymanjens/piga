@@ -233,15 +233,21 @@ final class ExternalApi @Inject() (implicit
 
     require(orderTokens.size == parsedTasks.size)
 
+    // If this the first task is the only top level task, collapse it because it nicely encapsulates the whole added task
+    val collapseFirstTask =
+      parsedTasks.size > 1 && parsedTasks.head.relativeIndentation == 0 && parsedTasks.tail.forall(
+        _.relativeIndentation > 0
+      )
+
     entityAccess.persistEntityModifications(
-      for ((parsedTask, orderToken) <- (parsedTasks zip orderTokens).toVector) yield {
+      for (((parsedTask, orderToken), i) <- (parsedTasks zip orderTokens).zipWithIndex.toVector) yield {
         EntityModification.createAddWithRandomId(
           TaskEntity(
             documentId = documentId,
             contentHtml = parsedTask.html,
             orderToken = orderToken,
             indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
-            collapsed = false,
+            collapsed = i == 0 && collapseFirstTask,
             checked = false,
             delayedUntil = None,
             tags = Seq(),
