@@ -19,7 +19,7 @@ object ClientApp {
     // create stylesheet
     //GlobalStyles.addToDocument()
 
-    setUpServiceWorker()
+    // setUpServiceWorker() // Disabled because it caused problems
     setUpNoSleep()
 
     val commonTimeModule = new hydro.common.time.Module
