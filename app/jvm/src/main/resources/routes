@@ -10,7 +10,6 @@ GET  /appwithoutcreds/                 hydro.controllers.StandardActions.reactAp
 
 # Javscript files
 GET  /localDatabaseWebWorker.js        hydro.controllers.JavascriptFiles.localDatabaseWebWorker
-GET  /serviceWorker.js                 hydro.controllers.JavascriptFiles.serviceWorker
 GET  /manifest.webmanifest             app.controllers.Webmanifest.webmanifest
 
 # Internal API
