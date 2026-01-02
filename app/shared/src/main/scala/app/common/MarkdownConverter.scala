@@ -14,13 +14,29 @@ object MarkdownConverter {
     val markdown = s.trim
     if (s.startsWith("- ")) {
       for (task <- splitInTasks(s)) yield {
+        val TagExtraction(tags, remainingMarkdown) = extractTags(task.trim.stripPrefix("- "))
         ParsedTask(
-          html = toHtml(task.trim.stripPrefix("- ")),
+          html = toHtml(remainingMarkdown),
           relativeIndentation = task.prefixLength(_ == ' ') / 2,
+          tags = tags,
         )
       }
     } else {
-      Seq(ParsedTask(html = toHtml(markdown), relativeIndentation = 0))
+      val TagExtraction(tags, remainingMarkdown) = extractTags(markdown)
+      Seq(ParsedTask(html = toHtml(remainingMarkdown), relativeIndentation = 0, tags = tags))
+    }
+  }
+
+  private def extractTags(markdown: String): TagExtraction = {
+    val tagRegex = """^%(.*?)% """.r.unanchored
+    markdown match {
+      case tagRegex(tag) =>
+        val fullMatch = "%" + tag + "% "
+        require(markdown.startsWith(fullMatch))
+        val additionalTags = extractTags(markdown.stripPrefix(fullMatch))
+        TagExtraction(tags = tag +: additionalTags.tags, remainingMarkdown = additionalTags.remainingMarkdown)
+      case _ =>
+        TagExtraction(tags = Seq(), remainingMarkdown = markdown)
     }
   }
 
@@ -126,5 +142,6 @@ object MarkdownConverter {
     None
   }
 
-  case class ParsedTask(html: String, relativeIndentation: Int)
+  private case class TagExtraction(tags: Seq[String], remainingMarkdown: String)
+  case class ParsedTask(html: String, relativeIndentation: Int, tags: Seq[String] = Seq())
 }

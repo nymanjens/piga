@@ -1,5 +1,6 @@
 package app.common
 
+import scala.collection.immutable.Seq
 import app.common.MarkdownConverter.ParsedTask
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
@@ -117,5 +118,30 @@ class MarkdownConverterTest {
       """<a href="ex.com/ab<df">a <i>b</i> `c</a> <i>d`ef*</i> <b>g <s>[h](</s> &lt;z&gt;</b> <code>klm</code> <code>nop</code>""",
       0,
     )
+  }
+
+  @Test
+  def markdownToParsedTasks_tags(): Unit = {
+    assertThat(
+      MarkdownConverter.markdownToParsedTasks("%c% %xyz% abc def").asJava
+    ) containsExactly ParsedTask("abc def", 0, tags = Seq("c", "xyz"))
+  }
+
+  @Test
+  def markdownToParsedTasks_list_tags(): Unit = {
+    assertThat(
+      MarkdownConverter
+        .markdownToParsedTasks(
+          "" +
+            "- %c% abc\n" +
+            "  - def\n" +
+            "  - %x% ghi\n\n"
+        )
+        .asJava
+    ) containsExactly (ParsedTask("abc", 0, tags = Seq("c")), ParsedTask("def", 1), ParsedTask(
+      "ghi",
+      1,
+      tags = Seq("x"),
+    ))
   }
 }

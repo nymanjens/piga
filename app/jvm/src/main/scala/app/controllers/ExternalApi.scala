@@ -250,7 +250,7 @@ final class ExternalApi @Inject() (implicit
             collapsed = i == 0 && collapseFirstTask,
             checked = false,
             delayedUntil = None,
-            tags = Seq(),
+            tags = parsedTask.tags,
             lastContentModifierUserId = user.id,
           )
         )
