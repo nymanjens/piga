@@ -1873,6 +1873,10 @@ private[document] final class DesktopTaskEditor(implicit
           pushChildNodesWithoutLi()
         }
 
+        def withoutLink(f: Formatting): Formatting = {
+          f.copy(link = None)
+        }
+
         if (containsNodeWithPigaAttribute(rootNode)) {
           addPastedPigaText(Seq(rootNode), nextRelativeIndentation = -1)
         } else if (nodeWithGoogleDocsAttribute(rootNode).isDefined) {
@@ -1883,6 +1887,21 @@ private[document] final class DesktopTaskEditor(implicit
           addPastedNonPigaText(childrenOfDocsNode, nextRelativeIndentation = -1, insideListItem = false)
         } else {
           addPastedNonPigaText(Seq(rootNode), nextRelativeIndentation = -1, insideListItem = false)
+
+          // Don't copy formatting if there is only a single task with uniform formatting (except link). This avoids
+          // inserting e.g. code font because the snippet comes from an IDE.
+          if (partsBuilder.size == 1) {
+            val replacementPart = getOnlyElement(partsBuilder)
+            val formattingAtStart = withoutLink(replacementPart.content.formattingAtCursor(0))
+            if (replacementPart.content.hasFormattingEverywhere(f => withoutLink(f) == formattingAtStart)) {
+              partsBuilder.update(
+                0,
+                replacementPart.copy(content =
+                  replacementPart.content.withFormatting(f => baseFormatting.copy(link = f.link))
+                ),
+              )
+            }
+          }
         }
       }
 
