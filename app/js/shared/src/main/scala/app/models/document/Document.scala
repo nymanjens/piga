@@ -259,7 +259,7 @@ object Document {
             offsetInTask
           } else {
             val currentChar = if (step > 0) task.charAt(offsetInTask) else task.charAt(nextOffset)
-            val currentCharIsWord = currentChar.isLetterOrDigit
+            val currentCharIsWord = currentChar.isLetterOrDigit|| currentChar == '_')
             if (currentCharIsWord) {
               move(nextOffset, seenWord = true)
             } else {

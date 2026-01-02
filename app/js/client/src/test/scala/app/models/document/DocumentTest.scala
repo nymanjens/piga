@@ -308,7 +308,7 @@ object DocumentTest extends TestSuite {
     }
     "IndexedCursor" - {
       "plusWord" - {
-        implicit val document = newDocument(newTask("the red apple"))
+        implicit val document = newDocument(newTask("the red ap_le"))
         IndexedCursor(0, 0).plusWord ==> IndexedCursor(0, 3)
         IndexedCursor(0, 3).plusWord ==> IndexedCursor(0, 7)
         IndexedCursor(0, 4).plusWord ==> IndexedCursor(0, 7)
