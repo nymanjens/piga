@@ -532,7 +532,8 @@ private[document] final class DesktopTaskEditor(implicit
               )
 
             // Code font
-            case CharacterKey('`', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+            case SpecialKey(Backquote, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) |
+                CharacterKey('`', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
               toggleFormatting(
                 (form, value) => form.copy(code = value),
