@@ -453,7 +453,12 @@ private[document] final class DesktopTaskEditor(implicit
             // Delete rest of line
             case SpecialKey(Delete, /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
-              replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.toEndOfTask))
+              val contentStr = document.tasks(end.seqIndex).contentString
+              val targetEnd = contentStr.indexOf('\n', end.offsetInTask) match {
+                case -1               => end.toEndOfTask
+                case nextNewlineIndex => end.copy(offsetInTask = nextNewlineIndex)
+              }
+              replaceSelection(replacement = Replacement.empty, IndexedSelection(start, targetEnd))
 
             // Move cursor up/down
             // Note: This is re-implementation of the default behavior only for Firefox because it behaves weirdly with
