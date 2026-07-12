@@ -1,20 +1,24 @@
 package hydro.flux.react.uielements
 
+import app.flux.router.AppPages
 import app.flux.stores.GlobalMessagesStore
 import app.flux.stores.GlobalMessagesStore.Message
+import hydro.common.I18n
 import hydro.common.JsLoggingUtils.logExceptions
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.uielements.Bootstrap.Variant
+import hydro.flux.router.RouterContext
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
 
-final class GlobalMessages(implicit globalMessagesStore: GlobalMessagesStore) extends HydroReactComponent {
+final class GlobalMessages(implicit globalMessagesStore: GlobalMessagesStore, i18n: I18n)
+    extends HydroReactComponent {
 
   // **************** API ****************//
-  def apply(): VdomElement = {
-    component((): Unit)
+  def apply()(implicit router: RouterContext): VdomElement = {
+    component(Props(router))
   }
 
   // **************** Implementation of HydroReactComponent methods ****************//
@@ -22,12 +26,13 @@ final class GlobalMessages(implicit globalMessagesStore: GlobalMessagesStore) ex
     .withStateStoresDependency(globalMessagesStore, _.copy(maybeMessage = globalMessagesStore.state))
 
   // **************** Implementation of HydroReactComponent types ****************//
-  protected type Props = Unit
+  protected case class Props(router: RouterContext)
   protected case class State(maybeMessage: Option[GlobalMessagesStore.Message] = None)
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State): VdomElement = logExceptions {
+      implicit val _ = props.router
       state.maybeMessage match {
         case None => <.span()
         case Some(message) =>
@@ -40,6 +45,17 @@ final class GlobalMessages(implicit globalMessagesStore: GlobalMessagesStore) ex
               " ",
             ),
             message.string,
+            message.linkPage.map { pageFactory =>
+              <.span(
+                " ",
+                props.router.anchorWithHrefTo(pageFactory.create())(
+                  <.span(
+                    ^.className := "global-message-link",
+                    s"[${i18n("app.edit")}]",
+                  )
+                ),
+              )
+            },
           )
       }
     }
