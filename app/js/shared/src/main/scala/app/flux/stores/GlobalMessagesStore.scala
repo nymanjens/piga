@@ -2,6 +2,7 @@ package app.flux.stores
 
 import java.time.Instant
 
+import hydro.flux.action.StandardActions.DoneWithLink.PageFactory
 import app.flux.action.AppActions._
 import app.flux.stores.GlobalMessagesStore.Message
 import hydro.common.I18n
@@ -122,14 +123,21 @@ final class GlobalMessagesStore(implicit
 }
 
 object GlobalMessagesStore {
-  case class Message private (string: String, messageType: Message.Type, private val createTime: Instant) {
+  case class Message private (
+      string: String,
+      messageType: Message.Type,
+      private val createTime: Instant,
+      linkPage: Option[PageFactory],
+  ) {
     private[GlobalMessagesStore] def age(implicit clock: Clock): java.time.Duration =
       java.time.Duration.between(createTime, clock.nowInstant)
   }
 
   object Message {
-    def apply(string: String, messageType: Message.Type)(implicit clock: Clock): Message =
-      Message(string = string, messageType = messageType, createTime = clock.nowInstant)
+    def apply(string: String, messageType: Message.Type, linkPage: Option[PageFactory] = None)(implicit
+        clock: Clock
+    ): Message =
+      Message(string = string, messageType = messageType, createTime = clock.nowInstant, linkPage = linkPage)
 
     sealed trait Type
     object Type {
