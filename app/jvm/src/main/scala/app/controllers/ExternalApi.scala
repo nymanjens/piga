@@ -1,6 +1,7 @@
 package app.controllers
 
 import app.common.MarkdownConverter
+import app.common.MarkdownConverter.ParsedTask
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization
 
@@ -110,13 +111,14 @@ final class ExternalApi @Inject() (implicit
       documentIdString: String,
       parentTagEncoded: String,
       contentEncoded: String,
+      isMarkdown: Boolean,
       applicationSecret: String,
   ) =
     Action { implicit request =>
       validateApplicationSecret(applicationSecret)
       implicit val user = Users.getOrCreateRobotUser()
 
-      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
+      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded, isMarkdown)
 
       Ok(s"OK\n")
     }
@@ -181,17 +183,25 @@ final class ExternalApi @Inject() (implicit
 
   def interactiveInsertTask(documentIdString: String, parentTagEncoded: String, contentEncoded: String) =
     AuthenticatedAction(parse.raw) { implicit user => implicit request =>
-      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded)
+      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded, isMarkdown = true)
       Redirect(app.controllers.routes.ExternalApi.interactiveDone())
     }
 
   // ********** private helper methods ********** //
-  private def insertTaskInternal(documentIdString: String, parentTagEncoded: String, contentEncoded: String)(
-      implicit user: User
+  private def insertTaskInternal(
+      documentIdString: String,
+      parentTagEncoded: String,
+      contentEncoded: String,
+      isMarkdown: Boolean,
+  )(implicit
+      user: User
   ): Unit = {
     val documentId = documentIdString.toLong
     val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
-    val parsedTasks = MarkdownConverter.markdownToParsedTasks(maybeDecodeAsBase64(contentEncoded))
+    val content = maybeDecodeAsBase64(contentEncoded)
+    val parsedTasks =
+      if (isMarkdown) MarkdownConverter.markdownToParsedTasks(content)
+      else Seq(ParsedTask(html = content.replace("<", "&lt;").replace(">", "&gt;"), relativeIndentation = 0))
 
     // Validate that document exists
     entityAccess
