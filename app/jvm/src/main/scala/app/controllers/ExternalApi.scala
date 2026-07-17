@@ -112,13 +112,14 @@ final class ExternalApi @Inject() (implicit
       parentTagEncoded: String,
       contentEncoded: String,
       isMarkdown: Boolean,
+      extraIndent: Int,
       applicationSecret: String,
   ) =
     Action { implicit request =>
       validateApplicationSecret(applicationSecret)
       implicit val user = Users.getOrCreateRobotUser()
 
-      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded, isMarkdown)
+      insertTaskInternal(documentIdString, parentTagEncoded, contentEncoded, isMarkdown, extraIndent)
 
       Ok(s"OK\n")
     }
@@ -193,12 +194,13 @@ final class ExternalApi @Inject() (implicit
       parentTagEncoded: String,
       contentEncoded: String,
       isMarkdown: Boolean,
+      extraIndent: Int = 0,
   )(implicit
       user: User
   ): Unit = {
     val documentId = documentIdString.toLong
     val parentTag = URLDecoder.decode(parentTagEncoded, "UTF-8")
-    val content = maybeDecodeAsBase64(contentEncoded)
+    val content = decodeAsBase64(contentEncoded)
     val parsedTasks =
       if (isMarkdown) MarkdownConverter.markdownToParsedTasks(content)
       else Seq(ParsedTask(html = content.replace("<", "&lt;").replace(">", "&gt;"), relativeIndentation = 0))
@@ -256,7 +258,7 @@ final class ExternalApi @Inject() (implicit
             documentId = documentId,
             contentHtml = parsedTask.html,
             orderToken = orderToken,
-            indentation = parent.indentation + 1 + parsedTask.relativeIndentation,
+            indentation = parent.indentation + 1 + parsedTask.relativeIndentation + extraIndent,
             collapsed = i == 0 && collapseFirstTask,
             checked = false,
             delayedUntil = None,
@@ -268,15 +270,12 @@ final class ExternalApi @Inject() (implicit
     )
   }
 
-  private def maybeDecodeAsBase64(str: String): String = {
-    if (str.startsWith("base64:")) {
-      new String(
-        Base64.getDecoder.decode(ScalaUtils.stripRequiredPrefix(str, "base64:")),
-        StandardCharsets.UTF_8,
-      )
-    } else {
-      URLDecoder.decode(str, "UTF-8")
-    }
+  private def decodeAsBase64(str: String): String = {
+    require(str.startsWith("base64:"), str)
+    new String(
+      Base64.getDecoder.decode(ScalaUtils.stripRequiredPrefix(str, "base64:")),
+      StandardCharsets.UTF_8,
+    )
   }
 
   private def getGreatestDocumentOrderToken(user: User): Option[OrderToken] = {

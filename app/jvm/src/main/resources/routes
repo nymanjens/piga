@@ -22,9 +22,8 @@ GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthC
 GET  /externalapi/dbschema/:appSecret/  hydro.controllers.StandardActions.databaseSchema(appSecret)
 GET  /externalapi/clearoldentitymodifications/:dryOrWet/:appSecret/  hydro.controllers.StandardActions.clearOldEntityModifications(dryOrWet, appSecret)
 GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalApi.shareDocument(docId, loginName, appSecret)
-# Inserts a task. It is recommended to provide `content` in the form of "base64:<base64 encoded Markdown content>"
-GET  /externalapi/inserttask/markdown/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, isMarkdown: Boolean=true, appSecret)
-GET  /externalapi/inserttask/plaintext/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, isMarkdown: Boolean=false, appSecret)
+# Inserts a task. `content` must be in the form of "base64:<base64 encoded Markdown content>"
+GET  /externalapi/inserttask/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, isMarkdown: Boolean ?= false, extraIndent: Int ?= 0, appSecret)
 GET  /externalapi/gettasksasjson/:docId/$parentTag<[^/]+>/:appSecret/ app.controllers.ExternalApi.getTasksAsJson(docId, parentTag, appSecret)
 GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
 
