@@ -79,6 +79,7 @@ object DomNodeUtils {
         case "I"     => ParsedNode.I(element)
         case "S"     => ParsedNode.S(element)
         case "CODE"  => ParsedNode.Code(element)
+        case "MARK"  => ParsedNode.Mark(element)
         case "A"     => ParsedNode.A(element)
         case "STYLE" => ParsedNode.Style(element)
         case _       => ParsedNode.Other(node)
@@ -101,6 +102,7 @@ object DomNodeUtils {
     case class I(element: dom.raw.Element) extends ParsedNode
     case class S(element: dom.raw.Element) extends ParsedNode
     case class Code(element: dom.raw.Element) extends ParsedNode
+    case class Mark(element: dom.raw.Element) extends ParsedNode
     case class A(element: dom.raw.Element) extends ParsedNode
     case class Style(element: dom.raw.Element) extends ParsedNode
     case class Other(node: dom.raw.Node) extends ParsedNode

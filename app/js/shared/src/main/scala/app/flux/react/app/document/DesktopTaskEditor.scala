@@ -609,6 +609,16 @@ private[document] final class DesktopTaskEditor(implicit
                 }
               }
 
+            // Mark (Alt + Shift + 3)
+            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                if event.keyCode == 51 =>
+              event.preventDefault()
+              toggleFormatting(
+                (form, value) => form.copy(mark = value),
+                selection,
+                formattingAtStart = formatting,
+              )
+
             // Clear formatting
             case CharacterKey('\\', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()

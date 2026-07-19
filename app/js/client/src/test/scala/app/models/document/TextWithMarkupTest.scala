@@ -124,6 +124,9 @@ object TextWithMarkupTest extends TestSuite {
       "strikethrough" - {
         textWithMarkup("ABC", Formatting(strikethrough = true)).toHtml ==> "<s>ABC</s>"
       }
+      "mark" - {
+        textWithMarkup("ABC", Formatting(mark = true)).toHtml ==> "<mark>ABC</mark>"
+      }
       "link" - {
         textWithMarkup("ABC", Formatting(link = Some("example.com"))).toHtml ==>
           """<a href="example.com">ABC</a>"""
@@ -153,6 +156,9 @@ object TextWithMarkupTest extends TestSuite {
       }
       "strikethrough" - {
         textWithMarkup("ABC \n", Formatting(strikethrough = true)).toMarkdown ==> "~ABC   \n~"
+      }
+      "mark" - {
+        textWithMarkup("ABC \n", Formatting(mark = true)).toMarkdown ==> "==ABC   \n=="
       }
       "link" - {
         textWithMarkup("ABC", Formatting(link = Some("example.com"))).toMarkdown ==> "[ABC](example.com)"
@@ -199,6 +205,9 @@ object TextWithMarkupTest extends TestSuite {
       }
       "i via style" - {
         TextWithMarkup.fromSanitizedHtml("<span style='font-style:italic'>ABC</style>") ==> italic("ABC")
+      }
+      "mark" - {
+        TextWithMarkup.fromSanitizedHtml("<mark>ABC</mark>") ==> textWithMarkup("ABC", Formatting(mark = true))
       }
       "b and i" - {
         TextWithMarkup.fromSanitizedHtml("<i>AB<b>C</b></i>") ==>

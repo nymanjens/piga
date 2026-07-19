@@ -91,6 +91,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
           case FormattingOption.Code   => if (asBoolean(value)) <.code(^.key := nextKey, children) else children
           case FormattingOption.Strikethrough =>
             if (asBoolean(value)) <.s(^.key := nextKey, children) else children
+          case FormattingOption.Mark =>
+            if (asBoolean(value)) <.mark(^.key := nextKey, children) else children
           case FormattingOption.Link =>
             asOption(value) match {
               case Some(href) => linkVdomNode(href = href, children = children, cssClass = "explicit")
@@ -154,6 +156,7 @@ final class TextWithMarkup private (private val parts: List[Part]) {
           case FormattingOption.Italic        => if (asBoolean(value)) s"<i>$children</i>" else children
           case FormattingOption.Code          => if (asBoolean(value)) s"<code>$children</code>" else children
           case FormattingOption.Strikethrough => if (asBoolean(value)) s"<s>$children</s>" else children
+          case FormattingOption.Mark          => if (asBoolean(value)) s"<mark>$children</mark>" else children
           case FormattingOption.Link =>
             if (asOption(value).isDefined) s"""<a href="${asOption(value).get}">$children</a>""" else children
         }
@@ -198,6 +201,8 @@ final class TextWithMarkup private (private val parts: List[Part]) {
             if (asBoolean(value)) trimmedTransform(children, c => s"`$c`") else children
           case FormattingOption.Strikethrough =>
             if (asBoolean(value)) trimmedTransform(children, c => s"~$c~") else children
+          case FormattingOption.Mark =>
+            if (asBoolean(value)) trimmedTransform(children, c => s"==$c==") else children
           case FormattingOption.Link =>
             if (asOption(value).isDefined) trimmedTransform(children, c => s"[$c](${asOption(value).get})")
             else children
@@ -383,6 +388,8 @@ object TextWithMarkup {
             case ParsedNode.Code(e) => fromHtmlNodesInner(children(e), formattingFromStyle.copy(code = true))
             case ParsedNode.S(e) =>
               fromHtmlNodesInner(children(e), formattingFromStyle.copy(strikethrough = true))
+            case ParsedNode.Mark(e) =>
+              fromHtmlNodesInner(children(e), formattingFromStyle.copy(mark = true))
             case ParsedNode.A(e) =>
               fromHtmlNodesInner(children(e), formattingFromStyle.copy(link = Some(e.getAttribute("href"))))
             case ParsedNode.Style(e) => Seq() // Ignore style tags
@@ -402,6 +409,7 @@ object TextWithMarkup {
       italic: Boolean = false,
       code: Boolean = false,
       strikethrough: Boolean = false,
+      mark: Boolean = false,
       link: Option[String] = None,
   )
   object Formatting {
@@ -466,6 +474,9 @@ object TextWithMarkup {
     }
     object Strikethrough extends FormattingOption[Boolean] {
       override def getValue(part: Part): Boolean = part.formatting.strikethrough
+    }
+    object Mark extends FormattingOption[Boolean] {
+      override def getValue(part: Part): Boolean = part.formatting.mark
     }
     object Link extends FormattingOption[Option[String]] {
       override def getValue(part: Part): Option[String] = part.formatting.link

@@ -66,6 +66,7 @@ object MarkdownConverter {
         "_" -> "i",
         "`" -> "code",
         "~" -> "s",
+        "==" -> "mark",
       )
 
       val result = StringBuilder.newBuilder

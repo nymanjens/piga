@@ -95,6 +95,17 @@ class MarkdownConverterTest {
   }
 
   @Test
+  def markdownToParsedTasks_mark(): Unit = {
+    assertThat(
+      MarkdownConverter.markdownToParsedTasks("abc ==def==").asJava
+    ) containsExactly ParsedTask("abc <mark>def</mark>", 0)
+
+    assertThat(
+      MarkdownConverter.markdownToParsedTasks("==def x== adsf").asJava
+    ) containsExactly ParsedTask("<mark>def x</mark> adsf", 0)
+  }
+
+  @Test
   def markdownToParsedTasks_href(): Unit = {
     assertThat(
       MarkdownConverter.markdownToParsedTasks("- [abc](http://example.com)\n").asJava
