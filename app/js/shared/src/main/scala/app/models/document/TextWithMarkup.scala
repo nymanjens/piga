@@ -556,7 +556,7 @@ object TextWithMarkup {
     import FormattingOption._
     serializeToDomInner(
       parts,
-      formattingLeft = List(Link, Code, Strikethrough, Italic, Bold),
+      formattingLeft = List(Link, Code, Strikethrough, Mark, Italic, Bold),
       insideLink = false,
     )
   }
