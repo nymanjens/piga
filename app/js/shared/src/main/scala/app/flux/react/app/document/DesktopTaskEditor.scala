@@ -114,7 +114,8 @@ private[document] final class DesktopTaskEditor(implicit
   protected class Backend($ : BackendScope[Props, State])
       extends BackendBase($)
       with DidMount
-      with WillUnmount {
+      with WillUnmount
+      with DidUpdate {
 
     private val resizeListener: js.Function1[dom.raw.Event, Unit] = _ => $.forceUpdate.runNow()
     private var lastSingletonFormating: SingletonFormating = SingletonFormating(
@@ -158,6 +159,28 @@ private[document] final class DesktopTaskEditor(implicit
       }
 
       Callback.empty
+    }
+
+    override def didUpdate(
+        prevProps: Props,
+        currentProps: Props,
+        prevState: State,
+        currentState: State,
+    ): Callback = {
+      if (prevState.document != currentState.document) {
+        IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+          case Some(s) if s.seqIndices.contains(currentState.highlightedTaskIdAndIndex.taskIndex) =>
+            // Current selection matches expectation. Nothing needed
+            Callback.empty
+          case _ =>
+            // Hack: Fix for bug where selection changes if another instance added a task above the selected
+            // one
+            println("  Warning: Reset selection because it did not match state")
+            setSelection(documentSelectionStore.getSelection(currentState.document.id))
+        }
+      } else {
+        Callback.empty
+      }
     }
 
     override def render(props: Props, state: State): VdomElement = {
@@ -1270,7 +1293,7 @@ private[document] final class DesktopTaskEditor(implicit
           val contentFullTrue = selectedTask.content.withFormatting(
             beginOffset = 0,
             endOffset = selectedTask.contentString.length,
-            formatting => updateFunc(formatting, true)
+            formatting => updateFunc(formatting, true),
           )
           val newValue = contentFullTrue != selectedTask.content
 
@@ -1284,15 +1307,16 @@ private[document] final class DesktopTaskEditor(implicit
               content = task.content.withFormatting(
                 beginOffset = 0,
                 endOffset = task.contentString.length,
-                formatting => updateFunc(formatting, newValue)
-              )
+                formatting => updateFunc(formatting, newValue),
+              ),
             )
           }
         } else {
           lastSingletonFormating = SingletonFormating(
             start.detach,
             formatting =
-              if (updateFunc(formattingAtStart, true) == formattingAtStart) updateFunc(formattingAtStart, false)
+              if (updateFunc(formattingAtStart, true) == formattingAtStart)
+                updateFunc(formattingAtStart, false)
               else updateFunc(formattingAtStart, true),
           )
           Callback.empty

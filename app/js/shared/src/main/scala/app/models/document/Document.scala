@@ -356,7 +356,7 @@ object Document {
       } catch {
         case e: NoParentLiException =>
           console.log("Could not find parent li of node", node, " (offset = ", offset, ")")
-          e.printStackTrace()
+          // e.printStackTrace()
           None
       }
     }
