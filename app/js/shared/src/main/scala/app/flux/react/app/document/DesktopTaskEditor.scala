@@ -580,34 +580,9 @@ private[document] final class DesktopTaskEditor(implicit
                 (form, value) => form.copy(strikethrough = value),
                 selection,
                 formattingAtStart = formatting,
-              ) >> {
-                if (selection.isSingleton) {
-                  val selectedTask = document.tasks(selection.start.seqIndex)
-                  if (selectedTask.content.nonEmpty) {
-                    val hasStrikethrough = selectedTask.content.hasFormattingEverywhere(_.strikethrough)
-                    val hasNoStrikethrough = selectedTask.content.hasFormattingEverywhere(!_.strikethrough)
-                    if (hasStrikethrough || hasNoStrikethrough) {
-                      val newStrikethrough = !hasStrikethrough
-                      updateTasksInSelection(
-                        selection,
-                        updateChildren = !newStrikethrough,
-                        collapseIfChildren = newStrikethrough,
-                      ) { task =>
-                        MaskedTaskUpdate.fromFields(
-                          task,
-                          content = task.content.withFormatting(_.copy(strikethrough = newStrikethrough)),
-                        )
-                      }
-                    } else {
-                      Callback.empty
-                    }
-                  } else {
-                    Callback.empty
-                  }
-                } else {
-                  Callback.empty
-                }
-              }
+                updateChildrenIfSingleton = strikethroughBeingAdded => !strikethroughBeingAdded,
+                collapseIfChildrenIfSingleton = strikethroughBeingAdded => strikethroughBeingAdded,
+              )
 
             // Mark (Alt + Shift + 3)
             case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
@@ -1253,6 +1228,8 @@ private[document] final class DesktopTaskEditor(implicit
         updateFunc: (Formatting, Boolean) => Formatting,
         selection: IndexedSelection,
         formattingAtStart: Formatting,
+        updateChildrenIfSingleton: Boolean => Boolean = _ => false,
+        collapseIfChildrenIfSingleton: Boolean => Boolean = _ => false,
     )(implicit state: State, props: Props): Callback = {
       implicit val document = state.document
       val IndexedSelection(start, end) = selection
@@ -1288,13 +1265,38 @@ private[document] final class DesktopTaskEditor(implicit
       }
 
       if (start == end) {
-        lastSingletonFormating = SingletonFormating(
-          start.detach,
-          formatting =
-            if (updateFunc(formattingAtStart, true) == formattingAtStart) updateFunc(formattingAtStart, false)
-            else updateFunc(formattingAtStart, true),
-        )
-        Callback.empty
+        val selectedTask = document.tasks(start.seqIndex)
+        if (selectedTask.content.nonEmpty) {
+          val contentFullTrue = selectedTask.content.withFormatting(
+            beginOffset = 0,
+            endOffset = selectedTask.contentString.length,
+            formatting => updateFunc(formatting, true)
+          )
+          val newValue = contentFullTrue != selectedTask.content
+
+          updateTasksInSelection(
+            selection,
+            updateChildren = updateChildrenIfSingleton(newValue),
+            collapseIfChildren = collapseIfChildrenIfSingleton(newValue),
+          ) { task =>
+            MaskedTaskUpdate.fromFields(
+              task,
+              content = task.content.withFormatting(
+                beginOffset = 0,
+                endOffset = task.contentString.length,
+                formatting => updateFunc(formatting, newValue)
+              )
+            )
+          }
+        } else {
+          lastSingletonFormating = SingletonFormating(
+            start.detach,
+            formatting =
+              if (updateFunc(formattingAtStart, true) == formattingAtStart) updateFunc(formattingAtStart, false)
+              else updateFunc(formattingAtStart, true),
+          )
+          Callback.empty
+        }
       } else {
         toggleFormattingInternal(start, end)
       }
