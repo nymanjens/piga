@@ -1,5 +1,8 @@
 package app.flux.react.app.document
 
+import hydro.common.time.LocalDateTime
+import hydro.common.time.TimeUtils
+
 import java.lang.Math.abs
 import app.common.CaseFormats
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
@@ -39,6 +42,7 @@ import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
 import hydro.common.StringUtils
+import hydro.common.time.JavaTimeImplicits._
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
@@ -220,7 +224,8 @@ private[document] final class DesktopTaskEditor(implicit
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
-              val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
+              val tagsToRender = task.tags ++ task.delayedUntil.map(d => s"⌛ ${d.toLocalDate.toString}")
+              val renderedTags = renderTags(tagsToRender, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
                 s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}"""
               )
@@ -676,6 +681,11 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
+            // Queue task to be added later
+            case CharacterKey('d', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+              event.preventDefault()
+              queueTaskToBeAddedLater(selection)
+
             // Delete task
             case CharacterKey('d', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
@@ -1067,6 +1077,122 @@ private[document] final class DesktopTaskEditor(implicit
           selectionBeforeEdit.start.plusTasks(taskIndices.size),
           selectionBeforeEdit.end.plusTasks(taskIndices.size),
         ),
+      )
+    }
+
+    private def queueTaskToBeAddedLater(
+        selectionBeforeEdit: IndexedSelection
+    )(implicit state: State, props: Props): Callback = {
+      implicit val document = state.document
+
+      val hasDelayedTasksTag = document.tasks.exists(_.tags.contains("#delayed_tasks"))
+      val hasTodoUnsortedTag = document.tasks.exists(_.tags.contains("#todo_unsorted"))
+
+      if (hasDelayedTasksTag && hasTodoUnsortedTag) {
+        Callback.future {
+          Bootbox
+            .prompt(
+              "Date to queue this task to (YYYY-MM-DD):",
+              value = "",
+              animate = false,
+              selectValue = true,
+            )
+            .map {
+              case Some(dateString) =>
+                try {
+                  moveTasksToDelayedTasksList(selectionBeforeEdit, TimeUtils.parseDateString(dateString))
+                } catch {
+                  case _: Exception =>
+                    Future {
+                      globalMessagesStore.showAdHocMessage(
+                        s"Invalid date format: $dateString. Expected YYYY-MM-DD.",
+                        Message.Type.Failure,
+                      )
+                    }
+                    Callback.empty
+                }
+              case None =>
+                Callback.empty
+            }
+        }
+      } else {
+        Callback.empty
+      }
+    }
+
+    private def moveTasksToDelayedTasksList(
+        selectionBeforeEdit: IndexedSelection,
+        delayedUntil: LocalDateTime,
+    )(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+      val delayedTasksParentIndex = oldDocument.tasks.indexWhere(_.tags.contains("#delayed_tasks"))
+      val parentIndentation = oldDocument.tasks(delayedTasksParentIndex).indentation
+
+      val delayedTasksIndices = {
+        val delayedTasksListLimit = oldDocument.tasks.indices
+          .find(i => i > delayedTasksParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
+          .getOrElse(oldDocument.tasks.size)
+        (delayedTasksParentIndex + 1) until delayedTasksListLimit
+      }
+
+      var insertAfterIndex = delayedTasksParentIndex
+      for (i <- delayedTasksIndices) {
+        val task = oldDocument.tasks(i)
+        if (task.indentation == parentIndentation + 1) {
+          task.delayedUntil match {
+            case Some(taskDate) if taskDate <= delayedUntil =>
+              insertAfterIndex = i - 1
+            case _ =>
+          }
+        }
+      }
+
+      val selectionWithChildren = selectionBeforeEdit.includeChildren()
+
+      val newOrderTokens = {
+        val taskBefore = oldDocument.tasksOption(insertAfterIndex)
+        val taskAfter = oldDocument.tasksOption(insertAfterIndex + 1)
+        OrderToken.evenlyDistributedValuesBetween(
+          numValues = selectionWithChildren.seqIndices.length,
+          lowerExclusive = taskBefore.map(_.orderToken),
+          higherExclusive = taskAfter.map(_.orderToken),
+        )
+      }
+
+      val rootIndentation = oldDocument.tasks(selectionWithChildren.start.seqIndex).indentation
+      val targetRootIndentation = parentIndentation + 1
+
+      val taskUpdates =
+        for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
+          yield {
+            val indentationDiff = oldTask.indentation - rootIndentation
+            val newDelayedUntil = if (indentationDiff == 0) Some(delayedUntil) else oldTask.delayedUntil
+
+            MaskedTaskUpdate.fromFields(
+              originalTask = oldTask,
+              orderToken = newOrderToken,
+              indentation = targetRootIndentation + indentationDiff,
+              delayedUntil = newDelayedUntil,
+            )
+          }
+
+      val seqIndexMovement = if (insertAfterIndex > selectionWithChildren.end.seqIndex) {
+        insertAfterIndex - selectionWithChildren.end.seqIndex
+      } else if (insertAfterIndex < selectionWithChildren.start.seqIndex) {
+        insertAfterIndex - selectionWithChildren.start.seqIndex + 1
+      } else {
+        0
+      }
+
+      val selectionAfterEdit = IndexedSelection(
+        selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+        selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+      )
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEdit = selectionAfterEdit,
       )
     }
 
