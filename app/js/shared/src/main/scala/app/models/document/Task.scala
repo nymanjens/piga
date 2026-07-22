@@ -122,6 +122,10 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     )
   }
 
+  def tagsIncludingDelayedUntil: Seq[String] = {
+    delayedUntil.map(d => s"⏰ ${d.toLocalDate.toString}").toVector ++ tags
+  }
+
   // **************** Ordered methods **************** //
   override def compare(that: Task): Int = {
     val result = this.orderToken compare that.orderToken

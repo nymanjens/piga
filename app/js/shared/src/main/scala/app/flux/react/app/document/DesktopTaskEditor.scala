@@ -224,8 +224,7 @@ private[document] final class DesktopTaskEditor(implicit
         <.ul(
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
-              val tagsToRender = task.tags ++ task.delayedUntil.map(d => s"⌛ ${d.toLocalDate.toString}")
-              val renderedTags = renderTags(tagsToRender, seqIndex = taskIndex)
+              val renderedTags = renderTags(task.tagsIncludingDelayedUntil, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
                 s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}"""
               )
