@@ -8,7 +8,9 @@ import app.models.user.User
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.time.LocalDateTime
+import hydro.common.Formatting
 import hydro.common.GuavaReplacement.ImmutableBiMap
+import hydro.common.I18n
 import hydro.models.modification.EntityModification
 import hydro.models.UpdatableEntity.LastUpdateTime
 import hydro.models.access.ModelField
@@ -122,8 +124,8 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
     )
   }
 
-  def tagsIncludingDelayedUntil: Seq[String] = {
-    delayedUntil.map(d => s"⏰ ${d.toLocalDate.toString}").toVector ++ tags
+  def tagsIncludingDelayedUntil(implicit i18n: I18n, clock: Clock): Seq[String] = {
+    delayedUntil.map(d => s"⏰ ${Formatting.formatDate(d)}").toVector ++ tags
   }
 
   // **************** Ordered methods **************** //
