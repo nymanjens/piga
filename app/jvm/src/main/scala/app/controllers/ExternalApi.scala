@@ -1,5 +1,6 @@
 package app.controllers
 
+import hydro.common.time.JavaTimeImplicits._
 import app.common.MarkdownConverter
 import app.common.MarkdownConverter.ParsedTask
 import net.liftweb.json.DefaultFormats
@@ -174,6 +175,90 @@ final class ExternalApi @Inject() (implicit
     }
 
     Ok(s"OK\n\n$resultString")
+  }
+
+  def processDelayedTasks(applicationSecret: String) = Action { implicit request =>
+    validateApplicationSecret(applicationSecret)
+    implicit val user = Users.getOrCreateRobotUser()
+
+    val allDocuments = entityAccess.newQuerySync[DocumentEntity]().data()
+    var movedTasksCount = 0
+    val resultString = new StringBuilder()
+
+    for (document <- allDocuments) {
+      val tasks = entityAccess
+        .newQuerySync[TaskEntity]()
+        .filter(ModelFields.TaskEntity.documentId === document.id)
+        .data()
+        .sorted
+
+      def indicesIncludingChildren(task: TaskEntity) = {
+        val endIndex =
+          tasks.indexWhere(_.indentation <= task.indentation, from = tasks.indexOf(task) + 1) match {
+            case -1 => tasks.size
+            case i  => i
+          }
+        tasks.indexOf(task) until endIndex
+      }
+
+      if (tasks.exists(_.delayedUntil.isDefined)) {
+        val delayedTasksParent = tasks.find(_.tags.contains("#delayed_tasks")).get
+        val todoUnsortedParent = tasks.find(_.tags.contains("#todo_unsorted")).get
+        val delayedTasksIndices = indicesIncludingChildren(delayedTasksParent).drop(1)
+
+        // Validate that document is in expected state
+        for ((task, taskIndex) <- tasks.zipWithIndex) {
+          if (task.delayedUntil.isDefined) {
+            require(delayedTasksIndices.contains(taskIndex), task)
+            require(task.indentation == delayedTasksParent.indentation + 1, task)
+          }
+        }
+
+        // Find all root tasks under #delayed_tasks that are due
+        val dueRootTasksIndices = delayedTasksIndices.filter { i =>
+          tasks(i).delayedUntil.exists(_.toLocalDate <= clock.now.toLocalDate)
+        }
+
+        if (dueRootTasksIndices.nonEmpty) {
+          val todoUnsortedChildIndices = indicesIncludingChildren(todoUnsortedParent)
+
+          // Gather all tasks to move
+          val tasksToMove = dueRootTasksIndices.flatMap(i => indicesIncludingChildren(tasks(i))).map(tasks)
+
+          // Generate new OrderTokens for them, appending to #todo_unsorted
+          val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
+            numValues = tasksToMove.size,
+            lowerExclusive = Some(tasks( todoUnsortedChildIndices.max).orderToken),
+            higherExclusive =
+              CollectionUtils.maybeGet(tasks, todoUnsortedChildIndices.max + 1).map(_.orderToken),
+          )
+
+          val taskUpdates =
+            for ((task, newOrderToken) <- tasksToMove zip newOrderTokens) yield {
+              EntityModification.createUpdate(
+                task.copy(
+                  orderToken = newOrderToken,
+                  indentation = task.indentation - delayedTasksParent.indentation + todoUnsortedParent.indentation,
+                  delayedUntil = None,
+                ),
+                Seq(
+                  ModelFields.TaskEntity.orderToken,
+                  ModelFields.TaskEntity.indentation,
+                  ModelFields.TaskEntity.delayedUntil,
+                ),
+              )
+            }
+
+          entityAccess.persistEntityModifications(taskUpdates)
+          movedTasksCount += taskUpdates.size
+          val debugInfo = s"Moved ${taskUpdates.size} tasks in document ${document.name}"
+          println(s"  $debugInfo")
+          resultString.append(s"$debugInfo\n")
+        }
+      }
+    }
+
+    Ok(s"OK\n\nMoved $movedTasksCount tasks (including children).\n$resultString")
   }
 
   // ********** Interactive API ********** //

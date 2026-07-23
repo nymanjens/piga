@@ -26,6 +26,7 @@ GET  /externalapi/share/:docId/:loginName/:appSecret/  app.controllers.ExternalA
 GET  /externalapi/inserttask/:docId/$parentTag<[^/]+>/:appSecret/*content  app.controllers.ExternalApi.insertTask(docId, parentTag, content, isMarkdown: Boolean ?= false, extraIndent: Int ?= 0, appSecret)
 GET  /externalapi/gettasksasjson/:docId/$parentTag<[^/]+>/:appSecret/ app.controllers.ExternalApi.getTasksAsJson(docId, parentTag, appSecret)
 GET  /externalapi/regenordertokens/:dryOrWet/:appSecret/  app.controllers.ExternalApi.regenerateOrderTokens(dryOrWet, appSecret)
+GET  /externalapi/processdelayedtasks/:appSecret/  app.controllers.ExternalApi.processDelayedTasks(appSecret)
 
 # Interactive shortcuts
 GET  /interactive/done  app.controllers.ExternalApi.interactiveDone()
