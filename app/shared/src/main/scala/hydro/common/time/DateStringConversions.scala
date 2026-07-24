@@ -13,7 +13,7 @@ import hydro.common.I18n
 object DateStringConversions {
   // Note: Cannot use DateTimeFormatter as it isn't supported by scala.js
 
-  val monthToMessageKey: Map[Month, String] = Map(
+  private val monthToMessageKey: Map[Month, String] = Map(
     JANUARY -> "app.date.month.jan.abbrev",
     FEBRUARY -> "app.date.month.feb.abbrev",
     MARCH -> "app.date.month.mar.abbrev",
@@ -28,7 +28,7 @@ object DateStringConversions {
     DECEMBER -> "app.date.month.dec.abbrev",
   )
 
-  val dayOfWeekToMessageKey: Map[DayOfWeek, String] = Map(
+  private val dayOfWeekToMessageKey: Map[DayOfWeek, String] = Map(
     MONDAY -> "app.date.dayofweek.mon.abbrev",
     TUESDAY -> "app.date.dayofweek.tue.abbrev",
     WEDNESDAY -> "app.date.dayofweek.wed.abbrev",
@@ -44,7 +44,7 @@ object DateStringConversions {
   private val MonthDayYearRegex = """^([a-zA-Z]+)\s+(\d{1,2})\s+(\d{4})$""".r
   private val IsoRegex = """^(\d{4})-(\d{1,2})-(\d{1,2})$""".r
 
-  def dateToHumanReadableString(dateTime: LocalDateTime, forceIncludeDayOfWeek: Boolean = false)(implicit
+  def dateToHumanFriendlyString(dateTime: LocalDateTime, forceIncludeDayOfWeek: Boolean = false)(implicit
       i18n: I18n,
       clock: Clock,
   ): String = {

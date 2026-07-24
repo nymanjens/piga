@@ -21,31 +21,31 @@ class DateStringConversionsTest extends HookedSpecification {
     fakeClock.setNow(createDateTime(2010, APRIL, 4))
   }
 
-  "dateToHumanReadableString()" in {
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, MARCH, 31)) mustEqual "Wed, 31 Mar"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 1)) mustEqual "Thu, 1 Apr"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 2)) mustEqual "Fri, 2 Apr"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 3)) mustEqual "Yesterday"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 4)) mustEqual "Today"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 5)) mustEqual "Tomorrow"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 6)) mustEqual "Tue, 6 Apr"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, APRIL, 7)) mustEqual "Wed, 7 Apr"
+  "dateToHumanFriendlyString()" in {
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, MARCH, 31)) mustEqual "Wed, 31 Mar"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 1)) mustEqual "Thu, 1 Apr"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 2)) mustEqual "Fri, 2 Apr"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 3)) mustEqual "Yesterday"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 4)) mustEqual "Today"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 5)) mustEqual "Tomorrow"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 6)) mustEqual "Tue, 6 Apr"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, APRIL, 7)) mustEqual "Wed, 7 Apr"
 
-    DateStringConversions.dateToHumanReadableString(createDateTime(2010, JANUARY, 1)) mustEqual "1 Jan"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2009, DECEMBER, 31)) mustEqual "31 Dec '09"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2010, JANUARY, 1)) mustEqual "1 Jan"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2009, DECEMBER, 31)) mustEqual "31 Dec '09"
 
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, JANUARY, 12)) mustEqual "12 Jan '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, FEBRUARY, 12)) mustEqual "12 Feb '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, MARCH, 12)) mustEqual "12 Mar '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, APRIL, 12)) mustEqual "12 Apr '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, MAY, 12)) mustEqual "12 May '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, JUNE, 12)) mustEqual "12 June '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, JULY, 12)) mustEqual "12 July '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, AUGUST, 12)) mustEqual "12 Aug '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, SEPTEMBER, 12)) mustEqual "12 Sept '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, OCTOBER, 12)) mustEqual "12 Oct '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, NOVEMBER, 12)) mustEqual "12 Nov '12"
-    DateStringConversions.dateToHumanReadableString(createDateTime(2012, DECEMBER, 12)) mustEqual "12 Dec '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, JANUARY, 12)) mustEqual "12 Jan '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, FEBRUARY, 12)) mustEqual "12 Feb '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, MARCH, 12)) mustEqual "12 Mar '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, APRIL, 12)) mustEqual "12 Apr '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, MAY, 12)) mustEqual "12 May '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, JUNE, 12)) mustEqual "12 June '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, JULY, 12)) mustEqual "12 July '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, AUGUST, 12)) mustEqual "12 Aug '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, SEPTEMBER, 12)) mustEqual "12 Sept '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, OCTOBER, 12)) mustEqual "12 Oct '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, NOVEMBER, 12)) mustEqual "12 Nov '12"
+    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, DECEMBER, 12)) mustEqual "12 Dec '12"
   }
 
   private def setFakeI18nMappings(): Unit = {

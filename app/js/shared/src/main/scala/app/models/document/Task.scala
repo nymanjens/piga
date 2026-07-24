@@ -125,7 +125,7 @@ final class Task private (private val jsTaskEntity: Task.FakeJsTaskEntity) exten
   }
 
   def tagsIncludingDelayedUntil(implicit i18n: I18n, clock: Clock): Seq[String] = {
-    delayedUntil.map(d => s"⏰ ${DateStringConversions.dateToHumanReadableString(d)}").toVector ++ tags
+    delayedUntil.map(d => s"⏰ ${DateStringConversions.dateToHumanFriendlyString(d)}").toVector ++ tags
   }
 
   // **************** Ordered methods **************** //

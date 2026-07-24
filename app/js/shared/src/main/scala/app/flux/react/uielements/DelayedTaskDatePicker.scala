@@ -137,7 +137,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                       parsedDateOpt match {
                         case Some(date) =>
                           val daysInFuture = ChronoUnit.DAYS.between(now, date)
-                          val formattedStr = DateStringConversions.dateToHumanReadableString(
+                          val formattedStr = DateStringConversions.dateToHumanFriendlyString(
                             LocalDateTime.of(date, java.time.LocalTime.MIN),
                             forceIncludeDayOfWeek = true,
                           )
