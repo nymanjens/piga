@@ -175,15 +175,19 @@ private[document] final class DesktopTaskEditor(implicit
         currentState: State,
     ): Callback = {
       if (prevState.document != currentState.document) {
-        IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
-          case Some(s) if s.seqIndices.contains(currentState.highlightedTaskIdAndIndex.taskIndex) =>
-            // Current selection matches expectation. Nothing needed
-            Callback.empty
-          case _ =>
-            // Hack: Fix for bug where selection changes if another instance added a task above the selected
-            // one
-            println("  Warning: Reset selection because it did not match state")
-            setSelection(documentSelectionStore.getSelection(currentState.document.id))
+        if (currentState.showDatePickerForSelection.isDefined) {
+          Callback.empty // Don't reset selection during a dialog
+        } else {
+          IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) if s.seqIndices.contains(currentState.highlightedTaskIdAndIndex.taskIndex) =>
+              // Current selection matches expectation. Nothing needed
+              Callback.empty
+            case _ =>
+              // Hack: Fix for bug where selection changes if another instance added a task above the selected
+              // one
+              println("  Warning: Reset selection because it did not match state")
+              setSelection(documentSelectionStore.getSelection(currentState.document.id))
+          }
         }
       } else {
         Callback.empty

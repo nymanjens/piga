@@ -54,20 +54,23 @@ object DelayedTaskDatePicker extends HydroReactComponent {
 
       val now = clock.now.toLocalDate
       val tomorrow = now.plusDays(1)
-      val parsedDateOpt = DateParser.parseDate(state.inputText, now)
-
+      
+      val isRemoval = state.inputText.trim.isEmpty
+      val parsedDateOpt = if (isRemoval) None else DateParser.parseDate(state.inputText, now)
       val isValidDate = parsedDateOpt.exists(d => d.isEqual(tomorrow) || d.isAfter(tomorrow))
+
+      def handleConfirm: Callback = {
+        if (isRemoval) props.onConfirm(None)
+        else if (isValidDate) props.onConfirm(Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN)))
+        else Callback.empty
+      }
 
       def handleKeyDown(e: ReactKeyboardEventFrom[html.Input]): Callback = {
         e.stopPropagation()
         val key = e.key
         if (key == "Enter") {
           e.preventDefault()
-          if (isValidDate) {
-            props.onConfirm(Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN)))
-          } else {
-            Callback.empty
-          }
+          handleConfirm
         } else if (key == "Escape") {
           e.preventDefault()
           props.onCancel
@@ -86,82 +89,89 @@ object DelayedTaskDatePicker extends HydroReactComponent {
       }
 
       <.div(
-        ^.className := "delayed-task-date-picker-overlay",
-        ^.position := "fixed",
-        ^.top := "0",
-        ^.left := "0",
-        ^.width := "100%",
-        ^.height := "100%",
-        ^.backgroundColor := "rgba(0, 0, 0, 0.5)",
-        ^.zIndex := "1000",
-        ^.onClick --> props.onCancel,
+        <.div(^.className := "modal-backdrop fade in", ^.zIndex := "1000"),
         <.div(
-          ^.className := "delayed-task-date-picker-modal",
-          ^.position := "absolute",
-          ^.top := "50%",
-          ^.left := "50%",
-          ^.transform := "translate(-50%, -50%)",
-          ^.backgroundColor := "white",
-          ^.padding := "20px",
-          ^.borderRadius := "5px",
-          ^.boxShadow := "0 4px 8px rgba(0, 0, 0, 0.2)",
-          ^.onClick ==> ((e: ReactEventFrom[html.Div]) => e.stopPropagationCB),
-          <.h3("Set Delayed Until"),
-          <.input(
-            ^.`type` := "text",
-            ^.className := "form-control",
-            ^.autoFocus := true,
-            ^.value := state.inputText,
-            ^.onChange ==> ((e: ReactEventFrom[html.Input]) => {
-              val text = e.target.value
-              $.modState(_.copy(inputText = text))
-            }),
-            ^.onKeyDown ==> handleKeyDown,
-            ^.onKeyPress ==> ((e: ReactKeyboardEventFrom[html.Input]) => e.stopPropagationCB),
-            ^.onPaste ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
-            ^.onCopy ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
-            ^.onCut ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
-          ),
+          ^.className := "bootbox modal fade bootbox-prompt in",
+          ^.tabIndex := -1,
+          ^.role := "dialog",
+          ^.display := "block",
+          ^.zIndex := "1001",
+          ^.onClick --> props.onCancel,
           <.div(
-            ^.marginTop := "10px",
-            parsedDateOpt match {
-              case Some(date) =>
-                val daysInFuture = ChronoUnit.DAYS.between(now, date)
-                val dayOfWeekStr = i18n(Formatting.dayOfWeekToMessageKey(date.getDayOfWeek))
-                val formattedStr = Formatting.formatDate(LocalDateTime.of(date, java.time.LocalTime.MIN))
-
+            ^.className := "modal-dialog",
+            ^.onClick ==> ((e: ReactEventFrom[html.Div]) => e.stopPropagationCB),
+            <.div(
+              ^.className := "modal-content",
+              <.div(
+                ^.className := "modal-header",
+                <.h4(^.className := "modal-title", "Set Delayed Until")
+              ),
+              <.div(
+                ^.className := "modal-body",
                 <.div(
-                  <.div(s"Date: $formattedStr"),
-                  <.div(s"Day of week: $dayOfWeekStr"),
-                  <.div(s"In: $daysInFuture days"),
-                  if (!isValidDate) <.div(^.color := "red", "Date must be at least tomorrow") else EmptyVdom,
+                  ^.className := "bootbox-body",
+                  <.form(
+                    ^.className := "bootbox-form",
+                    <.input(
+                      ^.`type` := "text",
+                      ^.className := "bootbox-input bootbox-input-text form-control",
+                      ^.autoFocus := true,
+                      ^.value := state.inputText,
+                      ^.onFocus ==> ((e: ReactFocusEventFrom[html.Input]) => Callback { e.target.select() }),
+                      ^.onChange ==> ((e: ReactEventFrom[html.Input]) => {
+                        val text = e.target.value
+                        $.modState(_.copy(inputText = text))
+                      }),
+                      ^.onKeyDown ==> handleKeyDown,
+                      ^.onKeyPress ==> ((e: ReactKeyboardEventFrom[html.Input]) => e.stopPropagationCB),
+                      ^.onPaste ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
+                      ^.onCopy ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
+                      ^.onCut ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB)
+                    )
+                  ),
+                  <.div(
+                    ^.marginTop := "10px",
+                    if (isRemoval) {
+                      <.div("This will remove the delayed date")
+                    } else {
+                      parsedDateOpt match {
+                        case Some(date) =>
+                          val daysInFuture = ChronoUnit.DAYS.between(now, date)
+                          val dayOfWeekStr = i18n(Formatting.dayOfWeekToMessageKey(date.getDayOfWeek))
+                          val formattedStr = Formatting.formatDate(LocalDateTime.of(date, java.time.LocalTime.MIN))
+          
+                          <.div(
+                            <.div(s"$dayOfWeekStr, $formattedStr"),
+                            <.div(s"In: $daysInFuture days"),
+                            if (!isValidDate) <.div(^.color := "red", "Date must be at least tomorrow") else EmptyVdom
+                          )
+                        case None =>
+                          <.div(^.color := "red", "Invalid date format")
+                      }
+                    }
+                  )
                 )
-              case None =>
-                <.div(^.color := "red", "Invalid date format")
-            },
-          ),
-          <.div(
-            ^.marginTop := "15px",
-            if (props.initialDate.isDefined) {
-              <.button(
-                ^.className := "btn btn-danger",
-                ^.marginRight := "10px",
-                ^.onClick --> props.onConfirm(None),
-                "Remove Delayed Date (Move to Unsorted)",
+              ),
+              <.div(
+                ^.className := "modal-footer",
+                if (props.initialDate.isDefined) {
+                  <.button(
+                    ^.className := "btn btn-danger",
+                    ^.marginRight := "10px",
+                    ^.onClick --> props.onConfirm(None),
+                    "Remove Delayed Date (Move to Unsorted)"
+                  )
+                } else EmptyVdom,
+                <.button(
+                  ^.className := "btn btn-primary",
+                  ^.disabled := !(isValidDate || isRemoval),
+                  ^.onClick --> handleConfirm,
+                  "Confirm"
+                )
               )
-            } else EmptyVdom,
-            <.button(
-              ^.className := "btn btn-primary",
-              ^.disabled := !isValidDate,
-              ^.onClick --> (if (isValidDate)
-                               props.onConfirm(
-                                 Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN))
-                               )
-                             else Callback.empty),
-              "Confirm",
-            ),
-          ),
-        ),
+            )
+          )
+        )
       )
     }
   }
