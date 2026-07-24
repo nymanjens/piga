@@ -1,9 +1,8 @@
 package app.flux.react.uielements
 
-import hydro.common.Formatting
 import hydro.common.I18n
 import hydro.common.time.Clock
-import hydro.common.time.DateParser
+import hydro.common.time.DateStringConversions
 import hydro.common.time.LocalDateTime
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
@@ -45,7 +44,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
       val defaultDate =
         props.initialDate.map(_.toLocalDate).getOrElse(props.clock.now.toLocalDate.plusDays(1))
       val initialInput =
-        s"${defaultDate.getDayOfMonth} ${props.i18n(Formatting.monthToMessageKey(defaultDate.getMonth))} ${defaultDate.getYear}"
+        s"${defaultDate.getDayOfMonth} ${props.i18n(DateStringConversions.monthToMessageKey(defaultDate.getMonth))} ${defaultDate.getYear}"
       $.modState(_.copy(inputText = initialInput))
     }
     override def render(props: Props, state: State): VdomElement = {
@@ -56,7 +55,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
       val tomorrow = now.plusDays(1)
 
       val isRemoval = state.inputText.trim.isEmpty
-      val parsedDateOpt = if (isRemoval) None else DateParser.parseDate(state.inputText, now)
+      val parsedDateOpt = if (isRemoval) None else DateStringConversions.stringToDate(state.inputText)
       val isValidDate = parsedDateOpt.exists(d => d.isEqual(tomorrow) || d.isAfter(tomorrow))
 
       def handleConfirm: Callback = {
@@ -81,7 +80,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
             val diff = if (key == "ArrowUp") 1 else -1
             val newDate = parsedDate.plusDays(diff)
             val newInput =
-              s"${newDate.getDayOfMonth} ${i18n(Formatting.monthToMessageKey(newDate.getMonth))} ${newDate.getYear}"
+              s"${newDate.getDayOfMonth} ${i18n(DateStringConversions.monthToMessageKey(newDate.getMonth))} ${newDate.getYear}"
             $.modState(_.copy(inputText = newInput))
           }
         } else {
@@ -138,7 +137,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                       parsedDateOpt match {
                         case Some(date) =>
                           val daysInFuture = ChronoUnit.DAYS.between(now, date)
-                          val formattedStr = Formatting.formatDate(
+                          val formattedStr = DateStringConversions.dateToHumanReadableString(
                             LocalDateTime.of(date, java.time.LocalTime.MIN),
                             forceIncludeDayOfWeek = true,
                           )
