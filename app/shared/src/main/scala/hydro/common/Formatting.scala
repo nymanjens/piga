@@ -79,13 +79,6 @@ object Formatting {
     }
   }
 
-  def formatDateTime(dateTime: LocalDateTime)(implicit i18n: I18n): String = {
-    val date = dateTime.toLocalDate
-    val monthString = formatMonth(date)
-    val timeString = dateTime.toLocalTime.toString take 5 // hack to get time in format "HH:mm"
-    s"${date.getDayOfMonth} $monthString ${date.getYear}, $timeString"
-  }
-
   private def formatMonth(date: LocalDate)(implicit i18n: I18n): String = {
     i18n(monthToMessageKey(date.getMonth))
   }
