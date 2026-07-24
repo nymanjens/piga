@@ -50,8 +50,8 @@ object Formatting {
       val monthString = formatMonth(date)
       s"${date.getDayOfMonth} $monthString"
     }
-    val dayOfWeek = formatDayOfWeek(date)
 
+    var includeDayOfWeek = forceIncludeDayOfWeek
     val baseString =
       if (date.getYear == now.getYear) {
         val dayDifference = abs(now.getDayOfYear - date.getDayOfYear)
@@ -62,17 +62,18 @@ object Formatting {
           i18n("app.yesterday")
         } else if (date.getDayOfYear == now.getDayOfYear + 1) {
           i18n("app.tomorrow")
-        } else if (dayDifference < 7) {
-          s"$dayOfWeek, $dayMonthString"
         } else {
+          if (dayDifference < 7) {
+            includeDayOfWeek = true
+          }
           dayMonthString
         }
       } else {
         s"$dayMonthString '$yearString"
       }
 
-    if (forceIncludeDayOfWeek && !baseString.startsWith(dayOfWeek)) {
-      s"$dayOfWeek, $baseString"
+    if (includeDayOfWeek) {
+      s"${formatDayOfWeek(date)}, $baseString"
     } else {
       baseString
     }

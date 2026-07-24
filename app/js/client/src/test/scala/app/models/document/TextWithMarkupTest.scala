@@ -207,7 +207,10 @@ object TextWithMarkupTest extends TestSuite {
         TextWithMarkup.fromSanitizedHtml("<span style='font-style:italic'>ABC</style>") ==> italic("ABC")
       }
       "mark" - {
-        TextWithMarkup.fromSanitizedHtml("<mark>ABC</mark>") ==> textWithMarkup("ABC", Formatting(mark = true))
+        TextWithMarkup.fromSanitizedHtml("<mark>ABC</mark>") ==> textWithMarkup(
+          "ABC",
+          Formatting(mark = true),
+        )
       }
       "b and i" - {
         TextWithMarkup.fromSanitizedHtml("<i>AB<b>C</b></i>") ==>

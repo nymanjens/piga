@@ -228,7 +228,7 @@ final class ExternalApi @Inject() (implicit
           // Generate new OrderTokens for them, appending to #todo_unsorted
           val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
             numValues = tasksToMove.size,
-            lowerExclusive = Some(tasks( todoUnsortedChildIndices.max).orderToken),
+            lowerExclusive = Some(tasks(todoUnsortedChildIndices.max).orderToken),
             higherExclusive =
               CollectionUtils.maybeGet(tasks, todoUnsortedChildIndices.max + 1).map(_.orderToken),
           )
@@ -238,7 +238,8 @@ final class ExternalApi @Inject() (implicit
               EntityModification.createUpdate(
                 task.copy(
                   orderToken = newOrderToken,
-                  indentation = task.indentation - delayedTasksParent.indentation + todoUnsortedParent.indentation,
+                  indentation =
+                    task.indentation - delayedTasksParent.indentation + todoUnsortedParent.indentation,
                   delayedUntil = None,
                 ),
                 Seq(
