@@ -706,7 +706,7 @@ private[document] final class DesktopTaskEditor(implicit
               setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
             // Queue task to be added later
-            case CharacterKey('d', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+            case CharacterKey('d', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
               event.preventDefault()
               queueTaskToBeAddedLater(selection)
 
