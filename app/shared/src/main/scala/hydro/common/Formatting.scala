@@ -38,7 +38,10 @@ object Formatting {
     SUNDAY -> "app.date.dayofweek.sun.abbrev",
   )
 
-  def formatDate(dateTime: LocalDateTime)(implicit i18n: I18n, clock: Clock): String = {
+  def formatDate(dateTime: LocalDateTime, forceIncludeDayOfWeek: Boolean = false)(implicit
+      i18n: I18n,
+      clock: Clock,
+  ): String = {
     val now = clock.now.toLocalDate
     val date = dateTime.toLocalDate
 
@@ -49,22 +52,29 @@ object Formatting {
     }
     val dayOfWeek = formatDayOfWeek(date)
 
-    if (date.getYear == now.getYear) {
-      val dayDifference = abs(now.getDayOfYear - date.getDayOfYear)
+    val baseString =
+      if (date.getYear == now.getYear) {
+        val dayDifference = abs(now.getDayOfYear - date.getDayOfYear)
 
-      if (date.getDayOfYear == now.getDayOfYear) {
-        i18n("app.today")
-      } else if (date.getDayOfYear == now.getDayOfYear - 1) {
-        i18n("app.yesterday")
-      } else if (date.getDayOfYear == now.getDayOfYear + 1) {
-        i18n("app.tomorrow")
-      } else if (dayDifference < 7) {
-        s"$dayOfWeek, $dayMonthString"
+        if (date.getDayOfYear == now.getDayOfYear) {
+          i18n("app.today")
+        } else if (date.getDayOfYear == now.getDayOfYear - 1) {
+          i18n("app.yesterday")
+        } else if (date.getDayOfYear == now.getDayOfYear + 1) {
+          i18n("app.tomorrow")
+        } else if (dayDifference < 7) {
+          s"$dayOfWeek, $dayMonthString"
+        } else {
+          dayMonthString
+        }
       } else {
-        dayMonthString
+        s"$dayMonthString '$yearString"
       }
+
+    if (forceIncludeDayOfWeek && !baseString.startsWith(dayOfWeek)) {
+      s"$dayOfWeek, $baseString"
     } else {
-      s"$dayMonthString '$yearString"
+      baseString
     }
   }
 

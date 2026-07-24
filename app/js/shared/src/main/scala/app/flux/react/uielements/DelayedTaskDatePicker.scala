@@ -54,14 +54,15 @@ object DelayedTaskDatePicker extends HydroReactComponent {
 
       val now = clock.now.toLocalDate
       val tomorrow = now.plusDays(1)
-      
+
       val isRemoval = state.inputText.trim.isEmpty
       val parsedDateOpt = if (isRemoval) None else DateParser.parseDate(state.inputText, now)
       val isValidDate = parsedDateOpt.exists(d => d.isEqual(tomorrow) || d.isAfter(tomorrow))
 
       def handleConfirm: Callback = {
         if (isRemoval) props.onConfirm(None)
-        else if (isValidDate) props.onConfirm(Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN)))
+        else if (isValidDate)
+          props.onConfirm(Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN)))
         else Callback.empty
       }
 
@@ -104,7 +105,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
               ^.className := "modal-content",
               <.div(
                 ^.className := "modal-header",
-                <.h4(^.className := "modal-title", "Set Delayed Until")
+                <.h4(^.className := "modal-title", "Set Delayed Until"),
               ),
               <.div(
                 ^.className := "modal-body",
@@ -126,8 +127,8 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                       ^.onKeyPress ==> ((e: ReactKeyboardEventFrom[html.Input]) => e.stopPropagationCB),
                       ^.onPaste ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
                       ^.onCopy ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
-                      ^.onCut ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB)
-                    )
+                      ^.onCut ==> ((e: ReactClipboardEventFrom[html.Input]) => e.stopPropagationCB),
+                    ),
                   ),
                   <.div(
                     ^.marginTop := "10px",
@@ -137,20 +138,23 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                       parsedDateOpt match {
                         case Some(date) =>
                           val daysInFuture = ChronoUnit.DAYS.between(now, date)
-                          val dayOfWeekStr = i18n(Formatting.dayOfWeekToMessageKey(date.getDayOfWeek))
-                          val formattedStr = Formatting.formatDate(LocalDateTime.of(date, java.time.LocalTime.MIN))
-          
+                          val formattedStr = Formatting.formatDate(
+                            LocalDateTime.of(date, java.time.LocalTime.MIN),
+                            forceIncludeDayOfWeek = true,
+                          )
+
                           <.div(
-                            <.div(s"$dayOfWeekStr, $formattedStr"),
+                            <.div(formattedStr),
                             <.div(s"In: $daysInFuture days"),
-                            if (!isValidDate) <.div(^.color := "red", "Date must be at least tomorrow") else EmptyVdom
+                            if (!isValidDate) <.div(^.color := "red", "Date must be at least tomorrow")
+                            else EmptyVdom,
                           )
                         case None =>
                           <.div(^.color := "red", "Invalid date format")
                       }
-                    }
-                  )
-                )
+                    },
+                  ),
+                ),
               ),
               <.div(
                 ^.className := "modal-footer",
@@ -159,19 +163,19 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                     ^.className := "btn btn-danger",
                     ^.marginRight := "10px",
                     ^.onClick --> props.onConfirm(None),
-                    "Remove Delayed Date (Move to Unsorted)"
+                    "Remove Delayed Date (Move to Unsorted)",
                   )
                 } else EmptyVdom,
                 <.button(
                   ^.className := "btn btn-primary",
                   ^.disabled := !(isValidDate || isRemoval),
                   ^.onClick --> handleConfirm,
-                  "Confirm"
-                )
-              )
-            )
-          )
-        )
+                  "Confirm",
+                ),
+              ),
+            ),
+          ),
+        ),
       )
     }
   }
