@@ -13,7 +13,7 @@ import hydro.common.time.LocalDateTime
 object Formatting {
   // Note: Cannot use DateTimeFormatter as it isn't supported by scala.js
 
-  private val monthToMessageKey: Map[Month, String] = Map(
+  val monthToMessageKey: Map[Month, String] = Map(
     JANUARY -> "app.date.month.jan.abbrev",
     FEBRUARY -> "app.date.month.feb.abbrev",
     MARCH -> "app.date.month.mar.abbrev",
@@ -28,7 +28,7 @@ object Formatting {
     DECEMBER -> "app.date.month.dec.abbrev",
   )
 
-  private val dayOfWeekToMessageKey: Map[DayOfWeek, String] = Map(
+  val dayOfWeekToMessageKey: Map[DayOfWeek, String] = Map(
     MONDAY -> "app.date.dayofweek.mon.abbrev",
     TUESDAY -> "app.date.dayofweek.tue.abbrev",
     WEDNESDAY -> "app.date.dayofweek.wed.abbrev",

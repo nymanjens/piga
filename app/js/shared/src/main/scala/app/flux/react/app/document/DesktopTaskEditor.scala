@@ -7,6 +7,7 @@ import java.lang.Math.abs
 import app.common.CaseFormats
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
+import app.flux.react.uielements.DelayedTaskDatePicker
 import app.flux.react.uielements.SelectPrompt
 import app.flux.router.AppPages
 import app.flux.stores.document.AllDocumentsStore
@@ -47,6 +48,7 @@ import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
+import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.router.RouterContext
 import hydro.jsfacades.Bootbox
 import hydro.jsfacades.ClipboardPolyfill
@@ -106,6 +108,7 @@ private[document] final class DesktopTaskEditor(implicit
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
       highlightedTaskIdAndIndex: TaskIdAndIndex = TaskIdAndIndex.nullInstance,
+      showDatePickerForSelection: Option[IndexedSelection] = None,
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(
@@ -222,6 +225,24 @@ private[document] final class DesktopTaskEditor(implicit
         ^.onCopy ==> handleCopy,
         ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
+          <<.ifDefined(state.showDatePickerForSelection) { selection =>
+            DelayedTaskDatePicker(
+              initialDate = state.document.tasks(selection.start.seqIndex).delayedUntil,
+              onConfirm = {
+                case Some(date) =>
+                  $.modState(
+                    _.copy(showDatePickerForSelection = None),
+                    moveTasksToDelayedTasksList(selection, date)(state, props),
+                  )
+                case None =>
+                  $.modState(
+                    _.copy(showDatePickerForSelection = None),
+                    moveTasksToTodoUnsortedList(selection)(state, props),
+                  )
+              },
+              onCancel = $.modState(_.copy(showDatePickerForSelection = None), setSelection(selection)),
+            )
+          },
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
               val renderedTags = renderTags(task.tagsIncludingDelayedUntil, seqIndex = taskIndex)
@@ -255,7 +276,7 @@ private[document] final class DesktopTaskEditor(implicit
                   Seq()
                 }
               }).toVdomArray
-          }.toVdomArray
+          }.toVdomArray,
         ),
       )
     }
@@ -1088,35 +1109,71 @@ private[document] final class DesktopTaskEditor(implicit
       val hasTodoUnsortedTag = document.tasks.exists(_.tags.contains("#todo_unsorted"))
 
       if (hasDelayedTasksTag && hasTodoUnsortedTag) {
-        Callback.future {
-          Bootbox
-            .prompt(
-              "Date to queue this task to (YYYY-MM-DD):",
-              value = "",
-              animate = false,
-              selectValue = true,
-            )
-            .map {
-              case Some(dateString) =>
-                try {
-                  moveTasksToDelayedTasksList(selectionBeforeEdit, TimeUtils.parseDateString(dateString))
-                } catch {
-                  case _: Exception =>
-                    Future {
-                      globalMessagesStore.showAdHocMessage(
-                        s"Invalid date format: $dateString. Expected YYYY-MM-DD.",
-                        Message.Type.Failure,
-                      )
-                    }
-                    Callback.empty
-                }
-              case None =>
-                Callback.empty
-            }
-        }
+        $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
       } else {
         Callback.empty
       }
+    }
+
+    private def moveTasksToTodoUnsortedList(
+        selectionBeforeEdit: IndexedSelection
+    )(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+      val todoUnsortedParentIndex = oldDocument.tasks.indexWhere(_.tags.contains("#todo_unsorted"))
+      val parentTask = oldDocument.tasks(todoUnsortedParentIndex)
+      val parentIndentation = parentTask.indentation
+
+      val todoUnsortedListLimit = oldDocument.tasks.indices
+        .find(i => i > todoUnsortedParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
+        .getOrElse(oldDocument.tasks.size)
+
+      val insertAfterIndex = todoUnsortedListLimit - 1
+
+      val selectionWithChildren = selectionBeforeEdit.includeChildren()
+
+      val taskBefore = oldDocument.tasksOption(insertAfterIndex)
+      val taskAfter = oldDocument.tasksOption(insertAfterIndex + 1)
+      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
+        numValues = selectionWithChildren.seqIndices.length,
+        lowerExclusive = taskBefore.map(_.orderToken),
+        higherExclusive = taskAfter.map(_.orderToken),
+      )
+
+      val rootIndentation = oldDocument.tasks(selectionWithChildren.start.seqIndex).indentation
+      val targetRootIndentation = parentIndentation + 1
+
+      val taskUpdates =
+        for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
+          yield {
+            val indentationDiff = oldTask.indentation - rootIndentation
+            val newDelayedUntil = if (indentationDiff == 0) None else oldTask.delayedUntil
+
+            MaskedTaskUpdate.fromFields(
+              originalTask = oldTask,
+              orderToken = newOrderToken,
+              indentation = targetRootIndentation + indentationDiff,
+              delayedUntil = newDelayedUntil,
+            )
+          }
+
+      val seqIndexMovement = if (insertAfterIndex > selectionWithChildren.end.seqIndex) {
+        insertAfterIndex - selectionWithChildren.end.seqIndex
+      } else if (insertAfterIndex < selectionWithChildren.start.seqIndex) {
+        insertAfterIndex - selectionWithChildren.start.seqIndex + 1
+      } else {
+        0
+      }
+
+      val selectionAfterEdit = IndexedSelection(
+        selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+        selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+      )
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEdit = selectionAfterEdit,
+      )
     }
 
     private def moveTasksToDelayedTasksList(
@@ -1127,36 +1184,45 @@ private[document] final class DesktopTaskEditor(implicit
       val delayedTasksParentIndex = oldDocument.tasks.indexWhere(_.tags.contains("#delayed_tasks"))
       val parentIndentation = oldDocument.tasks(delayedTasksParentIndex).indentation
 
-      val delayedTasksIndices = {
-        val delayedTasksListLimit = oldDocument.tasks.indices
-          .find(i => i > delayedTasksParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
-          .getOrElse(oldDocument.tasks.size)
-        (delayedTasksParentIndex + 1) until delayedTasksListLimit
-      }
+      val selectionWithChildren = selectionBeforeEdit.includeChildren()
 
-      var insertAfterIndex = delayedTasksParentIndex
-      for (i <- delayedTasksIndices) {
-        val task = oldDocument.tasks(i)
+      val delayedTasksListLimit = oldDocument.tasks.indices
+        .find(i => i > delayedTasksParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
+        .getOrElse(oldDocument.tasks.size)
+
+      val otherDelayedTasksWithIndex = ((delayedTasksParentIndex + 1) until delayedTasksListLimit)
+        .filterNot(selectionWithChildren.seqIndices.contains)
+        .map(i => (oldDocument.tasks(i), i))
+
+      var taskBeforeIndex = delayedTasksParentIndex
+      var skippingSubtreeOfFutureTask = false
+
+      for ((task, i) <- otherDelayedTasksWithIndex) {
         if (task.indentation == parentIndentation + 1) {
           task.delayedUntil match {
             case Some(taskDate) if taskDate <= delayedUntil =>
-              insertAfterIndex = i - 1
+              taskBeforeIndex = i
+              skippingSubtreeOfFutureTask = false
             case _ =>
+              skippingSubtreeOfFutureTask = true
+          }
+        } else if (task.indentation > parentIndentation + 1) {
+          if (!skippingSubtreeOfFutureTask) {
+            taskBeforeIndex = i
           }
         }
       }
 
-      val selectionWithChildren = selectionBeforeEdit.includeChildren()
+      val taskBefore = oldDocument.tasksOption(taskBeforeIndex)
+      val taskAfter = oldDocument.tasks.indices
+        .find(i => i > taskBeforeIndex && !selectionWithChildren.seqIndices.contains(i))
+        .flatMap(oldDocument.tasksOption)
 
-      val newOrderTokens = {
-        val taskBefore = oldDocument.tasksOption(insertAfterIndex)
-        val taskAfter = oldDocument.tasksOption(insertAfterIndex + 1)
-        OrderToken.evenlyDistributedValuesBetween(
-          numValues = selectionWithChildren.seqIndices.length,
-          lowerExclusive = taskBefore.map(_.orderToken),
-          higherExclusive = taskAfter.map(_.orderToken),
-        )
-      }
+      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
+        numValues = selectionWithChildren.seqIndices.length,
+        lowerExclusive = taskBefore.map(_.orderToken),
+        higherExclusive = taskAfter.map(_.orderToken),
+      )
 
       val rootIndentation = oldDocument.tasks(selectionWithChildren.start.seqIndex).indentation
       val targetRootIndentation = parentIndentation + 1
@@ -1175,13 +1241,11 @@ private[document] final class DesktopTaskEditor(implicit
             )
           }
 
-      val seqIndexMovement = if (insertAfterIndex > selectionWithChildren.end.seqIndex) {
-        insertAfterIndex - selectionWithChildren.end.seqIndex
-      } else if (insertAfterIndex < selectionWithChildren.start.seqIndex) {
-        insertAfterIndex - selectionWithChildren.start.seqIndex + 1
-      } else {
-        0
+      val numTasksBeforeInNewDocument = oldDocument.tasks.indices.count { i =>
+        i <= taskBeforeIndex && !selectionWithChildren.seqIndices.contains(i)
       }
+      val newStartSeqIndex = numTasksBeforeInNewDocument
+      val seqIndexMovement = newStartSeqIndex - selectionWithChildren.start.seqIndex
 
       val selectionAfterEdit = IndexedSelection(
         selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
