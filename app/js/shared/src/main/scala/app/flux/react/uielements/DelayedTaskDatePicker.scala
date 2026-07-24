@@ -41,11 +41,11 @@ object DelayedTaskDatePicker extends HydroReactComponent {
 
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) with WillMount {
     override def willMount(props: Props, state: State): Callback = {
+      implicit val i18n: I18n = props.i18n
+
       val defaultDate =
         props.initialDate.map(_.toLocalDate).getOrElse(props.clock.now.toLocalDate.plusDays(1))
-      val initialInput =
-        s"${defaultDate.getDayOfMonth} ${props.i18n(DateStringConversions.monthToMessageKey(defaultDate.getMonth))} ${defaultDate.getYear}"
-      $.modState(_.copy(inputText = initialInput))
+      $.modState(_.copy(inputText = DateStringConversions.dateToHumanCanonicalString(defaultDate)))
     }
     override def render(props: Props, state: State): VdomElement = {
       implicit val i18n: I18n = props.i18n
@@ -79,9 +79,7 @@ object DelayedTaskDatePicker extends HydroReactComponent {
           parsedDateOpt.fold(Callback.empty) { parsedDate =>
             val diff = if (key == "ArrowUp") 1 else -1
             val newDate = parsedDate.plusDays(diff)
-            val newInput =
-              s"${newDate.getDayOfMonth} ${i18n(DateStringConversions.monthToMessageKey(newDate.getMonth))} ${newDate.getYear}"
-            $.modState(_.copy(inputText = newInput))
+            $.modState(_.copy(inputText = DateStringConversions.dateToHumanCanonicalString(newDate)))
           }
         } else {
           Callback.empty

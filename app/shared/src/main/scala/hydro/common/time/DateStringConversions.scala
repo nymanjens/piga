@@ -85,6 +85,10 @@ object DateStringConversions {
     }
   }
 
+  def dateToHumanCanonicalString(date: LocalDate)(implicit i18n: I18n): String = {
+    s"${date.getDayOfMonth} ${i18n(DateStringConversions.monthToMessageKey(date.getMonth))} ${date.getYear}"
+  }
+
   def stringToDate(input: String)(implicit i18n: I18n, clock: Clock): Option[LocalDate] = {
     val now = clock.now.toLocalDate
     val monthNames: Map[String, Month] = Month
