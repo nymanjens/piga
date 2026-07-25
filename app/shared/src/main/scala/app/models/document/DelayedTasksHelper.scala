@@ -18,15 +18,21 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     taskUpdateCreator: TaskUpdateCreator[TaskT, UpdateT],
 ) {
 
+  def containsDelayedTasks(): Boolean = {
+    tasks.exists(_.delayedUntil.isDefined)
+  }
+
+  def missingTags(): Seq[String] = {
+    Seq("#todo_unsorted", "#delayed_tasks").filter(tag => !tasks.exists(_.tags.contains(tag)))
+  }
+
+
   lazy val delayedRootTasks: Seq[TaskT] = {
     delayedTasksIndices.map(tasks).filter { t =>
       t.delayedUntil.isDefined && t.indentation == delayedTasksParent.indentation + 1
     }
   }
 
-  def containsDelayedTasks(): Boolean = {
-    tasks.exists(_.delayedUntil.isDefined)
-  }
 
   def validateTasks(): Unit = {
     def isInReverseOrder(datetimes: Seq[LocalDate]): Boolean = {

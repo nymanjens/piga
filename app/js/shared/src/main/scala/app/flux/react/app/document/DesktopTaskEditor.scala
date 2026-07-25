@@ -1111,13 +1111,9 @@ private[document] final class DesktopTaskEditor(implicit
     )(implicit state: State, props: Props): Callback = {
       implicit val document = state.document
 
-      val hasDelayedTasksTag = document.tasks.exists(_.tags.contains("#delayed_tasks"))
-      val hasTodoUnsortedTag = document.tasks.exists(_.tags.contains("#todo_unsorted"))
-
-      if (hasDelayedTasksTag && hasTodoUnsortedTag) {
-        $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
-      } else {
-        Callback.empty
+      createDelayedTasksHelper(document).missingTags() match {
+        case Seq() => $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
+        case missingTags => Callback.empty
       }
     }
 
