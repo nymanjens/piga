@@ -1159,7 +1159,9 @@ private[document] final class DesktopTaskEditor(implicit
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selectionBeforeEdit,
         selectionAfterEditFunc = newDocument => {
-          val nextTaskToHighlight = oldDocument.tasksOption(selectionBeforeEdit.start.seqIndex + taskUpdates.size) getOrElse oldDocument.tasks(selectionBeforeEdit.start.seqIndex - 1)
+          val nextTaskToHighlight = oldDocument.tasksOption(
+            selectionBeforeEdit.start.seqIndex + taskUpdates.size
+          ) getOrElse oldDocument.tasks(selectionBeforeEdit.start.seqIndex - 1)
           IndexedSelection.atStartOfTask(newDocument.maybeIndexOf(nextTaskToHighlight.id).get)
         },
         replacementString = "",

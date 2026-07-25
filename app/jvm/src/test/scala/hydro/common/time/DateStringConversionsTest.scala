@@ -42,7 +42,9 @@ class DateStringConversionsTest extends HookedSpecification {
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, JUNE, 12)) mustEqual "12 June '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, JULY, 12)) mustEqual "12 July '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, AUGUST, 12)) mustEqual "12 Aug '12"
-    DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, SEPTEMBER, 12)) mustEqual "12 Sept '12"
+    DateStringConversions.dateToHumanFriendlyString(
+      createDateTime(2012, SEPTEMBER, 12)
+    ) mustEqual "12 Sept '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, OCTOBER, 12)) mustEqual "12 Oct '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, NOVEMBER, 12)) mustEqual "12 Nov '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, DECEMBER, 12)) mustEqual "12 Dec '12"
