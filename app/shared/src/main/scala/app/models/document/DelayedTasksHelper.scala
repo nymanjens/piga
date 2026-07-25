@@ -82,7 +82,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     val maybeNextRootTask = delayedRootTasks.find(_.delayedUntil.get.toLocalDate <= delayedUntil.toLocalDate)
     val previousTaskIndex = maybeNextRootTask match {
       case Some(task) => tasks.indexOf(task) - 1
-      case None => delayedTasksIndices.max // Insert at the end of the list
+      case None => indicesIncludingChildren(delayedTasksParent).max // Insert at the end of the list
     }
     val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
       numValues = tasksToMove.size,
