@@ -151,7 +151,7 @@ private[document] final class MobileTaskEditor(implicit
                     ifThenOption(isReadOnly)("read-only")
                 ),
                 ^.onClick --> selectTask(task),
-                task.tags.zipWithIndex.map { case (tag, tagIndex) =>
+                task.tagsIncludingDelayedUntil.zipWithIndex.map { case (tag, tagIndex) =>
                   <.div( // This is a holder for the label to avoid tags to be affected by the surrounding flex box
                     ^.key := tagIndex,
                     ^.className := "tag-holder",

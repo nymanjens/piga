@@ -1,5 +1,6 @@
 package app.controllers
 
+import hydro.common.time.JavaTimeImplicits._
 import app.common.MarkdownConverter
 import app.common.MarkdownConverter.ParsedTask
 import net.liftweb.json.DefaultFormats
@@ -9,6 +10,8 @@ import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
+import app.models.document.DelayedTasksHelper
+import app.models.document.DelayedTasksHelper.TaskUpdateCreator
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
@@ -19,6 +22,7 @@ import hydro.common.CollectionUtils
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.ScalaUtils
+import hydro.common.time.LocalDateTime
 import hydro.controllers.helpers.AuthenticatedAction
 import hydro.models.modification.EntityModification
 import play.api.i18n.I18nSupport
@@ -174,6 +178,72 @@ final class ExternalApi @Inject() (implicit
     }
 
     Ok(s"OK\n\n$resultString")
+  }
+
+  def processDelayedTasks(applicationSecret: String) = Action { implicit request =>
+    validateApplicationSecret(applicationSecret)
+    implicit val user = Users.getOrCreateRobotUser()
+
+    val allDocuments = entityAccess.newQuerySync[DocumentEntity]().data()
+    var movedTasksCount = 0
+    val resultString = new StringBuilder()
+
+    for (document <- allDocuments) {
+      val tasks = entityAccess
+        .newQuerySync[TaskEntity]()
+        .filter(ModelFields.TaskEntity.documentId === document.id)
+        .data()
+        .sorted
+      val delayedTasksHelper = DelayedTasksHelper[TaskEntity, EntityModification](
+        tasks,
+        taskIndentation = _.indentation,
+        taskDelayedUntil = _.delayedUntil,
+        taskTags = _.tags,
+        taskOrderToken = _.orderToken,
+        taskCollapsed = _.collapsed,
+        taskUpdateCreator = new TaskUpdateCreator[TaskEntity, EntityModification] {
+          override def createUpdate(
+              task: TaskEntity,
+              orderToken: OrderToken,
+              indentation: Int,
+              delayedUntil: Option[LocalDateTime],
+              collapsed: Boolean,
+          ): EntityModification = EntityModification.createUpdate(
+            task.copy(
+              orderToken = orderToken,
+              indentation = indentation,
+              delayedUntil = delayedUntil,
+              collapsed = collapsed,
+            ),
+            Seq(
+              ModelFields.TaskEntity.orderToken,
+              ModelFields.TaskEntity.indentation,
+              ModelFields.TaskEntity.delayedUntil,
+              ModelFields.TaskEntity.collapsed,
+            ),
+          )
+        },
+      )
+
+      if (delayedTasksHelper.containsDelayedTasks()) {
+        delayedTasksHelper.validateTasks()
+
+        // Find all root tasks under #delayed_tasks that are due
+        val dueRootTasks =
+          delayedTasksHelper.delayedRootTasks.filter(_.delayedUntil.get.toLocalDate <= clock.now.toLocalDate)
+
+        if (dueRootTasks.nonEmpty) {
+          val taskUpdates = delayedTasksHelper.toTodoUnsorted(rootTasks = dueRootTasks)
+          entityAccess.persistEntityModifications(taskUpdates)
+          movedTasksCount += taskUpdates.size
+          val debugInfo = s"Moved ${taskUpdates.size} tasks in document ${document.name}"
+          println(s"  $debugInfo")
+          resultString.append(s"$debugInfo\n")
+        }
+      }
+    }
+
+    Ok(s"OK\n\nMoved $movedTasksCount tasks (including children).\n$resultString")
   }
 
   // ********** Interactive API ********** //

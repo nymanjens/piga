@@ -44,7 +44,6 @@ private[app] final class Menu(implicit
             MenuItem(
               i18n("app.document-administration.html"),
               AppPages.DocumentAdministration,
-              shortcuts = Seq("shift+alt+d"),
             )
           ),
         ),

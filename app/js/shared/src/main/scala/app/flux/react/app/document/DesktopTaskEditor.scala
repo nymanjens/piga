@@ -1,9 +1,13 @@
 package app.flux.react.app.document
 
+import hydro.common.time.LocalDateTime
+import hydro.common.time.TimeUtils
+
 import java.lang.Math.abs
 import app.common.CaseFormats
 import app.flux.react.app.document.TaskEditorUtils.applyCollapsedProperty
 import app.flux.react.app.document.TaskEditorUtils.TaskInSeq
+import app.flux.react.uielements.DelayedTaskDatePicker
 import app.flux.react.uielements.SelectPrompt
 import app.flux.router.AppPages
 import app.flux.stores.document.AllDocumentsStore
@@ -12,6 +16,8 @@ import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.flux.stores.GlobalMessagesStore.Message
 import app.flux.stores.GlobalMessagesStore
+import app.models.document.DelayedTasksHelper
+import app.models.document.DelayedTasksHelper.TaskUpdateCreator
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
@@ -39,10 +45,12 @@ import hydro.common.BrowserUtils
 import hydro.common.CollectionUtils
 import hydro.common.GuavaReplacement
 import hydro.common.StringUtils
+import hydro.common.time.JavaTimeImplicits._
 import hydro.flux.react.HydroReactComponent
 import hydro.flux.react.ReactVdomUtils.^^
 import hydro.flux.react.uielements.Bootstrap
 import hydro.flux.react.uielements.BootstrapTags
+import hydro.flux.react.ReactVdomUtils.<<
 import hydro.flux.router.RouterContext
 import hydro.jsfacades.Bootbox
 import hydro.jsfacades.ClipboardPolyfill
@@ -102,6 +110,7 @@ private[document] final class DesktopTaskEditor(implicit
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
       highlightedTaskIdAndIndex: TaskIdAndIndex = TaskIdAndIndex.nullInstance,
+      showDatePickerForSelection: Option[IndexedSelection] = None,
   ) {
     def copyFromStore(documentStore: DocumentStore): State =
       copy(
@@ -168,15 +177,19 @@ private[document] final class DesktopTaskEditor(implicit
         currentState: State,
     ): Callback = {
       if (prevState.document != currentState.document) {
-        IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
-          case Some(s) if s.seqIndices.contains(currentState.highlightedTaskIdAndIndex.taskIndex) =>
-            // Current selection matches expectation. Nothing needed
-            Callback.empty
-          case _ =>
-            // Hack: Fix for bug where selection changes if another instance added a task above the selected
-            // one
-            println("  Warning: Reset selection because it did not match state")
-            setSelection(documentSelectionStore.getSelection(currentState.document.id))
+        if (currentState.showDatePickerForSelection.isDefined) {
+          Callback.empty // Don't reset selection during a dialog
+        } else {
+          IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
+            case Some(s) if s.seqIndices.contains(currentState.highlightedTaskIdAndIndex.taskIndex) =>
+              // Current selection matches expectation. Nothing needed
+              Callback.empty
+            case _ =>
+              // Hack: Fix for bug where selection changes if another instance added a task above the selected
+              // one
+              println("  Warning: Reset selection because it did not match state")
+              setSelection(documentSelectionStore.getSelection(currentState.document.id))
+          }
         }
       } else {
         Callback.empty
@@ -218,9 +231,27 @@ private[document] final class DesktopTaskEditor(implicit
         ^.onCopy ==> handleCopy,
         ^.style := js.Dictionary("height" -> s"${editorHeightPx}px"),
         <.ul(
+          <<.ifDefined(state.showDatePickerForSelection) { selection =>
+            DelayedTaskDatePicker(
+              initialDate = state.document.tasks(selection.start.seqIndex).delayedUntil,
+              onConfirm = {
+                case Some(date) =>
+                  $.modState(
+                    _.copy(showDatePickerForSelection = None),
+                    moveTasksToDelayedTasksList(selection, date)(state, props),
+                  )
+                case None =>
+                  $.modState(
+                    _.copy(showDatePickerForSelection = None),
+                    moveTasksToTodoUnsortedList(selection)(state, props),
+                  )
+              },
+              onCancel = $.modState(_.copy(showDatePickerForSelection = None), setSelection(selection)),
+            )
+          },
           applyCollapsedProperty(state.document.tasks).map {
             case TaskInSeq(task, taskIndex, maybeAmountCollapsed, isRoot, isLeaf) =>
-              val renderedTags = renderTags(task.tags, seqIndex = taskIndex)
+              val renderedTags = renderTags(task.tagsIncludingDelayedUntil, seqIndex = taskIndex)
               val collapsedSuffixStyle = maybeAmountCollapsed.map(amountCollapsed =>
                 s"""#teli-$taskIndex:after {content: "  {+ $amountCollapsed}";}"""
               )
@@ -251,7 +282,7 @@ private[document] final class DesktopTaskEditor(implicit
                   Seq()
                 }
               }).toVdomArray
-          }.toVdomArray
+          }.toVdomArray,
         ),
       )
     }
@@ -676,6 +707,11 @@ private[document] final class DesktopTaskEditor(implicit
               event.preventDefault()
               setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
+            // Queue task to be added later
+            case CharacterKey('d', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+              event.preventDefault()
+              queueTaskToBeAddedLater(selection)
+
             // Delete task
             case CharacterKey('d', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
               event.preventDefault()
@@ -1069,6 +1105,103 @@ private[document] final class DesktopTaskEditor(implicit
         ),
       )
     }
+
+    private def queueTaskToBeAddedLater(
+        selectionBeforeEdit: IndexedSelection
+    )(implicit state: State, props: Props): Callback = {
+      implicit val document = state.document
+      val task = document.tasks(selectionBeforeEdit.start.seqIndex)
+
+      if (task.contentString.trim.isEmpty) {
+        Callback {
+          globalMessagesStore.showAdHocMessage(
+            "Cannot delay an empty task.",
+            GlobalMessagesStore.Message.Type.Failure,
+          )
+        }
+      } else {
+        createDelayedTasksHelper(document).missingTags() match {
+          case Seq() => $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
+          case missingTags =>
+            Callback {
+              globalMessagesStore.showAdHocMessage(
+                s"Missing required tags: ${missingTags.mkString(", ")}",
+                GlobalMessagesStore.Message.Type.Failure,
+              )
+            }
+        }
+      }
+    }
+
+    private def moveTasksToTodoUnsortedList(
+        selectionBeforeEdit: IndexedSelection
+    )(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+      val delayedTasksHelper = createDelayedTasksHelper(oldDocument)
+      val delayedRootTask = oldDocument.tasks(selectionBeforeEdit.start.seqIndex)
+      val taskUpdates = delayedTasksHelper.toTodoUnsorted(rootTasks = Seq(delayedRootTask))
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEditFunc = newDocument => {
+          val seqIndexMovement =
+            newDocument.maybeIndexOf(delayedRootTask.id).get - selectionBeforeEdit.start.seqIndex
+          IndexedSelection(
+            selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+          )
+        },
+        replacementString = "",
+      )
+    }
+
+    private def moveTasksToDelayedTasksList(
+        selectionBeforeEdit: IndexedSelection,
+        delayedUntil: LocalDateTime,
+    )(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+      val delayedTasksHelper = createDelayedTasksHelper(oldDocument)
+      val rootTask = oldDocument.tasks(selectionBeforeEdit.start.seqIndex)
+      val taskUpdates = delayedTasksHelper.toDelayedTasks(rootTask, delayedUntil)
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
+        selectionBeforeEdit = selectionBeforeEdit,
+        selectionAfterEditFunc = newDocument => {
+          val nextTaskToHighlight = oldDocument.tasksOption(
+            selectionBeforeEdit.start.seqIndex + taskUpdates.size
+          ) getOrElse oldDocument.tasks(selectionBeforeEdit.start.seqIndex - 1)
+          IndexedSelection.atStartOfTask(newDocument.maybeIndexOf(nextTaskToHighlight.id).get)
+        },
+        replacementString = "",
+      )
+    }
+
+    private def createDelayedTasksHelper(document: Document): DelayedTasksHelper[Task, MaskedTaskUpdate] =
+      DelayedTasksHelper(
+        document.tasks,
+        taskIndentation = _.indentation,
+        taskDelayedUntil = _.delayedUntil,
+        taskTags = _.tags,
+        taskOrderToken = _.orderToken,
+        taskCollapsed = _.collapsed,
+        taskUpdateCreator = new TaskUpdateCreator[Task, MaskedTaskUpdate] {
+          override def createUpdate(
+              task: Task,
+              orderToken: OrderToken,
+              indentation: Int,
+              delayedUntil: Option[LocalDateTime],
+              collapsed: Boolean,
+          ): MaskedTaskUpdate = MaskedTaskUpdate.fromFields(
+            originalTask = task,
+            orderToken = orderToken,
+            indentation = indentation,
+            delayedUntil = delayedUntil,
+            collapsed = collapsed,
+          )
+        },
+      )
 
     private def updateTasksInSelection(
         selection: IndexedSelection,
@@ -1588,12 +1721,24 @@ private[document] final class DesktopTaskEditor(implicit
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "",
-    )(implicit state: State, props: Props): Callback = {
+    )(implicit state: State, props: Props): Callback = replaceWithHistory(
+      edit = edit,
+      selectionBeforeEdit = selectionBeforeEdit,
+      selectionAfterEditFunc = _ => selectionAfterEdit,
+      replacementString = replacementString,
+    )
 
+    private def replaceWithHistory(
+        edit: DocumentEdit.Reversible,
+        selectionBeforeEdit: IndexedSelection,
+        selectionAfterEditFunc: Document => IndexedSelection,
+        replacementString: String,
+    )(implicit state: State, props: Props): Callback = {
       val documentStore = props.documentStore
       val oldDocument = state.document
       documentStore.applyEditWithoutCallingListeners(edit)
       val newDocument = documentStore.state.document
+      val selectionAfterEdit = selectionAfterEditFunc(newDocument)
 
       $.modState(
         _.copyFromStore(documentStore),
