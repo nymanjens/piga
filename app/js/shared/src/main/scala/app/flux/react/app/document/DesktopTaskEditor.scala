@@ -1110,16 +1110,26 @@ private[document] final class DesktopTaskEditor(implicit
         selectionBeforeEdit: IndexedSelection
     )(implicit state: State, props: Props): Callback = {
       implicit val document = state.document
+      val task = document.tasks(selectionBeforeEdit.start.seqIndex)
 
-      createDelayedTasksHelper(document).missingTags() match {
-        case Seq() => $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
-        case missingTags =>
-          Callback {
-            globalMessagesStore.showAdHocMessage(
-              s"Missing required tags: ${missingTags.mkString(", ")}",
-              GlobalMessagesStore.Message.Type.Failure,
-            )
-          }
+      if (task.contentString.trim.isEmpty) {
+        Callback {
+          globalMessagesStore.showAdHocMessage(
+            "Cannot delay an empty task.",
+            GlobalMessagesStore.Message.Type.Failure,
+          )
+        }
+      } else {
+        createDelayedTasksHelper(document).missingTags() match {
+          case Seq() => $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
+          case missingTags =>
+            Callback {
+              globalMessagesStore.showAdHocMessage(
+                s"Missing required tags: ${missingTags.mkString(", ")}",
+                GlobalMessagesStore.Message.Type.Failure,
+              )
+            }
+        }
       }
     }
 
