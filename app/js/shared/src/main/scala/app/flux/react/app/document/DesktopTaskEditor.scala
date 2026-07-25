@@ -1117,7 +1117,7 @@ private[document] final class DesktopTaskEditor(implicit
           Callback {
             globalMessagesStore.showAdHocMessage(
               s"Missing required tags: ${missingTags.mkString(", ")}",
-              GlobalMessagesStore.Message.Type.Failure
+              GlobalMessagesStore.Message.Type.Failure,
             )
           }
       }
@@ -1177,17 +1177,20 @@ private[document] final class DesktopTaskEditor(implicit
         taskDelayedUntil = _.delayedUntil,
         taskTags = _.tags,
         taskOrderToken = _.orderToken,
+        taskCollapsed = _.collapsed,
         taskUpdateCreator = new TaskUpdateCreator[Task, MaskedTaskUpdate] {
           override def createUpdate(
               task: Task,
               orderToken: OrderToken,
               indentation: Int,
               delayedUntil: Option[LocalDateTime],
+              collapsed: Boolean,
           ): MaskedTaskUpdate = MaskedTaskUpdate.fromFields(
             originalTask = task,
             orderToken = orderToken,
             indentation = indentation,
             delayedUntil = delayedUntil,
+            collapsed = collapsed,
           )
         },
       )

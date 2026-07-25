@@ -200,22 +200,26 @@ final class ExternalApi @Inject() (implicit
         taskDelayedUntil = _.delayedUntil,
         taskTags = _.tags,
         taskOrderToken = _.orderToken,
+        taskCollapsed = _.collapsed,
         taskUpdateCreator = new TaskUpdateCreator[TaskEntity, EntityModification] {
           override def createUpdate(
               task: TaskEntity,
               orderToken: OrderToken,
               indentation: Int,
               delayedUntil: Option[LocalDateTime],
+              collapsed: Boolean,
           ): EntityModification = EntityModification.createUpdate(
             task.copy(
               orderToken = orderToken,
               indentation = indentation,
               delayedUntil = delayedUntil,
+              collapsed = collapsed,
             ),
             Seq(
               ModelFields.TaskEntity.orderToken,
               ModelFields.TaskEntity.indentation,
               ModelFields.TaskEntity.delayedUntil,
+              ModelFields.TaskEntity.collapsed,
             ),
           )
         },

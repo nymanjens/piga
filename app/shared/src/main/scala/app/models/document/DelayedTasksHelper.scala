@@ -15,6 +15,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     taskDelayedUntil: TaskT => Option[LocalDateTime],
     taskTags: TaskT => Seq[String],
     taskOrderToken: TaskT => OrderToken,
+    taskCollapsed: TaskT => Boolean,
     taskUpdateCreator: TaskUpdateCreator[TaskT, UpdateT],
 ) {
 
@@ -26,13 +27,11 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     Seq("#todo_unsorted", "#delayed_tasks").filter(tag => !tasks.exists(_.tags.contains(tag)))
   }
 
-
   lazy val delayedRootTasks: Seq[TaskT] = {
     delayedTasksIndices.map(tasks).filter { t =>
       t.delayedUntil.isDefined && t.indentation == delayedTasksParent.indentation + 1
     }
   }
-
 
   def validateTasks(): Unit = {
     def isInReverseOrder(datetimes: Seq[LocalDate]): Boolean = {
@@ -79,6 +78,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
         orderToken = newOrderToken,
         indentation = task.indentation - delayedTasksParent.indentation + todoUnsortedParent.indentation,
         delayedUntil = None,
+        collapsed = task.collapsed,
       )
     }
   }
@@ -88,7 +88,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     val maybeNextRootTask = delayedRootTasks.find(_.delayedUntil.get.toLocalDate <= delayedUntil.toLocalDate)
     val previousTaskIndex = maybeNextRootTask match {
       case Some(task) => tasks.indexOf(task) - 1
-      case None => indicesIncludingChildren(delayedTasksParent).max // Insert at the end of the list
+      case None       => indicesIncludingChildren(delayedTasksParent).max // Insert at the end of the list
     }
     val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
       numValues = tasksToMove.size,
@@ -103,6 +103,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
           orderToken = newOrderToken,
           indentation = task.indentation - rootTask.indentation + delayedTasksParent.indentation + 1,
           delayedUntil = if (task == rootTask) Some(delayedUntil) else None,
+          collapsed = if (task == rootTask) tasksToMove.size > 1 else task.collapsed,
         )
       }
   }
@@ -128,6 +129,7 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     def delayedUntil: Option[LocalDateTime] = taskDelayedUntil(task)
     def tags: Seq[String] = taskTags(task)
     def orderToken: OrderToken = taskOrderToken(task)
+    def collapsed: Boolean = taskCollapsed(task)
   }
 }
 object DelayedTasksHelper {
@@ -137,6 +139,7 @@ object DelayedTasksHelper {
         orderToken: OrderToken,
         indentation: Int,
         delayedUntil: Option[LocalDateTime],
+        collapsed: Boolean,
     ): UpdateT
   }
 }
