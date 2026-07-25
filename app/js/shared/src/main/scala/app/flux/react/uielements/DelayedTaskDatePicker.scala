@@ -59,10 +59,14 @@ object DelayedTaskDatePicker extends HydroReactComponent {
       val isValidDate = parsedDateOpt.exists(d => d.isEqual(tomorrow) || d.isAfter(tomorrow))
 
       def handleConfirm: Callback = {
-        if (isRemoval) props.onConfirm(None)
-        else if (isValidDate)
+        if (isRemoval) {
+          if (props.initialDate.isDefined) props.onConfirm(None)
+          else props.onCancel
+        } else if (isValidDate) {
           props.onConfirm(Some(LocalDateTime.of(parsedDateOpt.get, java.time.LocalTime.MIN)))
-        else Callback.empty
+        } else {
+          Callback.empty
+        }
       }
 
       def handleKeyDown(e: ReactKeyboardEventFrom[html.Input]): Callback = {
@@ -130,7 +134,8 @@ object DelayedTaskDatePicker extends HydroReactComponent {
                   <.div(
                     ^.marginTop := "10px",
                     if (isRemoval) {
-                      <.div("This will remove the delayed date")
+                      if (props.initialDate.isDefined) <.div("This will remove the delayed date")
+                      else <.div("This will cancel")
                     } else {
                       parsedDateOpt match {
                         case Some(date) =>
