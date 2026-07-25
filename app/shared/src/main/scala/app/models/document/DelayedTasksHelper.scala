@@ -47,9 +47,11 @@ case class DelayedTasksHelper[TaskT, UpdateT](
         if (task.delayedUntil.isDefined) {
           require(delayedTasksIndices.contains(taskIndex), task)
           require(task.indentation == delayedTasksParent.indentation + 1, task)
-        } else {
-          require(!delayedTasksIndices.contains(taskIndex), task)
         }
+      }
+      for (taskIndex <- delayedTasksIndices) {
+        val task = tasks(taskIndex)
+        require(task.indentation == delayedTasksParent.indentation + 1 == task.delayedUntil.isDefined, task)
       }
 
       require(
