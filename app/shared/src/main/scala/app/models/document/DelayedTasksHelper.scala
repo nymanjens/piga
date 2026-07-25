@@ -77,6 +77,30 @@ case class DelayedTasksHelper[TaskT, UpdateT](
     }
   }
 
+  def toDelayedTasks(rootTask: TaskT, delayedUntil: LocalDateTime): Seq[UpdateT] = {
+    val tasksToMove = indicesIncludingChildren(rootTask).map(tasks)
+    val maybeNextRootTask = delayedRootTasks.find(_.delayedUntil.get.toLocalDate <= delayedUntil.toLocalDate)
+    val previousTaskIndex = maybeNextRootTask match {
+      case Some(task) => tasks.indexOf(task) - 1
+      case None => delayedTasksIndices.max // Insert at the end of the list
+    }
+    val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
+      numValues = tasksToMove.size,
+      lowerExclusive = Some(tasks(previousTaskIndex).orderToken),
+      higherExclusive = CollectionUtils.maybeGet(tasks, previousTaskIndex + 1).map(_.orderToken),
+    )
+
+    for ((task, newOrderToken) <- tasksToMove zip newOrderTokens)
+      yield {
+        taskUpdateCreator.createUpdate(
+          task = task,
+          orderToken = newOrderToken,
+          indentation = task.indentation - rootTask.indentation + delayedTasksParent.indentation + 1,
+          delayedUntil = if (task == rootTask) Some(delayedUntil) else None,
+        )
+      }
+  }
+
   private lazy val maybeTodoUnsortedParent: Option[TaskT] = tasks.find(_.tags.contains("#todo_unsorted"))
   private lazy val maybeDelayedTasksParent: Option[TaskT] = tasks.find(_.tags.contains("#delayed_tasks"))
   private lazy val todoUnsortedParent: TaskT = maybeTodoUnsortedParent.get

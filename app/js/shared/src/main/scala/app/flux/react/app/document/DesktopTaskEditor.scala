@@ -1126,7 +1126,6 @@ private[document] final class DesktopTaskEditor(implicit
     )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
       val delayedTasksHelper = createDelayedTasksHelper(oldDocument)
-
       val delayedRootTask = oldDocument.tasks(selectionBeforeEdit.start.seqIndex)
       val taskUpdates = delayedTasksHelper.toTodoUnsorted(rootTasks = Seq(delayedRootTask))
 
@@ -1150,81 +1149,22 @@ private[document] final class DesktopTaskEditor(implicit
         delayedUntil: LocalDateTime,
     )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-      val delayedTasksParentIndex = oldDocument.tasks.indexWhere(_.tags.contains("#delayed_tasks"))
-      val parentIndentation = oldDocument.tasks(delayedTasksParentIndex).indentation
-
-      val selectionWithChildren = selectionBeforeEdit.includeChildren()
-
-      val delayedTasksListLimit = oldDocument.tasks.indices
-        .find(i => i > delayedTasksParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
-        .getOrElse(oldDocument.tasks.size)
-
-      val otherDelayedTasksWithIndex = ((delayedTasksParentIndex + 1) until delayedTasksListLimit)
-        .filterNot(selectionWithChildren.seqIndices.contains)
-        .map(i => (oldDocument.tasks(i), i))
-
-      var taskBeforeIndex = delayedTasksParentIndex
-      var skippingSubtreeOfFutureTask = false
-
-      for ((task, i) <- otherDelayedTasksWithIndex) {
-        if (task.indentation == parentIndentation + 1) {
-          task.delayedUntil match {
-            case Some(taskDate) if taskDate <= delayedUntil =>
-              taskBeforeIndex = i
-              skippingSubtreeOfFutureTask = false
-            case _ =>
-              skippingSubtreeOfFutureTask = true
-          }
-        } else if (task.indentation > parentIndentation + 1) {
-          if (!skippingSubtreeOfFutureTask) {
-            taskBeforeIndex = i
-          }
-        }
-      }
-
-      val taskBefore = oldDocument.tasksOption(taskBeforeIndex)
-      val taskAfter = oldDocument.tasks.indices
-        .find(i => i > taskBeforeIndex && !selectionWithChildren.seqIndices.contains(i))
-        .flatMap(oldDocument.tasksOption)
-
-      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
-        numValues = selectionWithChildren.seqIndices.length,
-        lowerExclusive = taskBefore.map(_.orderToken),
-        higherExclusive = taskAfter.map(_.orderToken),
-      )
-
-      val rootIndentation = oldDocument.tasks(selectionWithChildren.start.seqIndex).indentation
-      val targetRootIndentation = parentIndentation + 1
-
-      val taskUpdates =
-        for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
-          yield {
-            val indentationDiff = oldTask.indentation - rootIndentation
-            val newDelayedUntil = if (indentationDiff == 0) Some(delayedUntil) else oldTask.delayedUntil
-
-            MaskedTaskUpdate.fromFields(
-              originalTask = oldTask,
-              orderToken = newOrderToken,
-              indentation = targetRootIndentation + indentationDiff,
-              delayedUntil = newDelayedUntil,
-            )
-          }
-
-      val numTasksBeforeInNewDocument = oldDocument.tasks.indices.count { i =>
-        i <= taskBeforeIndex && !selectionWithChildren.seqIndices.contains(i)
-      }
-      val newStartSeqIndex = numTasksBeforeInNewDocument
-      val seqIndexMovement = newStartSeqIndex - selectionWithChildren.start.seqIndex
-
-      val selectionAfterEdit = IndexedSelection(
-        selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
-        selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
-      )
+      val delayedTasksHelper = createDelayedTasksHelper(oldDocument)
+      val rootTask = oldDocument.tasks(selectionBeforeEdit.start.seqIndex)
+      val taskUpdates = delayedTasksHelper.toDelayedTasks(rootTask, delayedUntil)
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selectionBeforeEdit,
-        selectionAfterEdit = selectionAfterEdit,
+        selectionAfterEditFunc = newDocument => {
+          val seqIndexMovement =
+            newDocument.maybeIndexOf(rootTask.id).get - selectionBeforeEdit.start.seqIndex
+          IndexedSelection(
+            selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+          )
+        },
+        replacementString = "",
       )
     }
 
