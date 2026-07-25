@@ -1113,7 +1113,13 @@ private[document] final class DesktopTaskEditor(implicit
 
       createDelayedTasksHelper(document).missingTags() match {
         case Seq() => $.modState(_.copy(showDatePickerForSelection = Some(selectionBeforeEdit)))
-        case missingTags => Callback.empty
+        case missingTags =>
+          Callback {
+            globalMessagesStore.showAdHocMessage(
+              s"Missing required tags: ${missingTags.mkString(", ")}",
+              GlobalMessagesStore.Message.Type.Failure
+            )
+          }
       }
     }
 
