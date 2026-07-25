@@ -10,6 +10,8 @@ import scala.collection.immutable.Seq
 import hydro.models.access.DbQueryImplicits._
 import app.models.access.JvmEntityAccess
 import app.models.access.ModelFields
+import app.models.document.DelayedTasksHelper
+import app.models.document.DelayedTasksHelper.TaskUpdateCreator
 import app.models.document.DocumentEntity
 import app.models.document.DocumentPermissionAndPlacement
 import app.models.document.TaskEntity
@@ -20,6 +22,7 @@ import hydro.common.CollectionUtils
 import hydro.common.OrderToken
 import hydro.common.time.Clock
 import hydro.common.ScalaUtils
+import hydro.common.time.LocalDateTime
 import hydro.controllers.helpers.AuthenticatedAction
 import hydro.models.modification.EntityModification
 import play.api.i18n.I18nSupport
@@ -191,65 +194,42 @@ final class ExternalApi @Inject() (implicit
         .filter(ModelFields.TaskEntity.documentId === document.id)
         .data()
         .sorted
+      val delayedTasksHelper = DelayedTasksHelper[TaskEntity, EntityModification](
+        tasks,
+        taskIndentation = _.indentation,
+        taskDelayedUntil = _.delayedUntil,
+        taskTags = _.tags,
+        taskOrderToken = _.orderToken,
+        taskUpdateCreator = new TaskUpdateCreator[TaskEntity, EntityModification] {
+          override def createUpdate(
+              task: TaskEntity,
+              orderToken: OrderToken,
+              indentation: Int,
+              delayedUntil: Option[LocalDateTime],
+          ): EntityModification = EntityModification.createUpdate(
+            task.copy(
+              orderToken = orderToken,
+              indentation = indentation,
+              delayedUntil = delayedUntil,
+            ),
+            Seq(
+              ModelFields.TaskEntity.orderToken,
+              ModelFields.TaskEntity.indentation,
+              ModelFields.TaskEntity.delayedUntil,
+            ),
+          )
+        },
+      )
 
-      def indicesIncludingChildren(task: TaskEntity) = {
-        val endIndex =
-          tasks.indexWhere(_.indentation <= task.indentation, from = tasks.indexOf(task) + 1) match {
-            case -1 => tasks.size
-            case i  => i
-          }
-        tasks.indexOf(task) until endIndex
-      }
-
-      if (tasks.exists(_.delayedUntil.isDefined)) {
-        val delayedTasksParent = tasks.find(_.tags.contains("#delayed_tasks")).get
-        val todoUnsortedParent = tasks.find(_.tags.contains("#todo_unsorted")).get
-        val delayedTasksIndices = indicesIncludingChildren(delayedTasksParent).drop(1)
-
-        // Validate that document is in expected state
-        for ((task, taskIndex) <- tasks.zipWithIndex) {
-          if (task.delayedUntil.isDefined) {
-            require(delayedTasksIndices.contains(taskIndex), task)
-            require(task.indentation == delayedTasksParent.indentation + 1, task)
-          }
-        }
+      if (delayedTasksHelper.containsDelayedTasks()) {
+        delayedTasksHelper.validateTasks()
 
         // Find all root tasks under #delayed_tasks that are due
-        val dueRootTasksIndices = delayedTasksIndices.filter { i =>
-          tasks(i).delayedUntil.exists(_.toLocalDate <= clock.now.toLocalDate)
-        }
+        val dueRootTasks =
+          delayedTasksHelper.delayedRootTasks.filter(_.delayedUntil.get.toLocalDate <= clock.now.toLocalDate)
 
-        if (dueRootTasksIndices.nonEmpty) {
-          val todoUnsortedChildIndices = indicesIncludingChildren(todoUnsortedParent)
-
-          // Gather all tasks to move
-          val tasksToMove = dueRootTasksIndices.flatMap(i => indicesIncludingChildren(tasks(i))).map(tasks)
-
-          // Generate new OrderTokens for them, appending to #todo_unsorted
-          val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
-            numValues = tasksToMove.size,
-            lowerExclusive = Some(tasks(todoUnsortedChildIndices.max).orderToken),
-            higherExclusive =
-              CollectionUtils.maybeGet(tasks, todoUnsortedChildIndices.max + 1).map(_.orderToken),
-          )
-
-          val taskUpdates =
-            for ((task, newOrderToken) <- tasksToMove zip newOrderTokens) yield {
-              EntityModification.createUpdate(
-                task.copy(
-                  orderToken = newOrderToken,
-                  indentation =
-                    task.indentation - delayedTasksParent.indentation + todoUnsortedParent.indentation,
-                  delayedUntil = None,
-                ),
-                Seq(
-                  ModelFields.TaskEntity.orderToken,
-                  ModelFields.TaskEntity.indentation,
-                  ModelFields.TaskEntity.delayedUntil,
-                ),
-              )
-            }
-
+        if (dueRootTasks.nonEmpty) {
+          val taskUpdates = delayedTasksHelper.toTodoUnsorted(rootTasks = dueRootTasks)
           entityAccess.persistEntityModifications(taskUpdates)
           movedTasksCount += taskUpdates.size
           val debugInfo = s"Moved ${taskUpdates.size} tasks in document ${document.name}"

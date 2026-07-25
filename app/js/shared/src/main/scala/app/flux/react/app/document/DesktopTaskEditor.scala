@@ -16,6 +16,8 @@ import app.flux.stores.document.DocumentStore
 import app.flux.stores.document.DocumentStoreFactory
 import app.flux.stores.GlobalMessagesStore.Message
 import app.flux.stores.GlobalMessagesStore
+import app.models.document.DelayedTasksHelper
+import app.models.document.DelayedTasksHelper.TaskUpdateCreator
 import app.models.document.Document
 import app.models.document.Document.DetachedCursor
 import app.models.document.Document.DetachedSelection
@@ -1123,60 +1125,23 @@ private[document] final class DesktopTaskEditor(implicit
         selectionBeforeEdit: IndexedSelection
     )(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
-      val todoUnsortedParentIndex = oldDocument.tasks.indexWhere(_.tags.contains("#todo_unsorted"))
-      val parentTask = oldDocument.tasks(todoUnsortedParentIndex)
-      val parentIndentation = parentTask.indentation
+      val delayedTasksHelper = createDelayedTasksHelper(oldDocument)
 
-      val todoUnsortedListLimit = oldDocument.tasks.indices
-        .find(i => i > todoUnsortedParentIndex && oldDocument.tasks(i).indentation <= parentIndentation)
-        .getOrElse(oldDocument.tasks.size)
-
-      val insertAfterIndex = todoUnsortedListLimit - 1
-
-      val selectionWithChildren = selectionBeforeEdit.includeChildren()
-
-      val taskBefore = oldDocument.tasksOption(insertAfterIndex)
-      val taskAfter = oldDocument.tasksOption(insertAfterIndex + 1)
-      val newOrderTokens = OrderToken.evenlyDistributedValuesBetween(
-        numValues = selectionWithChildren.seqIndices.length,
-        lowerExclusive = taskBefore.map(_.orderToken),
-        higherExclusive = taskAfter.map(_.orderToken),
-      )
-
-      val rootIndentation = oldDocument.tasks(selectionWithChildren.start.seqIndex).indentation
-      val targetRootIndentation = parentIndentation + 1
-
-      val taskUpdates =
-        for ((oldTask, newOrderToken) <- oldDocument.tasksIn(selectionWithChildren) zip newOrderTokens)
-          yield {
-            val indentationDiff = oldTask.indentation - rootIndentation
-            val newDelayedUntil = if (indentationDiff == 0) None else oldTask.delayedUntil
-
-            MaskedTaskUpdate.fromFields(
-              originalTask = oldTask,
-              orderToken = newOrderToken,
-              indentation = targetRootIndentation + indentationDiff,
-              delayedUntil = newDelayedUntil,
-            )
-          }
-
-      val seqIndexMovement = if (insertAfterIndex > selectionWithChildren.end.seqIndex) {
-        insertAfterIndex - selectionWithChildren.end.seqIndex
-      } else if (insertAfterIndex < selectionWithChildren.start.seqIndex) {
-        insertAfterIndex - selectionWithChildren.start.seqIndex + 1
-      } else {
-        0
-      }
-
-      val selectionAfterEdit = IndexedSelection(
-        selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
-        selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
-      )
+      val delayedRootTask = oldDocument.tasks(selectionBeforeEdit.start.seqIndex)
+      val taskUpdates = delayedTasksHelper.toTodoUnsorted(rootTasks = Seq(delayedRootTask))
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = taskUpdates),
         selectionBeforeEdit = selectionBeforeEdit,
-        selectionAfterEdit = selectionAfterEdit,
+        selectionAfterEditFunc = newDocument => {
+          val seqIndexMovement =
+            newDocument.maybeIndexOf(delayedRootTask.id).get - selectionBeforeEdit.start.seqIndex
+          IndexedSelection(
+            selectionBeforeEdit.start.copy(seqIndex = selectionBeforeEdit.start.seqIndex + seqIndexMovement),
+            selectionBeforeEdit.end.copy(seqIndex = selectionBeforeEdit.end.seqIndex + seqIndexMovement),
+          )
+        },
+        replacementString = "",
       )
     }
 
@@ -1262,6 +1227,28 @@ private[document] final class DesktopTaskEditor(implicit
         selectionAfterEdit = selectionAfterEdit,
       )
     }
+
+    private def createDelayedTasksHelper(document: Document): DelayedTasksHelper[Task, MaskedTaskUpdate] =
+      DelayedTasksHelper(
+        document.tasks,
+        taskIndentation = _.indentation,
+        taskDelayedUntil = _.delayedUntil,
+        taskTags = _.tags,
+        taskOrderToken = _.orderToken,
+        taskUpdateCreator = new TaskUpdateCreator[Task, MaskedTaskUpdate] {
+          override def createUpdate(
+              task: Task,
+              orderToken: OrderToken,
+              indentation: Int,
+              delayedUntil: Option[LocalDateTime],
+          ): MaskedTaskUpdate = MaskedTaskUpdate.fromFields(
+            originalTask = task,
+            orderToken = orderToken,
+            indentation = indentation,
+            delayedUntil = delayedUntil,
+          )
+        },
+      )
 
     private def updateTasksInSelection(
         selection: IndexedSelection,
@@ -1781,12 +1768,24 @@ private[document] final class DesktopTaskEditor(implicit
         selectionBeforeEdit: IndexedSelection,
         selectionAfterEdit: IndexedSelection,
         replacementString: String = "",
-    )(implicit state: State, props: Props): Callback = {
+    )(implicit state: State, props: Props): Callback = replaceWithHistory(
+      edit = edit,
+      selectionBeforeEdit = selectionBeforeEdit,
+      selectionAfterEditFunc = _ => selectionAfterEdit,
+      replacementString = replacementString,
+    )
 
+    private def replaceWithHistory(
+        edit: DocumentEdit.Reversible,
+        selectionBeforeEdit: IndexedSelection,
+        selectionAfterEditFunc: Document => IndexedSelection,
+        replacementString: String,
+    )(implicit state: State, props: Props): Callback = {
       val documentStore = props.documentStore
       val oldDocument = state.document
       documentStore.applyEditWithoutCallingListeners(edit)
       val newDocument = documentStore.state.document
+      val selectionAfterEdit = selectionAfterEditFunc(newDocument)
 
       $.modState(
         _.copyFromStore(documentStore),
