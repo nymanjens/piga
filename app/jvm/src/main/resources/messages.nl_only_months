@@ -1,0 +1,15 @@
+# Dutch messages
+
+# --- Project-specific messages
+app.date.month.jan.abbrev=jan
+app.date.month.feb.abbrev=feb
+app.date.month.mar.abbrev=mrt
+app.date.month.apr.abbrev=apr
+app.date.month.may.abbrev=mei
+app.date.month.jun.abbrev=jun
+app.date.month.jul.abbrev=jul
+app.date.month.aug.abbrev=aug
+app.date.month.sep.abbrev=sept
+app.date.month.oct.abbrev=okt
+app.date.month.nov.abbrev=nov
+app.date.month.dec.abbrev=dec
