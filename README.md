@@ -108,11 +108,14 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
 - **Special actions**
     - `ctrl + K`: Create or edit a link
     - `alt + shift + T`: Create or edit a tag
-    - `alt + shift + D`: Queue task to be added later
     - `ctrl + P`: Open "Go to file" dialog
     - `ctrl + plus`: Expand current task
     - `ctrl + minus`: Collapse current task
     - `alt + shift + 4`: Mark as 'done'
+    - `alt + shift + D`: Queue task to be added later.
+      - Requires a task with tag `#delayed_tasks` to list all queued tasks
+      - Requires a task with tag `#todo_unsorted` to put the tasks that are due
+      - Requires a daily call to `/externalapi/processdelayedtasks/:appSecret/`
 - **Power user shortcuts**
     - **Copying**
         - `ctrl + shift + C`: Copy selected task and its children
