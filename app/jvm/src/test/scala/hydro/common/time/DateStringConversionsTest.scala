@@ -1,6 +1,7 @@
 package hydro.common.time
 
 import java.time.Month._
+import java.time.LocalDate
 
 import app.common.testing._
 import hydro.common.testing._
@@ -48,6 +49,34 @@ class DateStringConversionsTest extends HookedSpecification {
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, OCTOBER, 12)) mustEqual "12 Oct '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, NOVEMBER, 12)) mustEqual "12 Nov '12"
     DateStringConversions.dateToHumanFriendlyString(createDateTime(2012, DECEMBER, 12)) mustEqual "12 Dec '12"
+  }
+
+  "stringToDate()" in {
+    // Explicit year
+    DateStringConversions.stringToDate("2010-04-05") mustEqual Some(LocalDate.of(2010, APRIL, 5))
+    DateStringConversions.stringToDate("5 Apr 2010") mustEqual Some(LocalDate.of(2010, APRIL, 5))
+    DateStringConversions.stringToDate("Apr 5 2010") mustEqual Some(LocalDate.of(2010, APRIL, 5))
+
+    // Implicit year - current year
+    DateStringConversions.stringToDate("Apr 5") mustEqual Some(LocalDate.of(2010, APRIL, 5))
+    DateStringConversions.stringToDate("5 Apr") mustEqual Some(LocalDate.of(2010, APRIL, 5))
+
+    // Past date -> falls back to current year (which is actually the past).
+    DateStringConversions.stringToDate("Feb 1") mustEqual Some(LocalDate.of(2010, FEBRUARY, 1))
+
+    // Test the new logic: previous year less than 3 months ago.
+    fakeClock.setNow(createDateTime(2010, JANUARY, 15))
+    // Nov 1 is previous year, less than 3 months ago.
+    DateStringConversions.stringToDate("Nov 1") mustEqual Some(LocalDate.of(2009, NOVEMBER, 1))
+    // Oct 1 is previous year, MORE than 3 months ago. Will fall back to current year.
+    DateStringConversions.stringToDate("Oct 1") mustEqual Some(LocalDate.of(2010, OCTOBER, 1))
+
+    // Test the new logic: next year less than 3 months in the future.
+    fakeClock.setNow(createDateTime(2010, DECEMBER, 15))
+    // Feb 1 is next year, less than 3 months in the future.
+    DateStringConversions.stringToDate("Feb 1") mustEqual Some(LocalDate.of(2011, FEBRUARY, 1))
+    // Apr 1 is next year, MORE than 3 months in the future. Will fall back to current year.
+    DateStringConversions.stringToDate("Apr 1") mustEqual Some(LocalDate.of(2010, APRIL, 1))
   }
 
   private def setFakeI18nMappings(): Unit = {

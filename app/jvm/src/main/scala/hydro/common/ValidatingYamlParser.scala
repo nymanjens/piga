@@ -11,7 +11,7 @@ import hydro.common.ValidatingYamlParser.ParsableValue.MapParsableValue.MaybeReq
 import hydro.common.ValidatingYamlParser.ParsableValue.MapParsableValue.StringMap
 import hydro.common.ValidatingYamlParser.ParseResult.ValidationError
 import hydro.common.time.LocalDateTime
-import hydro.common.time.TimeUtils
+import hydro.common.time.DateStringConversions
 import org.yaml.snakeyaml.Yaml
 
 import scala.collection.immutable.Seq
@@ -98,7 +98,7 @@ object ValidatingYamlParser {
             )
           case v: String =>
             try {
-              ParseResult.success(TimeUtils.parseDateString(v))
+              ParseResult.success(DateStringConversions.stringToDateStrict(v))
             } catch {
               case e: Exception => ParseResult.onlyError(e.getMessage)
             }
