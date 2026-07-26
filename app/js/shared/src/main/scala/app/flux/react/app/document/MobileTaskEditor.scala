@@ -75,6 +75,7 @@ private[document] final class MobileTaskEditor(implicit
   protected case class Props(documentStore: DocumentStore, router: RouterContext)
   protected case class State(
       inEditMode: Boolean = false,
+      showMoreButtons: Boolean = false,
       document: Document = Document.nullInstance,
       pendingTaskIds: Set[Long] = Set(),
       highlightedTaskIdAndIndex: TaskIdAndIndex = TaskIdAndIndex.nullInstance,
@@ -223,62 +224,85 @@ private[document] final class MobileTaskEditor(implicit
 
     private def editButtons(implicit props: Props, state: State): VdomNode = <.div(
       ^.className := "edit-buttons",
-      Bootstrap.ButtonGroup(
-        // Create empty
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> createEmptyTaskUnderHighlighted(),
-          Bootstrap.FontAwesomeIcon("calendar-o"),
-        ),
-        // Delete
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> removeHighlightedTask(),
-          ^.disabled := state.document.tasks.size == 1,
-          Bootstrap.FontAwesomeIcon("trash-o"),
-        ),
+      <<.ifThen(state.showMoreButtons)(
+        <.div(
+          Bootstrap.ButtonGroup(
+            // Move up
+            Bootstrap.Button(Variant.info, size = Size.lg)(
+              ^.onClick --> moveHighlightedTask(direction = -1),
+              ^.disabled := state.highlightedTaskIndex == 0,
+              Bootstrap.FontAwesomeIcon("chevron-up"),
+            ),
+            // Move down
+            Bootstrap.Button(Variant.info, size = Size.lg)(
+              ^.onClick --> moveHighlightedTask(direction = +1),
+              ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
+              Bootstrap.FontAwesomeIcon("chevron-down"),
+            ),
+          ),
+          Bootstrap.ButtonGroup(
+            // Dedent
+            Bootstrap.Button(Variant.info, size = Size.lg)(
+              ^.onClick --> indentHighlightedTask(indentIncrease = -1),
+              ^.disabled := state.highlightedTask.indentation == 0,
+              Bootstrap.FontAwesomeIcon("dedent"),
+            ),
+            // Indent
+            Bootstrap.Button(Variant.info, size = Size.lg)(
+              ^.onClick --> indentHighlightedTask(indentIncrease = +1),
+              Bootstrap.FontAwesomeIcon("indent"),
+            ),
+          ),
+        )
       ),
-      Bootstrap.ButtonGroup(
-        // Move up
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> moveHighlightedTask(direction = -1),
-          ^.disabled := state.highlightedTaskIndex == 0,
-          Bootstrap.FontAwesomeIcon("chevron-up"),
+      <.div(
+        Bootstrap.ButtonGroup(
+          // Create empty
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> createEmptyTaskUnderHighlighted(),
+            Bootstrap.FontAwesomeIcon("calendar-o"),
+          ),
+          // Delete
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> removeHighlightedTask(),
+            ^.disabled := state.document.tasks.size == 1,
+            Bootstrap.FontAwesomeIcon("trash-o"),
+          ),
         ),
-        // Move down
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> moveHighlightedTask(direction = +1),
-          ^.disabled := state.highlightedTaskIndex == state.document.tasks.size - 1,
-          Bootstrap.FontAwesomeIcon("chevron-down"),
+        Bootstrap.ButtonGroup(
+          // Toggle checked
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> toggleCheckedOnHighlightedTask(),
+            if (state.highlightedTask.checked) Bootstrap.FontAwesomeIcon("check-square-o")
+            else Bootstrap.FontAwesomeIcon("square-o"),
+          ),
+          // Expand/collapse
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> toggleCollapseOnHighlightedTask(),
+            if (state.highlightedTask.collapsed) Bootstrap.Glyphicon("collapse-down")
+            else Bootstrap.Glyphicon("expand"),
+          ),
         ),
-        // Dedent
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> indentHighlightedTask(indentIncrease = -1),
-          ^.disabled := state.highlightedTask.indentation == 0,
-          Bootstrap.FontAwesomeIcon("dedent"),
+        Bootstrap.ButtonGroup(
+          // Undo
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> applyHistoryEdit(editHistory.undo()),
+            ^.disabled := !editHistory.canUndo,
+            Bootstrap.FontAwesomeIcon("rotate-left"),
+          ),
+          // Redo
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> applyHistoryEdit(editHistory.redo()),
+            ^.disabled := !editHistory.canRedo,
+            Bootstrap.FontAwesomeIcon("rotate-right"),
+          ),
         ),
-        // Indent
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> indentHighlightedTask(indentIncrease = +1),
-          Bootstrap.FontAwesomeIcon("indent"),
-        ),
-        // Expand/collapse
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> toggleCollapseOnHighlightedTask(),
-          if (state.highlightedTask.collapsed) Bootstrap.Glyphicon("collapse-down")
-          else Bootstrap.Glyphicon("expand"),
-        ),
-      ),
-      Bootstrap.ButtonGroup(
-        // Undo
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> applyHistoryEdit(editHistory.undo()),
-          ^.disabled := !editHistory.canUndo,
-          Bootstrap.FontAwesomeIcon("rotate-left"),
-        ),
-        // Redo
-        Bootstrap.Button(Variant.info)(
-          ^.onClick --> applyHistoryEdit(editHistory.redo()),
-          ^.disabled := !editHistory.canRedo,
-          Bootstrap.FontAwesomeIcon("rotate-right"),
+        Bootstrap.ButtonGroup(
+          // More...
+          Bootstrap.Button(Variant.info, size = Size.lg)(
+            ^.onClick --> toggleShowMoreButtons(),
+            Bootstrap.FontAwesomeIcon("ellipsis-h"),
+          )
         ),
       ),
     )
@@ -439,6 +463,22 @@ private[document] final class MobileTaskEditor(implicit
         edit = DocumentEdit.Reversible(taskUpdates = Seq(taskUpdate)),
         focusHighlightedTaskAfterEdit = false,
       )
+    }
+
+    private def toggleCheckedOnHighlightedTask()(implicit state: State, props: Props): Callback = {
+      implicit val oldDocument = state.document
+
+      val taskUpdate =
+        MaskedTaskUpdate.fromFields(state.highlightedTask, checked = !state.highlightedTask.checked)
+
+      replaceWithHistory(
+        edit = DocumentEdit.Reversible(taskUpdates = Seq(taskUpdate)),
+        focusHighlightedTaskAfterEdit = false,
+      )
+    }
+
+    private def toggleShowMoreButtons(): Callback = {
+      $.modState(state => state.copy(showMoreButtons = !state.showMoreButtons))
     }
 
     private def moveHighlightedTask(direction: Int)(implicit state: State, props: Props): Callback = {
