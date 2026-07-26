@@ -31,6 +31,6 @@ object MappingStore {
       inputStore: StateStore[InputState],
       mapFunction: InputState => OutputState,
   ): StateStore[OutputState] = {
-    return new MappingStore(inputStore, mapFunction)
+    new MappingStore(inputStore, mapFunction)
   }
 }

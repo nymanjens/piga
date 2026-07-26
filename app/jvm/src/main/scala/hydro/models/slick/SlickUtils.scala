@@ -32,7 +32,9 @@ object SlickUtils {
   val database = Database.forConfig("db.default")
 
   def dbRun[T](query: DBIO[T]): T = {
-    Await.result(database.run(query), Duration.Inf)
+    scala.concurrent.blocking {
+      Await.result(database.run(query), Duration.Inf)
+    }
   }
 
   def dbRun[T, C[T]](query: Query[_, T, C]): C[T] = dbRun(query.result)
