@@ -66,6 +66,7 @@ final class KeyboardShortcutsHelpOverlay extends HydroReactComponent {
             ^.tabIndex := -1,
             <.div(
               ^.className := "modal-dialog",
+              ^.style := js.Dictionary("width" -> "780px", "maxWidth" -> "95vw"),
               <.div(
                 ^.className := "modal-content",
                 <.div(
