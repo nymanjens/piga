@@ -97,7 +97,8 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
     - **Formatting**
         - `ctrl + I`: Toggle 'italic'
         - `ctrl + B`: Toggle 'bold'
-        - ``ctrl + `` `: Toggle 'code font'
+        - ``ctrl + `` ` or `alt + shift + 1`: Toggle 'code font'
+        - `alt + shift + 3`: Toggle 'highlight'
         - `alt + shift + 5`: Toggle 'strikethrough'
         - `ctrl + \`: Reset formatting
     - **Undo/redo**
@@ -107,6 +108,7 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
 - **Special actions**
     - `ctrl + K`: Create or edit a link
     - `alt + shift + T`: Create or edit a tag
+    - `alt + shift + D`: Queue task to be added later
     - `ctrl + P`: Open "Go to file" dialog
     - `ctrl + plus`: Expand current task
     - `ctrl + minus`: Collapse current task
@@ -136,7 +138,10 @@ When done, browse to http://<ip_address>:9000/app/useradministration (username: 
         - `ctrl + shift + M`: Select current quoted sentence
         - `ctrl + J`: Select current task
         - `ctrl + G`: Find next occurrence of selected text
+        - `ctrl + shift + G`: Find previous occurrence of selected text
     - **Other**
         - `ctrl + Q`: Go to the last edit
         - `ctrl + shift + delete`: Delete the remainder of the line after the cursor
+        - `shift + alt + up`: Switch to previous document
+        - `shift + alt + down`: Switch to next document
 
