@@ -31,7 +31,7 @@ final class KeyboardShortcutsHelpOverlay extends HydroReactComponent {
         $.modState(s => s.copy(isVisible = isVisibleCurrently)).runNow()
       })
 
-      Mousetrap.bind(
+      Mousetrap.bindGlobal(
         "shift+alt+/",
         e => {
           e.preventDefault()
@@ -80,6 +80,7 @@ final class KeyboardShortcutsHelpOverlay extends HydroReactComponent {
                 ),
                 <.div(
                   ^.className := "modal-body",
+                  ^.style := js.Dictionary("maxHeight" -> "calc(100vh - 150px)", "overflowY" -> "auto"),
                   <.table(
                     ^.className := "table table-bordered",
                     ^.style := js.Dictionary("marginBottom" -> "0"),
@@ -119,7 +120,7 @@ final class KeyboardShortcutsHelpOverlay extends HydroReactComponent {
       val tokens = shortcutString.split(" ")
       <.span(
         tokens.zipWithIndex.map { case (token, index) =>
-          if (token == "+" || token == "/") {
+          if (token == "+" || token == "/" || token == "or") {
             <.span(^.key := s"token-$index", s" $token "): VdomNode
           } else {
             Kbd(token)(^.key := s"token-$index"): VdomNode

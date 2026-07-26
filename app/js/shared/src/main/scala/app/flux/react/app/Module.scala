@@ -38,6 +38,7 @@ final class Module(implicit
   implicit private lazy val pageHeader = hydroUielementsModule.pageHeader
   implicit private lazy val sbadminMenu = hydroUielementsModule.sbadminMenu
   implicit private lazy val sbadminLayout = hydroUielementsModule.sbadminLayout
+  implicit private lazy val keyboardShortcutsHelpOverlay = hydroUielementsModule.keyboardShortcutsHelpOverlay
 
   private val userManagementModule = new hydro.flux.react.uielements.usermanagement.Module
   private val databaseExplorerModule = new hydro.flux.react.uielements.dbexplorer.Module
