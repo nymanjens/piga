@@ -6,6 +6,8 @@ import hydro.common.DesktopKeyCombination.ArrowDown
 import hydro.common.DesktopKeyCombination.SpecialKey
 import hydro.common.DesktopKeyCombination.ArrowUp
 import hydro.common.I18n
+import hydro.common.time.Clock
+import hydro.common.time.DateStringConversions
 import hydro.common.time.LocalDateTime
 import hydro.common.time.TimeUtils
 import hydro.flux.react.ReactVdomUtils.^^
@@ -43,8 +45,14 @@ object TextInput {
         },
         ^.disabled := extraProps.disabled,
         ^^.ifDefined(extraProps.arrowHandler) { arrowHandler =>
-          ^.onKeyDown ==> handleKeyDown(arrowHandler, currentValue = valueString, onChange = onChange),
+          ^.onKeyDown ==> handleKeyDown(arrowHandler, currentValue = valueString, onChange = onChange)
         },
+        ^.onBlur ==> ((event: ReactEventFromInput) => {
+          extraProps.onBlurCanonicalize(valueString) match {
+            case Some(canonicalValue) => onChange(canonicalValue)
+            case None => Callback.empty
+          }
+        }),
       )
     },
   )
@@ -66,6 +74,7 @@ object TextInput {
       arrowHandler: ArrowHandler = null,
       listener: InputBase.Listener[String] = InputBase.Listener.nullInstance,
       substituteNonLatin1: Boolean = true,
+      onBlurCanonicalize: String => Option[String] = _ => None,
   )(implicit i18n: I18n): VdomElement = {
     val props = Props(
       label = label,
@@ -85,6 +94,7 @@ object TextInput {
         autoComplete = autoComplete,
         disabled = disabled,
         arrowHandler = Option(arrowHandler),
+        onBlurCanonicalize = onBlurCanonicalize,
       ),
     )
     ref.mutableRef.component(props)
@@ -98,7 +108,7 @@ object TextInput {
     def newValueOnArrowDown(currentValue: String): String
   }
   object ArrowHandler {
-    object DateHandler extends ArrowHandler {
+    class DateHandler(implicit i18n: I18n, clock: Clock) extends ArrowHandler {
       override def newValueOnArrowUp(currentValue: String): String = {
         newValueOnDelta(daysDelta = 1, currentValue)
       }
@@ -107,12 +117,9 @@ object TextInput {
       }
 
       private def newValueOnDelta(daysDelta: Int, currentValue: String): String = {
-        try {
-          val currentDate = TimeUtils.parseDateString(currentValue.trim)
-          val newDate = currentDate.plus(Duration.ofDays(daysDelta))
-          newDate.toLocalDate.toString
-        } catch {
-          case _: IllegalArgumentException => currentValue
+        DateStringConversions.stringToDate(currentValue.trim) match {
+          case Some(currentDate) => currentDate.plusDays(daysDelta).toString
+          case None              => currentValue
         }
       }
     }
@@ -128,6 +135,7 @@ object TextInput {
       autoComplete: Boolean,
       disabled: Boolean,
       arrowHandler: Option[ArrowHandler],
+      onBlurCanonicalize: String => Option[String],
   )
 
   // **************** Private helper methods ****************//
