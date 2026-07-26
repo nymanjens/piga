@@ -36,4 +36,8 @@ final class Module(implicit
   implicit lazy val pendingModificationsCounter: PendingModificationsCounter = new PendingModificationsCounter
   implicit lazy val sbadminMenu: SbadminMenu = new SbadminMenu()
   implicit lazy val sbadminLayout: SbadminLayout = new SbadminLayout()
+  implicit lazy val keyboardShortcutsHelpOverlay: KeyboardShortcutsHelpOverlay =
+    new KeyboardShortcutsHelpOverlay()
+  implicit lazy val keyboardShortcutsHelpToggleIcon: KeyboardShortcutsHelpToggleIcon =
+    new KeyboardShortcutsHelpToggleIcon()
 }

@@ -25,6 +25,7 @@ final class SbadminLayout(implicit
     pageLoadingSpinner: PageLoadingSpinner,
     applicationDisconnectedIcon: ApplicationDisconnectedIcon,
     localDatabaseHasBeenLoadedIcon: LocalDatabaseHasBeenLoadedIcon,
+    keyboardShortcutsHelpToggleIcon: KeyboardShortcutsHelpToggleIcon,
     pendingModificationsCounter: PendingModificationsCounter,
     user: User,
     i18n: I18n,
@@ -73,6 +74,7 @@ final class SbadminLayout(implicit
           applicationDisconnectedIcon(),
           pendingModificationsCounter(),
           localDatabaseHasBeenLoadedIcon(),
+          keyboardShortcutsHelpToggleIcon(),
           <.li(
             ^.className := "dropdown",
             <.a(
