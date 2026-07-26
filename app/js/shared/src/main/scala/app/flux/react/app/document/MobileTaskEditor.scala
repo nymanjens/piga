@@ -468,8 +468,13 @@ private[document] final class MobileTaskEditor(implicit
     private def toggleCheckedOnHighlightedTask()(implicit state: State, props: Props): Callback = {
       implicit val oldDocument = state.document
 
+      val newCheckedValue = !state.highlightedTask.checked
       val taskUpdate =
-        MaskedTaskUpdate.fromFields(state.highlightedTask, checked = !state.highlightedTask.checked)
+        MaskedTaskUpdate.fromFields(
+          state.highlightedTask,
+          checked = newCheckedValue,
+          collapsed = if (newCheckedValue) true else state.highlightedTask.collapsed
+        )
 
       replaceWithHistory(
         edit = DocumentEdit.Reversible(taskUpdates = Seq(taskUpdate)),
