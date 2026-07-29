@@ -26,7 +26,9 @@ final class LocalDatabaseWebWorkerApiStub(
     forceJsWorker: Option[JsWorkerClientFacade] = None
 ) extends LocalDatabaseWebWorkerApi.ForClient {
 
-  private val responseMessagePromises: mutable.Buffer[Promise[js.Any]] = mutable.Buffer()
+  private var nextMessageId: Double = 0
+  private val responseMessagePromises: mutable.Map[Double, Promise[js.Any]] = mutable.Map()
+  private var lastMessageFuture: Future[Unit] = Future.successful(())
   private val worker: JsWorkerClient = initializeJsWorker()
   private var listeners: Seq[LocalDatabaseWebWorkerApi.ForClient.Listener] = Seq()
 
@@ -72,16 +74,19 @@ final class LocalDatabaseWebWorkerApiStub(
 
   private def sendAndReceive(methodNum: Int, args: Seq[js.Any], timeout: FiniteDuration): Future[js.Any] =
     async {
-      val lastMessagePromise: Option[Promise[_]] = responseMessagePromises.lastOption
+      val messageId = nextMessageId
+      nextMessageId += 1
       val thisMessagePromise: Promise[js.Any] = Promise()
-      responseMessagePromises += thisMessagePromise
+      responseMessagePromises.put(messageId, thisMessagePromise)
 
-      if (lastMessagePromise.isDefined) {
-        await(lastMessagePromise.get.future)
-      }
+      val futureToAwait = lastMessageFuture
+      val nextLastMessagePromise = Promise[Unit]()
+      lastMessageFuture = nextLastMessagePromise.future
+
+      await(futureToAwait)
 
       logExceptions {
-        worker.postMessage(js.Array(methodNum, args.toJSArray))
+        worker.postMessage(js.Array(messageId, methodNum, args.toJSArray))
       }
 
       js.timers.setTimeout(timeout) {
@@ -91,14 +96,17 @@ final class LocalDatabaseWebWorkerApiStub(
               "  [LocalDatabaseWebWorker] Operation timed out " +
                 s"(methodNum = $methodNum, args = $args, timeout = $timeout)"
             )
-          responseMessagePromises -= thisMessagePromise
-          thisMessagePromise.failure(
+          responseMessagePromises.remove(messageId)
+          thisMessagePromise.tryFailure(
             new Exception(s"Operation timed out (methodNum = $methodNum, args = $args, timeout = $timeout)")
           )
+          nextLastMessagePromise.trySuccess(())
         }
       }
 
-      await(thisMessagePromise.future)
+      val result = await(thisMessagePromise.future)
+      nextLastMessagePromise.trySuccess(())
+      result
     }
 
   private def initializeJsWorker(): JsWorkerClient = {
@@ -111,33 +119,35 @@ final class LocalDatabaseWebWorkerApiStub(
       scriptUrl = "/localDatabaseWebWorker.js",
       onMessage = data =>
         logExceptions {
-          Scala2Js.toScala[WorkerResponse](data) match {
-            case response @ WorkerResponse.Failed(stackTrace) =>
-              responseMessagePromises.headOption match {
-                case Some(promise) =>
-                  responseMessagePromises.remove(0)
-                  promise.failure(new IllegalStateException(s"WebWorker invocation failed:\n$stackTrace"))
-                case None =>
-                  throw new AssertionError(
-                    s"Received unexpected message (this is a bug unless this operation timed out): $response"
-                  )
-              }
+          if (
+            js.Array.isArray(data) && data.asInstanceOf[js.Array[js.Any]].length == 2 && js
+              .typeOf(data.asInstanceOf[js.Array[js.Any]](0)) == "number"
+          ) {
+            val arr = data.asInstanceOf[js.Array[js.Any]]
+            val messageId = arr(0).asInstanceOf[Double]
+            val responseData = arr(1)
 
-            case response @ WorkerResponse.MethodReturnValue(returnValue) =>
-              responseMessagePromises.headOption match {
-                case Some(promise) =>
-                  responseMessagePromises.remove(0)
-                  promise.success(returnValue)
-                case None =>
-                  throw new AssertionError(
-                    s"Received unexpected message (this is a bug unless this operation timed out): $response"
-                  )
-              }
-
-            case WorkerResponse.BroadcastedWriteOperations(writeOperations) =>
-              for (listener <- listeners) {
-                listener.onWriteOperationsDone(writeOperations)
-              }
+            Scala2Js.toScala[WorkerResponse](responseData) match {
+              case WorkerResponse.Failed(stackTrace) =>
+                responseMessagePromises.remove(messageId).foreach { promise =>
+                  promise.tryFailure(new IllegalStateException(s"WebWorker invocation failed:\n$stackTrace"))
+                }
+              case WorkerResponse.MethodReturnValue(returnValue) =>
+                responseMessagePromises.remove(messageId).foreach { promise =>
+                  promise.trySuccess(returnValue)
+                }
+              case WorkerResponse.BroadcastedWriteOperations(_) =>
+                throw new AssertionError("Targeted response should not be a BroadcastedWriteOperations")
+            }
+          } else {
+            Scala2Js.toScala[WorkerResponse](data) match {
+              case WorkerResponse.BroadcastedWriteOperations(writeOperations) =>
+                for (listener <- listeners) {
+                  listener.onWriteOperationsDone(writeOperations)
+                }
+              case response =>
+                throw new AssertionError(s"Received unexpected broadcast message: $response")
+            }
           }
         },
     )

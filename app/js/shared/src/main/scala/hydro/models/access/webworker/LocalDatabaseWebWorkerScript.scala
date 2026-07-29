@@ -39,19 +39,30 @@ object LocalDatabaseWebWorkerScript {
         override def onMessage(data: js.Any): Future[OnMessageResponse] = {
           // Flatmap dummy future so that exceptions being thrown by method invocation and in returned future
           // get treated the same
+          var currentMessageId: Option[Double] = None
           Future.successful((): Unit).flatMap { _ =>
             logExceptions {
               data.asInstanceOf[js.Array[_]].toVector match {
-                case Seq(methodNum, args) =>
-                  executeMethod(methodNum.asInstanceOf[Int], args.asInstanceOf[js.Array[js.Any]])
+                case Seq(messageId, methodNum, args) =>
+                  currentMessageId = Some(messageId.asInstanceOf[Double])
+                  executeMethod(methodNum.asInstanceOf[Int], args.asInstanceOf[js.Array[js.Any]]).map {
+                    response =>
+                      response.copy(
+                        response = js.Array(messageId, response.response)
+                      )
+                  }
               }
             }
           } recover { case e: Throwable =>
             console.log(s"  LocalDatabaseWebWorkerScript: Caught exception: $e")
             e.printStackTrace()
-            OnMessageResponse(
+            val errorResponse = OnMessageResponse(
               response = Scala2Js.toJs[WorkerResponse](WorkerResponse.Failed(getStackTraceString(e)))
             )
+            currentMessageId match {
+              case Some(id) => errorResponse.copy(response = js.Array(id, errorResponse.response))
+              case None     => errorResponse
+            }
           }
         }
       })
