@@ -58,9 +58,9 @@ object LocalDatabaseWebWorkerApiConvertersTest extends TestSuite {
     }
 
     "WorkerResponseConverter" - {
-      "Failed" - { testForwardAndBackward[WorkerResponse](WorkerResponse.Failed("test")) }
+      "Failed" - { testForwardAndBackward[WorkerResponse](WorkerResponse.Failed(1.5, "test")) }
       "MethodReturnValue" - {
-        testForwardAndBackward[WorkerResponse](WorkerResponse.MethodReturnValue(testObj))
+        testForwardAndBackward[WorkerResponse](WorkerResponse.MethodReturnValue(0.1, testObj))
       }
       "BroadcastedWriteOperations" - {
         testForwardAndBackward[WorkerResponse](

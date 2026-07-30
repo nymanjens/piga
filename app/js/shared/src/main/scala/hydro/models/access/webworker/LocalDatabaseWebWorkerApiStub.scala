@@ -21,12 +21,13 @@ import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.util.Random
 
 final class LocalDatabaseWebWorkerApiStub(
     forceJsWorker: Option[JsWorkerClientFacade] = None
 ) extends LocalDatabaseWebWorkerApi.ForClient {
 
-  private val responseMessagePromises: mutable.Buffer[Promise[js.Any]] = mutable.Buffer()
+  private val responseMessagePromises: mutable.Map[Double, Promise[js.Any]] = mutable.Map()
   private val worker: JsWorkerClient = initializeJsWorker()
   private var listeners: Seq[LocalDatabaseWebWorkerApi.ForClient.Listener] = Seq()
 
@@ -70,36 +71,30 @@ final class LocalDatabaseWebWorkerApiStub(
     listeners = listeners :+ listener
   }
 
-  private def sendAndReceive(methodNum: Int, args: Seq[js.Any], timeout: FiniteDuration): Future[js.Any] =
-    async {
-      val lastMessagePromise: Option[Promise[_]] = responseMessagePromises.lastOption
-      val thisMessagePromise: Promise[js.Any] = Promise()
-      responseMessagePromises += thisMessagePromise
+  private def sendAndReceive(methodNum: Int, args: Seq[js.Any], timeout: FiniteDuration): Future[js.Any] = {
+    val thisMessageId = Random.nextDouble()
+    val thisMessagePromise: Promise[js.Any] = Promise()
+    responseMessagePromises.put(thisMessageId, thisMessagePromise)
 
-      if (lastMessagePromise.isDefined) {
-        await(lastMessagePromise.get.future)
-      }
-
-      logExceptions {
-        worker.postMessage(js.Array(methodNum, args.toJSArray))
-      }
-
-      js.timers.setTimeout(timeout) {
-        if (!thisMessagePromise.isCompleted) {
-          scalajs.dom.console
-            .log(
-              "  [LocalDatabaseWebWorker] Operation timed out " +
-                s"(methodNum = $methodNum, args = $args, timeout = $timeout)"
-            )
-          responseMessagePromises -= thisMessagePromise
-          thisMessagePromise.failure(
-            new Exception(s"Operation timed out (methodNum = $methodNum, args = $args, timeout = $timeout)")
-          )
-        }
-      }
-
-      await(thisMessagePromise.future)
+    logExceptions {
+      worker.postMessage(js.Array(thisMessageId, methodNum, args.toJSArray))
     }
+
+    js.timers.setTimeout(timeout) {
+      if (!thisMessagePromise.isCompleted) {
+        scalajs.dom.console.log(
+          "  [LocalDatabaseWebWorker] Operation timed out " +
+            s"(methodNum = $methodNum, args = $args, timeout = $timeout)"
+        )
+        responseMessagePromises.remove(thisMessageId)
+        thisMessagePromise.tryFailure(
+          new Exception(s"Operation timed out (methodNum = $methodNum, args = $args, timeout = $timeout)")
+        )
+      }
+    }
+
+    thisMessagePromise.future
+  }
 
   private def initializeJsWorker(): JsWorkerClient = {
     val workerClientFacade =
@@ -112,25 +107,23 @@ final class LocalDatabaseWebWorkerApiStub(
       onMessage = data =>
         logExceptions {
           Scala2Js.toScala[WorkerResponse](data) match {
-            case response @ WorkerResponse.Failed(stackTrace) =>
-              responseMessagePromises.headOption match {
+            case response @ WorkerResponse.Failed(messageId, stackTrace) =>
+              responseMessagePromises.remove(messageId) match {
                 case Some(promise) =>
-                  responseMessagePromises.remove(0)
                   promise.failure(new IllegalStateException(s"WebWorker invocation failed:\n$stackTrace"))
                 case None =>
-                  throw new AssertionError(
-                    s"Received unexpected message (this is a bug unless this operation timed out): $response"
+                  scalajs.dom.console.log(
+                    s"  Warning: Received unexpected message (this is a bug unless this operation timed out): $response"
                   )
               }
 
-            case response @ WorkerResponse.MethodReturnValue(returnValue) =>
-              responseMessagePromises.headOption match {
+            case response @ WorkerResponse.MethodReturnValue(messageId, returnValue) =>
+              responseMessagePromises.remove(messageId) match {
                 case Some(promise) =>
-                  responseMessagePromises.remove(0)
                   promise.success(returnValue)
                 case None =>
-                  throw new AssertionError(
-                    s"Received unexpected message (this is a bug unless this operation timed out): $response"
+                  scalajs.dom.console.log(
+                    s"  Warning: Received unexpected message (this is a bug unless this operation timed out): $response"
                   )
               }
 

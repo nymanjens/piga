@@ -36,31 +36,35 @@ object LocalDatabaseWebWorkerScript {
     JsWorkerServerFacade
       .getFromGlobalScope()
       .setUpFromWorkerScript(new WorkerScriptLogic {
-        override def onMessage(data: js.Any): Future[OnMessageResponse] = {
-          // Flatmap dummy future so that exceptions being thrown by method invocation and in returned future
-          // get treated the same
-          Future.successful((): Unit).flatMap { _ =>
-            logExceptions {
-              data.asInstanceOf[js.Array[_]].toVector match {
-                case Seq(methodNum, args) =>
-                  executeMethod(methodNum.asInstanceOf[Int], args.asInstanceOf[js.Array[js.Any]])
+        override def onMessage(data: js.Any): Future[OnMessageResponse] = logExceptions {
+          data.asInstanceOf[js.Array[_]].toVector match {
+            case Seq(rawMessageId, methodNum, args) =>
+              val messageId = rawMessageId.asInstanceOf[Double]
+              // Flatmap dummy future so that exceptions being thrown by method invocation and in returned future
+              // get treated the same
+              Future.successful((): Unit).flatMap { _ =>
+                executeMethod(messageId, methodNum.asInstanceOf[Int], args.asInstanceOf[js.Array[js.Any]])
+              } recover { case e: Throwable =>
+                console.log(s"  LocalDatabaseWebWorkerScript: Caught exception: $e")
+                e.printStackTrace()
+                OnMessageResponse(
+                  response =
+                    Scala2Js.toJs[WorkerResponse](WorkerResponse.Failed(messageId, getStackTraceString(e)))
+                )
               }
-            }
-          } recover { case e: Throwable =>
-            console.log(s"  LocalDatabaseWebWorkerScript: Caught exception: $e")
-            e.printStackTrace()
-            OnMessageResponse(
-              response = Scala2Js.toJs[WorkerResponse](WorkerResponse.Failed(getStackTraceString(e)))
-            )
           }
         }
       })
   }
 
-  private def executeMethod(methodNum: Int, args: js.Array[js.Any]): Future[OnMessageResponse] = {
+  private def executeMethod(
+      messageId: Double,
+      methodNum: Int,
+      args: js.Array[js.Any],
+  ): Future[OnMessageResponse] = {
     def toResponse(returnValue: js.Any): OnMessageResponse = {
       OnMessageResponse(
-        response = Scala2Js.toJs[WorkerResponse](WorkerResponse.MethodReturnValue(returnValue))
+        response = Scala2Js.toJs[WorkerResponse](WorkerResponse.MethodReturnValue(messageId, returnValue))
       )
     }
 
@@ -97,7 +101,8 @@ object LocalDatabaseWebWorkerScript {
           val operationsToBroadcast = currentApiImpl.getWriteOperationsToBroadcast(operations)
 
           OnMessageResponse(
-            response = Scala2Js.toJs[WorkerResponse](WorkerResponse.MethodReturnValue(somethingChanged)),
+            response =
+              Scala2Js.toJs[WorkerResponse](WorkerResponse.MethodReturnValue(messageId, somethingChanged)),
             responseToBroadcastToOtherPorts =
               if (operationsToBroadcast.nonEmpty && somethingChanged)
                 Scala2Js.toJs[WorkerResponse](
