@@ -88,8 +88,8 @@ object LocalDatabaseWebWorkerApi {
 
   sealed trait WorkerResponse
   object WorkerResponse {
-    case class Failed(stackTrace: String) extends WorkerResponse
-    case class MethodReturnValue(value: js.Any) extends WorkerResponse
+    case class Failed(messageId: Double, stackTrace: String) extends WorkerResponse
+    case class MethodReturnValue(messageId: Double, value: js.Any) extends WorkerResponse
     case class BroadcastedWriteOperations(operations: Seq[WriteOperation]) extends WorkerResponse
   }
 }

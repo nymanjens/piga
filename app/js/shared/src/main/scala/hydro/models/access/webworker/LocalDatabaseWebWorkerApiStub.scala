@@ -21,14 +21,13 @@ import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.util.Random
 
 final class LocalDatabaseWebWorkerApiStub(
     forceJsWorker: Option[JsWorkerClientFacade] = None
 ) extends LocalDatabaseWebWorkerApi.ForClient {
 
-  private var nextMessageId: Double = 0
   private val responseMessagePromises: mutable.Map[Double, Promise[js.Any]] = mutable.Map()
-  private var lastMessageFuture: Future[Unit] = Future.successful(())
   private val worker: JsWorkerClient = initializeJsWorker()
   private var listeners: Seq[LocalDatabaseWebWorkerApi.ForClient.Listener] = Seq()
 
@@ -72,42 +71,30 @@ final class LocalDatabaseWebWorkerApiStub(
     listeners = listeners :+ listener
   }
 
-  private def sendAndReceive(methodNum: Int, args: Seq[js.Any], timeout: FiniteDuration): Future[js.Any] =
-    async {
-      val messageId = nextMessageId
-      nextMessageId += 1
-      val thisMessagePromise: Promise[js.Any] = Promise()
-      responseMessagePromises.put(messageId, thisMessagePromise)
+  private def sendAndReceive(methodNum: Int, args: Seq[js.Any], timeout: FiniteDuration): Future[js.Any] = {
+    val thisMessageId = Random.nextDouble()
+    val thisMessagePromise: Promise[js.Any] = Promise()
+    responseMessagePromises.put(thisMessageId, thisMessagePromise)
 
-      val futureToAwait = lastMessageFuture
-      val nextLastMessagePromise = Promise[Unit]()
-      lastMessageFuture = nextLastMessagePromise.future
-
-      await(futureToAwait)
-
-      logExceptions {
-        worker.postMessage(js.Array(messageId, methodNum, args.toJSArray))
-      }
-
-      js.timers.setTimeout(timeout) {
-        if (!thisMessagePromise.isCompleted) {
-          scalajs.dom.console
-            .log(
-              "  [LocalDatabaseWebWorker] Operation timed out " +
-                s"(methodNum = $methodNum, args = $args, timeout = $timeout)"
-            )
-          responseMessagePromises.remove(messageId)
-          thisMessagePromise.tryFailure(
-            new Exception(s"Operation timed out (methodNum = $methodNum, args = $args, timeout = $timeout)")
-          )
-          nextLastMessagePromise.trySuccess(())
-        }
-      }
-
-      val result = await(thisMessagePromise.future)
-      nextLastMessagePromise.trySuccess(())
-      result
+    logExceptions {
+      worker.postMessage(js.Array(thisMessageId, methodNum, args.toJSArray))
     }
+
+    js.timers.setTimeout(timeout) {
+      if (!thisMessagePromise.isCompleted) {
+        scalajs.dom.console.log(
+          "  [LocalDatabaseWebWorker] Operation timed out " +
+            s"(methodNum = $methodNum, args = $args, timeout = $timeout)"
+        )
+        responseMessagePromises.remove(thisMessageId)
+        thisMessagePromise.tryFailure(
+          new Exception(s"Operation timed out (methodNum = $methodNum, args = $args, timeout = $timeout)")
+        )
+      }
+    }
+
+    thisMessagePromise.future
+  }
 
   private def initializeJsWorker(): JsWorkerClient = {
     val workerClientFacade =
@@ -119,35 +106,31 @@ final class LocalDatabaseWebWorkerApiStub(
       scriptUrl = "/localDatabaseWebWorker.js",
       onMessage = data =>
         logExceptions {
-          if (
-            js.Array.isArray(data) && data.asInstanceOf[js.Array[js.Any]].length == 2 && js
-              .typeOf(data.asInstanceOf[js.Array[js.Any]](0)) == "number"
-          ) {
-            val arr = data.asInstanceOf[js.Array[js.Any]]
-            val messageId = arr(0).asInstanceOf[Double]
-            val responseData = arr(1)
+          Scala2Js.toScala[WorkerResponse](data) match {
+            case response @ WorkerResponse.Failed(messageId, stackTrace) =>
+              responseMessagePromises.remove(messageId) match {
+                case Some(promise) =>
+                  promise.failure(new IllegalStateException(s"WebWorker invocation failed:\n$stackTrace"))
+                case None =>
+                  scalajs.dom.console.log(
+                    s"  Warning: Received unexpected message (this is a bug unless this operation timed out): $response"
+                  )
+              }
 
-            Scala2Js.toScala[WorkerResponse](responseData) match {
-              case WorkerResponse.Failed(stackTrace) =>
-                responseMessagePromises.remove(messageId).foreach { promise =>
-                  promise.tryFailure(new IllegalStateException(s"WebWorker invocation failed:\n$stackTrace"))
-                }
-              case WorkerResponse.MethodReturnValue(returnValue) =>
-                responseMessagePromises.remove(messageId).foreach { promise =>
-                  promise.trySuccess(returnValue)
-                }
-              case WorkerResponse.BroadcastedWriteOperations(_) =>
-                throw new AssertionError("Targeted response should not be a BroadcastedWriteOperations")
-            }
-          } else {
-            Scala2Js.toScala[WorkerResponse](data) match {
-              case WorkerResponse.BroadcastedWriteOperations(writeOperations) =>
-                for (listener <- listeners) {
-                  listener.onWriteOperationsDone(writeOperations)
-                }
-              case response =>
-                throw new AssertionError(s"Received unexpected broadcast message: $response")
-            }
+            case response @ WorkerResponse.MethodReturnValue(messageId, returnValue) =>
+              responseMessagePromises.remove(messageId) match {
+                case Some(promise) =>
+                  promise.success(returnValue)
+                case None =>
+                  scalajs.dom.console.log(
+                    s"  Warning: Received unexpected message (this is a bug unless this operation timed out): $response"
+                  )
+              }
+
+            case WorkerResponse.BroadcastedWriteOperations(writeOperations) =>
+              for (listener <- listeners) {
+                listener.onWriteOperationsDone(writeOperations)
+              }
           }
         },
     )

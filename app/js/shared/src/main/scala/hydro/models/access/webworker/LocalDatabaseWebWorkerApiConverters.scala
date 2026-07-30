@@ -100,8 +100,10 @@ private[webworker] object LocalDatabaseWebWorkerApiConverters {
 
     override def toJs(value: WorkerResponse) = {
       value match {
-        case WorkerResponse.Failed(stackTrace)       => js.Array[js.Any](failedNumber, stackTrace)
-        case WorkerResponse.MethodReturnValue(value) => js.Array[js.Any](methodReturnValueNumber, value)
+        case WorkerResponse.Failed(messageId, stackTrace) =>
+          js.Array[js.Any](failedNumber, messageId, stackTrace)
+        case WorkerResponse.MethodReturnValue(messageId, value) =>
+          js.Array[js.Any](methodReturnValueNumber, messageId, value)
         case WorkerResponse.BroadcastedWriteOperations(operations) =>
           js.Array[js.Any](broadcastedWriteOperationsNumber, Scala2Js.toJs(operations))
       }
@@ -113,10 +115,10 @@ private[webworker] object LocalDatabaseWebWorkerApiConverters {
       val params = value.asInstanceOf[js.Array[js.Any]].toVector.drop(1)
 
       (number, params) match {
-        case (`failedNumber`, Seq(stackTrace)) =>
-          WorkerResponse.Failed(Scala2Js.toScala[String](stackTrace))
-        case (`methodReturnValueNumber`, Seq(value)) =>
-          WorkerResponse.MethodReturnValue(value)
+        case (`failedNumber`, Seq(messageId, stackTrace)) =>
+          WorkerResponse.Failed(Scala2Js.toScala[Double](messageId), Scala2Js.toScala[String](stackTrace))
+        case (`methodReturnValueNumber`, Seq(messageId, value)) =>
+          WorkerResponse.MethodReturnValue(Scala2Js.toScala[Double](messageId), value)
         case (`broadcastedWriteOperationsNumber`, Seq(operations)) =>
           WorkerResponse.BroadcastedWriteOperations(Scala2Js.toScala[Seq[WriteOperation]](operations))
       }
