@@ -136,6 +136,7 @@ private[document] final class DesktopTaskEditor(implicit
       new DuplicateKeypressWorkaroundManager()
     private val taskKeyRemapForReactBugWorkaround: mutable.Map[Long, Long] =
       mutable.Map().withDefault(identity)
+    private var compositionStartSelection: Option[IndexedSelection] = None
 
     override def didMount(props: Props, state: State): Callback = {
       dom.window.addEventListener("resize", resizeListener)
@@ -226,6 +227,8 @@ private[document] final class DesktopTaskEditor(implicit
         // as a fall-back.
         ^.onKeyPress ==> handleKeyDown,
         ^.onSelect ==> (_ => updateCursor()),
+        ^.onCompositionStart ==> handleCompositionStart,
+        ^.onCompositionEnd ==> handleCompositionEnd,
         ^.onPaste ==> handlePaste,
         ^.onCut ==> handleCut,
         ^.onCopy ==> handleCopy,
@@ -387,6 +390,44 @@ private[document] final class DesktopTaskEditor(implicit
         }
       }
 
+    private def handleCompositionStart(event: ReactEventFromInput): Callback = {
+      compositionStartSelection = IndexedSelection.tupleFromSelection(dom.window.getSelection())
+      Callback.empty
+    }
+
+    private def handleCompositionEnd(event: ReactEventFromInput): Callback =
+      $.state flatMap { implicit state =>
+        $.props flatMap { implicit props =>
+          val dataRaw = event.nativeEvent.asInstanceOf[js.Dynamic].data
+          val data = if (!js.isUndefined(dataRaw) && dataRaw != null) dataRaw.asInstanceOf[String] else ""
+          if (data.nonEmpty) {
+            val selection = compositionStartSelection getOrElse (
+              IndexedSelection.tupleFromSelection(
+                dom.window.getSelection()
+              ) getOrElse IndexedSelection.nullInstance
+            )
+            val IndexedSelection(start, end) = selection
+            implicit val document = state.document
+            val formatting =
+              if (lastSingletonFormating.cursor == start.detach) {
+                lastSingletonFormating.formatting
+              } else {
+                document
+                  .tasksOption(start.seqIndex)
+                  .map(_.content.formattingAtCursor(start.offsetInTask))
+                  .getOrElse(Formatting.none)
+              }
+
+            replaceSelection(
+              replacement = Replacement.fromString(data, formatting),
+              selectionBeforeEdit = selection,
+            )
+          } else {
+            Callback.empty
+          }
+        }
+      }
+
     private def updateCursor(): Callback = {
       IndexedSelection.tupleFromSelection(dom.window.getSelection()) match {
         case Some(selection) =>
@@ -423,398 +464,409 @@ private[document] final class DesktopTaskEditor(implicit
           //dom.console.log(event.nativeEvent)
           //dom.console.log(s"keyCombination = $keyCombination")
 
-          keyCombination match {
-            case _
-                if duplicateKeypressWorkaroundManager.recordAndIsDuplicate(
-                  event.nativeEvent,
-                  keyCombination.toString,
-                ) =>
-              event.preventDefault()
-              Callback.empty
-            case _ if keyCombination.meta =>
-              // Do nothing when meta key is pressed
-              event.preventDefault()
-              Callback.empty
+          val isComposing = {
+            val d = event.nativeEvent.asInstanceOf[js.Dynamic]
+            !js.isUndefined(d.isComposing) && d.isComposing.asInstanceOf[Boolean]
+          }
 
-            case c @ CharacterKey(_, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              maybeHandleWrappingCharacter(
-                c.capitalizedCharacter,
-                selection,
-                formatting,
-              ) getOrElse replaceSelection(
-                replacement = Replacement.fromString(c.capitalizedCharacter.toString, formatting),
-                IndexedSelection(start, end),
-              )
+          if (isComposing) {
+            Callback.empty
+          } else {
+            keyCombination match {
+              case _
+                  if duplicateKeypressWorkaroundManager.recordAndIsDuplicate(
+                    event.nativeEvent,
+                    keyCombination.toString,
+                  ) =>
+                event.preventDefault()
+                Callback.empty
+              case _ if keyCombination.meta =>
+                // Do nothing when meta key is pressed
+                event.preventDefault()
+                Callback.empty
 
-            case SpecialKey(Enter, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              if (keyCombination.shift) {
-                replaceSelection(
-                  replacement = Replacement.fromString("\n", formatting),
+              case c @ CharacterKey(_, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                maybeHandleWrappingCharacter(
+                  c.capitalizedCharacter,
+                  selection,
+                  formatting,
+                ) getOrElse replaceSelection(
+                  replacement = Replacement.fromString(c.capitalizedCharacter.toString, formatting),
                   IndexedSelection(start, end),
                 )
-              } else {
-                if (
-                  selection.isSingleton &&
-                  document.tasks(start.seqIndex).collapsed &&
-                  start == start.toEndOfTask
-                ) {
-                  // Pressing enter at the end of a collapsed task --> skip the children
-                  val lastCollapsedIndex = selection.includeChildren(collapsedOnly = true).end.seqIndex
+
+              case SpecialKey(Enter, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                if (keyCombination.shift) {
                   replaceSelection(
-                    replacement = Replacement.newEmptyTask(
-                      indentationRelativeToCurrent = document.tasks(start.seqIndex).indentation
-                        - document.tasks(lastCollapsedIndex).indentation
-                    ),
-                    IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex)),
+                    replacement = Replacement.fromString("\n", formatting),
+                    IndexedSelection(start, end),
                   )
                 } else {
-                  replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
+                  if (
+                    selection.isSingleton &&
+                    document.tasks(start.seqIndex).collapsed &&
+                    start == start.toEndOfTask
+                  ) {
+                    // Pressing enter at the end of a collapsed task --> skip the children
+                    val lastCollapsedIndex = selection.includeChildren(collapsedOnly = true).end.seqIndex
+                    replaceSelection(
+                      replacement = Replacement.newEmptyTask(
+                        indentationRelativeToCurrent = document.tasks(start.seqIndex).indentation
+                          - document.tasks(lastCollapsedIndex).indentation
+                      ),
+                      IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex)),
+                    )
+                  } else {
+                    replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
+                  }
                 }
-              }
 
-            case SpecialKey(Backspace, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              if (start == end) {
-                if (keyCombination.ctrl) {
-                  replaceSelection(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
+              case SpecialKey(Backspace, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                if (start == end) {
+                  if (keyCombination.ctrl) {
+                    replaceSelection(replacement = Replacement.empty, IndexedSelection(start.minusWord, end))
+                  } else {
+                    replaceSelection(
+                      replacement = Replacement.empty,
+                      IndexedSelection(start minusOffsetInSeq 1, end),
+                    )
+                  }
                 } else {
-                  replaceSelection(
-                    replacement = Replacement.empty,
-                    IndexedSelection(start minusOffsetInSeq 1, end),
+                  replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
+                }
+
+              case SpecialKey(Delete, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                if (start == end) {
+                  if (keyCombination.ctrl) {
+                    replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
+                  } else {
+                    replaceSelection(
+                      replacement = Replacement.empty,
+                      IndexedSelection(start, end plusOffsetInSeq 1),
+                    )
+                  }
+                } else {
+                  replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
+                }
+
+              // Delete rest of line
+              case SpecialKey(Delete, /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                val contentStr = document.tasks(end.seqIndex).contentString
+                val targetEnd = contentStr.indexOf('\n', end.offsetInTask) match {
+                  case -1               => end.toEndOfTask
+                  case nextNewlineIndex => end.copy(offsetInTask = nextNewlineIndex)
+                }
+                replaceSelection(replacement = Replacement.empty, IndexedSelection(start, targetEnd))
+
+              // Move cursor up/down
+              // Note: This is re-implementation of the default behavior only for Firefox because it behaves weirdly with
+              // indented tasks (as of early 2020)
+              case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
+                  if BrowserUtils.isFirefox =>
+                event.preventDefault()
+                moveCursorVertically(selection, direction = +1)
+              case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
+                  if BrowserUtils.isFirefox =>
+                event.preventDefault()
+                moveCursorVertically(selection, direction = -1)
+
+              case SpecialKey(Tab, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                val indentIncrease = if (keyCombination.shift) -1 else 1
+                // Don't indent children if task is empty
+                val updateChildren =
+                  !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
+                updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
+                  MaskedTaskUpdate.fromFields(
+                    task,
+                    indentation = zeroIfNegative(task.indentation + indentIncrease),
                   )
                 }
-              } else {
-                replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
-              }
 
-            case SpecialKey(Delete, /*ctrl*/ _, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              if (start == end) {
-                if (keyCombination.ctrl) {
-                  replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end.plusWord))
-                } else {
-                  replaceSelection(
-                    replacement = Replacement.empty,
-                    IndexedSelection(start, end plusOffsetInSeq 1),
-                  )
+              // Go to parent task
+              case CharacterKey('p', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                document.findParentIndex(selection.start.seqIndex) match {
+                  case None                 => Callback.empty
+                  case Some(parentSeqIndex) => setSelection(IndexedSelection.atStartOfTask(parentSeqIndex))
                 }
-              } else {
-                replaceSelection(replacement = Replacement.empty, IndexedSelection(start, end))
-              }
+              // Go to last edit
+              case CharacterKey('q', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                goToLastEdit(selection)
 
-            // Delete rest of line
-            case SpecialKey(Delete, /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              val contentStr = document.tasks(end.seqIndex).contentString
-              val targetEnd = contentStr.indexOf('\n', end.offsetInTask) match {
-                case -1               => end.toEndOfTask
-                case nextNewlineIndex => end.copy(offsetInTask = nextNewlineIndex)
-              }
-              replaceSelection(replacement = Replacement.empty, IndexedSelection(start, targetEnd))
+              // Copy whole task and its children (shift-copy)
+              case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
+                Callback.empty
 
-            // Move cursor up/down
-            // Note: This is re-implementation of the default behavior only for Firefox because it behaves weirdly with
-            // indented tasks (as of early 2020)
-            case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
-                if BrowserUtils.isFirefox =>
-              event.preventDefault()
-              moveCursorVertically(selection, direction = +1)
-            case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ false, /*meta*/ false)
-                if BrowserUtils.isFirefox =>
-              event.preventDefault()
-              moveCursorVertically(selection, direction = -1)
+              // Cut whole task and its children (shift-cut)
+              case CharacterKey('x', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
 
-            case SpecialKey(Tab, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              val indentIncrease = if (keyCombination.shift) -1 else 1
-              // Don't indent children if task is empty
-              val updateChildren = !(selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty)
-              updateTasksInSelection(selection, updateChildren = updateChildren) { task =>
-                MaskedTaskUpdate.fromFields(
-                  task,
-                  indentation = zeroIfNegative(task.indentation + indentIncrease),
+                val fullSelection = selection.includeChildren().includeFullTasks()
+                setNavigatorClipboardData(selection = fullSelection)
+                removeTasks(fullSelection.seqIndices)
+
+              // Copy whole task and its children as Markdown (shift+alt+M)
+              case CharacterKey('m', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                val markdown =
+                  convertToMarkdown(document.tasksIn(selection.includeChildren().includeFullTasks()))
+                setNavigatorClipboardData(htmlText = markdown, plainText = markdown)
+                Callback.empty
+
+              // Italic
+              case CharacterKey('i', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(italic = value),
+                  selection,
+                  formattingAtStart = formatting,
                 )
-              }
 
-            // Go to parent task
-            case CharacterKey('p', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              document.findParentIndex(selection.start.seqIndex) match {
-                case None                 => Callback.empty
-                case Some(parentSeqIndex) => setSelection(IndexedSelection.atStartOfTask(parentSeqIndex))
-              }
-            // Go to last edit
-            case CharacterKey('q', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              goToLastEdit(selection)
-
-            // Copy whole task and its children (shift-copy)
-            case CharacterKey('c', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              setNavigatorClipboardData(selection = selection.includeChildren().includeFullTasks())
-              Callback.empty
-
-            // Cut whole task and its children (shift-cut)
-            case CharacterKey('x', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-
-              val fullSelection = selection.includeChildren().includeFullTasks()
-              setNavigatorClipboardData(selection = fullSelection)
-              removeTasks(fullSelection.seqIndices)
-
-            // Copy whole task and its children as Markdown (shift+alt+M)
-            case CharacterKey('m', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              val markdown =
-                convertToMarkdown(document.tasksIn(selection.includeChildren().includeFullTasks()))
-              setNavigatorClipboardData(htmlText = markdown, plainText = markdown)
-              Callback.empty
-
-            // Italic
-            case CharacterKey('i', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(italic = value),
-                selection,
-                formattingAtStart = formatting,
-              )
-
-            // Bold
-            case CharacterKey('b', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(bold = value),
-                selection,
-                formattingAtStart = formatting,
-              )
-
-            // Code font
-            case SpecialKey(Backquote, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) |
-                CharacterKey('`', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(code = value),
-                selection,
-                formattingAtStart = formatting,
-              )
-
-            // Code font (Alt + Shift + 1)
-            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
-                if event.keyCode == 49 =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(code = value),
-                selection,
-                formattingAtStart = formatting,
-              )
-
-            // Check (Alt + Shift + 4)
-            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
-                if event.keyCode == 52 =>
-              event.preventDefault()
-              val newCheckedValue = document.tasksIn(selection).forall(!_.checked)
-              updateTasksInSelection(
-                selection,
-                updateChildren = !newCheckedValue,
-                collapseIfChildren = newCheckedValue,
-              ) { task =>
-                MaskedTaskUpdate.fromFields(
-                  task,
-                  checked = newCheckedValue,
+              // Bold
+              case CharacterKey('b', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(bold = value),
+                  selection,
+                  formattingAtStart = formatting,
                 )
-              }
 
-            // Strikethrough (Alt + Shift + 5)
-            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
-                if event.keyCode == 53 =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(strikethrough = value),
-                selection,
-                formattingAtStart = formatting,
-                updateChildrenIfSingleton = strikethroughBeingAdded => !strikethroughBeingAdded,
-                collapseIfChildrenIfSingleton = strikethroughBeingAdded => strikethroughBeingAdded,
-              )
+              // Code font
+              case SpecialKey(Backquote, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) |
+                  CharacterKey('`', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(code = value),
+                  selection,
+                  formattingAtStart = formatting,
+                )
 
-            // Mark (Alt + Shift + 3)
-            case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
-                if event.keyCode == 51 =>
-              event.preventDefault()
-              toggleFormatting(
-                (form, value) => form.copy(mark = value),
-                selection,
-                formattingAtStart = formatting,
-              )
+              // Code font (Alt + Shift + 1)
+              case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                  if event.keyCode == 49 =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(code = value),
+                  selection,
+                  formattingAtStart = formatting,
+                )
 
-            // Clear formatting
-            case CharacterKey('\\', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
+              // Check (Alt + Shift + 4)
+              case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                  if event.keyCode == 52 =>
+                event.preventDefault()
+                val newCheckedValue = document.tasksIn(selection).forall(!_.checked)
+                updateTasksInSelection(
+                  selection,
+                  updateChildren = !newCheckedValue,
+                  collapseIfChildren = newCheckedValue,
+                ) { task =>
+                  MaskedTaskUpdate.fromFields(
+                    task,
+                    checked = newCheckedValue,
+                  )
+                }
 
-            // Disable underline modifier
-            case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              Callback.empty
+              // Strikethrough (Alt + Shift + 5)
+              case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                  if event.keyCode == 53 =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(strikethrough = value),
+                  selection,
+                  formattingAtStart = formatting,
+                  updateChildrenIfSingleton = strikethroughBeingAdded => !strikethroughBeingAdded,
+                  collapseIfChildrenIfSingleton = strikethroughBeingAdded => strikethroughBeingAdded,
+                )
 
-            // Disable save shortcut
-            case CharacterKey('s', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              Callback.empty
+              // Mark (Alt + Shift + 3)
+              case CharacterKey(_, /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false)
+                  if event.keyCode == 51 =>
+                event.preventDefault()
+                toggleFormatting(
+                  (form, value) => form.copy(mark = value),
+                  selection,
+                  formattingAtStart = formatting,
+                )
 
-            // Undo
-            case CharacterKey('z', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              applyHistoryEdit(editHistory.undo())
+              // Clear formatting
+              case CharacterKey('\\', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                toggleFormatting((form, value) => Formatting.none, selection, formattingAtStart = formatting)
 
-            // Redo
-            case CharacterKey('z', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              applyHistoryEdit(editHistory.redo())
+              // Disable underline modifier
+              case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                Callback.empty
 
-            // Redo
-            case CharacterKey('y', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              applyHistoryEdit(editHistory.redo())
+              // Disable save shortcut
+              case CharacterKey('s', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                Callback.empty
 
-            // Edit link
-            case CharacterKey('k', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              editLink(selection)
+              // Undo
+              case CharacterKey('z', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                applyHistoryEdit(editHistory.undo())
 
-            // Open link
-            case SpecialKey(Enter, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              getAnyLinkInSelection(selection) match {
-                case Some(link) => dom.window.open(link, "_blank")
-                case None       =>
-              }
-              Callback.empty
+              // Redo
+              case CharacterKey('z', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                applyHistoryEdit(editHistory.redo())
 
-            // Select word
-            case CharacterKey('m', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              selectExtendedWordAround(start)
+              // Redo
+              case CharacterKey('y', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                applyHistoryEdit(editHistory.redo())
 
-            // Select quoted sentence
-            case CharacterKey('m', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              selectQuotedSentenceAround(start)
+              // Edit link
+              case CharacterKey('k', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                editLink(selection)
 
-            // Select task
-            case CharacterKey('j', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
+              // Open link
+              case SpecialKey(Enter, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                getAnyLinkInSelection(selection) match {
+                  case Some(link) => dom.window.open(link, "_blank")
+                  case None       =>
+                }
+                Callback.empty
 
-            // Queue task to be added later
-            case CharacterKey('d', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              queueTaskToBeAddedLater(selection)
+              // Select word
+              case CharacterKey('m', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                selectExtendedWordAround(start)
 
-            // Delete task
-            case CharacterKey('d', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              val currentTaskIsEmpty = selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty
-              removeTasks(
-                if (currentTaskIsEmpty) selection.seqIndices
-                else selection.includeChildren().seqIndices
-              )
+              // Select quoted sentence
+              case CharacterKey('m', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                selectQuotedSentenceAround(start)
 
-            // Duplicate task
-            case CharacterKey('b', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              duplicateTasks(
-                selection.includeChildren(collapsedOnly = true).seqIndices,
-                selectionBeforeEdit = selection,
-              )
+              // Select task
+              case CharacterKey('j', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                setSelection(IndexedSelection(start.toStartOfTask, start.toEndOfTask))
 
-            // Move tasks up
-            case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              moveTasksInSeq(selection, direction = -1)
+              // Queue task to be added later
+              case CharacterKey('d', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                queueTaskToBeAddedLater(selection)
 
-            // Move tasks down
-            case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              moveTasksInSeq(selection, direction = +1)
+              // Delete task
+              case CharacterKey('d', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                val currentTaskIsEmpty =
+                  selection.isSingleton && document.tasks(start.seqIndex).content.isEmpty
+                removeTasks(
+                  if (currentTaskIsEmpty) selection.seqIndices
+                  else selection.includeChildren().seqIndices
+                )
 
-            // Expand tasks
-            case CharacterKey('=' | '+', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              updateTasksInSelection(selection, updateChildren = false) { task =>
-                MaskedTaskUpdate.fromFields(task, collapsed = false)
-              }
+              // Duplicate task
+              case CharacterKey('b', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                duplicateTasks(
+                  selection.includeChildren(collapsedOnly = true).seqIndices,
+                  selectionBeforeEdit = selection,
+                )
 
-            // Collapse tasks
-            case CharacterKey('-', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              if (selection.includeChildren() == selection) {
-                Callback.empty // Don't collapse a task tha has no children
-              } else {
+              // Move tasks up
+              case SpecialKey(ArrowUp, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                moveTasksInSeq(selection, direction = -1)
+
+              // Move tasks down
+              case SpecialKey(ArrowDown, /*ctrl*/ false, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                moveTasksInSeq(selection, direction = +1)
+
+              // Expand tasks
+              case CharacterKey('=' | '+', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
                 updateTasksInSelection(selection, updateChildren = false) { task =>
-                  MaskedTaskUpdate.fromFields(task, collapsed = true)
+                  MaskedTaskUpdate.fromFields(task, collapsed = false)
                 }
-              }
 
-            // Convert to upper case
-            case CharacterKey('u', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, _.toUpperCase)
+              // Collapse tasks
+              case CharacterKey('-', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                if (selection.includeChildren() == selection) {
+                  Callback.empty // Don't collapse a task tha has no children
+                } else {
+                  updateTasksInSelection(selection, updateChildren = false) { task =>
+                    MaskedTaskUpdate.fromFields(task, collapsed = true)
+                  }
+                }
 
-            // Convert to upper case
-            case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, _.toUpperCase)
+              // Convert to upper case
+              case CharacterKey('u', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, _.toUpperCase)
 
-            // convert to lower case
-            case CharacterKey('l', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, _.toLowerCase)
+              // Convert to upper case
+              case CharacterKey('u', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, _.toUpperCase)
 
-            // convert to lower case
-            case CharacterKey('l', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, _.toLowerCase)
+              // convert to lower case
+              case CharacterKey('l', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, _.toLowerCase)
 
-            // convert to CamelCase
-            case CharacterKey('l', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(
-                selection,
-                s => CaseFormats.toUpperCamelCase(CaseFormats.tokenize(s)),
-              )
+              // convert to lower case
+              case CharacterKey('l', /*ctrl*/ true, /*shift*/ false, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, _.toLowerCase)
 
-            // convert to snake_case
-            case CharacterKey('k', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, s => CaseFormats.toSnakeCase(CaseFormats.tokenize(s)))
+              // convert to CamelCase
+              case CharacterKey('l', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(
+                  selection,
+                  s => CaseFormats.toUpperCamelCase(CaseFormats.tokenize(s)),
+                )
 
-            // convert to dash-case
-            case CharacterKey('h', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              updateCharactersInSelection(selection, s => CaseFormats.toDashCase(CaseFormats.tokenize(s)))
+              // convert to snake_case
+              case CharacterKey('k', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, s => CaseFormats.toSnakeCase(CaseFormats.tokenize(s)))
 
-            // Edit tags
-            case CharacterKey('t', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
-              event.preventDefault()
-              editTagsInTasks(selection)
+              // convert to dash-case
+              case CharacterKey('h', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                updateCharactersInSelection(selection, s => CaseFormats.toDashCase(CaseFormats.tokenize(s)))
 
-            // Go to file or chapter
-            case CharacterKey('p', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              goToFileOrChapterPrompt(selection)
+              // Edit tags
+              case CharacterKey('t', /*ctrl*/ false, /*shift*/ true, /*alt*/ true, /*meta*/ false) =>
+                event.preventDefault()
+                editTagsInTasks(selection)
 
-            // Find next occurrence of selected string
-            case CharacterKey('g', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              findNextOccurrenceOfSelectedString(selection)
-            case CharacterKey('g', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
-              event.preventDefault()
-              findNextOccurrenceOfSelectedString(selection, backwards = true)
+              // Go to file or chapter
+              case CharacterKey('p', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                goToFileOrChapterPrompt(selection)
 
-            case _ =>
-              Callback.empty
+              // Find next occurrence of selected string
+              case CharacterKey('g', /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                findNextOccurrenceOfSelectedString(selection)
+              case CharacterKey('g', /*ctrl*/ true, /*shift*/ true, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                findNextOccurrenceOfSelectedString(selection, backwards = true)
+
+              case _ =>
+                Callback.empty
+            }
           }
         }
       }
