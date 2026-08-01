@@ -54,6 +54,7 @@ final class Layout(implicit
                 "Ctrl + Shift + Delete" -> "Delete the remainder of the line after the cursor",
                 "Shift + Alt + Up" -> "Switch to previous document",
                 "Shift + Alt + Down" -> "Switch to next document",
+                "Ctrl + Up / Down" -> "Scroll up/down",
               ),
               "Power user: Change casing" -> Seq(
                 "Ctrl + Alt + U" -> "Convert selection to uppercase",
