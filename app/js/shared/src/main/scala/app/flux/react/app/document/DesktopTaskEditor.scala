@@ -575,6 +575,14 @@ private[document] final class DesktopTaskEditor(implicit
                 event.preventDefault()
                 moveCursorVertically(selection, direction = -1)
 
+              // Scroll editor up/down
+              case SpecialKey(ArrowUp, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                scrollEditorVertically(direction = -1)
+              case SpecialKey(ArrowDown, /*ctrl*/ true, /*shift*/ false, /*alt*/ false, /*meta*/ false) =>
+                event.preventDefault()
+                scrollEditorVertically(direction = +1)
+
               case SpecialKey(Tab, /*ctrl*/ false, /*shift*/ _, /*alt*/ false, /*meta*/ false) =>
                 event.preventDefault()
                 val indentIncrease = if (keyCombination.shift) -1 else 1
@@ -1629,8 +1637,6 @@ private[document] final class DesktopTaskEditor(implicit
       }
     }
 
-    // TODO: Handle multi-line tasks. Note that it should work for the current task, but also the previous task
-    // TODO: Preserve horizontal positioning (use heuristic: 5 chars per indentation)
     private def moveCursorVertically(
         selectionBeforeEdit: IndexedSelection,
         direction: Int,
@@ -1657,6 +1663,11 @@ private[document] final class DesktopTaskEditor(implicit
       } else {
         Callback.empty
       }
+    }
+
+    private def scrollEditorVertically(direction: Int): Callback = Callback {
+      val editor = dom.document.getElementsByClassName("desktop-task-editor").apply(0).asInstanceOf[dom.raw.Element]
+      editor.scrollTop = editor.scrollTop + (40 * direction)
     }
 
     private def moveTasksInSeq(
