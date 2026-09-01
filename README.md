@@ -1,4 +1,4 @@
-Task Keeper
+Piga
 ===========
 
 [![CI Status](https://github.com/nymanjens/piga/actions/workflows/ci.yml/badge.svg)](https://github.com/nymanjens/piga/actions)

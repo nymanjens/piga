@@ -90,7 +90,7 @@ private[router] final class RouterFactory(implicit
           .onPostRender((_, page) =>
             LogExceptionsCallback(async {
               val title = await(page.title)
-              dom.document.title = s"$title | Task Keeper"
+              dom.document.title = s"$title | Piga"
             })
           )
       }

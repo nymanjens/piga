@@ -29,14 +29,14 @@ final class Webmanifest @Inject() (implicit
     Ok(
       toJsonString(
         Webmanifest.Wrapper(
-          name = "Task Keeper",
-          short_name = "Task Keeper",
+          name = "Piga",
+          short_name = "Piga",
           start_url = "/app/",
           scope = "/",
           display = "standalone",
           background_color = "#fff",
           theme_color = "#f8f8f8",
-          description = "Task Keeper",
+          description = "Piga",
           icons = Seq(
             Webmanifest.Icon(
               src = "/assets/images/favicon48x48.png",
