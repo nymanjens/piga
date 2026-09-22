@@ -429,14 +429,13 @@ object TextWithMarkup {
   }
   private object Part {
     def apply(text: String, formatting: Formatting = Formatting.none, alreadySanitized: Boolean): Part = {
-      val textWithoutHttp = stripHttpFromShortLinks(text)
       if (alreadySanitized) {
-        PartImpl(textWithoutHttp, formatting)
+        PartImpl(text, formatting)
       } else {
         PartImpl(
           text = StringUtils
             .sanitizeSpecializedCharacters(
-              textWithoutHttp,
+              stripHttpFromShortLinks(text),
               stripNewlines = false,
               substituteNonLatin1 = false,
             ),
@@ -500,7 +499,6 @@ object TextWithMarkup {
     }
     new TextWithMarkup(createCanonicalInner(parts.toList))
   }
-
 
   private def stripHttpFromShortLinks(string: String): String = {
     shortLinkWithHttpRegex.replaceAllIn(string, m => Regex.quoteReplacement(m.group(1)))
