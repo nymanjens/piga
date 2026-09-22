@@ -21,10 +21,7 @@ import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
 final class TextWithMarkup private (private val parts: List[Part]) {
-
-  private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s\)]*".r
-  private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,}[a-zA-Z0-9_#$$.-]*)|" +
-    raw"((go|google3|bit\.ly)\/[a-zA-Z0-9_#$$.:/?+-]{2,})").r
+  import TextWithMarkup._
 
   lazy val contentString: String = parts.map(_.text).mkString
 
@@ -318,6 +315,11 @@ final class TextWithMarkup private (private val parts: List[Part]) {
 
 object TextWithMarkup {
 
+  private val urlRegex: Regex = raw"https?:\/\/[^\s/$$.?#].[^\s\)]*".r
+  private val shortLinkRegex: Regex = (raw"(((cr)|(cl)|b)\/\d{6,}[a-zA-Z0-9_#$$.-]*)|" +
+    raw"((go|google3|bit\.ly)\/[a-zA-Z0-9_#$$.:/?+-]{2,})").r
+  private val shortLinkWithHttpRegex: Regex = (raw"https?:\/\/(" + shortLinkRegex.regex + ")").r
+
   val empty: TextWithMarkup = new TextWithMarkup(Nil)
 
   def create(
@@ -427,12 +429,17 @@ object TextWithMarkup {
   }
   private object Part {
     def apply(text: String, formatting: Formatting = Formatting.none, alreadySanitized: Boolean): Part = {
+      val textWithoutHttp = stripHttpFromShortLinks(text)
       if (alreadySanitized) {
-        PartImpl(text, formatting)
+        PartImpl(textWithoutHttp, formatting)
       } else {
         PartImpl(
           text = StringUtils
-            .sanitizeSpecializedCharacters(text, stripNewlines = false, substituteNonLatin1 = false),
+            .sanitizeSpecializedCharacters(
+              textWithoutHttp,
+              stripNewlines = false,
+              substituteNonLatin1 = false,
+            ),
           formatting = formatting.copy(link =
             formatting.link.filter(l =>
               !StringUtils.containsSpecialCharacters(l, newlinesAreSpecial = true, nonLatin1AreSpecial = true)
@@ -492,6 +499,11 @@ object TextWithMarkup {
       case part :: rest => part :: createCanonicalInner(rest)
     }
     new TextWithMarkup(createCanonicalInner(parts.toList))
+  }
+
+
+  private def stripHttpFromShortLinks(string: String): String = {
+    shortLinkWithHttpRegex.replaceAllIn(string, m => Regex.quoteReplacement(m.group(1)))
   }
 
   private type InsideLink = Boolean
