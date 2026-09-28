@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 object MarkdownConverter {
 
-  private val wordBreakCharacters: Set[Char] = " \n.,".toSet
+  private val wordBreakCharacters: Set[Char] = " \n.,():;!?[]{}".toSet
 
   def markdownToParsedTasks(s: String): Seq[ParsedTask] = {
     val markdown = s.trim

@@ -155,4 +155,11 @@ class MarkdownConverterTest {
       tags = Seq("x"),
     ))
   }
+
+  @Test
+  def markdownToParsedTasks_bold_with_parentheses(): Unit = {
+    assertThat(
+      MarkdownConverter.markdownToParsedTasks("Seat (**A5**): **chosen**").asJava
+    ) containsExactly ParsedTask("Seat (<b>A5</b>): <b>chosen</b>", 0)
+  }
 }
