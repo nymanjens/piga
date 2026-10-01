@@ -268,7 +268,9 @@ private[document] final class DesktopTaskEditor(implicit
                   Seq() ++
                     ifThenOption(isRoot)("root") ++
                     ifThenOption(isLeaf)("leaf") ++
-                    ifThenOption(task.contentString.isEmpty)("empty-task") ++
+                    ifThenOption(task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty)(
+                      "empty-task"
+                    ) ++
                     ifThenOption(task.collapsed)("collapsed") ++
                     ifThenOption(task.checked)("checked") ++
                     ifThenOption(state.highlightedTaskIdAndIndex.taskIndex == taskIndex)("highlighted") ++
@@ -277,7 +279,8 @@ private[document] final class DesktopTaskEditor(implicit
                 ),
                 VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
-                task.content.toVdomNode,
+                if (task.contentString.isEmpty) <.br
+                else task.content.toVdomNode,
               ) +: {
                 if (styleStrings.nonEmpty) {
                   Seq(<.styleTag(^.key := s"listyle-$taskIndex", styleStrings.mkString("\n")))
@@ -986,6 +989,7 @@ private[document] final class DesktopTaskEditor(implicit
           if (start.seqIndex < end.seqIndex) Some(oldDocument.tasks(start.seqIndex + 1)) else None
         if (
           firstTask.contentString.isEmpty
+          && firstTask.tags.isEmpty
           && secondTask.isDefined
           && secondTask.get.contentString.nonEmpty
           && replacement.parts.size <= 1
@@ -997,7 +1001,10 @@ private[document] final class DesktopTaskEditor(implicit
       }
       val replacementIndexMatchedToTaskToUpdate = {
         if (
-          replacement.parts.size > 1 && replacement.parts.head.contentString.isEmpty && start.offsetInTask == 0
+          replacement.parts.size > 1
+          && replacement.parts.head.contentString.isEmpty
+          && start.offsetInTask == 0
+          && firstTask.contentString.nonEmpty
         )
           1
         else 0
@@ -1009,6 +1016,7 @@ private[document] final class DesktopTaskEditor(implicit
       for (((replacementPart, newOrderToken), i) <- (replacement.parts zip newOrderTokens).zipWithIndex)
         yield {
           val replacesWholeTask = start.offsetInTask == 0 && end == end.toEndOfTask
+          val mergesMultipleTasks = start.seqIndex < end.seqIndex
           def ifIndexOrEmpty(index: Int)(tags: TextWithMarkup): TextWithMarkup =
             if (i == index) tags else TextWithMarkup.empty
           val newContent = ifIndexOrEmpty(0)(firstTask.content.sub(0, start.offsetInTask)) +
@@ -1018,6 +1026,12 @@ private[document] final class DesktopTaskEditor(implicit
             )
           val newIndentation = firstTask.indentation + replacementPart.indentationRelativeToCurrent
           if (i == replacementIndexMatchedToTaskToUpdate) {
+            val tasksInSelectionToKeepTags = oldDocument
+              .tasksIn(selectionBeforeEdit)
+              .filter(t => t == taskToUpdate || t.contentString.nonEmpty)
+            val mergedTags = (tasksInSelectionToKeepTags.flatMap(
+              _.tags
+            ) ++ taskToUpdate.tags ++ replacementPart.tags).distinct
             taskUpdates.append(
               MaskedTaskUpdate.fromFields(
                 taskToUpdate,
@@ -1027,7 +1041,7 @@ private[document] final class DesktopTaskEditor(implicit
                 collapsed =
                   if (replacesWholeTask) taskToUpdate.collapsed || replacementPart.collapsed else null,
                 checked = if (replacesWholeTask) taskToUpdate.checked || replacementPart.checked else null,
-                tags = if (replacesWholeTask) (taskToUpdate.tags ++ replacementPart.tags).distinct else null,
+                tags = if (replacesWholeTask || mergesMultipleTasks) mergedTags else null,
               )
             )
           } else {
@@ -1857,15 +1871,30 @@ private[document] final class DesktopTaskEditor(implicit
       }
 
       def findCursorInDom(cursor: IndexedCursor)(func: (dom.raw.Node, Int) => Unit): Unit = {
-        walkDepthFirstPreOrder(getTaskElement(cursor)).find {
-          case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
-            if (offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd) {
-              func(node, cursor.offsetInTask - offsetSoFar)
+        val taskElement = getTaskElement(cursor)
+        def isTagNode(node: dom.raw.Node): Boolean =
+          DomNodeUtils.asElement(node).exists(_.classList.contains("tag"))
 
-              true
+        val nodes = walkDepthFirstPreOrder(taskElement).filterNot(n => isTagNode(n.node))
+
+        val matchingNode = nodes.find { case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+          node.nodeType == dom.raw.Node.TEXT_NODE &&
+            offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd
+        } orElse nodes.find { case NodeWithOffset(node, offsetSoFar, offsetAtEnd) =>
+          offsetSoFar <= cursor.offsetInTask && cursor.offsetInTask <= offsetAtEnd
+        }
+
+        matchingNode match {
+          case Some(NodeWithOffset(node, offsetSoFar, _)) =>
+            if (node == taskElement) {
+              val tagCount = DomNodeUtils.children(taskElement).count(isTagNode)
+              func(node, tagCount + cursor.offsetInTask - offsetSoFar)
             } else {
-              false
+              func(node, cursor.offsetInTask - offsetSoFar)
             }
+          case None =>
+            val tagCount = DomNodeUtils.children(taskElement).count(isTagNode)
+            func(taskElement, tagCount)
         }
       }
 
