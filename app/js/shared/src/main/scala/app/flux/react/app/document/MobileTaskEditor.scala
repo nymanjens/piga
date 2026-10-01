@@ -378,7 +378,16 @@ private[document] final class MobileTaskEditor(implicit
                   oldDocument.tasksOption(insertIndex).map(_.orderToken),
                   oldDocument.tasksOption(insertIndex + 1).map(_.orderToken),
                 ),
-                indentation = state.highlightedTask.indentation,
+                indentation = {
+                  val nextTaskOption = oldDocument.tasksOption(insertIndex + 1)
+                  val hasUncollapsedChildren = !state.highlightedTask.collapsed &&
+                    nextTaskOption.exists(_.indentation > state.highlightedTask.indentation)
+                  if (hasUncollapsedChildren) {
+                    state.highlightedTask.indentation + 1
+                  } else {
+                    state.highlightedTask.indentation
+                  }
+                },
                 collapsed = false,
                 checked = false,
                 delayedUntil = None,
@@ -473,7 +482,7 @@ private[document] final class MobileTaskEditor(implicit
         MaskedTaskUpdate.fromFields(
           state.highlightedTask,
           checked = newCheckedValue,
-          collapsed = if (newCheckedValue) true else state.highlightedTask.collapsed
+          collapsed = if (newCheckedValue) true else state.highlightedTask.collapsed,
         )
 
       replaceWithHistory(

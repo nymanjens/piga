@@ -518,6 +518,20 @@ private[document] final class DesktopTaskEditor(implicit
                       ),
                       IndexedSelection.singleton(IndexedCursor.atEndOfTask(lastCollapsedIndex)),
                     )
+                  } else if (
+                    selection.isSingleton &&
+                    start == start.toEndOfTask &&
+                    !document.tasks(start.seqIndex).collapsed &&
+                    start.seqIndex + 1 < document.tasks.size &&
+                    document.tasks(start.seqIndex + 1).indentation > document
+                      .tasks(start.seqIndex)
+                      .indentation
+                  ) {
+                    // Pressing enter at the end of a non-collapsed task with children --> extra indentation
+                    replaceSelection(
+                      replacement = Replacement.newEmptyTask(indentationRelativeToCurrent = 1),
+                      IndexedSelection(start, end),
+                    )
                   } else {
                     replaceSelection(replacement = Replacement.newEmptyTask(), IndexedSelection(start, end))
                   }
@@ -1666,7 +1680,8 @@ private[document] final class DesktopTaskEditor(implicit
     }
 
     private def scrollEditorVertically(direction: Int): Callback = Callback {
-      val editor = dom.document.getElementsByClassName("desktop-task-editor").apply(0).asInstanceOf[dom.raw.Element]
+      val editor =
+        dom.document.getElementsByClassName("desktop-task-editor").apply(0).asInstanceOf[dom.raw.Element]
       editor.scrollTop = editor.scrollTop + (40 * direction)
     }
 
