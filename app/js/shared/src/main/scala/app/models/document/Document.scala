@@ -167,6 +167,12 @@ final class Document(val id: Long, val name: String, val tasks: Seq[Task]) {
     )
   }
 
+  def hasChildren(seqIndex: Int): Boolean = {
+    tasksOption(seqIndex).exists { task =>
+      tasksOption(seqIndex + 1).exists(_.indentation > task.indentation)
+    }
+  }
+
   def findParentIndex(seqIndex: Int): Option[Int] = {
     findRootParentIndex(seqIndex, rootParentIndentation = tasks(seqIndex).indentation - 1)
   }

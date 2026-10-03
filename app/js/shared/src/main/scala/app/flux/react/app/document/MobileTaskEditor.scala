@@ -144,7 +144,8 @@ private[document] final class MobileTaskEditor(implicit
                     ifThenOption(isRoot)("root") ++
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(
-                      task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty && maybeAmountCollapsed.forall(_ == 0)
+                      task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty && maybeAmountCollapsed
+                        .forall(_ == 0)
                     )(
                       "empty-task"
                     ) ++
@@ -283,6 +284,7 @@ private[document] final class MobileTaskEditor(implicit
           // Expand/collapse
           Bootstrap.Button(Variant.info, size = Size.lg)(
             ^.onClick --> toggleCollapseOnHighlightedTask(),
+            ^.disabled := !state.document.hasChildren(state.highlightedTaskIndex),
             if (state.highlightedTask.collapsed) Bootstrap.Glyphicon("collapse-down")
             else Bootstrap.Glyphicon("expand"),
           ),
