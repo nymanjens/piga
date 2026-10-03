@@ -143,7 +143,9 @@ private[document] final class MobileTaskEditor(implicit
                   Seq() ++
                     ifThenOption(isRoot)("root") ++
                     ifThenOption(isLeaf)("leaf") ++
-                    ifThenOption(task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty)(
+                    ifThenOption(
+                      task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty && maybeAmountCollapsed.forall(_ == 0)
+                    )(
                       "empty-task"
                     ) ++
                     ifThenOption(task.collapsed)("collapsed") ++
