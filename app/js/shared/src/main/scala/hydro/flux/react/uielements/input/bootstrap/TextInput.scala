@@ -50,7 +50,7 @@ object TextInput {
         ^.onBlur ==> ((event: ReactEventFromInput) => {
           extraProps.onBlurCanonicalize(valueString) match {
             case Some(canonicalValue) => onChange(canonicalValue)
-            case None => Callback.empty
+            case None                 => Callback.empty
           }
         }),
       )
