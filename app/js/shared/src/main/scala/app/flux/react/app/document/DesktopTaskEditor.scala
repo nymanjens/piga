@@ -279,7 +279,7 @@ private[document] final class DesktopTaskEditor(implicit
                 ),
                 VdomAttr("num") := taskIndex,
                 renderedTags.map(_.span).toVdomArray,
-                if (task.contentString.isEmpty) <.br
+                if (task.contentString.isEmpty && maybeAmountCollapsed.isEmpty) <.br
                 else task.content.toVdomNode,
               ) +: {
                 if (styleStrings.nonEmpty) {
