@@ -269,7 +269,8 @@ private[document] final class DesktopTaskEditor(implicit
                     ifThenOption(isRoot)("root") ++
                     ifThenOption(isLeaf)("leaf") ++
                     ifThenOption(
-                      task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty && maybeAmountCollapsed.forall(_ == 0)
+                      task.contentString.isEmpty && task.tagsIncludingDelayedUntil.isEmpty && !state.document
+                        .hasChildren(taskIndex)
                     )(
                       "empty-task"
                     ) ++
