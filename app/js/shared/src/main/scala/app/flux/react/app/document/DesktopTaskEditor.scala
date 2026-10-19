@@ -304,10 +304,13 @@ private[document] final class DesktopTaskEditor(implicit
     private def handleCopy(event: ReactEventFromInput): Callback = $.state.map[Unit] { implicit state =>
       event.preventDefault()
 
+      implicit val document = state.document
+      val selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
+        IndexedSelection.nullInstance
+
       setEventClipboardData(
         event,
-        selection = IndexedSelection.tupleFromSelection(dom.window.getSelection()) getOrElse
-          IndexedSelection.nullInstance,
+        selection = if (selection.isSingleton) selection.includeFullTasks() else selection,
       )
     }
 
