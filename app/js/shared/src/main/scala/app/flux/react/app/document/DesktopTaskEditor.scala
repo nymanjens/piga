@@ -1775,14 +1775,22 @@ private[document] final class DesktopTaskEditor(implicit
         (beforeCursor + afterCursor).contentString
       }
 
+      val validChars = mutable.Buffer('\n')
       if (selectedLineInTask.count(_ == '"') >= 2) {
-        selectAroundCursorUntilChars(cursor, "\"\n")
-      } else if (selectedLineInTask.count(_ == '\'') >= 2) {
-        selectAroundCursorUntilChars(cursor, "'\n")
-      } else if (selectedLineInTask.count(_ == '`') >= 2) {
-        selectAroundCursorUntilChars(cursor, "`\n")
-      } else if (selectedLineInTask.count(_ == '>') >= 1 && selectedLineInTask.count(_ == '<') >= 1) {
-        selectAroundCursorUntilChars(cursor, "<>\n")
+        validChars.append('"')
+      }
+      if (selectedLineInTask.count(_ == '\'') >= 2) {
+        validChars.append('\'')
+      }
+      if (selectedLineInTask.count(_ == '`') >= 2) {
+        validChars.append('`')
+      }
+      if (selectedLineInTask.count(_ == '>') >= 1 && selectedLineInTask.count(_ == '<') >= 1) {
+        validChars.append('<', '>')
+      }
+
+      if (validChars.length > 1) {
+        selectAroundCursorUntilChars(cursor, validChars.mkString)
       } else {
         selectAroundCursorUntilChars(cursor, "`'\"\n<>")
       }
